@@ -1,0 +1,60 @@
+# SE CREO EL ENTORNO VIRTUAL
+
+py -m venv .env
+
+Se crea con -m para usar la version de python que este instalada en el PC no se especifica version
+
+
+# -- Acceso al entorno virtual
+
+.venv\Scripts\Activate.ps1
+
+pip install flask
+
+# ejecución
+
+python app.py
+
+# 
+
+
+
+
+1. Se HIZO LA CREACION DE LAS VARIABLES DE ENTORNO EN EL ARCHIVO:
+
+    .env
+
+2. Se configuro toda la conexionde la base de datos en el archivo:
+
+    config.py
+
+3. Se creo el archivo principal donde va a ir todo nuestro proyecto:
+
+    app.py
+
+    aun no tiene nada
+
+4. Para usar las librerias que usa el profe, se hizo un archivo:
+
+    requirements.txt 
+
+    para instalarlo:
+
+    pip install -r requirements.txt
+
+5. Creacion de la QUERYDB, para tener en cuenta como esta la DB
+
+6. Creacion del archivo:
+
+    models.py
+
+    ACA SE MAPEAN TODAS LAS TABLAS
+
+7. Creacion CARPETA templates: 
+
+En esta carpeta van a ir todas las plantillas .HTML de cada una de las paginas o apartados que va a tener la APP
+
+
+
+
+8. 

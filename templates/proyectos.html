@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Proyectos</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    .badge-status {
+      font-size: 0.8rem;
+    }
+
+    .accordion-button:not(.collapsed) {
+      background-color: #f8f9fa;
+    }
+
+    .mini-card {
+      border-radius: 12px;
+    }
+
+    .progress {
+      height: 8px;
+    }
+
+    .alerta-proyecto {
+      background-color: #eaf4ff;
+      border: 1px solid #007bff;
+      padding: 10px;
+      border-radius: 10px;
+      color: #004085;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* 🔹 Estilo para proyectos atrasados */
+    .proyecto-atrasado {
+      border: 3px solid #dc3545 !important;
+      box-shadow: 0 0 12px rgba(220, 53, 69, 0.5) !important;
+      border-radius: 10px !important;
+      background-color: #ffeaea !important;
+      transition: all 0.3s ease-in-out;
+    }
+
+    /* Al pasar el mouse, resalta más el borde */
+    .proyecto-atrasado:hover {
+      box-shadow: 0 0 18px rgba(220, 53, 69, 0.7) !important;
+      transform: scale(1.01);
+    }
+  </style>
+</head>
+
+<body class="bg-light">
+
+  <div class="container my-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Volver al Dashboard
+      </a>
+      <h3 class="fw-bold">📑 Gestión de Proyectos</h3>
+      <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#nuevoProyectoModal">
+        <i class="bi bi-plus-circle"></i> Nuevo Proyecto
+      </button>
+    </div>
+
+    <p class="text-muted">Administra todos los proyectos activos y su estado</p>
+
+    <!-- Listado de proyectos -->
+    <div class="accordion" id="proyectosAccordion">
+      {% if proyectos_data %}
+      {% for item in proyectos_data %}
+      <div class="mb-3">
+        <div class="accordion-item shadow-sm {% if item.estado_visual == 'ATRASADO' %}proyecto-atrasado{% endif %}">
+          <h2 class="accordion-header" id="heading{{ item.proyecto.id_proyecto }}">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#collapse{{ item.proyecto.id_proyecto }}" aria-expanded="false"
+              aria-controls="collapse{{ item.proyecto.id_proyecto }}">
+              <div class="d-flex justify-content-between w-100 align-items-center">
+                <div>
+                  <h5 class="fw-bold mb-0">{{ item.proyecto.nombre }}</h5>
+                  <small class="text-muted">{{ item.proyecto.descripcion or "Sin descripción" }}</small>
+                </div>
+
+                <div class="text-end ms-auto">
+                  <!-- 🔹 Estado visual calculado -->
+                  <span class="badge 
+                      {% if item.estado_visual == 'PENDIENTE' %} bg-secondary
+                      {% elif item.estado_visual == 'EN_PROGRESO' %} bg-primary
+                      {% elif item.estado_visual == 'FINALIZADO' %} bg-success
+                      {% elif item.estado_visual == 'ATRASADO' %} bg-danger
+                      {% else %} bg-dark {% endif %} badge-status">
+                    {{ item.estado_visual.replace('_', ' ').title() }}
+                  </span>
+
+                  <!-- 🔹 Mensaje dinámico -->
+                  {% if item.mensaje_estado %}
+                  <div class="fw-semibold mt-1 text-muted">
+                    {{ item.mensaje_estado }}
+                  </div>
+                  {% endif %}
+
+                  <!-- ✅ Presupuesto opcional -->
+                  {% if item.proyecto.presupuesto %}
+                  <div class="fw-bold mt-1">${{ "{:,.0f}".format(item.proyecto.presupuesto) }}</div>
+                  {% endif %}
+                  <small class="text-muted">{{ item.trabajadores|length }} Personal</small>
+                </div>
+              </div>
+            </button>
+          </h2>
+
+          <div id="collapse{{ item.proyecto.id_proyecto }}" class="accordion-collapse collapse"
+            aria-labelledby="heading{{ item.proyecto.id_proyecto }}" data-bs-parent="#proyectosAccordion">
+            <div class="accordion-body">
+
+              {% if item.progreso < 20 %} <div class="alerta-proyecto mb-3">
+                ⚠ El proyecto "{{ item.proyecto.nombre }}" apenas tiene {{ item.progreso }}% de avance.
+            </div>
+            {% endif %}
+
+            <!-- 🔹 Progreso general -->
+            <div class="d-flex justify-content-between mb-1">
+              <small><strong>{{ item.progreso or 0 }}%</strong> Progreso general</small>
+            </div>
+            <div class="progress mb-3" style="height: 10px;">
+              <div class="progress-bar bg-dark" style="width: {{ item.progreso or 0 }}%;"></div>
+            </div>
+            <div class="d-flex justify-content-between mb-3 mt-3">
+              <small><strong>Inicio:</strong> {{ item.proyecto.fecha_inicio.strftime('%Y-%m-%d') }}</small>
+              <small><strong>Fin:</strong> {{ item.proyecto.fecha_fin.strftime('%Y-%m-%d') }}</small>
+            </div>
+
+            <!-- 🔹 Avance de actividades -->
+            <div class="mt-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold mb-0">📊 Avance de Actividades</h6>
+                <button class="btn btn-sm btn-outline-dark" data-bs-toggle="modal"
+                  data-bs-target="#actividadModal{{ item.proyecto.id_proyecto }}">
+                  <i class="bi bi-plus-circle"></i> Agregar Actividad
+                </button>
+              </div>
+
+              {% if item.actividades %}
+              {% for actividad in item.actividades %}
+              <div class="mb-3 d-flex justify-content-between align-items-center">
+                <div class="flex-grow-1">
+                  <div class="d-flex justify-content-between">
+                    <span class="fw-semibold">{{ actividad.nombre }}</span>
+                    <small class="text-muted">{{ actividad.avanzado }}/{{ actividad.unidades_totales }} unidades</small>
+                  </div>
+
+                  <div class="progress" style="height: 20px;">
+                    <div class="progress-bar 
+                            {% if actividad.porcentaje < 30 %} bg-danger
+                            {% elif actividad.porcentaje < 70 %} bg-warning
+                            {% else %} bg-success {% endif %}" role="progressbar"
+                      style="width: {{ actividad.porcentaje }}%;" aria-valuenow="{{ actividad.porcentaje }}"
+                      aria-valuemin="0" aria-valuemax="100">
+                      {{ actividad.porcentaje }}%
+                    </div>
+                  </div>
+                  <div class="mt-2">
+                    <span class=""><b>Descripción:</b> <br> {{actividad.descripcion}}</span>
+                  </div>
+
+                  <!-- BOTONES DE ACCION -->
+                  <div class="ms-3 d-flex justify-content-end mt-2">
+                    {% if item.estado_visual != "FINALIZADO" %}
+                    <a href="#" class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal"
+                      data-bs-target="#editarActividadModal-{{ item.proyecto.id_proyecto }}-{{ actividad.id }}">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <form method="POST"
+                      action="{{ url_for('actividades.eliminar_actividad', id_actividad=actividad.id) }}"
+                      onsubmit="return confirm('¿Seguro que quieres eliminar esta actividad?');">
+                      <button type="submit" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+                    {% endif %}
+                  </div>
+
+
+                </div>
+
+
+              </div>
+
+              <!-- Modal de edición de ACTIVIDADES -->
+              <div class="modal fade" id="editarActividadModal-{{ item.proyecto.id_proyecto }}-{{ actividad.id }}"
+                tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content border-0 shadow">
+                    <div class="modal-header bg-dark text-white">
+                      <h5 class="modal-title"><i class="bi bi-pencil-square"></i> Editar Actividad</h5>
+                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="POST"
+                      action="{{ url_for('actividades.editar_actividad', id_actividad=actividad.id) }}">
+                      <div class="modal-body">
+                        <div class="mb-3">
+                          <label class="form-label">Nombre</label>
+                          <input type="text" class="form-control" name="nombre" value="{{ actividad.nombre }}" required>
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">Descripción</label>
+                          <textarea class="form-control" name="descripcion">{{ actividad.descripcion }}</textarea>
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">Unidades Totales</label>
+                          <input type="number" class="form-control" name="unidades_totales" min="1"
+                            value="{{ actividad.unidades_totales }}" required>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="submit" class="btn btn-success"><i class="bi bi-check2"></i> Guardar</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+              {% else %}
+              <p class="text-muted">No hay actividades registradas.</p>
+              {% endif %}
+            </div>
+
+
+
+            <!-- 🔹 Personal -->
+            <div class="row g-3">
+              <div class="col-md-4">
+                <div class="card mini-card shadow-sm p-3">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">👷 Personal Asignado</h6>
+                    <div class="d-flex gap-2">
+                      <small class="text-muted">{{ item.trabajadores|length }} personas</small>
+                      <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                        data-bs-target="#editarPersonalModal{{item.proyecto.id_proyecto}}">
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <ul class="list-group list-group-flush">
+                    {% if item.trabajadores %}
+                    {% for t in item.trabajadores %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      <div>
+                        <div class="fw-semibold">{{ t.nombre }}</div>
+                        <small class="text-muted">{{ t.rol or 'Sin rol' }}</small>
+                      </div>
+                      <span class="badge bg-success">{{ t.asistencias or 0 }}</span>
+                    </li>
+                    {% endfor %}
+                    {% else %}
+                    <li class="list-group-item text-muted">Sin personal asignado</li>
+                    {% endif %}
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Modal de edición de personal -->
+              <div class="modal fade" id="editarPersonalModal{{ item.proyecto.id_proyecto }}" tabindex="-1"
+                aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Editar Personal - {{ item.proyecto.nombre }}</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="POST"
+                      action="{{ url_for('proyectos.actualizar_personal_proyecto', id_proyecto=item.proyecto.id_proyecto) }}">
+                      <div class="modal-body">
+                        <div class="row g-2">
+                          {% for p in personal %}
+                          <div class="col-md-6">
+                            <div class="input-group align-items-center">
+                              <div class="input-group-text">
+                                <input type="checkbox" class="personal-checkbox" data-id="{{ p.id }}" name="personal_id"
+                                  value="{{ p.id }}" {% if p.id in item.personal_asignado_ids or
+                                  p.id==item.proyecto.responsable_id %}checked{% endif %} {% if
+                                  p.id==item.proyecto.responsable_id %}disabled{% endif %}>
+                              </div>
+                              <div class="form-control d-flex justify-content-between align-items-center">
+                                <div>
+                                  <strong>{{ p.nombre }}</strong>
+                                  <div class="small text-muted">{{ p.rol or 'Sin rol' }}</div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          {% endfor %}
+                        </div>
+                        <small class="text-muted mt-2">Marca los trabajadores que necesitas. El responsable no se puede
+                          quitar.</small>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success">Guardar Personal</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+
+
+
+              <!-- 🔹 Materiales -->
+              <!-- 🔹 Materiales -->
+              <div class="col-md-4">
+                <div class="card mini-card shadow-sm p-3">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">📦 Materiales Asignados</h6>
+                    <div class="d-flex gap-2">
+                      <small class="text-muted">{{ item.materiales|length }}</small>
+                      <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                        data-bs-target="#editarMaterialesModal{{ item.proyecto.id_proyecto }}">
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <ul class="list-group list-group-flush">
+                    {% if item.materiales %}
+                    {% for m in item.materiales %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      <div>
+                        <div class="fw-semibold">{{ m.nombre }}</div>
+                        <small class="text-muted">{{ m.cantidad }} unidades</small>
+                      </div>
+                    </li>
+                    {% endfor %}
+                    {% else %}
+                    <li class="list-group-item text-muted">No hay materiales asignados</li>
+                    {% endif %}
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Modal de edición de materiales -->
+              <div class="modal fade" id="editarMaterialesModal{{ item.proyecto.id_proyecto }}" tabindex="-1"
+                aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Editar Materiales - {{ item.proyecto.nombre }}</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="POST"
+                      action="{{ url_for('proyectos.actualizar_materiales_proyecto', id_proyecto=item.proyecto.id_proyecto) }}">
+                      <div class="modal-body">
+                        <div class="row g-2">
+                          {% for m in materiales %}
+                          <div class="col-md-6">
+                            <div class="input-group align-items-center">
+                              <div class="input-group-text">
+                                <input type="checkbox" class="material-checkbox" data-id="{{ m.id_material }}"
+                                  name="material_id" value="{{ m.id_material }}" {% if m.id_material in
+                                  item.materiales|map(attribute='id' )|list %}checked{% endif %}>
+                              </div>
+                              <div class="form-control d-flex justify-content-between align-items-center">
+                                <div>
+                                  <strong>{{ m.nombre }}</strong>
+                                  <div class="small text-muted">{{ m.unidad }} (Stock: {{ m.cantidad }})</div>
+                                </div>
+                                <input type="number" class="form-control ms-3 cantidad-input"
+                                  name="cantidad_{{ m.id_material }}" data-id="{{ m.id_material }}" min="1"
+                                  placeholder="Cant."
+                                  value="{% if m.id_material in item.materiales_asignados %}{{ item.materiales_asignados[m.id_material] }}{% endif %}"
+                                  {% if m.id_material not in item.materiales|map(attribute='id' )|list %}disabled{%
+                                  endif %} style="max-width:110px;">
+                              </div>
+                            </div>
+                          </div>
+                          {% endfor %}
+                        </div>
+                        <small class="text-muted mt-2">Marca los materiales que necesitas y especifica la
+                          cantidad.</small>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success">Guardar Materiales</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 🚗 Vehículos -->
+              <div class="col-md-4">
+                <div class="card mini-card shadow-sm p-3">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">🚗 Vehículos Asignados</h6>
+                    <div class="d-flex gap-2">
+                      <small class="text-muted">{{ item.vehiculos|length }}</small>
+                      <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                        data-bs-target="#editarVehiculosModal{{ item.proyecto.id_proyecto }}">
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <ul class="list-group list-group-flush">
+                    {% if item.vehiculos %}
+                    {% for v in item.vehiculos %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      <div>
+                        <div class="fw-semibold">{{ v.placa }}</div>
+                        <small class="text-muted">{{ v.marca }}</small>
+                      </div>
+                    </li>
+                    {% endfor %}
+                    {% else %}
+                    <li class="list-group-item text-muted">No hay vehículos asignados</li>
+                    {% endif %}
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Modal de edición de vehículos -->
+              <div class="modal fade" id="editarVehiculosModal{{ item.proyecto.id_proyecto }}" tabindex="-1"
+                aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Editar Vehículos - {{ item.proyecto.nombre }}</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="POST"
+                      action="{{ url_for('proyectos.actualizar_vehiculos_proyecto', id_proyecto=item.proyecto.id_proyecto) }}">
+                      <div class="modal-body">
+                        <div class="row g-2">
+                          {% for v in vehiculos %}
+                          <div class="col-md-6">
+                            <div class="input-group align-items-center">
+                              <div class="input-group-text">
+                                <input type="checkbox" class="vehiculo-checkbox" data-id="{{ v.id_vehiculo }}"
+                                  name="vehiculo_id" value="{{ v.id_vehiculo }}" {% if v.id_vehiculo in
+                                  item.vehiculos|map(attribute='id' )|list %}checked{% endif %}>
+                              </div>
+                              <div class="form-control d-flex justify-content-between align-items-center">
+                                <div>
+                                  <strong>{{ v.placa }}</strong>
+                                  <div class="small text-muted">{{ v.marca or 'Sin marca' }}</div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          {% endfor %}
+                        </div>
+                        <small class="text-muted mt-2">Marca los vehículos que necesitas. Los no marcados se
+                          quitarán.</small>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success">Guardar Vehículos</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+
+
+
+              <!-- 🔹 Acciones -->
+              <div class="d-flex justify-content-end mt-3 gap-2">
+                <a href="{{ url_for('avances.ver_informe_avance', id_proyecto=item.proyecto.id_proyecto) }}"
+                  class="btn btn-info">
+                  <i class="bi bi-clipboard-data"></i> Ver informe
+                </a>
+                <a href="{{ url_for('proyectos.editar_proyecto', id_proyecto=item.proyecto.id_proyecto) }}"
+                  class="btn btn-sm btn-outline-primary">
+                  <i class="bi bi-pencil"></i> Editar
+                </a>
+                <form method="POST"
+                  action="{{ url_for('proyectos.delete_proyecto', id_proyecto=item.proyecto.id_proyecto) }}"
+                  onsubmit="return confirm('¿Seguro que quieres eliminar el proyecto {{ item.proyecto.nombre }}?');">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash"></i> Eliminar
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🔹 Modal Nueva Actividad -->
+      <div class="modal fade" id="actividadModal{{ item.proyecto.id_proyecto }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-dark text-white">
+              <h5 class="modal-title"><i class="bi bi-clipboard2-plus"></i> Nueva Actividad</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST"
+              action="{{ url_for('proyectos.agregar_actividad', id_proyecto=item.proyecto.id_proyecto) }}">
+              <div class="modal-body">
+                <div class="mb-3">
+                  <label class="form-label">Nombre</label>
+                  <input type="text" class="form-control" name="nombre" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Descripción</label>
+                  <textarea class="form-control" name="descripcion"></textarea>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Unidades Totales</label>
+                  <input type="number" class="form-control" name="unidades_totales" min="1" required>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="submit" class="btn btn-success"><i class="bi bi-check2"></i> Guardar</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <p class="text-muted">No hay proyectos registrados.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 🔹 Modal Nuevo Proyecto -->
+  <div class="modal fade" id="nuevoProyectoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Crear Nuevo Proyecto</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+
+        <!-- IMPORTANTE: los names de materiales deben coincidir con lo que espera el controller -->
+        <form method="POST" action="{{ url_for('proyectos.manage_proyectos') }}">
+          <div class="modal-body">
+            <div class="row g-3">
+
+              <div class="col-md-6">
+                <label class="form-label">Nombre</label>
+                <input type="text" class="form-control" name="nombre" required>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Lugar</label>
+                <input type="text" class="form-control" name="lugar" required>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Responsable</label>
+                <select class="form-select" name="responsable_id" id="responsableSelect" required>
+                  <option value="" disabled selected>Seleccione...</option>
+                  {% for p in personal %}
+                  <option value="{{ p.id }}">{{ p.nombre }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Personal adicional</label>
+                <select multiple class="form-select" name="personal_id" id="personalAdicionalSelect">
+                  {% for p in personal %}
+                  <option value="{{ p.id }}">{{ p.nombre }}</option>
+                  {% endfor %}
+                </select>
+                <small class="text-muted">Mantén CTRL o CMD para seleccionar varios.</small>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Vehículos disponibles</label>
+                <!-- el controller usa request.form.getlist('vehiculo_id') así que dejar name="vehiculo_id" (multiple) -->
+                <select multiple class="form-select" name="vehiculo_id">
+                  {% for v in vehiculos %}
+                  <option value="{{ v.id_vehiculo }}">{{ v.placa }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Estado</label>
+                <select class="form-select" name="estado" required>
+                  <option value="Iniciado" selected>Iniciado</option>
+                  <option value="Pendiente">Pendiente</option>
+                  <option value="Finalizado">Finalizado</option>
+                </select>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Fecha de Inicio</label>
+                <input type="date" class="form-control" name="fecha_inicio" required>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Fecha de Fin</label>
+                <input type="date" class="form-control" name="fecha_fin" required>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label">Descripción</label>
+                <textarea class="form-control" name="descripcion" rows="3"></textarea>
+              </div>
+
+              <!-- 📦 Materiales: checkbox name material_id[] y cantidad_{id} -->
+              <div class="col-12">
+                <label class="form-label">📦 Materiales a asignar</label>
+                <div class="row g-2">
+                  {% for m in materiales %}
+                  <div class="col-md-6">
+                    <div class="input-group align-items-center">
+                      <div class="input-group-text">
+                        <!-- nombre correcto: material_id[] -->
+                        <input type="checkbox" class="material-checkbox" data-id="{{ m.id_material }}"
+                          name="material_id[]" value="{{ m.id_material }}">
+                      </div>
+                      <div class="form-control d-flex justify-content-between align-items-center">
+                        <div>
+                          <strong>{{ m.nombre }}</strong>
+                          <div class="small text-muted">{{ m.unidad }}</div>
+                        </div>
+                        <!-- cantidad debe llamarse cantidad_{id_material} para que el controller la lea -->
+                        <input type="number" class="form-control ms-3 cantidad-input"
+                          name="cantidad_{{ m.id_material }}" data-id="{{ m.id_material }}" min="1" placeholder="Cant."
+                          disabled style="max-width:110px;">
+                      </div>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+                <small class="text-muted">Marca el material y escribe la cantidad. Si no marcas el checkbox, la cantidad
+                  se ignora.</small>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i> Guardar</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- small JS para habilitar/ deshabilitar cantidades -->
+  <script>
+document.addEventListener('DOMContentLoaded', function () {
+  const responsableSelect = document.getElementById('responsableSelect');
+  const personalAdicionalSelect = document.getElementById('personalAdicionalSelect');
+
+  // Guardar todas las opciones originales del personal adicional
+  const opcionesOriginales = Array.from(personalAdicionalSelect.options);
+
+  // Escuchar cambios en el responsable
+  responsableSelect.addEventListener('change', function () {
+    const responsableId = this.value;
+
+    // Restaurar todas las opciones primero
+    personalAdicionalSelect.innerHTML = '';
+    opcionesOriginales.forEach(opt => {
+      const newOpt = document.createElement('option');
+      newOpt.value = opt.value;
+      newOpt.textContent = opt.textContent;
+      personalAdicionalSelect.appendChild(newOpt);
+    });
+
+    // Si se ha seleccionado un responsable, deshabilitar su opción en personal adicional
+    if (responsableId) {
+      const optionToDisable = personalAdicionalSelect.querySelector(`option[value="${responsableId}"]`);
+      if (optionToDisable) {
+        optionToDisable.disabled = true;
+      }
+    }
+  });
+
+  // === FUNCION PARA INICIALIZAR CHECKBOXES ===
+  function initCheckboxes(container) {
+    // Materiales
+    container.querySelectorAll('.material-checkbox').forEach(cb => {
+      cb.addEventListener('change', function() {
+        const id = this.getAttribute('data-id');
+        const qty = container.querySelector(`.cantidad-input[data-id="${id}"]`);
+        if (!qty) return;
+        if (this.checked) {
+          qty.removeAttribute('disabled');
+          qty.focus();
+        } else {
+          qty.value = '';
+          qty.setAttribute('disabled', 'disabled');
+        }
+      });
+      
+      // Forzar estado inicial
+      const id = cb.getAttribute('data-id');
+      const qty = container.querySelector(`.cantidad-input[data-id="${id}"]`);
+      if (cb.checked && qty) {
+        qty.removeAttribute('disabled');
+      } else if (!cb.checked && qty) {
+        qty.setAttribute('disabled', 'disabled');
+      }
+    });
+  }
+
+  // Inicializar en toda la página (para el formulario de creación)
+  initCheckboxes(document.body);
+
+  // Inicializar en modales (para edición)
+  document.addEventListener('shown.bs.modal', function(e) {
+    initCheckboxes(e.target);
+  });
+});
+</script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,178 @@
+<!-- DEBUG TEMPLATE: trabajador/dashboard_trabajador.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Trabajador</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+    .card {
+      border-radius: 15px;
+    }
+    .progress {
+      height: 10px;
+      border-radius: 10px;
+    }
+    .progress-bar {
+      background-color: #28a745;
+    }
+    .btn-dark-custom {
+      background-color: #111;
+      color: #fff;
+      border-radius: 10px;
+      transition: background-color 0.3s ease-in-out;
+    }
+    .btn-dark-custom:hover {
+      background-color: #333;
+    }
+    video {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    canvas {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+{% block content %}
+<div class="container mt-4">
+
+  <!-- Encabezado -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3>👷‍♂️ Hola, {{ session["nombre"] if session["nombre"] else "Trabajador" }}</h3>
+      <p class="text-muted mb-0">Panel de registro de avances</p>
+    </div>
+    <div>
+      <a href="{{ url_for('usuarios.logout') }}" class="btn btn-danger">Salir →</a>
+    </div>
+  </div>
+
+  <!-- Proyectos -->
+  {% if proyectos %}
+    {% for proyecto in proyectos %}
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="card-title text-primary mb-1">{{ proyecto.nombre }}</h5>
+          <p class="text-muted">{{ proyecto.descripcion or "Sin descripción" }}</p>
+
+          <!-- ACTIVIDADES -->
+          {% if proyecto.actividades %}
+            <div class="list-group mb-3">
+              {% for actividad in proyecto.actividades %}
+                <div class="list-group-item">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <strong>{{ actividad.nombre }}</strong><br>
+                      <small class="text-muted">{{ actividad.descripcion or "Sin descripción" }}</small>
+                    </div>
+                    {% set progreso = actividad.obtener_porcentaje() if actividad.obtener_porcentaje else 0 %}
+                    <span class="badge bg-success">{{ progreso }}%</span>
+                  </div>
+
+                  <!-- Barra de progreso -->
+                  <div class="progress mt-2">
+                    <div class="progress-bar" role="progressbar" style="width: {{ progreso }}%;"></div>
+                  </div>
+
+                  <!-- Formulario de avance -->
+                  <form method="POST"
+                        action="{{ url_for('avances.registrar_avance', id_actividad=actividad.id_actividad) }}"
+                        class="mt-3"
+                        enctype="multipart/form-data">
+
+                    <div class="row g-2 align-items-end">
+                      <div class="col-md-3">
+                        <label class="form-label">Unidades avanzadas</label>
+                        <input type="number" name="unidades_avanzadas" class="form-control" min="1" required>
+                      </div>
+                      <div class="col-md-3">
+                        <label class="form-label">Fecha</label>
+                        <input type="date" name="fecha" class="form-control" required value="{{ now }}">
+                      </div>
+                      <div class="col-md-4">
+                        <label class="form-label">Comentario</label>
+                        <input type="text" name="mensaje" class="form-control" placeholder="Ej: tramo A terminado">
+                      </div>
+                    </div>
+
+                    <div class="row g-2 mt-3">
+                      <!-- Subir evidencias -->
+                      <div class="col-md-6">
+                        <label class="form-label">📂 Subir evidencias</label>
+                        <input type="file" name="evidencias" class="form-control" accept="image/*" multiple>
+                      </div>
+
+                      <!-- Cámara -->
+                      <div class="col-md-6">
+                        <label class="form-label">📸 Tomar foto en vivo</label>
+                        <div class="d-flex flex-column">
+                          <video id="video-{{ actividad.id_actividad }}" width="220" height="160" autoplay></video>
+                          <button type="button" class="btn btn-secondary mt-2 btn-sm"
+                                  onclick="tomarFoto('{{ actividad.id_actividad }}')">
+                            <i class="bi bi-camera"></i> Capturar
+                          </button>
+                          <canvas id="canvas-{{ actividad.id_actividad }}" width="220" height="160"></canvas>
+                          <input type="hidden" name="captura_base64" id="captura_base64-{{ actividad.id_actividad }}">
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="row mt-3">
+                      <div class="col-md-12 text-end">
+                        <button type="submit" class="btn btn-success w-100">
+                          <i class="bi bi-send"></i> Enviar Avance
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-muted fst-italic">No hay actividades asignadas en este proyecto.</p>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="alert alert-info">No tienes proyectos asignados actualmente.</div>
+  {% endif %}
+</div>
+
+<script>
+  // Iniciar cámara en cada actividad
+  document.addEventListener('DOMContentLoaded', () => {
+    const videos = document.querySelectorAll('video[id^="video-"]');
+    videos.forEach(video => {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => video.srcObject = stream)
+        .catch(err => console.error("Error cámara:", err));
+    });
+  });
+
+  function tomarFoto(idActividad) {
+    const video = document.getElementById('video-' + idActividad);
+    const canvas = document.getElementById('canvas-' + idActividad);
+    const input = document.getElementById('captura_base64-' + idActividad);
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    input.value = canvas.toDataURL('image/jpeg');
+    alert('📷 Foto capturada correctamente.');
+  }
+</script>
+
+{% endblock %}
+</body>
+</html>
