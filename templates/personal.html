@@ -61,197 +61,295 @@
 
   <div class="container my-4">
 
-  <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-outline-secondary">← Volver al Dashboard</a>
-    <h3 class="fw-bold">👷 Gestión de Personal</h3>
-    <button class="btn btn-dark-custom" data-bs-toggle="modal" data-bs-target="#crearPersonalModal">
-      + Nuevo Miembro
-    </button>
-  </div>
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-outline-secondary">← Volver al Dashboard</a>
+      <h3 class="fw-bold">👷 Gestión de Personal</h3>
+      <button class="btn btn-dark-custom" data-bs-toggle="modal" data-bs-target="#crearPersonalModal">
+        + Nuevo Miembro
+      </button>
+    </div>
 
-  <p class="text-muted">Administra tu personal, roles y estados.</p>
+    <p class="text-muted">Administra tu personal, roles y estados.</p>
 
-  <!-- Cards / Acordeones -->
-  {% if personal %}
-  <div class="row g-4">
-    {% for p in personal %}
-    <div class="col-md-6">
-      <div class="accordion" id="accordion-{{ p.id }}">
-        <div class="accordion-item shadow-sm rounded-3">
+    <!-- Cards / Acordeones -->
+    {% if personal %}
+    <div class="row g-4">
+      {% for p in personal %}
+      <div class="col-md-6">
+        <div class="accordion" id="accordion-{{ p.id }}">
+          <div class="accordion-item shadow-sm rounded-3">
 
-          <!-- Encabezado del acordeón -->
-          <h2 class="accordion-header" id="heading-{{ p.id }}">
-            <button class="accordion-button collapsed d-flex justify-content-between align-items-center"
-              type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ p.id }}" aria-expanded="false"
-              aria-controls="collapse-{{ p.id }}">
-              <div>
-                <h5 class="mb-0 fw-bold">{{ p.nombre }}</h5>
-                <small class="text-muted">{{ p.rol }}</small>
-              </div>
-              <div class="text-end">
-                <span
-                  class="badge {% if p.activo %}bg-success{% else %}bg-danger{% endif %}">{{ "activo" if p.activo else "inactivo" }}</span><br>
-                <small class="fw-semibold text-dark">${{ "%.0f"|format(p.costo_diario * 30) }}</small>
-              </div>
-            </button>
-          </h2>
-
-          <!-- Contenido del acordeón -->
-          <div id="collapse-{{ p.id }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ p.id }}"
-            data-bs-parent="#accordion-{{ p.id }}">
-            <div class="accordion-body">
-
-              <!-- Proyectos -->
-              <p class="fw-semibold mb-2">Proyectos Asignados</p>
-              <div class="mb-3">
-                {% if p.proyectos %}
-                {% for pr in p.proyectos %}
-                <div class="d-flex align-items-center mb-1">
-                  <span class="badge-proyecto me-2">{{ pr.proyecto.lugar }}</span>
-                  <a href="https://www.google.com/maps/search/?api=1&query={{ pr.proyecto.lugar | urlencode }}"
-                    target="_blank" class="text-danger" title="Ver ubicación en Google Maps">
-                    <i class="bi bi-geo-alt-fill"></i>
-                  </a>
+            <!-- Encabezado del acordeón -->
+            <h2 class="accordion-header" id="heading-{{ p.id }}">
+              <button class="accordion-button collapsed d-flex justify-content-between align-items-center" type="button"
+                data-bs-toggle="collapse" data-bs-target="#collapse-{{ p.id }}" aria-expanded="false"
+                aria-controls="collapse-{{ p.id }}">
+                <div>
+                  <h5 class="mb-0 fw-bold">{{ p.nombre }}</h5>
+                  <small class="text-muted">{{ p.rol }}</small>
                 </div>
-                {% endfor %}
-                {% else %}
-                <span class="text-muted">Sin proyectos</span>
+                <div class="text-end">
+                  <span class="badge {% if p.activo %}bg-success{% else %}bg-danger{% endif %}">{{ "activo" if p.activo
+                    else "inactivo" }}</span><br>
+                  <small class="fw-semibold text-dark">${{ "%.0f"|format(p.costo_diario * 30) }}</small>
+                </div>
+              </button>
+            </h2>
+
+            <!-- Contenido del acordeón -->
+            <div id="collapse-{{ p.id }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ p.id }}"
+              data-bs-parent="#accordion-{{ p.id }}">
+              <div class="accordion-body">
+
+                <!-- Proyectos -->
+                <p class="fw-semibold mb-2">Proyectos Asignados</p>
+                <div class="mb-3">
+                  {% if p.proyectos %}
+                  {% for pr in p.proyectos %}
+                  <div class="d-flex align-items-center mb-1">
+                    <span class="badge-proyecto me-2">{{ pr.proyecto.lugar }}</span>
+                    <a href="https://www.google.com/maps/search/?api=1&query={{ pr.proyecto.lugar | urlencode }}"
+                      target="_blank" class="text-danger" title="Ver ubicación en Google Maps">
+                      <i class="bi bi-geo-alt-fill"></i>
+                    </a>
+                  </div>
+                  {% endfor %}
+                  {% else %}
+                  <span class="text-muted">Sin proyectos</span>
+                  {% endif %}
+                </div>
+
+                <!-- Contacto -->
+                <p class="fw-semibold mb-2">Contacto</p>
+                <div class="contact-info mb-3">
+                  <p><i class="bi bi-telephone-fill text-danger"></i> {{ p.contacto or "N/A" }}</p>
+                  <p><i class="bi bi-envelope-fill text-primary"></i> {{ p.usuario_data.email if p.usuario_data else
+                    "N/A" }}
+                  </p>
+                  <p><i class="bi bi-calendar-event text-secondary"></i> Ingreso: {{ p.asistencias or "N/D" }}</p>
+                </div>
+
+                <!-- Asistencias -->
+                <p class="fw-semibold mb-2">Asistencia (Semana actual)</p>
+                <div class="d-flex justify-content-between mb-3 flex-wrap">
+                  {% for dia, info in asistencias[p.id].items() %}
+                  <div class="asistencia-cell 
+                      {% if info.estado == 'presente' %}asistencia-presente
+                      {% elif info.estado == 'ausente' %}asistencia-ausente
+                      {% else %}asistencia-sin{% endif %}">
+                    <strong>{{ dia[0:2] }}</strong><br>
+                    {{ info.horas }}h
+                  </div>
+                  {% endfor %}
+                </div>
+
+                <!-- Acciones -->
+                <div class="d-flex justify-content-between">
+                  <a href="{{ url_for('personal.detalles_personal', id=p.id) }}" class="btn btn-sm btn-outline-dark">📊
+                    Ver Detalles</a>
+                  <div>
+
+                    <!-- Botón de editar con modal -->
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
+                      data-bs-target="#editarPersonalModal{{ p.id }}">
+                      <i class="bi bi-pencil"></i> Editar
+                    </button>
+
+                    <a href="{{ url_for('personal.registrar_asistencia', id=p.id) }}"
+                      class="btn btn-sm btn-outline-info">📅 Horarios</a>
+
+                    {% if p.activo %}
+                    <a href="{{ url_for('personal.desactivar_personal', id=p.id) }}"
+                      class="btn btn-sm btn-outline-warning">⏸ Desactivar</a>
+                    {% else %}
+                    <a href="{{ url_for('personal.activar_personal', id=p.id) }}"
+                      class="btn btn-sm btn-outline-success">▶ Activar</a>
+                    {% endif %}
+
+                    <form action="{{ url_for('personal.delete_personal', id=p.id) }}" method="POST"
+                      style="display:inline-block"
+                      onsubmit="return confirm('¿Seguro que quieres eliminar a {{ p.nombre }}? Esta acción no se puede deshacer.');">
+                      <button type="submit" class="btn btn-sm btn-outline-danger">🗑 Eliminar</button>
+                    </form>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-muted">No hay personal registrado.</p>
+    {% endif %}
+
+
+    <!-- Modal Crear Personal -->
+    <div class="modal fade" id="crearPersonalModal" tabindex="-1" aria-labelledby="crearPersonalLabel"
+      aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content p-3 rounded-4 shadow">
+          <div class="modal-header border-0">
+            <h5 class="modal-title fw-bold" id="crearPersonalLabel">Agregar Nuevo Personal</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">
+            <form action="{{ url_for('personal.manage_personal') }}" method="POST">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Nombre</label>
+                  <input type="text" class="form-control" name="nombre" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Rol</label>
+                  <select class="form-select" name="rol" required>
+                    <option value="Ingeniero">Ingeniero</option>
+                    <option value="Trabajador">Trabajador</option>
+                    <option value="Supervisor">Supervisor</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Costo Diario</label>
+                  <input type="number" class="form-control" name="costo_diario" step="0.01" required>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Contacto</label>
+                  <input type="number" class="form-control" name="contacto">
+                </div>
+
+                <div class="col-12 form-check mt-2">
+                  <input type="checkbox" class="form-check-input" name="activo" id="activo" checked>
+                  <label class="form-check-label" for="activo">Activo</label>
+                </div>
+
+              </div>
+
+              <div class="col-12 form-check mt-2">
+                <input type="checkbox" class="form-check-input" name="crear_usuario" id="crear_usuario">
+                <label class="form-check-label fw-bold" for="crear_usuario">¿Dar acceso al sistema?</label>
+              </div>
+
+
+              <!-- Campos de usuario (solo si se marca el checkbox) -->
+              <div id="usuario_fields" class="row g-3 mt-2" style="display:none;">
+                <div class="col-md-6">
+                  <label class="form-label">Correo electrónico</label>
+                  <input type="email" class="form-control" name="email" placeholder="ejemplo@correo.com">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Rol del Usuario</label>
+                  <select class="form-select" name="rol_usuario">
+                    <option value="EMPLEADO">Empleado</option>
+                    <option value="ENCARGADO">Encargado</option>
+                    <option value="ADMIN">Administrador</option>
+                  </select>
+                </div>
+              </div>
+
+
+
+              <div class="mt-4 d-flex justify-content-end">
+                <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-dark-custom">Guardar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Editar Personal -->
+    {% for p in personal %}
+    <div class="modal fade" id="editarPersonalModal{{ p.id }}" tabindex="-1"
+      aria-labelledby="editarPersonalLabel{{ p.id }}" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content p-3 rounded-4 shadow">
+          <div class="modal-header border-0">
+            <h5 class="modal-title fw-bold" id="editarPersonalLabel{{ p.id }}">Editar Personal: {{ p.nombre }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">
+            <form action="{{ url_for('personal.editar_personal', id=p.id) }}" method="POST">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Nombre</label>
+                  <input type="text" class="form-control" name="nombre" value="{{ p.nombre }}" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Rol</label>
+                  <select class="form-select" name="rol" required>
+                    <option value="Ingeniero" {% if p.rol=='Ingeniero' %}selected{% endif %}>Ingeniero</option>
+                    <option value="Trabajador" {% if p.rol=='Trabajador' %}selected{% endif %}>Trabajador</option>
+                    <option value="Supervisor" {% if p.rol=='Supervisor' %}selected{% endif %}>Supervisor</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Costo Diario</label>
+                  <input type="number" class="form-control" name="costo_diario" step="0.01" value="{{ p.costo_diario }}"
+                    min="0" required>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Contacto</label>
+                  <input type="number" class="form-control" name="contacto" value="{{ p.contacto or '' }}">
+                </div>
+
+                <div class="col-12 form-check mt-2">
+                  <input type="checkbox" class="form-check-input" name="activo" id="activo_edit_{{ p.id }}" {% if
+                    p.activo %}checked{% endif %}>
+                  <label class="form-check-label" for="activo_edit_{{ p.id }}">Activo</label>
+                </div>
+
+                <!-- Si tiene usuario, mostrar campos de email -->
+                {% if p.usuario_data %}
+                <!-- Cuenta de Usuario (siempre visible para edición) -->
+                <div class="col-12 mt-3">
+                  <h6 class="fw-bold">Cuenta de Usuario</h6>
+                  <div class="form-check mb-3">
+                    <input type="checkbox" class="form-check-input" name="crear_usuario" id="crear_usuario_edit_{{ p.id }}" 
+                      {% if p.usuario_data %}checked{% endif %} 
+                      onchange="toggleUsuarioFieldsEdit('{{ p.id }}')">
+                    <label class="form-check-label" for="crear_usuario_edit_{{ p.id }}">
+                      {% if p.usuario_data %}Tiene acceso al sistema{% else %}Dar acceso al sistema{% endif %}
+                    </label>
+                  </div>
+                  
+                  <div id="usuario_fields_edit_{{ p.id }}" class="row g-3" style="display:{% if p.usuario_data %}flex{% else %}none{% endif %};">
+                    <div class="col-md-6">
+                      <label class="form-label">Correo electrónico</label>
+                      <input type="email" class="form-control" name="email" 
+                            value="{{ p.usuario_data.email if p.usuario_data else '' }}" 
+                            placeholder="ejemplo@correo.com" required>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Rol del Usuario</label>
+                      <select class="form-select" name="rol_usuario" required>
+                        <option value="EMPLEADO" {% if p.usuario_data and p.usuario_data.rol == 'EMPLEADO' %}selected{% endif %}>Empleado</option>
+                        <option value="ENCARGADO" {% if p.usuario_data and p.usuario_data.rol == 'ENCARGADO' %}selected{% endif %}>Encargado</option>
+                        <option value="ADMIN" {% if p.usuario_data and p.usuario_data.rol == 'ADMIN' %}selected{% endif %}>Administrador</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
                 {% endif %}
               </div>
 
-              <!-- Contacto -->
-              <p class="fw-semibold mb-2">Contacto</p>
-              <div class="contact-info mb-3">
-                <p><i class="bi bi-telephone-fill text-danger"></i> {{ p.contacto or "N/A" }}</p>
-                <p><i class="bi bi-envelope-fill text-primary"></i> {{ p.usuario_data.email if p.usuario_data else "N/A" }}
-                </p>
-                <p><i class="bi bi-calendar-event text-secondary"></i> Ingreso: {{ p.asistencias or "N/D" }}</p>
+              <div class="mt-4 d-flex justify-content-end">
+                <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-dark-custom">Guardar Cambios</button>
               </div>
-
-              <!-- Asistencias -->
-              <p class="fw-semibold mb-2">Asistencia (Semana actual)</p>
-              <div class="d-flex justify-content-between mb-3 flex-wrap">
-                {% for dia, info in asistencias[p.id].items() %}
-                <div class="asistencia-cell 
-                    {% if info.estado == 'presente' %}asistencia-presente
-                    {% elif info.estado == 'ausente' %}asistencia-ausente
-                    {% else %}asistencia-sin{% endif %}">
-                  <strong>{{ dia[0:2] }}</strong><br>
-                  {{ info.horas }}h
-                </div>
-                {% endfor %}
-              </div>
-
-              <!-- Acciones -->
-              <div class="d-flex justify-content-between">
-                <a href="{{ url_for('personal.detalles_personal', id=p.id) }}"
-                  class="btn btn-sm btn-outline-dark">📊 Ver Detalles</a>
-                <div>
-                  <a href="#" class="btn btn-sm btn-outline-secondary">✏️ Editar</a>
-                  <a href="{{ url_for('personal.registrar_asistencia', id=p.id) }}"
-                    class="btn btn-sm btn-outline-info">📅 Horarios</a>
-
-                  {% if p.activo %}
-                  <a href="{{ url_for('personal.desactivar_personal', id=p.id) }}"
-                    class="btn btn-sm btn-outline-warning">⏸ Desactivar</a>
-                  {% else %}
-                  <a href="{{ url_for('personal.activar_personal', id=p.id) }}"
-                    class="btn btn-sm btn-outline-success">▶ Activar</a>
-                  {% endif %}
-
-                  <form action="{{ url_for('personal.delete_personal', id=p.id) }}" method="POST"
-                    style="display:inline-block"
-                    onsubmit="return confirm('¿Seguro que quieres eliminar a {{ p.nombre }}? Esta acción no se puede deshacer.');">
-                    <button type="submit" class="btn btn-sm btn-outline-danger">🗑 Eliminar</button>
-                  </form>
-                </div>
-              </div>
-
-            </div>
+            </form>
           </div>
         </div>
       </div>
     </div>
     {% endfor %}
-  </div>
-  {% else %}
-  <p class="text-muted">No hay personal registrado.</p>
-  {% endif %}
 
 
-  <!-- Modal Crear Personal -->
-  <div class="modal fade" id="crearPersonalModal" tabindex="-1" aria-labelledby="crearPersonalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content p-3 rounded-4 shadow">
-        <div class="modal-header border-0">
-          <h5 class="modal-title fw-bold" id="crearPersonalLabel">Agregar Nuevo Personal</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-        </div>
-        <div class="modal-body">
-          <form action="{{ url_for('personal.manage_personal') }}" method="POST">
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label">Nombre</label>
-                <input type="text" class="form-control" name="nombre" required>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Rol</label>
-                <select class="form-select" name="rol" required>
-                  <option value="Ingeniero">Ingeniero</option>
-                  <option value="Trabajador">Trabajador</option>
-                  <option value="Supervisor">Supervisor</option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Costo Diario</label>
-                <input type="number" class="form-control" name="costo_diario" step="0.01" required>
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label">Contacto</label>
-                <input type="number" class="form-control" name="contacto">
-              </div>
-
-              <div class="col-12 form-check mt-2">
-                <input type="checkbox" class="form-check-input" name="activo" id="activo" checked>
-                <label class="form-check-label" for="activo">Activo</label>
-              </div>
-
-            </div>
-
-            <div class="col-12 form-check mt-2">
-              <input type="checkbox" class="form-check-input" name="crear_usuario" id="crear_usuario">
-              <label class="form-check-label fw-bold" for="crear_usuario">¿Dar acceso al sistema?</label>
-            </div>
-
-
-            <!-- Campos de usuario (solo si se marca el checkbox) -->
-            <div id="usuario_fields" class="row g-3 mt-2" style="display:none;">
-              <div class="col-md-6">
-                <label class="form-label">Correo electrónico</label>
-                <input type="email" class="form-control" name="email" placeholder="ejemplo@correo.com">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Rol del Usuario</label>
-                <select class="form-select" name="rol_usuario">
-                  <option value="EMPLEADO">Empleado</option>
-                  <option value="ENCARGADO">Encargado</option>
-                  <option value="ADMIN">Administrador</option>
-                </select>
-              </div>
-            </div>
-
-
-
-            <div class="mt-4 d-flex justify-content-end">
-              <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancelar</button>
-              <button type="submit" class="btn btn-dark-custom">Guardar</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- Bootstrap icons -->
@@ -263,6 +361,16 @@
     const usuarioFields = document.getElementById("usuario_fields");
     usuarioFields.style.display = this.checked ? "flex" : "none";
   });
+</script>
+
+<script>
+function toggleUsuarioFieldsEdit(personalId) {
+  const checkbox = document.getElementById(`crear_usuario_edit_${personalId}`);
+  const fields = document.getElementById(`usuario_fields_edit_${personalId}`);
+  if (checkbox && fields) {
+    fields.style.display = checkbox.checked ? 'flex' : 'none';
+  }
+}
 </script>
 
 </html>

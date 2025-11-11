@@ -3,7 +3,7 @@ from models import db, Actividades, Avances, Proyectos, ProyectoPersonal, Eviden
 from datetime import datetime
 import os, base64
 from werkzeug.utils import secure_filename
-
+from frases import obtener_frase
 # Carpeta donde se guardarán las imágenes
 UPLOAD_FOLDER = "static/uploads/evidencias"
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
@@ -13,41 +13,13 @@ def allowed_file(filename):
 
 avances_bp = Blueprint("avances", __name__)
 
-# ===============================================================
-# 🧱 PANEL DE TRABAJADOR: listar actividades asignadas
-# ===============================================================
-@avances_bp.route("/dashboard_trabajador")
-def dashboard_trabajador():
-    print("✅ Entrando a dashboard_trabajador del blueprint avances_bp")
-    id_usuario = session.get("user_id")
-    if not id_usuario:
-        flash("⚠️ Debes iniciar sesión para acceder a tu panel.", "warning")
-        return redirect(url_for("auth.login"))
-
-    proyectos = (
-        db.session.query(Proyectos)
-        .join(ProyectoPersonal, ProyectoPersonal.proyecto_id == Proyectos.id_proyecto)
-        .filter(ProyectoPersonal.personal_id == id_usuario)
-        .all()
-    )
-
-    actividades = []
-    for proyecto in proyectos:
-        for act in proyecto.actividades:
-            actividades.append(act)
-
-    return render_template(
-        "/dashboard_trabajador.html",
-        actividades=actividades,
-        proyectos=proyectos,
-        now=datetime.utcnow().strftime("%Y-%m-%d")
-    )
 
 # ===============================================================
 # ➕ REGISTRAR AVANCE DE UNA ACTIVIDAD (trabajador)
 # ===============================================================
 @avances_bp.route("/registrar/<int:id_actividad>", methods=["POST"])
 def registrar_avance(id_actividad):
+    flash(obtener_frase("avance"), "success")
     id_usuario = session.get("user_id")
     if not id_usuario:
         flash("⚠️ Debes iniciar sesión para enviar avances.", "warning")
@@ -76,18 +48,14 @@ def registrar_avance(id_actividad):
         for file in files:
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
-
-                # Ruta relativa (lo que se guardará en BD)
                 ruta_relativa = os.path.join("uploads", "evidencias", filename)
                 ruta_completa = os.path.join("static", ruta_relativa)
-
-                # Guardar físicamente
                 os.makedirs(os.path.dirname(ruta_completa), exist_ok=True)
                 file.save(ruta_completa)
 
                 evidencia = Evidencias(
                     id_avance=nuevo_avance.id_avance,
-                    ruta_archivo=ruta_relativa,  # 🔹 Guardamos solo la ruta relativa
+                    ruta_archivo=ruta_relativa,
                     tipo="imagen"
                 )
                 db.session.add(evidencia)
@@ -97,10 +65,8 @@ def registrar_avance(id_actividad):
         if imagen_capturada:
             img_data = base64.b64decode(imagen_capturada.split(",")[1])
             filename = f"captura_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
-
             ruta_relativa = os.path.join("uploads", "evidencias", filename)
             ruta_completa = os.path.join("static", ruta_relativa)
-
             os.makedirs(os.path.dirname(ruta_completa), exist_ok=True)
             with open(ruta_completa, "wb") as f:
                 f.write(img_data)
@@ -112,6 +78,21 @@ def registrar_avance(id_actividad):
             )
             db.session.add(evidencia)
 
+        # ✅ RECALCULAR EL PROGRESO DE LA ACTIVIDAD
+        actividad = Actividades.query.get(id_actividad)
+        total = actividad.unidades_totales or 0
+        avanzado = (
+            db.session.query(db.func.sum(Avances.unidades_avanzadas))
+            .filter_by(id_actividad=id_actividad)
+            .scalar()
+        ) or 0
+        
+        # Guardar el progreso calculado en la sesión (para usarlo en el dashboard)
+        session[f'avance_{id_actividad}'] = {
+            'avanzado': avanzado,
+            'porcentaje': int((avanzado / total) * 100) if total > 0 else 0
+        }
+
         db.session.commit()
         flash("✅ Avance y evidencias registradas correctamente.", "success")
 
@@ -120,8 +101,7 @@ def registrar_avance(id_actividad):
         print("❌ Error al registrar avance:", e)
         flash("❌ Error al registrar avance o subir evidencias.", "danger")
 
-    return redirect(url_for("avances.dashboard_trabajador"))
-
+    return redirect(url_for("dashboard.dashboard_trabajador"))
 # ===============================================================
 # 📋 INFORME DE AVANCE DE UN PROYECTO
 # ===============================================================

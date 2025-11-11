@@ -67,9 +67,15 @@
           </div>
         </div>
       </div>
+
+
       <div>
         <a href="{{ url_for('usuarios.logout') }}" class="btn btn-danger">Salir →</a>
       </div>
+    </div>
+    <br>
+    <div class="alert alert-info text-center shadow-sm border" style="border-radius: 10px;">
+      💡 {{ frase }}
     </div>
 
     <!-- Tarjetas superiores -->
@@ -119,10 +125,10 @@
             <!--FINALIZADOS-->
             <div class="col">
               <a href="{{url_for('proyectos.proyectos_finalizados')}}" class="text-decoration-none">
-              <div class="p-3 border border-success rpunded shadow-sm hover-shadow">
-                <h3 class="text-success">{{ proyectos_finalizados|length }}</h3>
-                <p class="text-muted">Finalizados</p>
-              </div>
+                <div class="p-3 border border-success rpunded shadow-sm hover-shadow">
+                  <h3 class="text-success">{{ proyectos_finalizados|length }}</h3>
+                  <p class="text-muted">Finalizados</p>
+                </div>
               </a>
             </div>
 
@@ -130,10 +136,10 @@
 
             <div class="col">
               <a href="{{url_for('proyectos.proyectos_progreso')}}" class="text-decoration-none">
-              <div class="p-3 border border-primary rounded shadow-sm hover-shadow">
-                <h3 class="text-primary">{{ proyectos_activos|length }}</h3>
-                <p class="text-muted">En Progreso</p>
-              </div>
+                <div class="p-3 border border-primary rounded shadow-sm hover-shadow">
+                  <h3 class="text-primary">{{ proyectos_activos|length }}</h3>
+                  <p class="text-muted">En Progreso</p>
+                </div>
               </a>
             </div>
 

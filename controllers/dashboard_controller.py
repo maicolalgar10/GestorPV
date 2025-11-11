@@ -3,7 +3,8 @@ from flask import Blueprint, render_template, redirect, request, url_for, flash,
 from datetime import date, timedelta
 from decimal import Decimal
 from werkzeug.utils import secure_filename
-from models import db, Usuarios, Proyectos, Personal, Vehiculos, ProyectoPersonal, Materiales, MaterialesProyecto, Asistencia  # <-- añadí Asistencia
+from models import db, Usuarios, Proyectos, Personal, Vehiculos, ProyectoPersonal, Materiales, MaterialesProyecto, Asistencia, Avances
+from frases import frase_del_dia
 
 # Creamos el blueprint
 dashboard_bp = Blueprint("dashboard", __name__)
@@ -23,6 +24,7 @@ def home():
 @dashboard_bp.route("/dashboard")
 def dashboard():
     # Verificar sesión
+    frase = frase_del_dia()
     if "user_id" not in session:
         flash("⚠️ Debes iniciar sesión primero", "warning")
         return redirect(url_for("usuarios.login"))
@@ -139,33 +141,60 @@ def dashboard():
         vehiculos_disponibles=vehiculos_disponibles,
         materiales=materiales,
         alertas=alertas,
-        proyectos_recientes=proyectos_recientes
+        proyectos_recientes=proyectos_recientes,
+        frase=frase
     )
 
 # -----------------------------
 # DASHBOARD DEL TRABAJADOR
 # -----------------------------
+# dashboard_controller.py
 @dashboard_bp.route("/dashboard/trabajador")
 def dashboard_trabajador():
+    frase = frase_del_dia()  # genera una diferente cada día
+
     if "user_id" not in session:
         flash("⚠️ Debes iniciar sesión primero", "warning")
         return redirect(url_for("usuarios.login"))
 
     usuario = Usuarios.query.get(session["user_id"])
-    print(f"🧍 Usuario logueado: {usuario.nombre} (id_usuario={usuario.id_usuario})")
-
     if not usuario.personal_data:
-        print("⚠️ Este usuario no tiene registro asociado en la tabla Personal.")
         return render_template("dashboard_trabajador.html", usuario=usuario, proyectos=[])
 
     personal_id = usuario.personal_data.id
-    print(f"✅ ID del personal vinculado: {personal_id}")
-
     relaciones = ProyectoPersonal.query.filter_by(personal_id=personal_id).all()
     proyectos_asignados = [r.proyecto for r in relaciones if r.proyecto]
+
+    # Calcular progreso PONDERADO por unidades
+    for proyecto in proyectos_asignados:
+        total_unidades_proyecto = 0
+        total_avanzado_proyecto = 0
+
+        for actividad in proyecto.actividades:
+            total = actividad.unidades_totales or 0
+            avanzado = (
+                db.session.query(db.func.sum(Avances.unidades_avanzadas))
+                .filter_by(id_actividad=actividad.id_actividad)
+                .scalar()
+            ) or 0
+
+            # Para la actividad individual
+            actividad.avanzado = avanzado
+            actividad.porcentaje = int((avanzado / total) * 100) if total > 0 else 0
+
+            # Para el proyecto total
+            total_unidades_proyecto += total
+            total_avanzado_proyecto += avanzado
+
+        # Progreso PONDERADO del proyecto
+        if total_unidades_proyecto > 0:
+            proyecto.progreso_general = round((total_avanzado_proyecto / total_unidades_proyecto) * 100, 1)
+        else:
+            proyecto.progreso_general = 0
 
     return render_template(
         "dashboard_trabajador.html",
         usuario=usuario,
-        proyectos=proyectos_asignados
+        proyectos=proyectos_asignados,
+        frase=frase
     )

@@ -422,3 +422,101 @@ def detalles_personal(id):
         dias_presentes=dias_presentes,
         horas_total=horas_total
     )
+
+# ===============================================================
+# ✏️ Editar personal
+# ===============================================================
+@personal_bp.route('/personal/editar/<int:id>', methods=['GET', 'POST'])
+def editar_personal(id):
+    persona = Personal.query.get_or_404(id)
+    usuario = Usuarios.query.filter_by(personal_id=id).first()
+
+    if request.method == 'POST':
+        try:
+            nombre = request.form.get('nombre', '').strip()
+            rol = request.form.get('rol')
+            costo_diario = Decimal(request.form.get('costo_diario', 0))
+            activo = True if request.form.get('activo') == 'on' else False
+            contacto = request.form.get('contacto', '').strip()
+
+            if rol not in ['Ingeniero', 'Trabajador', 'Supervisor']:
+                flash("❌ Rol no válido", "danger")
+                return redirect(url_for("personal.editar_personal", id=id))
+
+            if not nombre or costo_diario <= 0:
+                flash("❌ Faltan datos obligatorios", "danger")
+                return redirect(url_for("personal.editar_personal", id=id))
+
+            # Verificar contacto único (excluyendo el actual)
+            if contacto:
+                existente = Personal.query.filter(
+                    Personal.contacto == contacto,
+                    Personal.id != id
+                ).first()
+                if existente:
+                    flash(f"❌ Ya existe una persona registrada con el contacto {contacto}", "danger")
+                    return redirect(url_for("personal.editar_personal", id=id))
+
+            # Actualizar datos del personal
+            persona.nombre = nombre
+            persona.rol = rol
+            persona.costo_diario = costo_diario
+            persona.activo = activo
+            persona.contacto = contacto if contacto else None
+
+            # === MANEJO DE USUARIO ===
+            crear_usuario = request.form.get('crear_usuario') == 'on'
+            email = request.form.get('email', '').strip()
+
+            if crear_usuario and email:
+                if not usuario:
+                    # Crear nuevo usuario
+                    temp_pass = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+                    hashed_pw = bcrypt.generate_password_hash(temp_pass).decode('utf-8')
+                    rol_usuario = request.form.get('rol_usuario', 'EMPLEADO')
+
+                    nuevo_usuario = Usuarios(
+                        nombre=nombre,
+                        email=email,
+                        password=hashed_pw,
+                        rol=rol_usuario.upper(),
+                        foto_perfil="default.png",
+                        personal_data=persona,
+                        debe_cambiar_contrasena=True
+                    )
+                    db.session.add(nuevo_usuario)
+                    db.session.flush()
+                    persona.usuario_id = nuevo_usuario.id_usuario
+                    
+                    # Enviar correo
+                    try:
+                        msg = Message(
+                            subject="Tu cuenta en el sistema",
+                            recipients=[email],
+                            body=f"Hola {nombre}, tu usuario fue creado. Tu contraseña temporal es: {temp_pass}",
+                            sender="tucorreo@gmail.com"
+                        )
+                        mail.send(msg)
+                        flash(f"✅ Usuario creado. Contraseña temporal enviada a {email}", "success")
+                    except Exception as e:
+                        print(f"Error enviando correo: {str(e)}")
+                        flash("⚠️ Usuario creado, pero no se pudo enviar el correo", "warning")
+                else:
+                    # Actualizar usuario existente
+                    usuario.email = email
+                    usuario.rol = request.form.get('rol_usuario', 'EMPLEADO').upper()
+            elif not crear_usuario and usuario:
+                # Eliminar usuario si se desmarca
+                db.session.delete(usuario)
+                persona.usuario_id = None
+
+            db.session.commit()
+            flash(f"✅ Personal {nombre} actualizado correctamente", "success")
+            return redirect(url_for("personal.manage_personal"))
+
+        except Exception as e:
+            db.session.rollback()
+            print("ERROR ACTUALIZANDO PERSONAL:\n", traceback.format_exc())
+            flash(f"❌ Error al actualizar personal: {str(e)}", "danger")
+
+    return render_template("personal.html", persona=persona, usuario=usuario)
