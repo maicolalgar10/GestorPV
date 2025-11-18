@@ -436,16 +436,83 @@ def manage_proyectos():
 # ===============================================================
 @proyectos_bp.route('/proyectos/delete/<int:id_proyecto>', methods=['POST'])
 @login_required
-@admin_required
 def delete_proyecto(id_proyecto):
-    proyecto = Proyectos.query.get(id_proyecto)
-    if proyecto:
+    proyecto = Proyectos.query.get_or_404(id_proyecto)
+
+    try:
+        print(f"\n🗑️ Iniciando eliminación del proyecto '{proyecto.nombre}' (ID: {id_proyecto})")
+
+        # 🔍 1. Buscar y eliminar movimientos relacionados (anterior y nuevo)
+        movimientos_anteriores = MovimientoVehiculo.query.filter_by(proyecto_anterior_id=id_proyecto).all()
+        movimientos_nuevos = MovimientoVehiculo.query.filter_by(proyecto_nuevo_id=id_proyecto).all()
+
+        for mv in movimientos_anteriores + movimientos_nuevos:
+            db.session.delete(mv)
+            print(f"🗑️ Eliminado movimiento ID {mv.id_movimiento} relacionado con proyecto ID {id_proyecto}")
+
+        # 🔍 2. Buscar vehículos que tenían este proyecto como su proyecto_actual y actualizarlos
+        vehiculos_con_proyecto_actual = Vehiculos.query.filter_by(proyecto_actual_id=id_proyecto).all()
+        for v in vehiculos_con_proyecto_actual:
+            print(f"🔧 Actualizando vehículo '{v.placa}' (ID: {v.id_vehiculo}): proyecto_actual_id de {id_proyecto} a NULL")
+            v.proyecto_actual_id = None
+            # Opcional: v.ubicacion_actual = None
+            v.updated_at = dt.utcnow()
+
+        # 🔍 3. Buscar y eliminar relaciones Proyecto-Vehículo (VehiculoProyecto)
+        relaciones_pv = VehiculoProyecto.query.filter_by(id_proyecto=id_proyecto).all() # ✅ CORRECTO: id_proyecto es el nombre en VehiculoProyecto
+        for rpv in relaciones_pv:
+            db.session.delete(rpv)
+            print(f"🗑️ Eliminada relación VehiculoProyecto para vehículo ID {rpv.id_vehiculo} y proyecto ID {id_proyecto}")
+
+        # 🔍 4. Buscar y eliminar relaciones Proyecto-Personal (ProyectoPersonal) - ✅ CORREGIDO
+        relaciones_pp = ProyectoPersonal.query.filter_by(proyecto_id=id_proyecto).all() # 👈 CAMBIADO A 'proyecto_id'
+        for rpp in relaciones_pp:
+            db.session.delete(rpp)
+            print(f"🗑️ Eliminada relación ProyectoPersonal para personal ID {rpp.personal_id} y proyecto ID {id_proyecto}")
+
+        # 🔍 5. Buscar y eliminar relaciones Proyecto-Material (MaterialesProyecto)
+        relaciones_pm = MaterialesProyecto.query.filter_by(id_proyecto=id_proyecto).all() # ✅ CORRECTO: id_proyecto es el nombre en MaterialesProyecto
+        for rpm in relaciones_pm:
+            # Opcional: Devolver el stock del material al inventario general
+            material = Materiales.query.get(rpm.id_material)
+            if material:
+                material.cantidad += rpm.cantidad
+            db.session.delete(rpm)
+            print(f"🗑️ Eliminada relación MaterialesProyecto para material ID {rpm.id_material} y proyecto ID {id_proyecto}")
+
+        # 🔍 6. Buscar y eliminar relaciones Proyecto-Ubicacion (ProyectoUbicacion)
+        relaciones_pu = ProyectoUbicacion.query.filter_by(proyecto_id=id_proyecto).all() # ✅ CORRECTO: proyecto_id es el nombre en ProyectoUbicacion
+        for rpu in relaciones_pu:
+            db.session.delete(rpu)
+            print(f"🗑️ Eliminada relación ProyectoUbicacion para ubicación ID {rpu.id} y proyecto ID {id_proyecto}")
+
+        # 🔍 7. Buscar y eliminar relaciones Asistencia-Proyecto (si existe tal relación)
+        # Asumiendo que Asistencia tiene un proyecto_id
+        asistencias_del_proyecto = Asistencia.query.filter_by(proyecto_id=id_proyecto).all()
+        for a in asistencias_del_proyecto:
+            db.session.delete(a)
+            print(f"🗑️ Eliminada relación Asistencia para personal ID {a.personal_id} en proyecto ID {id_proyecto}")
+
+        # 🔍 8. Buscar y eliminar Actividades del Proyecto (y posiblemente Avances relacionados)
+        actividades_del_proyecto = Actividades.query.filter_by(id_proyecto=id_proyecto).all()
+        for act in actividades_del_proyecto:
+            # Opcional: Eliminar también los avances de esta actividad si no se eliminan en cascada
+            # Avances.query.filter_by(id_actividad=act.id_actividad).delete()
+            db.session.delete(act)
+            print(f"🗑️ Eliminada Actividad ID {act.id_actividad} del proyecto ID {id_proyecto}")
+
+        # ✅ 9. Finalmente, eliminar el proyecto
         db.session.delete(proyecto)
         db.session.commit()
-        flash("Proyecto eliminado 🗑️", "success")
-    else:
-        flash("Proyecto no encontrado", "danger")
-    return redirect(url_for("proyectos.manage_proyectos"))
+        flash(f"🗑️ Proyecto '{proyecto.nombre}' eliminado correctamente junto con sus relaciones.", "success")
+        print(f"✅ Proyecto '{proyecto.nombre}' (ID: {id_proyecto}) eliminado exitosamente.")
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Error al eliminar el proyecto {proyecto.nombre} (ID: {id_proyecto}): {e}")
+        flash(f"❌ Error al eliminar el proyecto: {str(e)}", "danger")
+
+    return redirect(url_for('proyectos.manage_proyectos'))
 
 
 # ===============================================================
