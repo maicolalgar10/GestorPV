@@ -1082,37 +1082,6 @@
                     <textarea class="form-control" name="descripcion" rows="3"></textarea>
                   </div>
 
-                  <!-- 📦 Materiales: checkbox name material_id[] y cantidad_{id} -->
-                  <div class="col-12">
-                    <label class="form-label">📦 Materiales a asignar</label>
-                    <div class="row g-2">
-                      {% for m in materiales %}
-                      <div class="col-md-6">
-                        <div class="input-group align-items-center">
-                          <div class="input-group-text">
-                            <!-- nombre correcto: material_id[] -->
-                            <input type="checkbox" class="material-checkbox" data-id="{{ m.id_material }}"
-                              name="material_id[]" value="{{ m.id_material }}">
-                          </div>
-                          <div class="form-control d-flex justify-content-between align-items-center">
-                            <div>
-                              <strong>{{ m.nombre }}</strong>
-                              <div class="small text-muted">{{ m.unidad }}</div>
-                            </div>
-                            <!-- cantidad debe llamarse cantidad_{id_material} para que el controller la lea -->
-                            <input type="number" class="form-control ms-3 cantidad-input"
-                              name="cantidad_{{ m.id_material }}" data-id="{{ m.id_material }}" min="1"
-                              placeholder="Cant." disabled style="max-width:110px;">
-                          </div>
-                        </div>
-                      </div>
-                      {% endfor %}
-                    </div>
-                    <small class="text-muted">Marca el material y escribe la cantidad. Si no marcas el checkbox, la
-                      cantidad
-                      se ignora.</small>
-                  </div>
-
                 </div>
               </div>
 
