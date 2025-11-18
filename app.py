@@ -1,36 +1,49 @@
 import os
 from flask import Flask, send_from_directory
 from flask_bcrypt import Bcrypt
+from flask_migrate import Migrate
 from config import Config
-from extensions import init_mail  # debe contener: mail = Mail()
 from models import db
 from controllers import register_controllers
+from mailjet_rest import Client
+from datetime import timezone, timedelta
 
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
-    
+
+    # 📁 Configuración de uploads
     app.config["UPLOAD_FOLDER"] = os.path.join("static", "uploads", "perfiles")
     app.config["ALLOWED_EXTENSIONS"] = {"png", "jpg", "jpeg", "gif"}
 
+    # ⚠️ MUY IMPORTANTE: Configurar pool para planes gratuitos
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        "pool_pre_ping": True,
+        "pool_size": 2,
+        "max_overflow": 0,
+        "pool_timeout": 30,
+        "pool_recycle": 1800
+    }
+
+    # 🔹 Inicializar extensiones
     db.init_app(app)
-    bcrypt = Bcrypt()
-    bcrypt.init_app(app)
+    Migrate(app, db)
+    Bcrypt(app)
 
-    with app.app_context():
-        db.create_all()
+    # Inicializar Mailjet
+    mailjet = Client(
+        auth=(app.config["MAILJET_API_KEY"], app.config["MAILJET_SECRET_KEY"]),
+        version='v3.1'
+    )
+    app.extensions["mailjet"] = mailjet
 
-    # 👇 aquí se registran los controladores desde controllers/__init__.py
+    # ❌ NO CREAR TABLAS AQUÍ → rompe en producción
+    # db.create_all()
+
+    # Registrar controladores
     register_controllers(app)
 
-    # Inicializar extensiones
-    init_mail(app)
-
-    print("📧 MAIL_USERNAME:", app.config.get("MAIL_USERNAME"))
-    print("🔑 MAIL_PASSWORD:", app.config.get("MAIL_PASSWORD"))
-
-    # ✅ Ruta para servir el favicon
     @app.route('/favicon.ico')
     def favicon():
         return send_from_directory(
@@ -39,10 +52,29 @@ def create_app():
             mimetype='image/vnd.microsoft.icon'
         )
 
+    # Filtro hora Colombia
+    @app.template_filter("to_colombia")
+    def to_colombia(value):
+        if not value:
+            return "—"
+        try:
+            if value.tzinfo is None:
+                value = value.replace(tzinfo=timezone.utc)
+            colombia_tz = timezone(timedelta(hours=-5))
+            return value.astimezone(colombia_tz).strftime("%d/%m/%Y %H:%M")
+        except:
+            return str(value)
+
+    print("📧 Mailjet inicializado correctamente")
+    print("📨 MAILJET_SENDER:", app.config.get("MAILJET_SENDER_EMAIL"))
+
     return app
 
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app = create_app()
-    app.run(host="0.0.0.0", port=port)
+
+    # ⚠️ IMPORTANTE: Debug = False para no duplicar procesos
+    app.run(debug=False, host="0.0.0.0", port=port)
+

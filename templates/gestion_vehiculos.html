@@ -1,0 +1,239 @@
+<!-- gestion_vehiculos.html -->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Vehículos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        /* ==============================
+    Barra de scroll para el historial
+   ============================== */
+        .movimientos-container {
+            max-height: 100vh;
+            /* Altura máxima antes de mostrar el scroll */
+            overflow-y: auto;
+            /* Habilita el scroll vertical si el contenido excede la altura */
+            border: 1px solid #dee2e6;
+            /* Borde sutil para delimitar el contenedor */
+            border-radius: 8px;
+            /* Bordes redondeados */
+            padding: 10px;
+            /* Espacio interno */
+            background-color: #fff;
+            /* Fondo blanco para mejorar la legibilidad */
+        }
+
+        /* Estilo opcional: Cambiar el color de la barra de scroll (solo funciona en WebKit/Blink - Chrome, Edge, Safari) */
+        .movimientos-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .movimientos-container::-webkit-scrollbar-thumb {
+            background-color: #adb5bd;
+            border-radius: 4px;
+        }
+
+        .movimientos-container::-webkit-scrollbar-thumb:hover {
+            background-color: #6c757d;
+        }
+
+        /* Asegurar que las tarjetas dentro del contenedor se adapten al ancho */
+        .movimientos-container .card {
+            width: 100%;
+            /* Opcional: hacer que la tarjeta ocupe todo el ancho del contenedor */
+            margin-bottom: 10px;
+            /* Espaciado entre tarjetas */
+        }
+
+        /* Asegurar que el texto dentro de las tarjetas no se desborde */
+        .movimientos-container .card-body {
+            word-wrap: break-word;
+            /* Rompe palabras largas */
+            white-space: normal;
+            /* Permite que el texto se envuelva */
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+    <div class="container my-4">
+
+        <div class="mt-2 mb-2">
+            <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Volver al Dashboard
+            </a>
+        </div>
+        <h3 class="fw-bold">MOVIMIENTO DE VEHICULOS</h3>
+        <p>Administra la asignación de vehículos a proyectos y consulta el historial de movimientos.</p>
+
+        <div class="row equal-height">
+            <!-- Columna izquierda: Asignación de Vehículos -->
+            <div class="col-md-5">
+                <h5>Asignación de Vehículos</h5>
+
+                {% for v in vehiculos %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <strong>{{ v.placa }} — {{ v.marca }} {{ v.modelo }}</strong>
+                                <br>
+                                <span class="badge bg-success">{{ v.estado }}</span>
+                            </div>
+                            <div>
+                                <span class="badge bg-primary">Proyecto</span>
+                                {% if v.proyecto_actual %}
+                                <span class="badge bg-info">{{ v.proyecto_actual.nombre }}</span>
+                                <!-- Opcional: mostrar también la ubicación actual -->
+                                {% if v.ubicacion_actual %}
+                                <span class="badge bg-secondary">{{ v.ubicacion_actual }}</span>
+                                {% endif %}
+                                {% else %}
+                                <span class="badge bg-dark">Sin asignar</span>
+                                {% if v.ubicacion_actual %}
+                                <!-- Opcional: mostrar ubicación actual si no está asignado a proyecto -->
+                                <span class="badge bg-secondary">{{ v.ubicacion_actual }}</span>
+                                {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Botón Cambiar -->
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                                    data-bs-target="#cambiarModal{{ v.id_vehiculo }}">
+                                    <i class="bi bi-pencil"></i> Cambiar
+                                </button>
+                            </div>
+                            <div>
+                                <small>Última actualización: {{ v.updated_at.strftime('%d/%m/%Y %H:%M') if v.updated_at
+                                    else 'N/A' }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Columna derecha: Historial de Movimientos -->
+            <div class="col-md-7 mb-2">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5>Movimientos Más Reciente</h5>
+                    <a href="{{ url_for('vehiculos.historial_completo') }}" class="btn btn-primary mb-3">
+                        Ver Historial Completo
+                    </a>
+                </div>
+
+                <div class="movimientos-container mt-2">
+                    {% if movimientos_globales %}
+                    {% for m in movimientos_globales %}
+                    <div class="card mb-2 mt-2">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <span class="badge bg-info">{{ m.fecha_hora | to_colombia }}</span>
+                                    <br>
+                                    <span class="badge bg-secondary">{{ m.usuario.nombre if m.usuario else 'Sistema'
+                                        }}</span>
+                                </div>
+                                <div>
+                                    <span class="badge bg-primary">{{ m.vehiculo.placa }}</span>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-light text-dark">Desde</span>
+                                        <span class="mx-2">→</span>
+                                        <span class="badge bg-info">{{ m.proyecto_anterior.nombre if m.proyecto_anterior
+                                            else 'Sin asignar' }}</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mt-2">
+                                        <span class="badge bg-light text-dark">Hacia</span>
+                                        <span class="mx-2">→</span>
+                                        <span class="badge bg-success">{{ m.proyecto_nuevo.nombre if m.proyecto_nuevo
+                                            else 'Sin asignar' }}</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <small><strong>Motivo:</strong> {{ m.motivo or 'No especificado' }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="alert alert-info text-center" role="alert">
+                        <i class="bi bi-info-circle"></i> SIN MOVIMIENTOS AÚN
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- *** MODALES DE CAMBIO DE ASIGNACIÓN *** -->
+    {% for v in vehiculos %}
+    <div class="modal fade" id="cambiarModal{{ v.id_vehiculo }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Cambiar Asignación - {{ v.placa }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{{ url_for('vehiculos.cambiar_asignacion', id_vehiculo=v.id_vehiculo) }}">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <strong>{{ v.placa }} — {{ v.marca }} {{ v.modelo }}</strong>
+                        </div>
+                        <div class="mb-3">
+                            <label for="asignacion_actual" class="form-label">Asignación actual:</label>
+                            <input type="text" class="form-control" id="asignacion_actual" value="{%- if v.proyecto_actual -%}{{ v.proyecto_actual.nombre }} {%- if v.ubicacion_actual -%} - {{ v.ubicacion_actual }} {%- endif -%}{%- else -%}Sin asignar
+    {%- endif -%}
+" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="proyecto_nuevo_id" class="form-label">Nuevo Proyecto</label>
+                            <select class="form-select" name="proyecto_nuevo_id" required>
+                                <option value="">-- Selecciona un proyecto --</option>
+                                {% for p in proyectos %}
+                                <option value="{{ p.id_proyecto }}">{{ p.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="ubicacion_nueva" class="form-label">Nueva Ubicación</label>
+                            <input type="text" class="form-control" name="ubicacion_nueva" placeholder="Ej: Villa Nueva"
+                                optional>
+                        </div>
+                        <div class="mb-3">
+                            <label for="motivo" class="form-label">Motivo del Cambio</label>
+                            <textarea class="form-control" name="motivo" rows="3"
+                                placeholder="Ej: Reasignación por urgencia"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar Cambio</button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+
+
+    </div>
+
+    {% endfor %}
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

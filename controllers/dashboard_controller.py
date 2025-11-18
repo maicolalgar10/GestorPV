@@ -1,10 +1,13 @@
+import datetime
 import os
 from flask import Blueprint, render_template, redirect, request, url_for, flash, session
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from decimal import Decimal
 from werkzeug.utils import secure_filename
-from models import db, Usuarios, Proyectos, Personal, Vehiculos, ProyectoPersonal, Materiales, MaterialesProyecto, Asistencia, Avances
+from models import db, Usuarios, Proyectos, Personal, Vehiculos, ProyectoPersonal, Materiales, MaterialesProyecto, Asistencia, Avances, Notificaciones
 from frases import frase_del_dia
+from decorators import login_required, admin_required, admin_encargado_required # Importa los decoradores
+
 
 # Creamos el blueprint
 dashboard_bp = Blueprint("dashboard", __name__)
@@ -22,6 +25,7 @@ def home():
 # DASHBOARD PRINCIPAL
 # -----------------------------
 @dashboard_bp.route("/dashboard")
+@login_required
 def dashboard():
     # Verificar sesión
     frase = frase_del_dia()
@@ -88,6 +92,7 @@ def dashboard():
             "estado": p.estado
         })
 
+
     # ======================
     # PROYECTOS FINALIZADOS
     # ======================
@@ -131,6 +136,16 @@ def dashboard():
 
     vehiculos_disponibles = Vehiculos.query.filter_by(estado="Disponible").all()
     proyectos_recientes = Proyectos.query.order_by(Proyectos.fecha_inicio.desc()).limit(5).all()
+    
+    
+    # 🔔 Notificaciones (solo no leídas)
+    notificaciones = (
+        Notificaciones.query
+        .filter_by(id_usuario_destino=session["user_id"], leido=False)
+        .order_by(Notificaciones.creado_en.desc())
+        .all()
+    )
+
 
     return render_template(
         "dashboard.html",
@@ -142,14 +157,15 @@ def dashboard():
         materiales=materiales,
         alertas=alertas,
         proyectos_recientes=proyectos_recientes,
-        frase=frase
+        frase=frase,
+        notificaciones=notificaciones
     )
 
 # -----------------------------
 # DASHBOARD DEL TRABAJADOR
 # -----------------------------
-# dashboard_controller.py
 @dashboard_bp.route("/dashboard/trabajador")
+@login_required
 def dashboard_trabajador():
     frase = frase_del_dia()  # genera una diferente cada día
 
@@ -162,10 +178,17 @@ def dashboard_trabajador():
         return render_template("dashboard_trabajador.html", usuario=usuario, proyectos=[])
 
     personal_id = usuario.personal_data.id
-    relaciones = ProyectoPersonal.query.filter_by(personal_id=personal_id).all()
-    proyectos_asignados = [r.proyecto for r in relaciones if r.proyecto]
 
-    # Calcular progreso PONDERADO por unidades
+
+    proyectos_asignados = (
+        db.session.query(Proyectos)
+        .join(ProyectoPersonal)
+        .filter(ProyectoPersonal.personal_id == personal_id)
+        .distinct() 
+        .all()
+    )
+
+    # Calcular progreso PONDERADO
     for proyecto in proyectos_asignados:
         total_unidades_proyecto = 0
         total_avanzado_proyecto = 0
@@ -178,23 +201,38 @@ def dashboard_trabajador():
                 .scalar()
             ) or 0
 
-            # Para la actividad individual
             actividad.avanzado = avanzado
             actividad.porcentaje = int((avanzado / total) * 100) if total > 0 else 0
 
-            # Para el proyecto total
             total_unidades_proyecto += total
             total_avanzado_proyecto += avanzado
 
-        # Progreso PONDERADO del proyecto
         if total_unidades_proyecto > 0:
             proyecto.progreso_general = round((total_avanzado_proyecto / total_unidades_proyecto) * 100, 1)
         else:
             proyecto.progreso_general = 0
 
+    hoy = datetime.utcnow().date()
+    proyectos_activos = [
+        p for p in proyectos_asignados
+        if not p.estado or p.estado.strip().upper() != "FINALIZADO"
+    ]
+
+    # 🔔 Notificaciones (solo no leídas)
+    notificaciones = (
+        Notificaciones.query
+        .filter_by(id_usuario_destino=session["user_id"], leido=False)
+        .order_by(Notificaciones.creado_en.desc())
+        .all()
+    )
+
     return render_template(
         "dashboard_trabajador.html",
         usuario=usuario,
-        proyectos=proyectos_asignados,
-        frase=frase
+        proyectos=proyectos_activos,
+        frase=frase,
+        now=hoy,
+        datetime=datetime,
+        notificaciones=notificaciones
     )
+

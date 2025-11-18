@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import DateTime
 from datetime import datetime
 
 db = SQLAlchemy()
@@ -48,6 +49,7 @@ class Personal(db.Model):
     # Relaciones
     proyectos = db.relationship("ProyectoPersonal", back_populates="personal", cascade="all, delete-orphan")
     asistencias = db.relationship("Asistencia", back_populates="personal", cascade="all, delete-orphan")
+    horarios = db.relationship("Horario", back_populates="personal", cascade="all, delete-orphan")
 
     # Relación uno a uno con Usuarios
     usuario_data = db.relationship(
@@ -73,7 +75,7 @@ class Proyectos(db.Model):
 
     fecha_inicio = db.Column(db.Date, nullable=False)   
     fecha_fin = db.Column(db.Date, nullable=False)
-    estado = db.Column(db.Enum('EN_PROGRESO', 'FINALIZADO', 'PENDIENTE', name='estado_proyecto_enum'), default="PENDIENTE")
+    estado = db.Column(db.Enum('EN_PROGRESO', 'FINALIZADO', 'PENDIENTE', 'ATRASADO', name='estado_proyecto_enum'), default="PENDIENTE")
 
     # 🔹 Nuevo campo: fecha real en la que se terminó el proyecto
     fecha_fin_real = db.Column(db.Date, nullable=True)
@@ -86,6 +88,7 @@ class Proyectos(db.Model):
     asistencias = db.relationship("Asistencia", back_populates="proyecto", cascade="all, delete-orphan")
     personal_asignado = db.relationship("ProyectoPersonal", back_populates="proyecto", cascade="all, delete-orphan")
     ubicaciones = db.relationship("ProyectoUbicacion", back_populates="proyecto", cascade="all, delete-orphan")
+    horarios = db.relationship("Horario", back_populates="proyecto", cascade="all, delete-orphan")
 
 
     # ===========================================
@@ -187,6 +190,7 @@ class Notificaciones(db.Model):
     mensaje = db.Column(db.Text, nullable=False)
     leido = db.Column(db.Boolean, default=False)
     creado_en = db.Column(db.DateTime, default=datetime.utcnow)
+    id_horario = db.Column(db.Integer, db.ForeignKey("horarios.id", ondelete="CASCADE"), nullable=True) 
 
     # Relaciones
     destinatario = db.relationship("Usuarios", back_populates="notificaciones")
@@ -195,6 +199,7 @@ class Notificaciones(db.Model):
 # ===========================================
 # 8. Vehiculos
 # ===========================================
+# models.py
 class Vehiculos(db.Model):
     __tablename__ = "vehiculos"
 
@@ -207,8 +212,21 @@ class Vehiculos(db.Model):
     tecno_vencimiento = db.Column(db.Date, nullable=False)
     estado = db.Column(db.Enum('Disponible', 'En uso', 'Mantenimiento', name='estado_vehiculo_enum'), default='Disponible')
 
+    updated_at = db.Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # 🔸 Asignación actual del vehículo
+    proyecto_actual_id = db.Column(db.Integer, db.ForeignKey("proyectos.id_proyecto"), nullable=True)
+    ubicacion_actual = db.Column(db.String(100), nullable=True)
+
+    # Relaciones
+    # 👇 Asegúrate de que esta línea ESTÉ en la clase Vehiculos
+    movimientos = db.relationship("MovimientoVehiculo", back_populates="vehiculo", cascade="all, delete-orphan")
+
     usos = db.relationship("VehiculoProyecto", back_populates="vehiculo", cascade="all, delete-orphan")
     mantenimientos = db.relationship("MantenimientoVehiculo", back_populates="vehiculo", cascade="all, delete-orphan")
+
+    # Relación con Proyecto actual
+    proyecto_actual = db.relationship("Proyectos", foreign_keys=[proyecto_actual_id])
 
 
 class VehiculoProyecto(db.Model):
@@ -223,6 +241,26 @@ class VehiculoProyecto(db.Model):
 
     vehiculo = db.relationship("Vehiculos", back_populates="usos")
     proyecto = db.relationship("Proyectos", back_populates="vehiculos")
+
+
+class MovimientoVehiculo(db.Model):
+    __tablename__ = "movimiento_vehiculo"
+
+    id_movimiento = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id_vehiculo = db.Column(db.Integer, db.ForeignKey("vehiculos.id_vehiculo", ondelete="CASCADE"), nullable=False)
+    id_usuario = db.Column(db.Integer, db.ForeignKey("usuarios.id_usuario", ondelete="SET NULL"), nullable=True)  # Quién hizo el cambio
+    fecha_hora = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    proyecto_anterior_id = db.Column(db.Integer, db.ForeignKey("proyectos.id_proyecto"), nullable=True)  # De dónde vino
+    proyecto_nuevo_id = db.Column(db.Integer, db.ForeignKey("proyectos.id_proyecto"), nullable=True)  # A dónde va
+    ubicacion_anterior = db.Column(db.String(100), nullable=True)  # Desde dónde
+    ubicacion_nueva = db.Column(db.String(100), nullable=True)  # Hacia dónde
+    motivo = db.Column(db.Text, nullable=True)  # Por qué se hizo el cambio
+
+    vehiculo = db.relationship("Vehiculos", back_populates="movimientos")
+    usuario = db.relationship("Usuarios", foreign_keys=[id_usuario])
+    proyecto_anterior = db.relationship("Proyectos", foreign_keys=[proyecto_anterior_id])
+    proyecto_nuevo = db.relationship("Proyectos", foreign_keys=[proyecto_nuevo_id])
+
 
 
 # ===========================================
@@ -307,3 +345,29 @@ class ProyectoPersonal(db.Model):
 
     proyecto = db.relationship("Proyectos", back_populates="personal_asignado")
     personal = db.relationship("Personal", back_populates="proyectos")
+    
+
+
+# ===========================================
+# 12. Horarios
+# ===========================================
+class Horario(db.Model):
+    __tablename__ = "horarios"
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+
+    # Relaciones
+    personal_id = db.Column(db.Integer, db.ForeignKey("personal.id", ondelete="CASCADE"), nullable=False)
+    proyecto_id = db.Column(db.Integer, db.ForeignKey("proyectos.id_proyecto", ondelete="CASCADE"), nullable=False)
+
+    # Campos principales
+    fecha = db.Column(db.Date, nullable=False, default=datetime.utcnow)  # Fecha del registro
+    hora_entrada = db.Column(db.Time, nullable=False)  # Solo hora de entrada
+
+    # Opcional
+    observacion = db.Column(db.String(200), nullable=True)  # Ej: "Retraso por tráfico", etc.
+
+    # Relaciones inversas
+    personal = db.relationship("Personal", back_populates="horarios")
+    proyecto = db.relationship("Proyectos", back_populates="horarios")
+

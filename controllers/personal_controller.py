@@ -5,9 +5,8 @@ from decimal import Decimal
 from datetime import date, datetime, timedelta
 import traceback  # 👈 Para imprimir la traza completa
 import random, string
-from extensions import mail
-from flask_mail import Message
-
+from mail_utils import enviar_correo
+from decorators import login_required, admin_required
 
 personal_bp = Blueprint("personal", __name__)
 bcrypt = Bcrypt()
@@ -50,6 +49,8 @@ def asistencia_dict(personal_id, semana_inicio=None):
 # Rutas
 # -------------------------
 @personal_bp.route('/personal', methods=['GET', 'POST'])
+@login_required
+@admin_required
 def manage_personal():
     if request.method == 'POST':
         try:
@@ -64,17 +65,17 @@ def manage_personal():
             email = request.form.get('email', '').strip()
 
             if rol not in ['Ingeniero', 'Trabajador', 'Supervisor']:
-                flash("❌ Rol no válido", "danger")
+                flash("❌ Rol no válido", "personal-danger")
                 return redirect(url_for("personal.manage_personal"))
 
             if not nombre or costo_diario <= 0:
-                flash("❌ Faltan datos obligatorios", "danger")
+                flash("❌ Faltan datos obligatorios", "personal-danger")
                 return redirect(url_for("personal.manage_personal"))
 
             if contacto:
                 existente = Personal.query.filter_by(contacto=contacto).first()
                 if existente:
-                    flash(f"❌ Ya existe una persona registrada con el contacto {contacto}", "danger")
+                    flash(f"❌ Ya existe una persona registrada con el contacto {contacto}", "personal-danger")
                     return redirect(url_for("personal.manage_personal"))
                 
             # 1️⃣ Crear el Personal
@@ -90,6 +91,10 @@ def manage_personal():
 
             # 2️⃣ Si se marcó “Crear usuario” y hay correo
             if crear_usuario and email:
+                if Usuarios.query.filter_by(email=email).first():
+                    flash(f"❌ Ya existe un usuario con el correo {email}", "personal-danger")
+                    return redirect(url_for("personal.manage_personal"))
+                
                 temp_pass = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
                 hashed_pw = bcrypt.generate_password_hash(temp_pass).decode('utf-8')
                 rol_usuario = request.form.get('rol_usuario', 'EMPLEADO')
@@ -100,36 +105,44 @@ def manage_personal():
                     password=hashed_pw,
                     rol=rol_usuario.upper(),
                     foto_perfil="default.png",
-                    #activo=activo,
                     personal_data=nuevo_personal,
-                    debe_cambiar_contrasena = True
+                    debe_cambiar_contrasena=True
                 )
 
-
                 db.session.flush()
-
                 nuevo_personal.usuario_id = nuevo_usuario.id_usuario
-                
                 db.session.add(nuevo_usuario)
                 db.session.commit()
 
-
                 print(f"🔑 Contraseña temporal para {nuevo_usuario.email}: {temp_pass}")
 
-    # 🔹 (Opcional) enviar correo al empleado con su contraseña temporal
-                msg = Message(
-                    subject="Tu cuenta en el sistema",
-                    recipients=[email],
-                    body=f"Hola {nombre}, tu usuario fue creado. Tu contraseña temporal es: {temp_pass}",
-                    sender="tucorreo@gmail.com"
-                )
-                mail.send(msg)
+                # 🔹 Enviar correo con Mailjet
+                subject = "Tu cuenta en el sistema"
+                body = f"""
+                Hola {nombre},
 
-                flash(f"✅ Personal {nombre} agregado y usuario creado (email: {email})", "success")
+                Tu usuario fue creado exitosamente en el sistema.
+                Tu contraseña temporal es: {temp_pass}
+
+                Por seguridad, deberás cambiarla al iniciar sesión.
+                """
+
+                status, response = enviar_correo(
+                    to_email=email,
+                    subject=subject,
+                    body_text=body
+                )
+
+                if status != 200:
+                    print(f"❌ Error enviando correo a {email}: {response}")
+                else:
+                    print(f"✅ Correo enviado a {email}")
+
+                flash(f"✅ Personal {nombre} agregado y usuario creado (email: {email})", "personal-success")
 
             else:
                 db.session.commit()
-                flash(f"✅ Personal {nombre} agregado (sin usuario del sistema)", "success")
+                flash(f"✅ Personal {nombre} agregado (sin usuario del sistema)", "personal-success")
             
 
             
@@ -138,22 +151,32 @@ def manage_personal():
             db.session.rollback()
             import traceback
             print("ERROR REGISTRANDO PERSONAL:\n", traceback.format_exc())
-            flash(f"❌ Error al registrar personal: {str(e)}", "danger")
+            flash(f"❌ Error al registrar personal: {str(e)}", "personal-danger")
 
         return redirect(url_for("personal.manage_personal"))
+    
+    # 1. Obtener el término de búsqueda de la URL
+    termino_busqueda = request.args.get('q', '').strip()
 
-    personal = Personal.query.order_by(Personal.nombre).all()
+    # 2. Aplicar el filtro a la consulta de personal
+    if termino_busqueda:
+        personal = Personal.query.filter(Personal.nombre.ilike(f'%{termino_busqueda}%')).all()
+    else:
+        personal = Personal.query.order_by(Personal.nombre).all()
+
     personal_asistencia = {p.id:asistencia_dict(p.id) for p in personal}
 
     return render_template("personal.html", personal=personal, asistencias=personal_asistencia)
 
 
 @personal_bp.route('/personal/<int:id>/desactivar')
+@login_required
+@admin_required
 def desactivar_personal(id):
     print(f"🟡 Intentando desactivar personal con id={id}")
     persona = Personal.query.get_or_404(id)
     if not persona.activo:
-        flash(f"⚠️ {persona.nombre} ya está desactivado", "warning")
+        flash(f"⚠️ {persona.nombre} ya está desactivado", "personal-warning")
     else:
         try:
             persona.activo = False
@@ -163,21 +186,23 @@ def desactivar_personal(id):
                 usuario.rol = "EMPLEADO"
             db.session.commit()
             print(f"✅ {persona.nombre} desactivado")
-            flash(f"🚫 {persona.nombre} desactivado", "warning")
+            flash(f"🚫 {persona.nombre} desactivado", "personal-warning")
         except Exception as e:
             db.session.rollback()
             print("❌ Error al desactivar personal")
             print(traceback.format_exc())
-            flash(f"❌ Error al desactivar: {str(e)}", "danger")
+            flash(f"❌ Error al desactivar: {str(e)}", "personal-danger")
     return redirect(url_for("personal.manage_personal"))
 
 
 @personal_bp.route('/personal/<int:id>/activar')
+@login_required
+@admin_required
 def activar_personal(id):
     print(f"🟡 Intentando activar personal con id={id}")
     persona = Personal.query.get_or_404(id)
     if persona.activo:
-        flash(f"⚠️ {persona.nombre} ya está activo", "info")
+        flash(f"⚠️ {persona.nombre} ya está activo", "personal-info")
     else:
         try:
             persona.activo = True
@@ -187,16 +212,18 @@ def activar_personal(id):
                 usuario.rol = "EMPLEADO"
             db.session.commit()
             print(f"✅ {persona.nombre} activado nuevamente")
-            flash(f"✅ {persona.nombre} activado nuevamente", "success")
+            flash(f"✅ {persona.nombre} activado nuevamente", "personal-success")
         except Exception as e:
             db.session.rollback()
             print("❌ Error al activar personal")
             print(traceback.format_exc())
-            flash(f"❌ Error al activar: {str(e)}", "danger")
+            flash(f"❌ Error al activar: {str(e)}", "personal-danger")
     return redirect(url_for("personal.manage_personal"))
 
 
 @personal_bp.route('/personal/delete/<int:id>', methods=['POST'])
+@login_required
+@admin_required
 def delete_personal(id):
     print(f"\n🟡 Intentando eliminar personal con id={id}...")
     persona = Personal.query.get_or_404(id)
@@ -222,12 +249,12 @@ def delete_personal(id):
 
         db.session.commit()
         print("✅ Commit realizado correctamente.")
-        flash(f"🗑️ {persona.nombre} eliminado junto con su usuario y asistencias", "success")
+        flash(f"🗑️ {persona.nombre} eliminado junto con su usuario y asistencias", "personal-success")
     except Exception as e:
         db.session.rollback()
         print("❌ Error al eliminar personal")
         print(traceback.format_exc())
-        flash(f"❌ Error al eliminar personal: {str(e)}", "danger")
+        flash(f"❌ Error al eliminar personal: {str(e)}", "personal-danger")
 
     return redirect(url_for("personal.manage_personal"))
 
@@ -238,6 +265,8 @@ def delete_personal(id):
 
 # 📘 Ver asistencia semanal
 @personal_bp.route('/personal/<int:id>/asistencia', methods=['GET'])
+@login_required
+@admin_required
 def ver_asistencia(id):
     print(f"🟡 Consultando asistencia para personal id={id}")
     persona = Personal.query.get_or_404(id)
@@ -265,6 +294,8 @@ def ver_asistencia(id):
 
 # 🆕 NUEVA RUTA: Registro de asistencia (formulario manual)
 @personal_bp.route('/personal/<int:id>/registrar_asistencia', methods=['GET', 'POST'])
+@login_required
+@admin_required
 def registrar_asistencia(id):
     print(f"🟢 [DEBUG] Entrando a registrar asistencia del ID={id}")
     trabajador = Personal.query.get_or_404(id)
@@ -292,7 +323,7 @@ def registrar_asistencia(id):
             print(f"📥 POST recibido: fecha={fecha}, proyecto={proyecto_id}")
 
             if not proyecto_id:
-                flash("⚠️ Debes seleccionar un proyecto", "warning")
+                flash("⚠️ Debes seleccionar un proyecto", "personal-warning")
                 return redirect(url_for('personal.registrar_asistencia', id=id))
 
             asistencia = Asistencia(
@@ -307,7 +338,7 @@ def registrar_asistencia(id):
             db.session.add(asistencia)
             db.session.commit()
 
-            flash("✅ Asistencia registrada correctamente", "success")
+            flash("✅ Asistencia registrada correctamente", "personal-success")
             print("✅ Asistencia guardada correctamente")
 
             # ✅ Recargar el formulario vacío tras guardar
@@ -317,7 +348,7 @@ def registrar_asistencia(id):
             db.session.rollback()
             print("❌ Error al guardar asistencia")
             print(traceback.format_exc())
-            flash(f"❌ Error al guardar asistencia: {str(e)}", "danger")
+            flash(f"❌ Error al guardar asistencia: {str(e)}", "personal-danger")
 
     # ✅ En GET, simplemente renderiza el formulario
     return render_template(
@@ -331,6 +362,8 @@ def registrar_asistencia(id):
 
 # 🧾 Guardar asistencia (POST)
 @personal_bp.route('/asistencia/<int:id>', methods=['POST'])
+@login_required
+@admin_required
 def save_asistencia(id):
     print(f"🟡 Guardando asistencia para personal id={id}")
     try:
@@ -357,12 +390,12 @@ def save_asistencia(id):
         db.session.add(asistencia)
         db.session.commit()
         print("✅ Asistencia guardada correctamente")
-        flash("✅ Asistencia guardada correctamente", "success")
+        flash("✅ Asistencia guardada correctamente", "personal-success")
     except Exception as e:
         db.session.rollback()
         print("❌ Error al guardar asistencia")
         print(traceback.format_exc())
-        flash(f"❌ Error al guardar: {str(e)}", "danger")
+        flash(f"❌ Error al guardar: {str(e)}", "personal-danger")
 
     return redirect(url_for('personal.manage_personal'))
 
@@ -370,6 +403,8 @@ def save_asistencia(id):
 
 # 📋 Detalle del trabajador (con asistencia semanal)
 @personal_bp.route('/personal/<int:id>/detalles')
+@login_required
+@admin_required
 def detalles_personal(id):
     persona = Personal.query.get_or_404(id)
 
@@ -427,6 +462,8 @@ def detalles_personal(id):
 # ✏️ Editar personal
 # ===============================================================
 @personal_bp.route('/personal/editar/<int:id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
 def editar_personal(id):
     persona = Personal.query.get_or_404(id)
     usuario = Usuarios.query.filter_by(personal_id=id).first()
@@ -439,36 +476,45 @@ def editar_personal(id):
             activo = True if request.form.get('activo') == 'on' else False
             contacto = request.form.get('contacto', '').strip()
 
-            if rol not in ['Ingeniero', 'Trabajador', 'Supervisor']:
-                flash("❌ Rol no válido", "danger")
-                return redirect(url_for("personal.editar_personal", id=id))
+            crear_usuario = request.form.get('crear_usuario') == 'on'
+            email = request.form.get('email', '').strip()
 
+            # Validaciones básicas
             if not nombre or costo_diario <= 0:
-                flash("❌ Faltan datos obligatorios", "danger")
-                return redirect(url_for("personal.editar_personal", id=id))
+                flash("❌ Faltan datos obligatorios", "personal-danger")
+                return redirect(url_for("personal.manage_personal"))
 
-            # Verificar contacto único (excluyendo el actual)
+            if rol not in ['Ingeniero', 'Trabajador', 'Supervisor']:
+                flash("❌ Rol no válido", "personal-danger")
+                return redirect(url_for("personal.manage_personal"))
+
+            # Contacto único
             if contacto:
                 existente = Personal.query.filter(
                     Personal.contacto == contacto,
                     Personal.id != id
                 ).first()
                 if existente:
-                    flash(f"❌ Ya existe una persona registrada con el contacto {contacto}", "danger")
-                    return redirect(url_for("personal.editar_personal", id=id))
+                    flash(f"❌ Ya existe una persona registrada con el contacto {contacto}", "personal-danger")
+                    return redirect(url_for("personal.manage_personal"))
 
-            # Actualizar datos del personal
             persona.nombre = nombre
             persona.rol = rol
             persona.costo_diario = costo_diario
             persona.activo = activo
             persona.contacto = contacto if contacto else None
 
-            # === MANEJO DE USUARIO ===
-            crear_usuario = request.form.get('crear_usuario') == 'on'
-            email = request.form.get('email', '').strip()
-
             if crear_usuario and email:
+                # 🔄 Asegurar que SQLAlchemy vea los datos actuales
+
+                # ⚠️ Verificar si ya existe un usuario con ese email en toda la DB
+                usuario_existente = Usuarios.query.filter(Usuarios.email == email).first()
+
+                if usuario_existente and usuario_existente.personal_id != persona.id:
+
+                    flash(f"❌ Ya existe un usuario con el correo {email}", "personal-danger")
+                    return redirect(url_for("personal.manage_personal"))
+
                 if not usuario:
                     # Crear nuevo usuario
                     temp_pass = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
@@ -487,36 +533,46 @@ def editar_personal(id):
                     db.session.add(nuevo_usuario)
                     db.session.flush()
                     persona.usuario_id = nuevo_usuario.id_usuario
-                    
-                    # Enviar correo
-                    try:
-                        msg = Message(
-                            subject="Tu cuenta en el sistema",
-                            recipients=[email],
-                            body=f"Hola {nombre}, tu usuario fue creado. Tu contraseña temporal es: {temp_pass}",
-                            sender="tucorreo@gmail.com"
-                        )
-                        mail.send(msg)
-                        flash(f"✅ Usuario creado. Contraseña temporal enviada a {email}", "success")
-                    except Exception as e:
-                        print(f"Error enviando correo: {str(e)}")
-                        flash("⚠️ Usuario creado, pero no se pudo enviar el correo", "warning")
+
+                    # ✉️ Enviar correo
+                    from mail_utils import enviar_correo
+                    subject = "Tu cuenta en el sistema"
+                    body = f"""
+                    Hola {nombre},
+
+                    Tu usuario fue creado exitosamente.
+                    Tu contraseña temporal es: {temp_pass}
+
+                    Por seguridad, deberás cambiarla al iniciar sesión.
+                    """
+                    status, response = enviar_correo(
+                        to_email=email,
+                        subject=subject,
+                        body_text=body
+                    )
+
+                    if status == 200:
+                        flash(f"✅ Usuario creado y correo enviado a {email}", "personal-success")
+                    else:
+                        flash(f"⚠️ Usuario creado, pero no se pudo enviar el correo ({status})", "warning")
+
                 else:
-                    # Actualizar usuario existente
+                    # Si ya existe el usuario, actualiza datos
                     usuario.email = email
                     usuario.rol = request.form.get('rol_usuario', 'EMPLEADO').upper()
             elif not crear_usuario and usuario:
-                # Eliminar usuario si se desmarca
                 db.session.delete(usuario)
                 persona.usuario_id = None
 
             db.session.commit()
-            flash(f"✅ Personal {nombre} actualizado correctamente", "success")
+            flash(f"✅ Personal {nombre} actualizado correctamente", "personal-success")
             return redirect(url_for("personal.manage_personal"))
 
         except Exception as e:
             db.session.rollback()
+            import traceback
             print("ERROR ACTUALIZANDO PERSONAL:\n", traceback.format_exc())
-            flash(f"❌ Error al actualizar personal: {str(e)}", "danger")
+            flash(f"❌ Error al actualizar personal: {str(e)}", "personal-danger")
+            return redirect(url_for("personal.manage_personal"))
 
-    return render_template("personal.html", persona=persona, usuario=usuario)
+    return redirect(url_for("personal.manage_personal"))

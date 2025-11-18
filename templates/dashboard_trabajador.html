@@ -13,7 +13,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/frases.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/trabajador.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/trabajador.css') }}">
 
   <style>
     body {
@@ -52,6 +52,52 @@
     canvas {
       display: none;
     }
+
+    /* Dropdown perfil */
+    .profile-dropdown-btn img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .profile-dropdown-menu {
+      position: absolute;
+      right: 0;
+      top: 100%;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      width: 220px;
+      display: none;
+      z-index: 1000;
+    }
+
+    .profile-dropdown-menu a {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      color: #333;
+      text-decoration: none;
+    }
+
+    .profile-dropdown-menu a:hover {
+      background-color: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .profile-dropdown-header {
+      padding: 10px 12px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .profile-dropdown-header-name {
+      font-weight: bold;
+    }
+
+    .profile-dropdown-item.logout {
+      color: #dc3545 !important;
+    }
   </style>
 </head>
 
@@ -59,23 +105,125 @@
   {% block content %}
   <div class="container mt-4">
 
-    <!-- Encabezado -->
+    <!-- ===========================
+         ENCABEZADO CON NOTIFICACIONES Y PERFIL
+         =========================== -->
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div>
-        <h3>👷‍♂️ Hola, {{ session["nombre"] if session["nombre"] else "Trabajador" }}</h3>
-        <p class="text-muted mb-0">Panel de registro de avances</p>
+        <h3 class="fw-bold">👷‍♂️ Panel del Trabajador</h3>
+        <p class="text-muted mb-0">Registra y consulta tus avances fácilmente</p>
       </div>
-      <div>
-        <a href="{{ url_for('usuarios.logout') }}" class="btn btn-danger">Salir →</a>
+
+      <div class="d-flex align-items-center gap-3 position-relative">
+
+        <!-- 🔔 Notificaciones -->
+        <div class="dropdown">
+          <button class="btn btn-light position-relative" type="button" id="notifDropdown" data-bs-toggle="dropdown"
+            aria-expanded="false" title="Notificaciones">
+            <i class="bi bi-bell fs-5"></i>
+
+            {% if notificaciones and notificaciones|length > 0 %}
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+              {{ notificaciones|selectattr('leido', 'equalto', False)|list|length }}
+            </span>
+            {% endif %}
+          </button>
+
+          <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="notifDropdown"
+            style="width: 320px; max-height: 400px; overflow-y: auto; border-radius: 10px;">
+            {% if notificaciones and notificaciones|length > 0 %}
+              {% for n in notificaciones %}
+              <li class="px-3 py-2 {% if not n.leido %}bg-light{% endif %}">
+                {% if n.id_horario %}
+                    <a href="{{ url_for('horarios.detalle_horario', id=n.id_horario) }}"
+                      class="text-decoration-none fw-semibold d-block text-primary">
+                      {{ n.mensaje }}
+                    </a>
+                {% else %}
+                  <span class="d-block">{{ n.mensaje }}</span>
+                {% endif %}
+                <small class="text-muted d-block">{{ n.creado_en.strftime('%d/%m/%Y %H:%M') }}</small>
+                {% if not loop.last %}
+                <hr class="my-2">
+                {% endif %}
+              </li>
+              {% endfor %}
+            {% else %}
+              <li class="text-center text-muted py-3">Sin notificaciones nuevas</li>
+            {% endif %}
+          </ul>
+        </div>
+
+
+        <!-- 👤 Perfil -->
+        <div class="profile-dropdown position-relative">
+          <button class="profile-dropdown-btn btn d-flex align-items-center border-0 bg-transparent"
+            onclick="toggleProfileMenu(event)">
+            <img src="{{ session.get('foto_perfil') or '/static/uploads/perfiles/default.png' }}" alt="Avatar"
+              class="me-2">
+            <span class="fw-semibold me-2">{{ session.get('nombre', 'Usuario') }}</span>
+            <i class="bi bi-chevron-down"></i>
+          </button>
+
+          <div class="profile-dropdown-menu" id="profileMenu">
+            <div class="profile-dropdown-header">
+              <div class="profile-dropdown-header-name">{{ session.get('nombre', 'Usuario') }}</div>
+              <div class="text-muted">{{ session.get('rol', 'TRABAJADOR') }}</div>
+            </div>
+
+            <a href="{{ url_for('usuarios.perfil') }}" class="profile-dropdown-item">
+              <i class="bi bi-person-circle me-2"></i> Mi Perfil
+            </a>
+            <a href="{{url_for('usuarios.configuracion_perfil')}}" class="profile-dropdown-item">
+              <i class="bi bi-gear me-2"></i> Configuración
+            </a>
+
+            <div class="dropdown-divider my-1"></div>
+
+            <a href="{{ url_for('usuarios.logout') }}" class="profile-dropdown-item logout">
+              <i class="bi bi-box-arrow-right me-2"></i> Cerrar Sesión
+            </a>
+          </div>
+        </div>
       </div>
     </div>
 
+    <script>
+      // --- Perfil desplegable
+      function toggleProfileMenu(event) {
+        event.stopPropagation();
+        const menu = document.getElementById("profileMenu");
+        menu.style.display = menu.style.display === "block" ? "none" : "block";
+      }
+
+      document.addEventListener("click", function (e) {
+        const menu = document.getElementById("profileMenu");
+        if (menu && !menu.contains(e.target)) {
+          menu.style.display = "none";
+        }
+      });
+
+      // --- Marcar notificaciones como leídas automáticamente
+      document.addEventListener("DOMContentLoaded", () => {
+        const notifBtn = document.getElementById("notifDropdown");
+        notifBtn?.addEventListener("click", () => {
+          fetch("/notificaciones/marcar_leidas", { method: "POST" })
+            .then(res => res.ok && console.log("Notificaciones marcadas como leídas"))
+            .catch(err => console.error(err));
+        });
+      });
+    </script>
+
+    <!-- ===========================
+         FRASE MOTIVACIONAL
+         =========================== -->
     <div class="frase-motivacional mt-4">
       <i class="bi bi-stars"></i> {{ frase }}
     </div>
 
-
-    <!-- Proyectos -->
+    <!-- ===========================
+         PROYECTOS
+         =========================== -->
     {% if proyectos %}
     {% for proyecto in proyectos %}
     <div class="accordion mb-4" id="proyectoAccordion{{ proyecto.id_proyecto }}">
@@ -84,9 +232,21 @@
           <button class="accordion-button collapsed d-flex justify-content-between align-items-center" type="button"
             data-bs-toggle="collapse" data-bs-target="#collapse{{ proyecto.id_proyecto }}" aria-expanded="false"
             aria-controls="collapse{{ proyecto.id_proyecto }}">
-            <div>
+            <div class="d-flex flex-column">
               <h5 class="mb-0 fw-bold">{{ proyecto.nombre }}</h5>
               <small class="text-muted">{{ proyecto.descripcion or "Sin descripción" }}</small>
+              <div class="mt-1">
+                <small class="text-muted">
+                  📅 Fecha de finalización:
+                  <strong>{{ proyecto.fecha_fin.strftime('%d/%m/%Y') if proyecto.fecha_fin else 'No definida' }}</strong>
+                </small>
+              </div>
+
+              {% if proyecto.fecha_fin and proyecto.fecha_fin < now %}
+              <div class="alert alert-warning mt-2 p-2 mb-0" role="alert">
+                ⚠️ Proyecto atrasado {{ (now - proyecto.fecha_fin).days }} día{{ 's' if (now - proyecto.fecha_fin).days != 1 else '' }}.
+              </div>
+              {% endif %}
             </div>
             <div class="text-end">
               <span class="badge bg-success">{{ "%.1f"|format(proyecto.progreso_general) }}%</span>
@@ -98,89 +258,83 @@
           data-bs-parent="#proyectoAccordion{{ proyecto.id_proyecto }}">
           <div class="accordion-body">
 
-            <!-- ACTIVIDADES -->
+            <h2>ACTIVIDADES</h2>
+
             {% if proyecto.actividades %}
-            <div class="list-group mb-3">
+            <div class="accordion mb-3" id="actividadesAccordion{{ proyecto.id_proyecto }}">
               {% for actividad in proyecto.actividades %}
-              <div class="list-group-item">
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <strong>{{ actividad.nombre }} ({{ actividad.avanzado }}/{{ actividad.unidades_totales }}
-                      unidades)</strong><br>
-                    <small class="text-muted">{{ actividad.descripcion or "Sin descripción" }}</small>
-                  </div>
-                  {% set progreso = actividad.porcentaje or 0 %}
-                  <span class="badge bg-success">{{ progreso }}%</span>
-                </div>
-
-                <!-- Barra de progreso -->
-                <div class="progress mt-2">
-                  <div class="progress-bar" role="progressbar" style="width: {{ progreso }}%;"></div>
-                </div>
-
-                <script>
-                  function enviarAvance(form) {
-                    // Mostrar mensaje
-                    const mensaje = document.createElement('div');
-                    mensaje.className = 'alert alert-success';
-                    mensaje.textContent = '✅ Avance enviado correctamente. Recargando...';
-                    form.parentNode.insertBefore(mensaje, form);
-
-                    // Enviar el formulario
-                    form.submit();
-                  }
-                </script>
-
-                <!-- Formulario de avance -->
-                <form method="POST"
-                  action="{{ url_for('avances.registrar_avance', id_actividad=actividad.id_actividad) }}" class="mt-3"
-                  enctype="multipart/form-data">
-
-                  <div class="row g-2 align-items-end">
-                    <div class="col-md-3">
-                      <label class="form-label">Unidades avanzadas</label>
-                      <input type="number" name="unidades_avanzadas" class="form-control" min="1" required>
+              <div class="accordion-item mb-2 shadow-sm">
+                <h2 class="accordion-header" id="headingActividad{{ actividad.id_actividad }}">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#collapseActividad{{ actividad.id_actividad }}" aria-expanded="false"
+                    aria-controls="collapseActividad{{ actividad.id_actividad }}">
+                    <div class="d-flex flex-column w-100">
+                      <strong>{{ actividad.nombre }} ({{ actividad.avanzado }}/{{ actividad.unidades_totales }} unidades)</strong>
+                      <small class="text-muted">{{ actividad.descripcion or "Sin descripción" }}</small>
                     </div>
-                    <div class="col-md-3">
-                      <label class="form-label">Fecha</label>
-                      <input type="date" name="fecha" class="form-control" required value="{{ now }}">
+                    <div class="text-end ms-auto">
+                      {% set progreso = actividad.porcentaje or 0 %}
+                      <span class="badge bg-success progress-badge">{{ progreso }}%</span>
                     </div>
-                    <div class="col-md-4">
-                      <label class="form-label">Comentario</label>
-                      <input type="text" name="mensaje" class="form-control" placeholder="Ej: tramo A terminado">
-                    </div>
-                  </div>
+                  </button>
+                </h2>
 
-                  <div class="row g-2 mt-3">
-                    <!-- Subir evidencias -->
-                    <div class="col-md-6">
-                      <label class="form-label">📂 Subir evidencias</label>
-                      <input type="file" name="evidencias" class="form-control" accept="image/*" multiple>
+                <div id="collapseActividad{{ actividad.id_actividad }}" class="accordion-collapse collapse"
+                  aria-labelledby="headingActividad{{ actividad.id_actividad }}"
+                  data-bs-parent="#actividadesAccordion{{ proyecto.id_proyecto }}">
+                  <div class="accordion-body">
+
+                    <div class="progress mb-3">
+                      <div class="progress-bar" role="progressbar" style="width: {{ progreso }}%;"></div>
                     </div>
 
-                    <!-- Cámara -->
-                    <div class="col-md-6">
-                      <label class="form-label">📸 Tomar foto en vivo</label>
-                      <div class="d-flex flex-column">
-                        <video id="video-{{ actividad.id_actividad }}" width="220" height="160" autoplay></video>
-                        <button type="button" class="btn btn-secondary mt-2 btn-sm"
-                          onclick="tomarFoto('{{ actividad.id_actividad }}')">
-                          <i class="bi bi-camera"></i> Capturar
-                        </button>
-                        <canvas id="canvas-{{ actividad.id_actividad }}" width="220" height="160"></canvas>
-                        <input type="hidden" name="captura_base64" id="captura_base64-{{ actividad.id_actividad }}">
+                    <form method="POST"
+                      action="{{ url_for('avances.registrar_avance', id_actividad=actividad.id_actividad) }}"
+                      enctype="multipart/form-data">
+
+                      <div class="row g-2 align-items-end">
+                        <div class="col-md-3">
+                          <label class="form-label">Unidades avanzadas</label>
+                          <input type="number" name="unidades_avanzadas" class="form-control" min="1" required>
+                        </div>
+                        <div class="col-md-3">
+                          <label class="form-label">Fecha</label>
+                          <input type="date" name="fecha" class="form-control" required value="{{ now }}">
+                        </div>
+                        <div class="col-md-4">
+                          <label class="form-label">Comentario</label>
+                          <input type="text" name="mensaje" class="form-control" placeholder="Ej: tramo A terminado">
+                        </div>
                       </div>
-                    </div>
-                  </div>
 
-                  <div class="row mt-3">
-                    <div class="col-md-12 text-end">
-                      <button type="submit" class="btn btn-success w-100">
-                        <i class="bi bi-send"></i> Enviar Avance
-                      </button>
-                    </div>
+                      <div class="row g-2 mt-3">
+                        <div class="col-md-6">
+                          <label class="form-label">📂 Subir evidencias</label>
+                          <input type="file" name="evidencias" class="form-control" accept="image/*" multiple>
+                        </div>
+
+                        <div class="col-md-6">
+                          <label class="form-label">📸 Tomar foto en vivo</label>
+                          <div class="d-flex flex-column">
+                            <video id="video-{{ actividad.id_actividad }}" width="220" height="160" autoplay></video>
+                            <button type="button" class="btn btn-secondary mt-2 btn-sm"
+                              onclick="tomarFoto('{{ actividad.id_actividad }}')">
+                              <i class="bi bi-camera"></i> Capturar
+                            </button>
+                            <canvas id="canvas-{{ actividad.id_actividad }}" width="220" height="160"></canvas>
+                            <input type="hidden" name="captura_base64" id="captura_base64-{{ actividad.id_actividad }}">
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="mt-3 text-end">
+                        <button type="submit" class="btn btn-success w-100">
+                          <i class="bi bi-send"></i> Enviar Avance
+                        </button>
+                      </div>
+                    </form>
                   </div>
-                </form>
+                </div>
               </div>
               {% endfor %}
             </div>
@@ -199,13 +353,7 @@
 
   </div>
 
-
-
-
-
-
-
-  <!-- Modal de felicitación -->
+  <!-- Modal felicitación -->
   <div class="modal fade" id="felicitacionModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow">
@@ -223,41 +371,24 @@
   </div>
 
   <script>
-
-
-    //CON SONIDO
     function mostrarFelicitacion() {
       const audio = document.getElementById('sonidoFelicitacion');
-      audio.play().catch(e => console.log("No se pudo reproducir el sonido"));
+      audio.play().catch(() => { });
       const modal = new bootstrap.Modal(document.getElementById('felicitacionModal'));
       modal.show();
     }
 
-    // Función para mostrar el modal de felicitación
-    function mostrarFelicitacion() {
-      const modal = new bootstrap.Modal(document.getElementById('felicitacionModal'));
-      modal.show();
-    }
-
-    // Escuchar el evento de envío de formulario
     document.addEventListener('DOMContentLoaded', function () {
       const forms = document.querySelectorAll('form[method="POST"]');
       forms.forEach(form => {
         form.addEventListener('submit', function (e) {
-          e.preventDefault(); // Evitar el envío normal
-
-          // Mostrar el modal de felicitación
+          e.preventDefault();
           mostrarFelicitacion();
-
-          // Enviar el formulario después de 2 segundos
-          setTimeout(() => {
-            form.submit();
-          }, 2000);
+          setTimeout(() => form.submit(), 2000);
         });
       });
     });
 
-    // Iniciar cámara en cada actividad
     document.addEventListener('DOMContentLoaded', () => {
       const videos = document.querySelectorAll('video[id^="video-"]');
       videos.forEach(video => {
@@ -276,21 +407,18 @@
       input.value = canvas.toDataURL('image/jpeg');
       alert('📷 Foto capturada correctamente.');
     }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const frase = document.querySelector(".frase-motivacional");
+      frase.style.opacity = 0;
+      frase.style.transform = "scale(0.95)";
+      setTimeout(() => {
+        frase.style.transition = "all 1s ease";
+        frase.style.opacity = 1;
+        frase.style.transform = "scale(1)";
+      }, 300);
+    });
   </script>
-
-  <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const frase = document.querySelector(".frase-motivacional");
-    frase.style.opacity = 0;
-    frase.style.transform = "scale(0.95)";
-    setTimeout(() => {
-      frase.style.transition = "all 1s ease";
-      frase.style.opacity = 1;
-      frase.style.transform = "scale(1)";
-    }, 300);
-  });
-</script>
-
   {% endblock %}
 </body>
 

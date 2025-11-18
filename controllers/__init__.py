@@ -7,6 +7,7 @@ from .asistencia_controller import asistencia_bp
 from .usuarios_controller import usuarios_bp
 from .avances_controller import avances_bp
 from .actividades_controller import actividades_bp
+from .horarios_controller import horarios_bp
 
 def register_controllers(app):
     app.register_blueprint(dashboard_bp)
@@ -18,3 +19,4 @@ def register_controllers(app):
     app.register_blueprint(usuarios_bp)
     app.register_blueprint(avances_bp)
     app.register_blueprint(actividades_bp)
+    app.register_blueprint(horarios_bp)

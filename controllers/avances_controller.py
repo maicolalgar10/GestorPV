@@ -1,9 +1,11 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from models import db, Actividades, Avances, Proyectos, ProyectoPersonal, Evidencias
+from models import db, Actividades, Avances, Proyectos, ProyectoPersonal, Evidencias, Usuarios, Notificaciones
 from datetime import datetime
 import os, base64
 from werkzeug.utils import secure_filename
 from frases import obtener_frase
+from decorators import login_required, admin_required, admin_encargado_required # Importa los decoradores
+
 # Carpeta donde se guardarán las imágenes
 UPLOAD_FOLDER = "static/uploads/evidencias"
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
@@ -18,6 +20,7 @@ avances_bp = Blueprint("avances", __name__)
 # ➕ REGISTRAR AVANCE DE UNA ACTIVIDAD (trabajador)
 # ===============================================================
 @avances_bp.route("/registrar/<int:id_actividad>", methods=["POST"])
+@login_required
 def registrar_avance(id_actividad):
     flash(obtener_frase("avance"), "success")
     id_usuario = session.get("user_id")
@@ -77,6 +80,29 @@ def registrar_avance(id_actividad):
                 tipo="imagen"
             )
             db.session.add(evidencia)
+            
+        
+        # ============================
+        # Crear notificación al ADMIN
+        # ============================
+        admins = Usuarios.query.filter_by(rol="ADMIN").all()
+
+        if admins:
+            actividad = Actividades.query.get(id_actividad)
+            proyecto = actividad.proyecto
+
+            mensaje_notif = (
+                f"Se ha registrado un nuevo avance en la actividad "
+                f"'{actividad.nombre}' del proyecto '{proyecto.nombre}'."
+            )
+
+            for admin in admins:
+                notificacion = Notificaciones(
+                    id_usuario_destino=admin.id_usuario,
+                    mensaje=mensaje_notif
+                )
+                db.session.add(notificacion)
+
 
         # ✅ RECALCULAR EL PROGRESO DE LA ACTIVIDAD
         actividad = Actividades.query.get(id_actividad)
@@ -106,6 +132,8 @@ def registrar_avance(id_actividad):
 # 📋 INFORME DE AVANCE DE UN PROYECTO
 # ===============================================================
 @avances_bp.route("/informe/<int:id_proyecto>")
+@login_required
+@admin_required
 def ver_informe_avance(id_proyecto):
     id_usuario = session.get("user_id")
     if not id_usuario:
@@ -127,3 +155,27 @@ def ver_informe_avance(id_proyecto):
         proyecto=proyecto,
         avances=avances
     )
+    
+
+# ===============================================================
+# 🔔 Marcar UNA notificación como leída y redirigir
+# ===============================================================
+@avances_bp.route('/notificacion/leer/<int:id_notificacion>')
+@login_required
+def leer_notificacion(id_notificacion):
+    notificacion = Notificaciones.query.get_or_404(id_notificacion)
+
+    # Verificar que la notificación sea del usuario
+    if notificacion.id_usuario_destino != session.get("user_id"):
+        flash("No tienes permiso para ver esta notificación", "danger")
+        return redirect(url_for('proyectos.manage_proyectos'))
+
+    # Marcar como leída
+    if not notificacion.leido:
+        notificacion.leido = True
+        db.session.commit()
+
+    # 👉 SIEMPRE REDIRIGIR A LA LISTA DE PROYECTOS
+    return redirect(url_for('proyectos.manage_proyectos'))
+
+

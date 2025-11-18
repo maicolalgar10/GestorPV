@@ -21,6 +21,7 @@
 <div class="container mt-4">
   <h2 class="text-primary fw-bold mb-4">🚧 Proyectos en Progreso</h2>
 
+  <!-- ... -->
   {% if proyectos %}
     <div class="table-responsive">
       <table class="table table-bordered table-hover align-middle shadow-sm">
@@ -53,6 +54,7 @@
   {% else %}
     <div class="alert alert-info">No hay proyectos en progreso registrados.</div>
   {% endif %}
+<!-- ... -->
 
   <a href="{{ url_for('dashboard.home') }}" class="btn btn-secondary mt-3">← Volver al Dashboard</a>
 </div>

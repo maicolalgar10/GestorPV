@@ -1,11 +1,14 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from models import db, Materiales, MaterialesProyecto, Proyectos
 from datetime import datetime, date
+from decorators import login_required, admin_required
 
 materiales_bp = Blueprint("materiales", __name__)
 
 # 👉 Listar materiales
 @materiales_bp.route("/materiales")
+@login_required
+@admin_required
 def manage_materiales():
     materiales = Materiales.query.all()
     proyectos = Proyectos.query.all()
@@ -22,6 +25,8 @@ def manage_materiales():
 
 # 👉 Crear nuevo material
 @materiales_bp.route("/materiales/nuevo", methods=["GET", "POST"])
+@login_required
+@admin_required
 def nuevo_material():
     if request.method == "POST":
         try:
@@ -51,6 +56,8 @@ def nuevo_material():
 
 # 👉 Editar material
 @materiales_bp.route("/materiales/editar/<int:id>", methods=["GET", "POST"])
+@login_required
+@admin_required
 def editar_material(id):
     material = Materiales.query.get_or_404(id)
 
@@ -75,6 +82,8 @@ def editar_material(id):
 
 # 👉 Eliminar material
 @materiales_bp.route("/materiales/delete/<int:id>", methods=["POST"])
+@login_required
+@admin_required
 def delete_material(id):
     material = Materiales.query.get_or_404(id)
     try:
@@ -93,6 +102,8 @@ def delete_material(id):
 
 # 👉 Asignar material a proyecto
 @materiales_bp.route("/materiales/asignar", methods=["POST"])
+@login_required
+@admin_required
 def asignar_material():
     try:
         id_material = int(request.form["id_material"])
@@ -134,6 +145,8 @@ def asignar_material():
 
 # 👉 Eliminar asignación de material a proyecto
 @materiales_bp.route("/materiales/asignacion/delete/<int:id>", methods=["POST"])
+@login_required
+@admin_required
 def delete_asignacion(id):
 
     

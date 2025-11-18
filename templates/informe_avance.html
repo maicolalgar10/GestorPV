@@ -32,14 +32,14 @@
   </h3>
 
   {% if avances %}
-    <table class="table table-bordered align-middle">
+    <table class="table table-bordered align-middle shadow-sm">
       <thead class="table-dark">
         <tr>
           <th>Actividad</th>
           <th>Fecha</th>
           <th>Unidades Avanzadas</th>
           <th>Comentario</th>
-          <th>Aprobado</th>
+          <th>Subido por</th>
           <th>Evidencias</th>
         </tr>
       </thead>
@@ -51,10 +51,11 @@
             <td>{{ avance.unidades_avanzadas }}</td>
             <td>{{ avance.mensaje or "Sin comentario" }}</td>
             <td>
-              {% if avance.aprobado %}
-                <span class="badge bg-success">Aprobado</span>
+              {% if avance.usuario %}
+                <i class="bi bi-person-circle text-primary"></i>
+                {{ avance.usuario.nombre or avance.usuario.username }}
               {% else %}
-                <span class="badge bg-warning text-dark">Pendiente</span>
+                <span class="text-muted fst-italic">Desconocido</span>
               {% endif %}
             </td>
             <td>
