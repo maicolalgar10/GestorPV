@@ -371,3 +371,17 @@ class Horario(db.Model):
     personal = db.relationship("Personal", back_populates="horarios")
     proyecto = db.relationship("Proyectos", back_populates="horarios")
 
+
+# models.py
+class AsignacionDiaria(db.Model):
+    __tablename__ = "asignacion_diaria"
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    fecha = db.Column(db.Date, nullable=False) # Fecha de la asignación
+    proyecto_id = db.Column(db.Integer, db.ForeignKey("proyectos.id_proyecto"), nullable=False)
+    personal_id = db.Column(db.Integer, db.ForeignKey("personal.id"), nullable=False) # El personal específico asignado
+    hora_entrada = db.Column(db.Time, nullable=False) # Hora de entrada
+    observacion = db.Column(db.Text, nullable=True) # Observación opcional
+
+    proyecto = db.relationship("Proyectos", back_populates="asignaciones_diarias")
+    personal = db.relationship("Personal", back_populates="asignaciones_diarias")
