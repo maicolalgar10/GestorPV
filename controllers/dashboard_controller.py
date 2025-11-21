@@ -236,3 +236,24 @@ def dashboard_trabajador():
         notificaciones=notificaciones
     )
 
+@dashboard_bp.route("/dashboard/notificaciones/historial_trabajador")
+@login_required
+def historial_notificaciones_trabajador():
+    from flask import session
+
+    user_id = session.get("user_id")
+    if not user_id:
+        flash("Error: usuario no autenticado.", "danger")
+        return redirect(url_for("usuarios.login"))
+
+    notificaciones = (
+        Notificaciones.query
+        .filter_by(id_usuario_destino=user_id)
+        .order_by(Notificaciones.creado_en.desc())
+        .all()
+    )
+
+    return render_template(
+        "notif_personal.html",
+        notificaciones=notificaciones
+    )
