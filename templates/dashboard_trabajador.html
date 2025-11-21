@@ -130,28 +130,39 @@
           </button>
 
           <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="notifDropdown"
-            style="width: 320px; max-height: 400px; overflow-y: auto; border-radius: 10px;">
-            {% if notificaciones and notificaciones|length > 0 %}
-              {% for n in notificaciones %}
-              <li class="px-3 py-2 {% if not n.leido %}bg-light{% endif %}">
-                {% if n.id_horario %}
-                    <a href="{{ url_for('horarios.detalle_horario', id=n.id_horario) }}"
-                      class="text-decoration-none fw-semibold d-block text-primary">
-                      {{ n.mensaje }}
-                    </a>
-                {% else %}
-                  <span class="d-block">{{ n.mensaje }}</span>
-                {% endif %}
-                <small class="text-muted d-block">{{ n.creado_en.strftime('%d/%m/%Y %H:%M') }}</small>
-                {% if not loop.last %}
-                <hr class="my-2">
-                {% endif %}
-              </li>
-              {% endfor %}
-            {% else %}
-              <li class="text-center text-muted py-3">Sin notificaciones nuevas</li>
-            {% endif %}
-          </ul>
+  style="width: 320px; max-height: 400px; overflow-y: auto; border-radius: 10px;">
+
+  {% if notificaciones and notificaciones|length > 0 %}
+    {% for n in notificaciones %}
+    <li class="px-3 py-2 {% if not n.leido %}bg-light{% endif %}">
+      {% if n.id_horario %}
+          <a href="{{ url_for('horarios.detalle_horario', id=n.id_horario) }}"
+            class="text-decoration-none fw-semibold d-block text-primary">
+            {{ n.mensaje }}
+          </a>
+      {% else %}
+        <span class="d-block">{{ n.mensaje }}</span>
+      {% endif %}
+      <small class="text-muted d-block">{{ n.creado_en.strftime('%d/%m/%Y %H:%M') }}</small>
+      {% if not loop.last %}
+      <hr class="my-2">
+      {% endif %}
+    </li>
+    {% endfor %}
+  {% else %}
+    <li class="text-center text-muted py-3">Sin notificaciones nuevas</li>
+  {% endif %}
+
+  <!-- 🔵 ESTE BOTÓN DEBE APARECER SIEMPRE -->
+  <div class="text-center mb-2 mt-2">
+      <a href="{{ url_for('dashboard.historial_notificaciones_trabajador') }}"
+        class="btn btn-outline-primary btn-sm w-100">
+        Ver historial de notificaciones
+      </a>
+  </div>
+
+</ul>
+
         </div>
 
 
