@@ -1,0 +1,97 @@
+
+-- ===========================================
+-- TABLA: personal
+-- ===========================================
+CREATE TABLE personal (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    iniciales VARCHAR(5) NOT NULL,
+    rol ENUM('Ingeniero', 'Trabajador', 'Supervisor') NOT NULL,
+    costo_diario DECIMAL(10,2) NOT NULL,
+    activo BOOLEAN DEFAULT TRUE
+) ENGINE=InnoDB;
+
+-- ===========================================
+-- TABLA: proyecto
+-- ===========================================
+CREATE TABLE proyecto (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    lugar VARCHAR(150) NOT NULL,
+    responsable_id INT NOT NULL,
+    descripcion TEXT,
+    fecha_inicio DATE NOT NULL,
+    fecha_fin DATE NOT NULL,
+    estado ENUM('Planeado', 'En ejecución', 'Finalizado') DEFAULT 'Planeado' NOT NULL,
+    costo_total DECIMAL(12,2),
+    FOREIGN KEY (responsable_id) REFERENCES personal(id)
+        ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+-- ===========================================
+-- TABLA: vehiculo (relación 1:N con proyecto)
+-- ===========================================
+CREATE TABLE vehiculo (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    placa VARCHAR(10) UNIQUE NOT NULL,
+    modelo VARCHAR(50) NOT NULL,
+    documentos_al_dia BOOLEAN DEFAULT TRUE,
+    soat_vencimiento DATE NOT NULL,
+    tecno_vencimiento DATE NOT NULL,
+    costo_dia DECIMAL(10,2) NOT NULL,
+    estado ENUM('Disponible', 'En uso', 'Mantenimiento') DEFAULT 'Disponible',
+    proyecto_id INT NULL,
+    FOREIGN KEY (proyecto_id) REFERENCES proyecto(id)
+        ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+-- ===========================================
+-- TABLA: proyecto_personal (N:N)
+-- ===========================================
+CREATE TABLE proyecto_personal (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    personal_id INT NOT NULL,
+    dias_asignados INT NOT NULL,
+    FOREIGN KEY (proyecto_id) REFERENCES proyecto(id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (personal_id) REFERENCES personal(id)
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+    UNIQUE (proyecto_id, personal_id)
+) ENGINE=InnoDB;
+
+-- ===========================================
+-- TABLA: asistencia
+-- ===========================================
+CREATE TABLE asistencia (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    personal_id INT NOT NULL,
+    proyecto_id INT NOT NULL,
+    fecha DATE NOT NULL,
+    trabajo_manana BOOLEAN DEFAULT FALSE,
+    trabajo_tarde BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (personal_id) REFERENCES personal(id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (proyecto_id) REFERENCES proyecto(id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    UNIQUE (personal_id, proyecto_id, fecha)
+) ENGINE=InnoDB;
+
+
+-- ===========================================
+-- TABLA: materiales (N:1 con proyecto, N:1 con personal)
+-- ===========================================
+CREATE TABLE material (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL,
+    descripcion TEXT,
+    cantidad INT NOT NULL,
+    
+    proyecto_id INT NOT NULL,
+    responsable_id INT NOT NULL,
+
+    FOREIGN KEY (proyecto_id) REFERENCES proyecto(id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (responsable_id) REFERENCES personal(id)
+        ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB;

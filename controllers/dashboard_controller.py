@@ -1,0 +1,393 @@
+import datetime
+import os
+from flask import Blueprint, render_template, redirect, request, url_for, flash, session
+from datetime import date, timedelta, datetime
+from decimal import Decimal
+from werkzeug.utils import secure_filename
+from models import db, Usuarios, Proyectos, Personal, Vehiculos, ProyectoPersonal, Materiales, SolicitudMateriales, Asistencia, Notificaciones, Cotizacion, DetalleSolicitudMaterial # Traemos la nueva propiedad/clase/enum del modelo
+from frases import frase_del_dia
+from decorators import login_required, admin_required, admin_encargado_required, admin_bodega_required, admin_oficina_required
+from sqlalchemy import func
+from sqlalchemy.orm import joinedload, selectinload
+
+# Creamos el blueprint
+dashboard_bp = Blueprint("dashboard", __name__)
+
+# -----------------------------
+# INICIO / HOME
+# -----------------------------
+@dashboard_bp.route("/")
+def home():
+    if "user_id" in session:
+        return redirect(url_for("dashboard.dashboard"))
+    return redirect(url_for("usuarios.login"))
+
+# -----------------------------
+# DASHBOARD PRINCIPAL (ADMIN)
+# -----------------------------
+@dashboard_bp.route("/dashboard")
+@login_required
+def dashboard():
+    # Verificar sesión
+    frase = frase_del_dia()
+    if "user_id" not in session:
+        flash("Debes iniciar sesión primero", "warning")
+        return redirect(url_for("usuarios.login"))
+
+    rol = session.get("rol", "EMPLEADO")
+
+    # Redirigir según rol
+    if rol == "EMPLEADO":
+        return redirect(url_for("dashboard.dashboard_trabajador"))
+    elif rol == "OFICINA":
+        return redirect(url_for("dashboard.dashboard_oficina"))
+    elif rol == "BODEGA":
+        return redirect(url_for("dashboard.dashboard_bodega"))
+
+    # ======================
+    # DASHBOARD DEL ADMIN
+    # ======================
+    proyectos = Proyectos.query.all()
+    personal = Personal.query.all()
+    vehiculos = Vehiculos.query.all()
+    materiales = Materiales.query.all()
+
+    # AJUSTE PARA EL ADMIN: Solo cargar proyectos visibles
+    proyectos = Proyectos.query.filter_by(visible=True).all()
+
+    # Separar proyectos activos y finalizados
+    proyectos_activos = [p for p in proyectos if p.estado and p.estado.strip().upper() != "FINALIZADO"]
+    proyectos_terminados = [p for p in proyectos if p.estado and p.estado.strip().upper() == "FINALIZADO"]
+
+    proyectos_activos_data = []
+    for p in proyectos_activos:
+        relaciones_p = ProyectoPersonal.query.filter_by(proyecto_id=p.id_proyecto).all()
+
+        # Solo personal activo
+        relaciones_activos = [
+            rel for rel in relaciones_p
+            if rel.personal and getattr(rel.personal, "activo", True)
+        ]
+
+        # ================================
+        # CÁLCULO DEL COSTO TOTAL
+        # ================================
+        costo_total = Decimal(0)
+        for rel in relaciones_activos:
+            # Si no tiene dias_asignados, intentar calcularlo desde Asistencia
+            if getattr(rel, "dias_asignados", None) is None:
+                rel.dias_asignados = 0  # por seguridad
+
+            # (opcional) calcular automáticamente según la tabla Asistencia
+            dias_trabajados = Asistencia.query.filter_by(
+                proyecto_id=p.id_proyecto, personal_id=rel.personal_id
+            ).count()
+
+            # Si hay registros de asistencia, reemplazamos el valor
+            if dias_trabajados > 0:
+                rel.dias_asignados = dias_trabajados
+
+            costo_total += rel.personal.costo_diario * rel.dias_asignados
+
+        proyectos_activos_data.append({
+            "id": p.id_proyecto,
+            "nombre": p.nombre,
+            "lugar": p.lugar,
+            "responsable": p.responsable.nombre if p.responsable else "No asignado",
+            "personal": relaciones_activos,
+            "costo_total": costo_total,
+            "vehiculos": [f"{rel.vehiculo.placa} - {rel.vehiculo.modelo}" for rel in p.vehiculos],
+            "estado": p.estado
+        })
+
+
+    # ======================
+    # PROYECTOS FINALIZADOS
+    # ======================
+    proyectos_finalizados = []
+    for p in proyectos_terminados:
+        proyectos_finalizados.append({
+            "id": p.id_proyecto,
+            "nombre": p.nombre,
+            "lugar": p.lugar,
+            "responsable": p.responsable.nombre if p.responsable else "No asignado",
+            "estado": p.estado,
+            "fecha_inicio": p.fecha_inicio,
+            "fecha_fin": p.fecha_fin
+        })
+
+    # ======================
+    # ALERTAS
+    # ======================
+    hoy = date.today()
+    proximos_dias = hoy + timedelta(days=7)
+    alertas = []
+
+    # Vehículos
+    for v in vehiculos:
+        if v.soat_vencimiento < hoy:
+            alertas.append({"mensaje": f"El SOAT del vehículo {v.placa} está VENCIDO ({v.soat_vencimiento})", "tipo": "danger"})
+        elif v.soat_vencimiento <= proximos_dias:
+            alertas.append({"mensaje": f"El SOAT del vehículo {v.placa} vence pronto ({v.soat_vencimiento})", "tipo": "warning"})
+
+        if v.tecno_vencimiento < hoy:
+            alertas.append({"mensaje": f"La Técnico-Mecánica del vehículo {v.placa} está VENCIDA ({v.tecno_vencimiento})", "tipo": "danger"})
+        elif v.tecno_vencimiento <= proximos_dias:
+            alertas.append({"mensaje": f"La Técnico-Mecánica del vehículo {v.placa} vence pronto ({v.tecno_vencimiento})", "tipo": "warning"})
+
+    
+
+    vehiculos_disponibles = Vehiculos.query.filter_by(estado="Disponible").all()
+    proyectos_recientes = Proyectos.query.order_by(Proyectos.fecha_inicio.desc()).limit(5).all()
+    
+    
+    #  Notificaciones (solo no leídas)
+    notificaciones = (
+        Notificaciones.query
+        .filter_by(id_usuario_destino=session["user_id"], leido=False)
+        .order_by(Notificaciones.creado_en.desc())
+        .all()
+    )
+
+
+    return render_template(
+        "dashboard.html",
+        proyectos_activos=proyectos_activos_data,
+        proyectos_finalizados=proyectos_finalizados,
+        personal=personal,
+        vehiculos=vehiculos,
+        vehiculos_disponibles=vehiculos_disponibles,
+        materiales=materiales,
+        alertas=alertas,
+        proyectos_recientes=proyectos_recientes,
+        frase=frase,
+        notificaciones=notificaciones
+    )
+
+# -----------------------------
+# DASHBOARD DEL TRABAJADOR
+# -----------------------------
+@dashboard_bp.route("/dashboard/trabajador")
+@login_required
+def dashboard_trabajador():
+    frase = frase_del_dia()
+
+    usuario = Usuarios.query.get(session["user_id"])
+    if not usuario.personal_data:
+        return render_template("dashboard_trabajador.html", usuario=usuario, proyectos=[], solicitudes=[])
+
+    personal_id = usuario.personal_data.id
+
+    # --- 1. PROYECTOS ASIGNADOS ---
+    proyectos_asignados = (
+        db.session.query(Proyectos)
+        .options(selectinload(Proyectos.materiales)) # <-- Fuerza a cargar la relación actualizada
+        .join(ProyectoPersonal)
+        .filter(ProyectoPersonal.personal_id == personal_id)
+        .filter(Proyectos.visible == True)
+        .distinct() 
+        .all()
+    )
+
+    proyectos_activos = [
+        p for p in proyectos_asignados
+        if not p.estado or p.estado.strip().upper() != "FINALIZADO"
+    ]
+
+    es_responsable=any(p.responsable_id == personal_id for p in proyectos_activos)
+
+    # --- 2. SOLICITUDES DE MATERIAL  ---
+    # Traemos todas las solicitudes hechas por este usuario, ordenadas por la más reciente
+    solicitudes = SolicitudMateriales.query.filter_by(
+    id_usuario_solicitante=session['user_id'],
+    visible_para_trabajador=True  # <--- Solo mostrar las activas
+    ).order_by(SolicitudMateriales.fecha_solicitud.desc()).all()
+
+    # --- 3. NOTIFICACIONES ---
+    notificaciones = (
+        Notificaciones.query
+        .filter_by(id_usuario_destino=session["user_id"], leido=False)
+        .order_by(Notificaciones.creado_en.desc())
+        .all()
+    )
+
+    hoy = datetime.utcnow().date()
+
+    return render_template(
+        "dashboard_trabajador.html",
+        usuario=usuario,
+        proyectos=proyectos_activos,
+        solicitudes=solicitudes, # <--- ¡IMPORTANTE PASAR ESTO!
+        frase=frase,
+        now=hoy,
+        datetime=datetime,
+        notificaciones=notificaciones,
+        es_responsable=es_responsable
+    )
+
+# -----------------------------
+# DASHBOARD DE OFICINA
+# -----------------------------
+@dashboard_bp.route("/dashboard/oficina")
+@login_required
+@admin_oficina_required
+def dashboard_oficina():
+    frase = frase_del_dia()
+
+
+    # 📌 Historial de cotizaciones (todas)
+    cotizaciones_historial = (
+        Cotizacion.query
+        .order_by(Cotizacion.id.desc())
+        .limit(5)
+        .all()
+    )
+
+    # 📌 Seguimiento de facturación (solo con factura)
+    from models import Factura
+
+    facturas = (
+        Factura.query
+        .order_by(Factura.id.desc())
+        .limit(5)
+        .all()
+    )
+
+    # Notificaciones no leídas
+    notificaciones = Notificaciones.query.filter_by(
+        id_usuario_destino=session["user_id"], leido=False
+    ).order_by(Notificaciones.creado_en.desc()).all()
+
+    # Usuario actual
+    usuario = Usuarios.query.get(session.get("user_id"))
+    
+    print("TOTAL COTIZACIONES:", Cotizacion.query.count())
+    print("CON FACTURA:", Cotizacion.query.filter(Cotizacion.factura.has()).count())
+
+    return render_template(
+        "dashboard_oficina.html",
+        usuario=usuario,
+        frase=frase,
+        cotizaciones_historial=cotizaciones_historial,
+        facturas=facturas,
+        notificaciones=notificaciones  # Cotización aceptada lista para facturar
+    )
+
+    
+# -----------------------------
+# DASHBOARD DE BODEGA
+# -----------------------------
+@dashboard_bp.route("/dashboard/bodega")
+@login_required
+@admin_bodega_required
+def dashboard_bodega():
+    frase = frase_del_dia()
+
+    if "user_id" not in session:
+        flash("Debes iniciar sesión primero", "warning")
+        return redirect(url_for("usuarios.login"))
+
+    usuario = Usuarios.query.get(session["user_id"])
+    rol = session.get("rol")
+
+    # Solo permitir acceso a BODEGA o ADMIN
+    if rol not in ["BODEGA", "ADMIN"]:
+        flash("No tienes permiso para acceder a esta sección", "danger")
+        return redirect(url_for("dashboard.dashboard"))
+
+    #OBTENER DATOS PARA BODEGA
+    materiales = Materiales.query.all()
+    proyectos = Proyectos.query.all()
+
+    # 1. Definimos la carga optimizada para no repetir código
+    # Esto trae la solicitud + sus detalles + el nombre del material en una sola ráfaga a la DB
+    query_optimizada = SolicitudMateriales.query.options(
+        joinedload(SolicitudMateriales.detalles).joinedload(DetalleSolicitudMaterial.material)
+    ).filter_by(visible_para_bodega=True)
+
+    # 2. Obtenemos las listas filtradas usando la optimización
+    pendientes = query_optimizada.filter_by(estado='PENDIENTE').all()    
+    en_proceso = query_optimizada.filter_by(estado='EN_PROCESO').all()
+    completados = query_optimizada.filter_by(estado='COMPLETADO').all()
+    rechazados = query_optimizada.filter_by(estado='RECHAZADO').all()
+
+    # Calcular estadísticas
+    total_materiales = len(materiales)
+    total_proyectos = len(proyectos)
+
+    # Notificaciones (solo no leídas)
+    notificaciones = (
+        Notificaciones.query
+        .filter_by(id_usuario_destino=session["user_id"], leido=False)
+        .order_by(Notificaciones.creado_en.desc())
+        .all()
+    )
+
+    return render_template(
+        "dashboard_bodega.html",  
+        usuario=usuario,
+        frase=frase,
+        total_materiales=total_materiales,
+        total_proyectos=total_proyectos,
+
+        #PASAR  SOLICITUDES A LA PLANTILLA
+        pendientes=pendientes,
+        en_proceso=en_proceso,
+        completados=completados,
+        rechazados=rechazados,
+        notificaciones=notificaciones
+    )
+
+
+
+
+
+@dashboard_bp.route("/dashboard/notificaciones/historial")
+@login_required
+def historial_notificaciones():
+
+    user_id = session.get("user_id")
+    if not user_id:
+        flash("Error: usuario no autenticado.", "danger")
+        return redirect(url_for("usuarios.login"))
+
+    notificaciones = (
+        Notificaciones.query
+        .filter_by(id_usuario_destino=user_id)
+        .order_by(Notificaciones.creado_en.desc())
+        .all()
+    )
+
+    return render_template(
+        "notif_personal.html",
+        notificaciones=notificaciones
+    )
+
+
+#AFECTA UNICAMENTE AL USUARIO LOGEADO
+@dashboard_bp.route("/dashboard/notificaciones/marcar_todas_leidas")
+@login_required
+def marcar_todas_leidas():
+    try:
+        user_id = session.get("user_id")
+        if not user_id:
+            flash("Error: usuario no autenticado.", "danger")
+            return redirect(url_for("usuarios.login"))
+
+        # Marcar todas las notificaciones del usuario como leídas
+        notificaciones_no_leidas = Notificaciones.query.filter_by(
+            id_usuario_destino=user_id,
+            leido=False
+        ).all()
+        
+        for notif in notificaciones_no_leidas:
+            notif.leido = True
+        
+        db.session.commit()
+        flash("Todas las notificaciones han sido marcadas como leídas", "success")
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al marcar notificaciones: {str(e)}", "danger")
+    
+    return redirect(url_for('dashboard.dashboard'))  # Redirige al dashboard

@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Oficina</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary-grad: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+      --success-grad: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --warning-grad: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    }
+
+    body { background-color: #f3f4f6; font-family: 'Inter', sans-serif; color: #1f2937; }
+
+    .module-card {
+      background: white;
+      border: none;
+      border-radius: 20px;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+
+    .stat-card {
+      border: none;
+      border-radius: 20px;
+      transition: transform 0.3s ease;
+      color: white;
+    }
+    .stat-card:hover { transform: translateY(-5px); }
+    
+    .bg-grad-blue { background: var(--primary-grad); }
+    .bg-grad-green { background: var(--success-grad); }
+    .bg-grad-orange { background: var(--warning-grad); }
+
+    .section-title {
+      font-weight: 700;
+      color: #374151;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+
+    /* Estilo para la fila expandida */
+    .detail-row {
+        background-color: #f8f9fa; /* Fondo gris claro */
+        box-shadow: inset 0 3px 6px -3px rgba(0,0,0,0.1); /* Sombra interna sutil */
+    }
+
+    /* La tarjeta blanca de cada acta */
+    .acta-card {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+        transition: transform 0.2s;
+    }
+    .acta-card:hover {
+        border-color: #3b82f6; /* Borde azul al pasar el mouse */
+    }
+
+    /* Contenedor de la imagen a la derecha */
+    .soporte-preview {
+        width: 80px;
+        height: 80px;
+        border-radius: 8px;
+        background-color: #f3f4f6;
+        border: 2px dashed #d1d5db;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        color: #9ca3af;
+        text-decoration: none;
+        overflow: hidden;
+    }
+    
+    .soporte-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .soporte-preview:hover {
+        background-color: #eef2ff;
+        border-color: #6366f1;
+        color: #6366f1;
+    }
+
+    /* Flecha de rotación */
+    .rotate-icon { transition: transform 0.3s ease; }
+    .collapsed .rotate-icon { transform: rotate(0deg); }
+    .btn-toggle:not(.collapsed) .rotate-icon { transform: rotate(180deg); }
+  </style>
+</head>
+<body>
+  {% include 'mensajes.html' %}
+
+  <div class="container mt-4 pb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h2 class="fw-bold m-0"><i class="bi bi-building-fill text-primary"></i> Gestión de Oficina</h2>
+        <p class="text-secondary small">Panel Administrativo | {{ usuario.nombre }}</p>
+      </div>
+      <div class="dropdown">
+        <button class="btn btn-white shadow-sm dropdown-toggle px-3 py-2 border-0 bg-white" data-bs-toggle="dropdown" style="border-radius: 12px;">
+          <i class="bi bi-person-circle text-primary"></i> Mi Perfil
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+          <li><a class="dropdown-item" href="{{ url_for('usuarios.perfil') }}">Ajustes</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item text-danger" href="{{ url_for('usuarios.logout') }}">Cerrar Sesión</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+      <div class="col-md-4">
+        <div class="card stat-card bg-grad-blue p-3">
+          <div class="card-body text-center">
+            <h2 class="fw-bold m-0">{{ total_proyectos }}</h2>
+            <p class="mb-0 opacity-75 small fw-bold text-uppercase">Proyectos Activos</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card stat-card bg-grad-green p-3">
+          <div class="card-body text-center">
+            <h2 class="fw-bold m-0">{{ total_personal }}</h2>
+            <p class="mb-0 opacity-75 small fw-bold text-uppercase">Personal</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card stat-card bg-grad-orange p-3">
+          <div class="card-body text-center">
+            <h2 class="fw-bold m-0">{{ total_materiales }}</h2>
+            <p class="mb-0 opacity-75 small fw-bold text-uppercase">Stock Materiales</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      
+      <div class="col-lg-8">
+        <div class="module-card p-4">
+          <h5 class="section-title"><i class="bi bi-receipt text-danger"></i> Seguimiento de Facturación</h5>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Proyecto</th>
+                  <th>Cliente</th>
+                  <th>Total</th>
+                  <th>Anticipo</th>
+                  <th>Saldo</th>
+                  <th>Estado</th>
+                  <th class="text-end">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for f in facturas %}
+                  <tr>
+                    <td>
+                      <strong>{{ f.cotizacion.proyecto }}</strong>
+                    </td>
+                    <td>{{ f.cotizacion.cliente }}</td>
+                    
+                    <td>${{ "{:,.2f}".format(f.total) }}</td>
+                    <td>
+                      {% if f %}
+                        {% set total_consignado = 0 %}
+                        {% for a in f.actas %}
+                          {% if a.tipo_documento == "FACTURA" %}
+                            {% set total_consignado = total_consignado + (a.valor_consignado or 0) %}
+                          {% endif %}
+                        {% endfor %}
+
+                        {% set total_pagado = f.anticipo + total_consignado %}
+                        ${{ "{:,.2f}".format(total_pagado) }}
+                      {% else %}
+                        -
+                      {% endif %}
+                    </td>
+
+                    <td>
+                      {% if f %}
+                        {% set total_consignado = 0 %}
+                        {% for a in f.actas %}
+                          {% if a.tipo_documento == "FACTURA" %}
+                            {% set total_consignado = total_consignado + (a.valor_consignado or 0) %}
+                          {% endif %}
+                        {% endfor %}
+
+                        {% set total_pagado = (f.anticipo or 0) + total_consignado %}
+
+                        <span class="text-danger fw-bold">
+                          ${{ "{:,.2f}".format((f.total or 0) - total_pagado) }}
+                        </span>
+                      {% else %}
+                        -
+                      {% endif %}
+                    </td>
+
+                    <td class="text-center">
+                      {% if f %}
+                        
+                        {% if f.actas|length == 0 %}
+                          <span class="badge bg-light text-secondary border">
+                            Sin pagos
+                          </span>
+
+                        {% elif f.estado == 'PENDIENTE' %}
+                          <span class="badge bg-light text-danger border border-danger">
+                            Pendiente
+                          </span>
+
+                        {% elif f.estado == 'EN_PROCESO' %}
+                          <span class="badge bg-light text-warning border border-warning">
+                            En Proceso
+                          </span>
+
+                        {% elif f.estado == 'FACTURADO' %}
+                          <span class="badge bg-light text-success border border-success">
+                            Facturado
+                          </span>
+
+                        {% endif %}
+
+                      {% else %}
+                        <span class="badge bg-light text-muted border">
+                          Sin factura
+                        </span>
+                      {% endif %}
+                    </td>
+
+
+                    <td class="text-end">
+                      <a href="{{ url_for('facturas.ver_factura', factura_id=f.id) }}"
+                        class="btn btn-primary btn-sm rounded-pill px-3">
+                        Revisar
+                      </a>
+                    </td>
+
+                  </tr>
+
+                  {% if f.actas %}
+                  <tr>
+                      <td colspan="7" class="p-0 border-0">
+                          <div class="collapse" id="detalle{{ f.id }}">
+                              <div class="detail-row p-4">
+                                  <h6 class="fw-bold mb-3 text-secondary ps-2 border-start border-4 border-primary">
+                                      Detalle de Anticipos y Facturas
+                                  </h6>
+
+                                  <div class="row g-3">
+                                      {% for acta in f.actas %}
+                                      <div class="col-md-6"> <div class="acta-card p-3 d-flex justify-content-between align-items-center shadow-sm">
+                                              
+                                              <div>
+                                                  <div class="d-flex align-items-center mb-1">
+                                                      <span class="badge bg-primary rounded-pill me-2">Acta #{{ loop.index }}</span>
+                                                      <span class="text-muted small">Ref: {{ acta.numero_documento }}</span>
+                                                  </div>
+                                                  <h5 class="text-success fw-bold mb-1">
+                                                      {% if acta.tipo_documento == "FACTURA" %}
+                                                        ${{ "{:,.0f}".format(acta.valor_consignado or 0) }}
+                                                      {% else %}
+                                                        ${{ "{:,.0f}".format(acta.cantidad or 0) }}
+                                                      {% endif %}
+                                                  </h5>
+                                                  <small class="text-muted">
+                                                      <i class="bi bi-calendar-event me-1"></i>
+                                                      {{ acta.fecha_recepcion.strftime('%d de %B de %Y') if acta.fecha_recepcion else 'Fecha N/A' }}
+                                                  </small>
+                                              </div>
+
+                                              <div>
+                                                  {% if acta.archivo_soporte %}
+                                                      <a href="{{ url_for('static', filename='uploads/actas/' + acta.archivo_soporte) }}" target="_blank" class="soporte-preview" title="Ver Soporte">
+                                                          {% if acta.archivo_soporte.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')) %}
+                                                              <img src="{{ url_for('static', filename='uploads/actas/' + acta.archivo_soporte) }}" alt="Soporte">
+                                                          {% else %}
+                                                              <i class="bi bi-file-earmark-pdf fs-3 text-danger"></i>
+                                                              <span>PDF</span>
+                                                          {% endif %}
+                                                      </a>
+                                                  {% else %}
+                                                      <div class="soporte-preview" style="cursor: default;">
+                                                          <i class="bi bi-image text-muted fs-4"></i>
+                                                          <span class="text-muted" style="font-size: 0.6rem;">Sin img</span>
+                                                      </div>
+                                                  {% endif %}
+                                              </div>
+
+                                          </div>
+                                      </div>
+                                      {% endfor %}
+                                  </div>
+                              </div>
+                          </div>
+                      </td>
+                  </tr>
+                  {% endif %}
+
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="module-card p-4 mb-4" style="border-top: 4px solid #4f46e5;">
+          <h5 class="section-title"><i class="bi bi-calculator text-primary"></i> Cotizador</h5>
+          <p class="text-muted small">Crea presupuestos y expórtalos a PDF.</p>
+          <button class="btn btn-primary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#modalCotizacion">
+            <i class="bi bi-plus-circle me-1"></i> Nueva Cotización
+          </button>
+        </div>
+
+        <div class="module-card p-4">
+          <h5 class="section-title"><i class="bi bi-receipt-cutoff text-success"></i> Historial</h5>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Cliente</th>
+                  <th class="text-end">Total</th>
+                  <th class="text-center">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for c in cotizaciones_historial %}
+                <tr>
+                  <td>
+                    <strong>{{ c.cliente }}</strong>
+                    <div class="small text-muted">{{ c.proyecto }}</div>
+                    
+                    <div class="mt-1">
+                        {% if c.estado == "PENDIENTE" %}
+                        <form method="POST" action="{{ url_for('cotizaciones.cambiar_estado_cotizacion', id=c.id, estado='ACEPTADA') }}" class="d-inline">
+                            <button class="btn btn-success btn-sm p-0 px-1" title="Aceptar">✔</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('cotizaciones.cambiar_estado_cotizacion', id=c.id, estado='RECHAZADA') }}" class="d-inline">
+                            <button class="btn btn-danger btn-sm p-0 px-1" title="Rechazar">✖</button>
+                        </form>
+                        {% endif %}
+
+                        {% if c.imagen_cotizacion %}
+                          <a href="{{ url_for('static', filename='uploads/cotizaciones/' ~ c.imagen_cotizacion) }}"
+                            target="_blank"
+                            class="btn btn-light btn-sm border me-1"
+                            title="Ver imagen de cotización">
+                            <i class="bi bi-image"></i>
+                          </a>
+                        {% endif %}
+
+
+                        {% if c.estado == "ACEPTADA" and not c.factura %}
+                        <button
+                          type="button"
+                          class="btn btn-light btn-sm border me-1 text-success"
+                          title="Crear factura"
+                          data-bs-toggle="modal"
+                          data-bs-target="#modalFactura"
+                          onclick="document.getElementById('factura_cotizacion_id').value='{{ c.id }}'">
+                          <i class="bi bi-receipt"></i>
+                        </button>
+                        {% endif %}
+
+
+                        <!-- BOTÓN ELIMINAR -->
+                        <form method="POST"
+                              action="{{ url_for('cotizaciones.eliminar_cotizacion', id=c.id) }}"
+                              class="d-inline"
+                              onsubmit="return confirm('¿Seguro que deseas eliminar esta cotización? Esta acción no se puede deshacer.')">
+                            <button class="btn btn-light btn-sm border p-0 px-1 text-danger"
+                                    title="Eliminar cotización">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                  </td>
+
+                  <td class="text-end">${{ "{:,.0f}".format(c.factura.total or 0) }}</td>
+
+                  <td class="text-center">
+                    {% if c.estado == "PENDIENTE" %}
+                      <span class="badge bg-warning">Pendiente</span>
+                    {% elif c.estado == "ACEPTADA" %}
+                      <span class="badge bg-success">Aceptada</span>
+                    {% else %}
+                      <span class="badge bg-danger">Rechazada</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3" class="text-center text-muted">No hay cotizaciones</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div> <div class="text-center mt-5">
+      <span class="badge bg-white text-secondary p-3 rounded-pill shadow-sm">
+          <i class="bi bi-stars text-warning me-2"></i> {{ frase }}
+      </span>
+    </div>
+  </div>
+
+<!-- ================= MODAL COTIZACIÓN ================= -->
+  <div class="modal fade" id="modalCotizacion" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content border-0 shadow" style="border-radius: 20px;">
+
+        <form id="formCotizacion"
+              method="POST"
+              action="{{ url_for('cotizaciones.crear_cotizacion') }}"
+              enctype="multipart/form-data">
+
+          <!-- HEADER -->
+          <div class="modal-header border-0">
+            <h5 class="fw-bold">
+              <i class="bi bi-calculator text-primary"></i> Nueva Cotización
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <!-- BODY -->
+          <div class="modal-body px-4">
+
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <input name="cliente" class="form-control" placeholder="Nombre del Cliente" required>
+              </div>
+              <div class="col-md-4">
+                <input name="proyecto" class="form-control" placeholder="Nombre del Proyecto" required>
+              </div>
+              <div class="col-md-4">
+                <input name="numero_cotizacion" class="form-control" placeholder="Número de Cotización" required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Imagen de Cotización (opcional)</label>
+              <input type="file" name="imagen_cotizacion" class="form-control" accept="image/*">
+            </div>
+
+          </div>
+
+          <!-- FOOTER -->
+          <div class="modal-footer border-0">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-success">Guardar Cotización</button>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+<!-- ================= MODAL FACTURA ================= -->
+<div class="modal fade" id="modalFactura" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow" style="border-radius: 20px;">
+
+      <form method="POST" action="{{ url_for('facturas.crear_factura') }}">
+        
+        <input type="hidden" name="cotizacion_id" id="factura_cotizacion_id">
+
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Crear factura</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Valor total oferta económica</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input type="number" name="total" class="form-control" min="0" step="0.01" required>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Porcentaje de anticipo</label>
+            <div class="input-group">
+              <input
+                type="number"
+                name="porcentaje_anticipo"
+                id="porcentaje_anticipo"
+                class="form-control"
+                min="0"
+                max="100"
+                step="0.01"
+                value="0"
+                required
+              >
+              <span class="input-group-text">%</span>
+            </div>
+          </div>
+
+          <div class="mb-2">
+            <small class="text-muted">
+              Anticipo calculado:
+              <strong id="previewAnticipo">$0</strong>
+            </small>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Total sin IVA</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input
+                type="number"
+                name="total_sin_iva"
+                class="form-control"
+                min="0"
+                step="0.01"
+                required
+              >
+            </div>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success">Crear factura</button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    // === Lógica para la Calculadora de Cotización ===
+    let contador = 0;
+    let total = 0;
+
+    function formato(num){
+      return num.toLocaleString('es-CO');
+    }
+
+    function agregarItem(id, nombre, precio) {
+      contador++;
+      const tbody = document.getElementById("itemsCotizados");
+      tbody.insertAdjacentHTML("beforeend", `
+        <tr>
+          <td>
+            <strong>${nombre}</strong>
+            <input type="hidden" name="items[${contador}][catalogo_item_id]" value="${id}">
+          </td>
+          <td class="text-end">$${formato(precio)}</td>
+          <td class="text-center">
+            <input type="number" name="items[${contador}][cantidad]" 
+                   class="form-control form-control-sm text-center" 
+                   style="width:70px;margin:auto" min="1" value="1" 
+                   onchange="recalcular(this, ${precio})">
+          </td>
+          <td class="text-end fw-bold subtotal">$${formato(precio)}</td>
+          <td class="text-end">
+            <button type="button" class="btn btn-outline-danger btn-sm border-0" onclick="eliminarItem(this)">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `);
+      calcularTodo();
+    }
+
+    function recalcular(input, precio){
+      const cantidad = parseInt(input.value) || 1;
+      const fila = input.closest("tr");
+      const subtotal = cantidad * precio;
+      fila.querySelector(".subtotal").innerText = "$" + formato(subtotal);
+      calcularTodo();
+    }
+
+    function eliminarItem(btn){
+      btn.closest("tr").remove();
+      calcularTodo();
+    }
+
+    function calcularTodo(){
+      let suma = 0;
+      document.querySelectorAll("#itemsCotizados tr").forEach(row => {
+        // Reconstruimos el subtotal basándonos en los inputs para mayor precisión
+        // O leemos el texto formateado (menos preciso pero más rápido si ya está calculado)
+        const txt = row.querySelector(".subtotal").innerText;
+        suma += parseInt(txt.replace(/[$.]/g,'')) || 0; // Elimina $ y puntos
+      });
+      total = suma;
+      document.getElementById("totalCotizacion").innerText = formato(total);
+    }
+  </script>
+
+
+  <script>
+    function eliminarItem(btn){
+      btn.closest("tr").remove();
+      calcularTodo();
+    }
+
+    function calcularTodo(){
+      let suma = 0;
+      document.querySelectorAll("#itemsCotizados tr").forEach(row => {
+        // Reconstruimos el subtotal basándonos en los inputs para mayor precisión
+        // O leemos el texto formateado (menos preciso pero más rápido si ya está calculado)
+        const txt = row.querySelector(".subtotal").innerText;
+        suma += parseInt(txt.replace(/[$.]/g,'')) || 0; // Elimina $ y puntos
+      });
+      total = suma;
+      document.getElementById("totalCotizacion").innerText = formato(total);
+    }
+  </script>
+
+  <script>
+    // Inputs
+    const totalInput = document.querySelector('#modalFactura input[name="total"]');
+    const totalSinIvaInput = document.querySelector('#modalFactura input[name="total_sin_iva"]');
+
+    const porcentajeAnticipoInput = document.getElementById('porcentaje_anticipo');
+
+    // Previews
+    const previewAnticipo = document.getElementById('previewAnticipo');
+
+    function actualizarPreviews() {
+      const total = parseFloat(totalInput.value) || 0;
+      const totalSinIva = parseFloat(totalSinIvaInput.value) || 0;
+
+      const pAnticipo = parseFloat(porcentajeAnticipoInput.value) || 0;
+
+      // Cálculos (SOLO visuales)
+      const anticipo = (total * pAnticipo) / 100;
+
+      previewAnticipo.innerText = '$' + anticipo.toLocaleString('es-CO', {
+        minimumFractionDigits: 2
+      });
+    }
+
+    // Eventos
+    totalInput.addEventListener('input', actualizarPreviews);
+    totalSinIvaInput.addEventListener('input', actualizarPreviews);
+    porcentajeAnticipoInput.addEventListener('input', actualizarPreviews);
+  </script>
+
+</body>
+</html>

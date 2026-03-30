@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Personal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css    " rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js    "></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css    ">
+
+  <style>
+    /* ===================== ESTILOS GLASSMORPHISM (Como en el Dashboard) ===================== */
+
+    /* Fondo con Imagen */
+    .background {
+      width: 100%;
+      min-height: 100vh;
+
+      /* Asegúrate de que la ruta a tu nueva imagen sea la correcta */
+      background-image: url("{{ url_for('static', filename='img/fondo.jpg') }}");
+
+      background-size: cover;
+      /* Sigue cubriendo toda la pantalla */
+
+      /* ⭐ EL CAMBIO CLAVE ⭐ */
+      /* Alinea la imagen abajo, para que se vea la carretera y los trabajadores */
+      background-position: bottom center;
+
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      /* El fondo se queda fijo al hacer scroll */
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    /* Contenedor Principal Transparente (Sin blur global para no romper modals) */
+    .container-dashboard {
+      width: 100%;
+      max-width: 1300px;
+      /* Fondo blanco semi-transparente */
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 30px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+      padding: 40px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    /* ===================== TARJETAS DE PERSONAL (ACORDEÓN) ===================== */
+
+    /* Aquí aplicamos el efecto de vidrio fuerte para que resalten */
+    .accordion-item {
+      background-color: rgba(255, 255, 255, 0.9);
+      /* Casi blanco */
+      backdrop-filter: blur(10px);
+      /* Efecto vidrio */
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      border-radius: 15px !important;
+      margin-bottom: 15px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .accordion-item:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .accordion-button {
+      background-color: transparent !important;
+      font-weight: 600;
+      color: #333;
+      border-radius: 15px !important;
+    }
+
+    .accordion-button:focus {
+      box-shadow: none;
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    .accordion-button:not(.collapsed) {
+      color: #0d6efd;
+      background-color: rgba(13, 110, 253, 0.05) !important;
+    }
+
+    /* ===================== BOTONES Y ELEMENTOS ===================== */
+
+    .btn-dark-custom {
+      background-color: #212529;
+      color: #fff;
+      border-radius: 10px;
+      padding: 8px 20px;
+      border: none;
+      transition: all 0.3s;
+    }
+
+    .btn-dark-custom:hover {
+      background-color: #000;
+      transform: scale(1.02);
+    }
+
+    .contact-info i {
+      margin-right: 8px;
+    }
+
+    .badge-proyecto {
+      background: #e9ecef;
+      color: #495057;
+      border: 1px solid #dee2e6;
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+
+    /* Search Bar Style */
+    .search-container input {
+      border-radius: 10px 0 0 10px;
+      border: 1px solid #ced4da;
+      background-color: rgba(255, 255, 255, 0.9);
+    }
+
+    .search-container button {
+      border-radius: 0 10px 10px 0;
+    }
+  </style>
+</head>
+
+<body>
+  {%include 'mensajes.html' %}
+
+  <div class="background">
+
+    <div class="container-dashboard">
+
+      <!-- TITULO Y BOTONES -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-sm btn-light border shadow-sm mb-2">
+            <i class="bi bi-arrow-left"></i> Volver al Dashboard
+          </a>
+          <h2 class="fw-bold text-dark"><i class="bi bi-person-standing"></i> Gestión de Personal</h2>
+          <p class="text-muted mb-0">Administra tu personal, roles y estados.</p>
+        </div>
+        <button class="btn btn-dark-custom shadow" data-bs-toggle="modal" data-bs-target="#crearPersonalModal">
+          <i class="bi bi-person-plus-fill"></i> Nuevo Miembro
+        </button>
+      </div>
+
+      
+
+      <!-- BUSQUEDA POR NOMBRE -->
+      <div>
+        <form method="GET" action="{{ url_for('personal.manage_personal') }}" class="mb-4 search-container">
+        <div class="input-group shadow-sm">
+          <input type="text" class="form-control p-3" name="q" placeholder="Buscar personal por nombre..."
+            value="{{ q or '' }}">
+          <button class="btn btn-light border" type="submit"><i class="bi bi-search"></i> Buscar</button>
+          {% if q %}
+          <a class="btn btn-danger" href="{{ url_for('personal.manage_personal') }}">Limpiar</a>
+          {% endif %}
+        </div>
+      </form>
+      </div>
+
+      {% if personal %}
+      <div class="row g-4">
+        {% for p in personal %}
+        <div class="col-md-6">
+          <div class="accordion" id="accordion-{{ p.id }}">
+            <div class="accordion-item">
+
+              <h2 class="accordion-header" id="heading-{{ p.id }}">
+                <button class="accordion-button collapsed d-flex justify-content-between align-items-center"
+                  type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ p.id }}" aria-expanded="false"
+                  aria-controls="collapse-{{ p.id }}">
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center"
+                      style="width:40px; height:40px;">
+                      <i class="bi bi-person-fill fs-5 text-secondary"></i>
+                    </div>
+                    <div>
+                      <h5 class="mb-0 fw-bold">{{ p.nombre }}</h5>
+                      <small class="text-muted"><strong>Profesión:</strong> {{ p.rol_personalizado or p.rol }}</small>
+                      <br>
+                      <small class="text-muted">
+                      <strong>ROL:</strong> 
+                      {% if p.usuario_data %}
+                        <span class="text-success">
+                          {{ p.usuario_data.rol }}
+                        </span>
+                      {% else %}
+                        <span class="text-danger">
+                          Sin acceso
+                        </span>
+                      {% endif %}
+                    </small>
+                    </div>
+                    
+                    
+                  </div>
+
+                  <div class="text-end ms-auto pe-2">
+                    <span class="badge rounded-pill {% if p.activo %}bg-success{% else %}bg-danger{% endif %}">
+                      {{ "Activo" if p.activo else "Inactivo" }}
+                    </span>
+                    <div class="small fw-bold text-secondary mt-1">${{ "%.0f"|format(p.costo_diario * 30) }}/mes</div>
+                  </div>
+                </button>
+              </h2>
+
+              <div id="collapse-{{ p.id }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ p.id }}"
+                data-bs-parent="#accordion-{{ p.id }}">
+                <div class="accordion-body">
+
+                  <h6 class="fw-bold text-secondary mb-2"><i class="bi bi-briefcase"></i> Proyectos Asignados</h6>
+                  <div class="mb-4 p-2 rounded bg-light border-0">
+                    {% if p.proyectos %}
+                    <div class="d-flex flex-wrap gap-2">
+                      {% for pr in p.proyectos %}
+                      <div class="d-flex align-items-center badge-proyecto bg-white shadow-sm">
+                        <span class="me-2">{{ pr.proyecto.lugar }}</span>
+                        <a href="http://maps.google.com/?q={{ pr.proyecto.lugar | urlencode }}" target="_blank"
+                          class="text-danger" title="Ver ubicación">
+                          <i class="bi bi-geo-alt-fill"></i>
+                        </a>
+                      </div>
+                      {% endfor %}
+                    </div>
+                    {% else %}
+                    <span class="text-muted small fst-italic">Sin proyectos asignados actualmente.</span>
+                    {% endif %}
+                  </div>
+
+                  <div class="row">
+                    <div class="col-md-6">
+                      <h6 class="fw-bold text-secondary mb-2"><i class="bi bi-person-lines-fill"></i> Contacto</h6>
+                      <div class="contact-info mb-3 small">
+                        <p class="mb-1"><i class="bi bi-telephone-fill text-success"></i> {{ p.contacto or "N/A" }}</p>
+                        <p class="mb-1"><i class="bi bi-envelope-fill text-primary"></i> {{ p.usuario_data.email if
+                          p.usuario_data else "N/A" }}</p>
+                      </div>
+                    </div>
+
+
+                  </div>
+
+                  <hr class="text-muted opacity-25">
+
+                  <div class="d-flex justify-content-between align-items-center">
+
+                    <div class="d-flex gap-1">
+                      <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
+                        data-bs-target="#editarPersonalModal{{ p.id }}">
+                        <i class="bi bi-pencil"></i>
+                      </button>
+
+                      {% if p.activo %}
+                      <a href="{{ url_for('personal.desactivar_personal', id=p.id) }}"
+                        class="btn btn-sm btn-outline-warning" title="Desactivar">
+                        <i class="bi bi-pause-circle"></i>
+                      </a>
+                      {% else %}
+                      <a href="{{ url_for('personal.activar_personal', id=p.id) }}"
+                        class="btn btn-sm btn-outline-success" title="Activar">
+                        <i class="bi bi-play-circle"></i>
+                      </a>
+                      {% endif %}
+
+                      <form action="{{ url_for('personal.delete_personal', id=p.id) }}" method="POST"
+                        style="display:inline-block"
+                        onsubmit="return confirm('¿Seguro que quieres eliminar a {{ p.nombre }}?');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-5">
+        <i class="bi bi-people text-muted display-1"></i>
+        <p class="text-muted mt-3">No hay personal registrado aún.</p>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+
+  <!-- MODAL NUEVO PERSONAL -->
+  <div class="modal fade" id="crearPersonalModal" tabindex="-1" aria-labelledby="crearPersonalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content p-4 rounded-4 shadow border-0">
+        <div class="modal-header border-0 pb-0">
+          <h4 class="modal-title fw-bold" id="crearPersonalLabel">Agregar Nuevo Personal</h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body pt-4">
+          <form action="{{ url_for('personal.manage_personal') }}" method="POST">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Nombre Completo</label>
+                <input type="text" class="form-control bg-light" name="nombre" required>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Profesión</label>
+                <select class="form-select bg-light" name="rol" id="rol" onchange="mostrarOtroRol()" required>
+                  <option value="Ingeniero">Ingeniero</option>
+                  <option value="Trabajador">Trabajador</option>
+                  <option value="Bodeguero">Bodeguero</option>
+                  <option value="Administrativo">Administrativo</option>
+                  <option value="Otra">Otra</option>
+                </select>
+              </div>
+
+              <div class="col-md-6" id="rol_otra_div" style="display:none;">
+                <label class="form-label fw-semibold">Especifique el rol</label>
+                <input type="text" class="form-control bg-light" name="rol_personalizado" placeholder="Ej: Soldador">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Costo Diario ($)</label>
+                <input type="number" class="form-control bg-light" name="costo_diario" step="0.01" required>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Contacto</label>
+                <input type="number" class="form-control bg-light" name="contacto">
+              </div>
+              <div class="col-12">
+                <div class="form-check form-switch">
+                  <input type="checkbox" class="form-check-input" name="activo" id="activo" checked>
+                  <label class="form-check-label" for="activo">Personal Activo</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 p-3 bg-light rounded-3">
+              <div class="form-check form-switch">
+                <input type="checkbox" class="form-check-input" name="crear_usuario" id="crear_usuario">
+                <label class="form-check-label fw-bold" for="crear_usuario">¿Dar acceso al sistema (Login)?</label>
+              </div>
+
+              <div id="usuario_fields" class="row g-3 mt-2" style="display:none;">
+                <div class="col-md-6">
+                  <label class="form-label small text-muted">Correo electrónico</label>
+                  <input type="email" class="form-control" name="email" placeholder="usuario@empresa.com">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small text-muted">Rol del Usuario</label>
+                  <select class="form-select" name="rol_usuario">
+                    <option value="EMPLEADO">Empleado (Acceso básico)</option>
+                    <option value="ADMIN">Administrador</option>
+                    <option value="BODEGA">Bodega</option>
+                    <option value="OFICINA">Oficina</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 d-flex justify-content-end gap-2">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="submit" class="btn btn-dark-custom">Guardar Personal</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- MODAL EDITAR PERSONAL -->
+  {% for p in personal %}
+  <div class="modal fade" id="editarPersonalModal{{ p.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content p-4 rounded-4 shadow border-0">
+        <div class="modal-header border-0 pb-0">
+          <h4 class="modal-title fw-bold">Editar Personal</h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body pt-4">
+          <form action="{{ url_for('personal.editar_personal', id=p.id) }}" method="POST">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Nombre</label>
+                <input type="text" class="form-control bg-light" name="nombre" value="{{ p.nombre }}" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Profesión</label>
+                <select class="form-select bg-light" name="rol" id="rol_edit_{{ p.id }}" onchange="mostrarOtroRolEdit('{{ p.id }}')" required>
+                  <option value="Ingeniero" {% if p.rol == 'Ingeniero' %}selected{% endif %}>Ingeniero</option>
+                  <option value="Trabajador" {% if p.rol == 'Trabajador' %}selected{% endif %}>Trabajador</option>
+                  <option value="Bodeguero" {% if p.rol == 'Bodeguero' %}selected{% endif %}>Bodeguero</option>
+                  <option value="Administrativo" {% if p.rol == 'Administrativo' %}selected{% endif %}>Administrativo</option>
+                  <option value="Otra" {% if p.rol_personalizado %}selected{% endif %}>Otra</option>
+                </select>
+              </div>
+              
+              <div class="col-md-6" id="rol_otra_div_edit_{{ p.id }}" style="display:{% if p.rol_personalizado %}block{% else %}none{% endif %};">
+                <label class="form-label fw-semibold">Especifique el rol</label>
+                <input type="text" class="form-control bg-light" name="rol_personalizado" value="{{ p.rol_personalizado or '' }}">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Costo Diario</label>
+                <input type="number" class="form-control bg-light" name="costo_diario" step="0.01"
+                  value="{{ p.costo_diario }}" min="0" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Contacto</label>
+                <input type="number" class="form-control bg-light" name="contacto" value="{{ p.contacto or '' }}">
+              </div>
+              <div class="col-12">
+                <div class="form-check form-switch">
+                  <input type="checkbox" class="form-check-input" name="activo" id="activo_edit_{{ p.id }}" {% if
+                    p.activo %}checked{% endif %}>
+                  <label class="form-check-label" for="activo_edit_{{ p.id }}">Personal Activo</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 p-3 bg-light rounded-3">
+              <h6 class="fw-bold mb-3">Cuenta de Usuario</h6>
+              <div class="form-check form-switch mb-2">
+                <input type="checkbox" class="form-check-input" name="crear_usuario" id="crear_usuario_edit_{{ p.id }}"
+                  {% if p.usuario_data %}checked{% endif %} onchange="toggleUsuarioFieldsEdit('{{ p.id }}')">
+                <label class="form-check-label" for="crear_usuario_edit_{{ p.id }}">
+                  {% if p.usuario_data %}Acceso al sistema habilitado{% else %}Habilitar acceso al sistema{% endif %}
+                </label>
+              </div>
+
+              <div id="usuario_fields_edit_{{ p.id }}" class="row g-3 mt-1"
+                style="display:{% if p.usuario_data %}flex{% else %}none{% endif %};">
+                <div class="col-md-6">
+                  <label class="form-label small text-muted">Correo electrónico</label>
+                  <input type="email" class="form-control" name="email"
+                    value="{{ p.usuario_data.email if p.usuario_data else '' }}" placeholder="usuario@empresa.com"
+                    >
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small text-muted">Rol del Usuario</label>
+                  <select class="form-select" name="rol_usuario" required>
+                    <option value="EMPLEADO" {% if p.usuario_data and p.usuario_data.rol=='EMPLEADO' %}selected{% endif
+                      %}>Empleado</option>
+                    <option value="BODEGA" {% if p.usuario_data and p.usuario_data.rol=='BODEGA' %}selected{%
+                      endif %}>Bodega</option>
+                    <option value="ADMIN" {% if p.usuario_data and p.usuario_data.rol=='ADMIN' %}selected{% endif %}>
+                      Administrador</option>
+                    <option value="OFICINA" {% if p.usuario_data and p.usuario_data.rol=='OFICINA' %}selected{% endif %}>
+                      Oficina</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 d-flex justify-content-end gap-2">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="submit" class="btn btn-dark-custom">Guardar Cambios</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+  <script>
+    document.getElementById("crear_usuario").addEventListener("change", function () {
+      const usuarioFields = document.getElementById("usuario_fields");
+      usuarioFields.style.display = this.checked ? "flex" : "none";
+    });
+
+    function toggleUsuarioFieldsEdit(personalId) {
+      const checkbox = document.getElementById(`crear_usuario_edit_${personalId}`);
+      const fields = document.getElementById(`usuario_fields_edit_${personalId}`);
+      if (checkbox && fields) {
+        fields.style.display = checkbox.checked ? 'flex' : 'none';
+      }
+    }
+
+    function mostrarOtroRol() {
+      const rol = document.getElementById("rol").value;
+      const div = document.getElementById("rol_otra_div");
+
+      if (rol === "Otra") {
+        div.style.display = "block";
+      } else {
+        div.style.display = "none";
+      }
+    }
+
+    function mostrarOtroRolEdit(personalId) {
+      const rol = document.getElementById(`rol_edit_${personalId}`).value;
+      const div = document.getElementById(`rol_otra_div_edit_${personalId}`);
+
+      if (rol === "Otra") {
+        div.style.display = "block";
+      } else {
+        div.style.display = "none";
+      }
+    }
+  </script>
+  
+</body>
+
+</html>

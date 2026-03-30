@@ -1,0 +1,193 @@
+/* ======== Dashboard Trabajador Mejorado ======== */
+
+/* Fondo general: blanco hueso */
+body {
+  background-color: #f8f7f4;
+  color: #222;
+  font-family: "Inter", sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* Encabezado */
+h2 {
+  font-weight: 700;
+  color: #333;
+}
+
+.text-muted {
+  color: #6b7280 !important;
+}
+
+/* Botón salir */
+.btn-salir {
+  background-color: #fff8e1;
+  border: 1px solid #ffe082;
+  color: #6a5500;
+  font-weight: 500;
+  padding: 8px 18px;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.btn-salir:hover {
+  background-color: #ffeb99;
+  color: #4a3b00;
+}
+
+
+
+/* Separador */
+.divider {
+  border-bottom: 1px solid #e4e0d4;
+  margin: 30px 0;
+}
+
+/* ======== Tarjetas de proyectos ======== */
+.card-avance {
+  background-color: #ffffff;
+  border: 1px solid #ebe8e2;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  padding: 20px;
+  transition: all 0.3s ease;
+}
+
+.card-avance:hover {
+  transform: scale(1.01);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+}
+
+/* Encabezado proyecto */
+.card-avance h5 {
+  color: #333;
+  font-weight: 600;
+}
+
+/* Badge de progreso */
+.progress-badge {
+  background-color: #2e7d32 !important;
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+/* ======== Acordeones ======== */
+.accordion-item {
+  background-color: #fcfbf8;
+  border-radius: 10px !important;
+  overflow: hidden;
+}
+
+.accordion-button {
+  background-color: #faf8f4;
+  color: #333;
+  border: none;
+  box-shadow: none;
+  transition: all 0.25s ease;
+  font-weight: 500;
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: #fff5d1;
+  color: #3a3000;
+}
+
+.accordion-body {
+  background-color: #fffdf6;
+  border-top: 1px solid #f1ecdf;
+}
+
+/* Barra de progreso */
+.progress {
+  height: 10px;
+  background-color: #ebe6dc;
+  border-radius: 10px;
+}
+
+.progress-bar {
+  background-color: #4caf50;
+  border-radius: 10px;
+}
+
+/* ======== Formularios ======== */
+form label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #4b4b4b;
+}
+
+input[type="number"],
+input[type="date"],
+input[type="text"],
+input[type="file"] {
+  border: 1px solid #ddd7cc;
+  background-color: #fffefb;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+input:focus {
+  border-color: #f3c246;
+  box-shadow: 0 0 0 3px rgba(243, 194, 70, 0.2);
+}
+
+/* Botón enviar */
+.btn-success {
+  background-color: #6cbf72;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 10px 20px;
+  transition: all 0.3s ease;
+  margin-top: 15px;
+}
+
+.btn-success:hover {
+  background-color: #5ca964;
+  transform: translateY(-1px);
+}
+
+/* ======== Modal de felicitación ======== */
+.modal-content {
+  background-color: #fffdf6;
+  border-radius: 20px;
+}
+
+.modal-body h2 {
+  color: #2e7d32;
+}
+
+.modal-body p {
+  color: #444;
+}
+
+/* ======== Animaciones ======== */
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card-avance,
+.accordion-item {
+  animation: fadeInSlide 0.5s ease both;
+}
+
+/* ======== Responsivo ======== */
+@media (max-width: 768px) {
+  .btn-salir {
+    font-size: 0.9rem;
+    padding: 6px 12px;
+  }
+
+  .card-avance {
+    padding: 15px;
+  }
+}

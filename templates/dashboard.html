@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard de Gestión de Proyectos</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <style>
+    /* ===================== FONDO CON IMAGEN ===================== */
+    .background {
+
+      /* AQUÍ ESTÁ EL CAMBIO DE IMAGEN */
+      /* Asegúrate de que 'fondo.jpg' esté en la misma carpeta o usa /static/fondo.jpg si es Flask */
+      background-image: url("{{ url_for('static', filename='img/fondo.jpg') }}");
+      width: 100%;
+      min-height: 100vh;
+
+      /* Ajustes para que la imagen cubra todo y se vea bien */
+      background-size: cover;
+      /* Cubre toda la pantalla */
+      background-position: center;
+      /* Centra la imagen */
+      background-repeat: no-repeat;
+      /* No repetir */
+      background-attachment: fixed;
+      /* El fondo se queda fijo al hacer scroll */
+      background-position: bottom center;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    /* ===================== CONTENEDOR TRANSPARENTE ===================== */
+    .container-dashboard {
+      width: 100%;
+      max-width: 1300px;
+
+      /* AQUÍ ESTÁ EL CAMBIO DE TRANSPARENCIA */
+      /* Usamos RGBA: Los primeros 3 números son blanco, el 0.85 es la transparencia (0 es invisible, 1 es sólido) */
+      background: rgba(255, 255, 255, 0.50);
+
+      /* Efecto de desenfoque estilo 'vidrio esmerilado' para mejorar lectura */
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      /* Para soporte en Safari */
+
+      border-radius: 30px;
+      box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.15);
+      padding: 25px 40px 40px 40px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      /* Borde sutil para resaltar el vidrio */
+    }
+
+    /* ===================== TARJETAS ===================== */
+    .card-summary {
+      height: 100%;
+      border-radius: 15px;
+      transition: transform 0.2s;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      /* Aseguramos que las tarjetas sean blancas o semi-transparentes según gusto */
+      background-color: rgba(255, 255, 255, 0.9);
+    }
+
+    .card-summary:hover {
+      transform: translateY(-5px);
+      background-color: #fff;
+      /* Blanco puro al pasar el mouse */
+    }
+
+    .card h3 {
+      font-size: 2rem;
+      font-weight: bold;
+    }
+
+    /* ===================== FRASE =====================*/
+    /* ⭐ ESTILO INTERMEDIO: Fondo oscuro con texto claro */
+    .alert-destacada {
+      background: linear-gradient(135deg, #2d3748, #4a5568) !important;
+      /* Gradiente de gris/azul oscuro */
+      color: #e2e8f0 !important;
+      /* Texto muy claro */
+      border: none !important;
+      border-radius: 15px !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+      /* Sombra sutil para "levantarla" */
+    }
+
+    .alert-destacada strong {
+      color: #63b3ed;
+      /* Color de acento (azul claro) para la frase */
+    }
+
+    /* ⭐ CAMBIO SUGERIDO: Fondo azul un poco más vibrante */
+    .alert-info-custom {
+      background-color: #bbdefb !important;
+      /* Azul más saturado y visible (Material Design Light Blue 100/200) */
+      color: #0d47a1 !important;
+      /* Color de texto azul oscuro para alto contraste */
+      border: none !important;
+      border-radius: 12px !important;
+      font-weight: 500;
+    }
+
+    /* Cuadros internos "Finalizados" y "En Progreso" */
+    .card-summary .border-success:hover,
+    .card-summary .border-success a:hover>div {
+      background-color: rgba(1, 253, 85, 0.1) !important;
+    }
+
+    .card-summary .border-primary:hover,
+    .card-summary .border-primary a:hover>div {
+      background-color: rgba(59, 128, 197, 0.652) !important;
+    }
+
+
+
+
+    /* ===================== BADGES ===================== */
+    .status-badge {
+      padding: 5px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+
+
+
+
+    /* ===================== ALERTAS ===================== */
+    .alertas .list-group-item {
+      border: none;
+      border-radius: 10px;
+      margin-bottom: 5px;
+      font-size: 0.9rem;
+    }
+
+    #alerta-card {
+      background-color: #fcfcfc;
+      /* Un blanco muy suave, casi imperceptible */
+      border-left: 5px solid #ffbf00;
+      /* Línea de color a la izquierda para darle énfasis */
+    }
+
+    /* ========== ESTILOS DEL DROPDOWN DE PERFIL ========== */
+    .profile-dropdown {
+      position: relative;
+    }
+
+    .profile-dropdown-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.6rem 1.2rem;
+      background: white;
+      border: 2px solid #e2e8f0;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .profile-dropdown-btn:hover {
+      border-color: #667eea;
+      box-shadow: 0 4px 16px rgba(102, 126, 234, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .profile-dropdown-btn img {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #f0f0f0;
+    }
+
+    .profile-dropdown-name {
+      font-weight: 600;
+      color: #2d3748;
+      font-size: 0.95rem;
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .profile-dropdown-icon {
+      color: #cbd5e0;
+      font-size: 0.85rem;
+      transition: transform 0.3s ease;
+    }
+
+    .profile-dropdown-btn:hover .profile-dropdown-icon {
+      color: #667eea;
+    }
+
+    .profile-dropdown.show .profile-dropdown-icon {
+      transform: rotate(180deg);
+    }
+
+    .profile-dropdown-menu {
+      position: absolute;
+      top: calc(100% + 0.75rem);
+      right: 0;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      padding: 0.75rem;
+      min-width: 240px;
+      display: none;
+      z-index: 1000;
+      animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .profile-dropdown-menu.show {
+      display: block;
+    }
+
+    .profile-dropdown-header {
+      padding: 1rem;
+      border-bottom: 1px solid #e2e8f0;
+      margin-bottom: 0.5rem;
+    }
+
+    .profile-dropdown-header-name {
+      font-weight: 600;
+      color: #2d3748;
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .profile-dropdown-header-email {
+      color: #718096;
+      font-size: 0.85rem;
+    }
+
+    .profile-dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      padding: 0.85rem 1rem;
+      border-radius: 10px;
+      color: #4a5568;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      font-size: 0.9rem;
+    }
+
+    .profile-dropdown-item:hover {
+      background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+      color: #667eea;
+      text-decoration: none;
+      transform: translateX(3px);
+    }
+
+    .profile-dropdown-item i {
+      font-size: 1.1rem;
+      width: 20px;
+      text-align: center;
+    }
+
+    .profile-dropdown-divider {
+      height: 1px;
+      background: #e2e8f0;
+      margin: 0.5rem 0;
+    }
+
+    .profile-dropdown-item.logout {
+      color: #e53e3e;
+    }
+
+    .profile-dropdown-item.logout:hover {
+      background: #fff5f5;
+      color: #c53030;
+    }
+
+    /* Botón de salir movido */
+    .btn-exit {
+      background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+      border: none;
+      padding: 0.6rem 1.5rem;
+      border-radius: 50px;
+      color: white;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(229, 62, 62, 0.3);
+      display: none;
+      /* Lo ocultamos porque ahora está en el dropdown */
+    }
+
+    .btn-exit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(229, 62, 62, 0.4);
+      background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .profile-dropdown-name {
+        display: none;
+      }
+
+      .profile-dropdown-btn {
+        padding: 0.5rem;
+        gap: 0;
+      }
+
+      .profile-dropdown-menu {
+        right: -20px;
+        min-width: 220px;
+      }
+    }
+
+    /* ===================== SCROLL LIST ===================== */
+    .scroll-list {
+      max-height: 300px;
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+
+    .scroll-list::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .scroll-list::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+
+    .scroll-list::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 5px;
+    }
+
+    /* ===================== RESPONSIVE ===================== */
+    @media (max-width: 768px) {
+      .profile-dropdown-name {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  {% include 'mensajes.html' %}
+  <div class="background">
+    <div class="container-dashboard">
+
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2 class="fw-bold">Dashboard de Administración</h2>
+          <p class="text-muted">Gestiona todos los aspectos de tus proyectos desde un solo lugar</p>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+
+          <!--  Notificaciones -->
+          <div class="dropdown">
+            <button class="btn btn-light position-relative" type="button" id="notifDropdown" data-bs-toggle="dropdown"
+              aria-expanded="false" title="Notificaciones">
+              <i class="bi bi-bell fs-5"></i>
+
+              {% if notificaciones and notificaciones|length > 0 %}
+              <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                {{ notificaciones|selectattr('leido', 'equalto', False)|list|length }}
+              </span>
+              {% endif %}
+            </button>
+
+            <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="notifDropdown"
+  style="width: 350px; max-height: 450px; overflow-y: auto; border-radius: 10px;">
+  
+  <!-- Encabezado con botones -->
+  <li class="px-3 py-2 border-bottom">
+    <div class="d-flex justify-content-between align-items-center">
+      <h6 class="mb-0">Notificaciones</h6>
+      <div class="btn-group btn-group-sm">
+        <a href="{{ url_for('dashboard.historial_notificaciones') }}" class="btn btn-outline-secondary" title="Historial">
+          <i class="bi bi-clock-history"></i>
+        </a>
+        <a href="{{ url_for('dashboard.marcar_todas_leidas') }}" class="btn btn-outline-success" title="Marcar todas como leídas"
+          onclick="return confirm('¿Seguro que deseas marcar todas las notificaciones como leídas?')">
+          <i class="bi bi-check-all"></i>
+        </a>
+      </div>
+    </div>
+  </li>
+
+  <!-- Lista de notificaciones -->
+  {% if notificaciones and notificaciones|length > 0 %}
+    {% for n in notificaciones %}
+    <li class="px-3 py-2 {% if not n.leido %}bg-light{% endif %}">
+      {% if n.id_notificacion %}
+      <a href="{{ url_for('avances.leer_notificacion', id_notificacion=n.id_notificacion) }}"
+        class="d-block text-decoration-none {% if not n.leido %}fw-semibold text-primary{% endif %}">
+        {{ n.mensaje }}
+      </a>
+      {% else %}
+      <span class="d-block">{{ n.mensaje }}</span>
+      {% endif %}
+      <small class="text-muted d-block">{{ n.creado_en|to_colombia }}</small>
+      {% if not loop.last %}
+      <hr class="my-2">
+      {% endif %}
+    </li>
+    {% endfor %}
+  {% else %}
+  <li class="text-center text-muted py-3">Sin notificaciones nuevas</li>
+  {% endif %}
+</ul>
+          </div>
+
+          <div class="profile-dropdown">
+            <button class="profile-dropdown-btn" onclick="toggleProfileMenu(event)">
+              <img src="{{ session.get('foto_perfil') or '/static/uploads/perfiles/default.png' }}" alt="Avatar">
+              <span class="profile-dropdown-name">{{ session.get('nombre', 'Usuario') }}</span>
+              <i class="bi bi-chevron-down profile-dropdown-icon"></i>
+            </button>
+
+            <div class="profile-dropdown-menu" id="profileMenu">
+              <div class="profile-dropdown-header">
+                <div class="profile-dropdown-header-name">
+                  {{ session.get('nombre', 'Usuario') }}
+                </div>
+                <div class="profile-dropdown-header-email">
+                  {{ session.get('rol', 'EMPLEADO') }}
+                </div>
+              </div>
+
+              <a href="{{ url_for('usuarios.perfil') }}" class="profile-dropdown-item">
+                <i class="bi bi-person-circle"></i>
+                <span>Mi Perfil</span>
+              </a>
+
+              <a href="{{url_for('usuarios.configuracion_perfil')}}" class="profile-dropdown-item">
+                <i class="bi bi-gear"></i>
+                <span>Configuración</span>
+              </a>
+
+              <div class="profile-dropdown-divider"></div>
+
+              <a href="{{ url_for('usuarios.logout') }}" class="profile-dropdown-item logout">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Cerrar Sesión</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+
+      <div class="alert alert-destacada text-center shadow-sm mb-4 py-2">
+        <strong>
+          <i class="bi bi-stars"></i>
+          <i class="bi bi-lightbulb-fill"></i>
+          <span class="texto-animado" id="fraseEscrita">
+            {{ frase|trim }}
+          </span>
+        </strong>
+      </div>
+
+      <div class="row g-3 mb-3 row-cols-1 row-cols-md-3 row-cols-lg-5">
+  
+  <div class="col">
+    <div class="card card-summary shadow-sm text-center p-3 h-100">
+      <h6 class="fw-bold">Proyectos</h6>
+      <h3>{{ proyectos_activos|length }}</h3>
+      <p class="text-muted small">Proyectos Activos</p>
+      <div class="card-actions">
+        <a href="{{ url_for('proyectos.manage_proyectos')}}" class="btn btn-dark btn-sm w-100">Ver Proyectos</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card card-summary shadow-sm text-center p-3 h-100">
+      <h6 class="fw-bold">Vehículos</h6>
+      <h3>{{ vehiculos_disponibles|length }}/{{ vehiculos|length }}</h3>
+      <p class="text-muted small">Disponibles</p>
+      <div class="card-actions">
+        <a href="{{ url_for('vehiculos.manage_vehiculos')}}" class="btn btn-dark btn-sm">Ver Todos</a>
+        <a href="{{ url_for('vehiculos.gestion_vehiculos')}}" class="btn btn-outline-primary btn-sm">Movimientos</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card card-summary shadow-sm text-center p-3 h-100">
+      <h6 class="fw-bold">Personal</h6>
+      <h3>{{ personal|length }}</h3>
+      <p class="text-muted small">Personal en la empresa</p>
+      <div class="card-actions">
+        <a href="{{ url_for('personal.manage_personal')}}" class="btn btn-dark btn-sm">Ver Personal</a>
+        <a href="{{ url_for('horarios.gestion_asignaciones_diarias')}}" class="btn btn-outline-primary btn-sm">Horarios</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card card-summary shadow-sm text-center p-3 h-100">
+      <h6 class="fw-bold">Materiales</h6>
+      <h3>{{ materiales|length }}</h3>
+      <p class="text-muted small">Tipos de Materiales</p>
+      <div class="card-actions">
+        <a href="{{ url_for('materiales.manage_materiales')}}" class="btn btn-dark btn-sm w-100">Inventario</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card card-summary shadow-sm text-center p-3 h-100 border-info">
+      <h6 class="fw-bold text-info">Análisis</h6>
+      <h3><i class="bi bi-bar-chart-line text-info"></i></h3>
+      <p class="text-muted small">Gasto de Materiales</p>
+      <div class="card-actions">
+        <a href="{{ url_for('avances.seleccion_analisis') }}" class="btn btn-info btn-sm w-100 text-white fw-bold">Comparativa</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+      <div class="row g-4 align-items-start">
+        <div class="col-lg-8">
+          <div class="card card-summary shadow-sm p-4 h-100">
+            <h5 class="fw-bold mb-4 border-bottom pb-2">Estado de Proyectos & Vehículos</h5>
+            <div class="row">
+
+              <div class="col-md-6 border-end pe-md-4">
+                <h6 class="text-muted mb-3 fw-bold">Proyectos</h6>
+                <div class="row g-2 mb-4">
+                  <div class="col-6">
+                    <a href="{{url_for('proyectos.proyectos_finalizados')}}" class="text-decoration-none">
+                      <div class="p-2 border border-success rounded text-center bg-light">
+                        <h4 class="text-success m-0">{{ proyectos_finalizados|length }}</h4>
+                        <small class="text-muted" style="font-size: 0.75rem;">Finalizados</small>
+                      </div>
+                    </a>
+                  </div>
+                  <div class="col-6">
+                    <a href="{{url_for('proyectos.proyectos_progreso')}}" class="text-decoration-none">
+                      <div class="p-2 border border-primary rounded text-center bg-light">
+                        <h4 class="text-primary m-0">{{ proyectos_activos|length }}</h4>
+                        <small class="text-muted" style="font-size: 0.75rem;">En Progreso</small>
+                      </div>
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-4 ps-md-4 mt-4 mt-md-0">
+                <h6 class="text-muted mb-3 fw-bold">Vehículos Disponibles</h6>
+                <div class="d-flex justify-content-between text-muted small mb-2 border-bottom pb-1">
+                  <span>Placa / Tipo</span>
+                  <span>Estado</span>
+                </div>
+
+                <div class="scroll-list">
+                  <ul class="list-group list-group-flush">
+                    {% for v in vehiculos_disponibles %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                      <div>
+                        <div class="fw-bold text-dark">{{ v.placa }}</div>
+                        <small class="text-muted">{{ v.tipo }}</small>
+                      </div>
+                      <span class="badge bg-success rounded-pill">Disponible</span>
+                    </li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="card card-summary shadow-sm p-3 h-100" id="alerta-card">
+            <h5 class="fw-bold mb-3 border-bottom pb-2">Alertas y Avisos</h5>
+
+            <div class="scroll-list" style="max-height: 400px;">
+              <div class="card" style="border: none;">
+                {% if alertas %}
+                <ul class="list-group list-group-flush">
+                  {% for a in alertas %}
+                  <li class="list-group-item d-flex align-items-start border-0 px-0 mb-2">
+                    <div class="me-2 mt-1">
+                      {% if a.tipo == 'danger' %} <i class="bi bi-exclamation-triangle-fill text-danger"></i>
+                      {% elif a.tipo == 'warning' %} <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                      {% else %} <i class="bi bi-info-circle-fill text-info"></i> {% endif %}
+                    </div>
+                    <div>
+                      <span class="d-block small text-dark">{{ a.mensaje }}</span>
+                      {% if a.fecha %}
+                      <small class="text-muted" style="font-size: 0.7rem;">{{ a.fecha }}</small>
+                      {% endif %}
+                    </div>
+                  </li>
+                  {% endfor %}
+                </ul>
+                {% else %}
+              </div>
+              <div class="text-center py-4 text-muted">
+                <i class="bi bi-check-circle fs-4"></i>
+                <p class="small mt-2">No hay alertas pendientes</p>
+              </div>
+              {% endif %}
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    function toggleProfileMenu(event) {
+      event.stopPropagation();
+      const dropdown = event.currentTarget.closest('.profile-dropdown');
+      const menu = document.getElementById('profileMenu');
+
+      dropdown.classList.toggle('show');
+      menu.classList.toggle('show');
+    }
+
+    // Cerrar el menú de perfil al hacer clic fuera
+    document.addEventListener('click', function (event) {
+      const dropdown = document.querySelector('.profile-dropdown');
+      const menu = document.getElementById('profileMenu');
+      const notifDropdown = document.querySelector('#notifDropdown'); // Para el de notificaciones
+
+      if (dropdown && !dropdown.contains(event.target)) {
+        dropdown.classList.remove('show');
+        menu.classList.remove('show');
+      }
+      // El de notificaciones se maneja automáticamente por Bootstrap 5, pero se mantiene el control del de perfil.
+    });
+
+    // Cerrar con tecla ESC
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') {
+        const dropdown = document.querySelector('.profile-dropdown');
+        const menu = document.getElementById('profileMenu');
+
+        if (dropdown && menu) {
+          dropdown.classList.remove('show');
+          menu.classList.remove('show');
+        }
+      }
+    });
+  </script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const span = document.getElementById("fraseEscrita");
+    const texto = span.textContent.trim();
+    let i = 0;
+    let escribiendo = true;
+
+    function cycle() {
+        if (escribiendo) {
+            if (i <= texto.length) {
+                span.textContent = texto.substring(0, i);
+                i++;
+                setTimeout(cycle, 80);
+            } else {
+                // esperar 5 segundos
+                setTimeout(() => { escribiendo = false; cycle(); }, 5000);
+            }
+        } else {
+            if (i >= 0) {
+                span.textContent = texto.substring(0, i);
+                i--;
+                setTimeout(cycle, 50);
+            } else {
+                escribiendo = true;
+                setTimeout(cycle, 800);
+            }
+        }
+    }
+
+    span.textContent = "";
+    cycle();
+});
+</script>
+
+</body>
+
+</html>

@@ -1,0 +1,128 @@
+<!-- templates/_messages.html -->
+<style>
+  .toast-stack { /* Contenedor de toasts en la esquina inferior derecha */
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 1080;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+  }
+
+  /* Estilos para el badge de notificaciones */
+  #notifBadge {
+    font-size: 0.65rem;
+    padding: 0 4px;
+    min-width: 10px;
+    height: 16px;
+    line-height: 16px;
+    transform: translate(-90%, -10%);
+  }
+
+  /* Barra de progreso del toast */
+  .toast-progress {
+    height: 3px;
+    background: rgba(255, 255, 255, 0.4);
+    width: 100%;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    border-radius: 0 0 0.25rem 0.25rem;
+  }
+
+  .toast-progress-bar {
+    height: 100%;
+    background: rgba(255, 255, 255, 0.7);
+    width: 100%;
+    transition: width linear;
+  }
+</style>
+
+<div class="toast-stack">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="toast align-items-center text-bg-{{ category }} border-0 position-relative" role="alert" aria-live="assertive" aria-atomic="true" data-delay="5000">
+          <div class="d-flex w-100">
+            <div class="toast-body py-2 px-3">
+              <!-- Iconos según categoría estándar -->
+              {% if category == 'success' %}
+                <i class="bi bi-check-circle-fill me-2"></i>
+              {% elif category == 'danger' or category == 'error' %}
+                <i class="bi bi-x-circle-fill me-2"></i>
+              {% elif category == 'warning' %}
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              {% elif category == 'info' %}
+                <i class="bi bi-info-circle-fill me-2"></i>
+              {% else %}
+                <i class="bi bi-info-circle-fill me-2"></i>
+              {% endif %}
+              {{ message }}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+          </div>
+          <div class="toast-progress">
+            <div class="toast-progress-bar"></div>
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const toastElements = document.querySelectorAll('.toast');
+    toastElements.forEach(function (toastEl) {
+      const delay = parseInt(toastEl.getAttribute('data-delay')) || 5000;
+      const progressBar = toastEl.querySelector('.toast-progress-bar');
+      const toast = new bootstrap.Toast(toastEl, { delay: delay, animation: true });
+
+      let startTime;
+      let paused = false;
+      let pauseStart = 0;
+      let pausedDuration = 0;
+
+      function updateProgress(timestamp) {
+        if (!startTime) startTime = timestamp;
+
+        if (!paused) {
+          const elapsed = timestamp - startTime - pausedDuration;
+          const remaining = Math.max(0, delay - elapsed);
+
+          if (remaining <= 0) {
+            progressBar.style.width = '0%';
+            toast.hide();
+          } else {
+            const progress = (remaining / delay) * 100;
+            progressBar.style.width = progress + '%';
+            requestAnimationFrame(updateProgress);
+          }
+        } else {
+          requestAnimationFrame(updateProgress);
+        }
+      }
+
+      // Pausar al hacer hover
+      toastEl.addEventListener('mouseenter', () => {
+        paused = true;
+        pauseStart = performance.now();
+      });
+
+      // Reanudar al salir del hover
+      toastEl.addEventListener('mouseleave', () => {
+        if (paused) {
+          paused = false;
+          pausedDuration += performance.now() - pauseStart;
+        }
+      });
+
+      toastEl.addEventListener('shown.bs.toast', () => {
+        requestAnimationFrame(updateProgress);
+      });
+
+      toast.show();
+    });
+  });
+</script>

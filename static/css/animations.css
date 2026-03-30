@@ -1,0 +1,50 @@
+/* Animaciones seguras para GestorPV (prefijo gpv- para evitar conflictos)
+   - Usar atributos: data-animate="fade-up|slide-left|scale-in|stagger"
+   - Añadir la clase gpv-in para activar la animación (JS la añade automáticamente)
+*/
+:root{
+  --gpv-ease: cubic-bezier(.2,.9,.2,1);
+  --gpv-duration: 420ms;
+  --gpv-stagger: 80ms;
+}
+
+[gdata-animate-debug]{display:none}
+
+/* Estado inicial común */
+.gpv-anim{opacity:0; transform-origin: center; will-change: opacity, transform; transition: opacity var(--gpv-duration) var(--gpv-ease), transform var(--gpv-duration) var(--gpv-ease);}
+
+/* Fade Up */
+.gpv-fade-up{transform: translateY(12px);}
+.gpv-fade-up.gpv-in{opacity:1; transform: translateY(0);} 
+
+/* Slide Left */
+.gpv-slide-left{transform: translateX(-14px);}
+.gpv-slide-left.gpv-in{opacity:1; transform: translateX(0);} 
+
+/* Scale in */
+.gpv-scale-in{transform: scale(.98);}
+.gpv-scale-in.gpv-in{opacity:1; transform: scale(1);} 
+
+/* Simple pulse for buttons (optional) */
+@keyframes gpv-pulse{0%{transform:scale(1)}50%{transform:scale(1.02)}100%{transform:scale(1)}}
+.gpv-pulse.gpv-in{animation: gpv-pulse 1.6s var(--gpv-ease) infinite; opacity:1}
+
+/* Stagger container: adds small delay to children */
+.gpv-stagger > *{transition-delay: calc(var(--i, 0) * var(--gpv-stagger));}
+.gpv-stagger .gpv-anim{opacity:0}
+.gpv-stagger.gpv-in .gpv-anim{opacity:1; transform:none}
+
+/* Utility: only animate when JS toggles gpv-in */
+.gpv-anim.gpv-nojs{opacity:1; transform:none}
+
+/* Accessibility: reduce motion preference */
+@media (prefers-reduced-motion: reduce){
+  .gpv-anim, .gpv-stagger > *{transition: none !important; animation: none !important; transform: none !important; opacity:1 !important}
+}
+
+/* Small helper classes to attach to elements */
+.gpv-fade-up, .gpv-slide-left, .gpv-scale-in, .gpv-pulse { /* markers: styles applied when gpv-in present */ }
+
+/* Page-level entrance: gentle fade + slide */
+#main-content.gpv-page{opacity:0; transform: translateY(8px); transition: opacity 420ms var(--gpv-ease), transform 420ms var(--gpv-ease);}
+#main-content.gpv-page.gpv-in{opacity:1; transform: translateY(0)}

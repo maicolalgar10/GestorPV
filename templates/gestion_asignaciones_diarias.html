@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Asignaciones Diarias</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        /* ===================== FONDO Y CONTENEDOR (GLASSMORPHISM) ===================== */
+        .background {
+            width: 100%;
+            min-height: 100vh;
+            background-image: url("{{ url_for('static', filename='img/fondo.jpg') }}");
+            background-size: cover;
+            background-position: bottom center;
+
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            padding: 20px;
+
+        }
+
+        .container-dashboard {
+            background: rgba(255, 255, 255, 0.6);
+            /* Transparencia */
+            backdrop-filter: blur(10px);
+            /* Desenfoque del fondo */
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 30px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+            min-height: 90vh;
+        }
+
+        /* ===================== ESTILO MASONRY (PARED DE LADRILLOS) ===================== */
+        /* Esto hace que las tarjetas se acomoden hacia arriba rellenando huecos */
+        .masonry-container {
+            column-count: 1;
+            /* Por defecto 1 columna (móvil) */
+            column-gap: 1.5rem;
+        }
+
+        @media (min-width: 768px) {
+            .masonry-container {
+                column-count: 2;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .masonry-container {
+                column-count: 3;
+            }
+        }
+
+        /* Tarjeta de Proyecto */
+        .proyecto-card {
+            background: rgba(255, 255, 255, 0.85);
+            /* Más opaco para lectura */
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 15px;
+            margin-bottom: 1.5rem;
+            /* Espacio abajo de cada ladrillo */
+            break-inside: avoid;
+            /* Evita que la tarjeta se parta entre columnas */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s;
+        }
+
+        .proyecto-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .proyecto-header {
+            background: rgba(13, 110, 253, 0.1);
+            /* Azul muy suave */
+            color: #0d6efd;
+            padding: 10px 15px;
+            border-radius: 15px 15px 0 0;
+            font-weight: bold;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        /* ===================== ÍTEM DE TRABAJADOR COMPACTO ===================== */
+        .trabajador-item {
+            background-color: rgba(255, 255, 255, 0.6);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.9rem;
+        }
+
+        .trabajador-item:last-child {
+            border-bottom: none;
+        }
+
+        .trabajador-item:hover {
+            background-color: rgba(255, 255, 255, 1);
+        }
+
+        .trabajador-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .rol-badge {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        /* Formulario de Crear (Glass) */
+        .glass-form-card {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            margin-bottom: 30px;
+        }
+
+        .btn-glass-primary {
+            background: #0d6efd;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 20px;
+            transition: all 0.3s;
+        }
+
+        .btn-glass-primary:hover {
+            background: #0b5ed7;
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+
+<body>
+      {% include 'mensajes.html' %}
+
+    <div class="background">
+        <div class="container-dashboard">
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-sm btn-light border shadow-sm mb-2">
+                        <i class="bi bi-arrow-left"></i> Volver
+                    </a>
+                    <h2 class="fw-bold text-dark m-0"><i class="bi bi-calendar-check-fill"></i> Asignaciones Diarias</h2>
+                </div>
+                <div>
+                    <a href="{{ url_for('asistencia.registro_diario_masivo', fecha=fecha_seleccionada) }}" 
+           class="btn btn-primary shadow-sm rounded-pill px-3 d-flex align-items-center">
+            <i class="bi bi-person-check-fill me-2"></i> 
+            <span class="d-none d-md-inline">Tomar Asistencia</span>
+        </a>
+</div>
+
+                <a href="{{ url_for('horarios.exportar_whatsapp', fecha=fecha_seleccionada) }}" target="_blank"
+                    class="btn btn-success shadow-sm rounded-pill px-3">
+                    <i class="bi bi-whatsapp"></i> <span class="d-none d-md-inline">Exportar ({{ fecha_seleccionada
+                        }})</span>
+                </a>
+            </div>
+
+            <div class="d-flex justify-content-center mb-4">
+                <form method="GET" action="{{ url_for('horarios.gestion_asignaciones_diarias') }}"
+                    class="bg-white p-2 rounded-pill shadow-sm d-flex align-items-center gap-2 border">
+                    <input type="date" class="form-control border-0 rounded-pill bg-light" name="fecha"
+                        value="{{ fecha_seleccionada }}" required style="max-width: 160px;">
+                    <button class="btn btn-primary rounded-pill px-4" type="submit">Ir a Fecha</button>
+                </form>
+            </div>
+
+            <div class="glass-form-card shadow-sm">
+                <div class="p-3 cursor-pointer" data-bs-toggle="collapse" data-bs-target="#formNuevaAsignacion"
+                    style="cursor: pointer;">
+                    <h6 class="m-0 fw-bold text-primary"><i class="bi bi-plus-circle-fill"></i> Crear Nueva Asignación
+                    </h6>
+                </div>
+                <div id="formNuevaAsignacion" class="collapse show">
+                    <div class="p-4 pt-0 border-top border-light mt-2">
+                        <form method="POST" action="{{ url_for('horarios.gestion_asignaciones_diarias') }}"
+                            class="mt-3">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold">Fecha</label>
+                                    <input type="date" class="form-control form-control-sm" name="fecha"
+                                        value="{{ fecha_seleccionada }}" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Proyecto</label>
+                                    <select class="form-select form-select-sm" name="proyecto_id" required>
+                                        <option value="">-- Seleccionar --</option>
+                                        {% for p in proyectos %}
+                                        <option value="{{ p.id_proyecto }}">{{ p.nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small fw-bold">Entrada</label>
+                                    <input type="time" class="form-control form-control-sm" name="hora_entrada"
+                                        value="08:00">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold">Observación</label>
+                                    <input type="text" class="form-control form-control-sm" name="observacion"
+                                        placeholder="Opcional">
+                                </div>
+                            </div>
+
+                            <div class="mt-3 p-3 bg-light rounded-3 border">
+                                <label class="form-label small fw-bold mb-2 d-block">Seleccionar Trabajadores:</label>
+                                <div class="row g-2" style="max-height: 150px; overflow-y: auto;">
+                                    {% for p in personal %}
+                                    <div class="col-6 col-md-4 col-lg-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="personal_id"
+                                                value="{{ p.id }}" id="p_{{ p.id }}">
+                                            <label class="form-check-label small" for="p_{{ p.id }}">{{ p.nombre
+                                                }}</label>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <div class="mt-3 text-end">
+                                <button type="submit" class="btn-glass-primary">Guardar Asignación</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4 text-muted opacity-25">
+
+            {% if asignaciones_agrupadas %}
+            <div class="masonry-container">
+                {% for nombre_proyecto, data in asignaciones_agrupadas.items() %}
+                <div class="proyecto-card">
+                    <div class="proyecto-header d-flex justify-content-between align-items-center">
+                        <span class="text-truncate">{{ nombre_proyecto }}</span>
+                        <span class="badge bg-white text-primary shadow-sm border">{{ data.trabajadores|length }}</span>
+                    </div>
+
+                    <div class="d-flex flex-column">
+                        {% for t in data.trabajadores %}
+                        <div class="trabajador-item">
+                            <div class="trabajador-info">
+                                <i class="bi bi-person-fill text-secondary"></i>
+                                <span class="fw-semibold text-dark">{{ t.nombre }}</span>
+                            </div>
+
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-light text-dark border" style="font-weight:normal;">{{
+                                    t.hora_entrada }}</span>
+
+                                <form method="POST"
+                                    action="{{ url_for('horarios.eliminar_asignacion_diaria', id=t.id_asignacion_diaria) }}"
+                                    onsubmit="return confirm('¿Eliminar?');" class="m-0 p-0">
+                                    <button type="submit" class="btn btn-link text-danger p-0 m-0"
+                                        style="line-height: 1;">
+                                        <i class="bi bi-x-circle-fill"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% if t.observacion %}
+                        <div class="px-3 pb-2 small text-muted fst-italic border-bottom"
+                            style="font-size: 0.75rem; margin-top: -4px;">
+                            ↳ {{ t.observacion }}
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <div class="bg-white p-4 rounded-circle shadow-sm d-inline-block mb-3">
+                    <i class="bi bi-calendar-x text-muted fs-1"></i>
+                </div>
+                <h5 class="text-muted">No hay asignaciones para el {{ fecha_seleccionada }}</h5>
+                <p class="small text-muted">Utiliza el formulario de arriba para comenzar.</p>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

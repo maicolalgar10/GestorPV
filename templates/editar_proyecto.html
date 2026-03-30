@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editar Proyecto</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    /* Fondo de la página principal (para que el vidrio resalte) */
+    body {
+        /* AQUÍ ESTÁ EL CAMBIO DE IMAGEN */
+      /* Asegúrate de que 'fondo.jpg' esté en la misma carpeta o usa /static/fondo.jpg si es Flask */
+      background-image: url("{{ url_for('static', filename='img/fondo.jpg') }}");      
+      width: 100%;
+      min-height: 100vh;
+      
+      /* Ajustes para que la imagen cubra todo y se vea bien */
+      background-size: cover;       /* Cubre toda la pantalla */
+      background-position: center;  /* Centra la imagen */
+      background-repeat: no-repeat; /* No repetir */
+      background-attachment: fixed; /* El fondo se queda fijo al hacer scroll */
+      /*  EL CAMBIO CLAVE  */
+  /* Alinea la imagen abajo, para que se vea la carretera y los trabajadores */
+      background-position: bottom center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    /* Contenedor principal del formulario: la tarjeta de vidrio */
+    .card-shadow {
+        /* Estilo Vidrio Esmerilado (Glassmorphism) */
+        background-color: rgba(255, 255, 255, 0.85); /* Fondo blanco semi-transparente */
+        backdrop-filter: blur(15px); /* Desenfoque clave del efecto vidrio */
+        border: 1px solid rgba(255, 255, 255, 0.3); /* Borde sutil */
+        border-radius: 1.5rem; /* Bordes más redondeados */
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15), /* Sombra principal */
+                    0 0 0 1px rgba(255, 255, 255, 0.2) inset; /* Borde interno ligero */
+        transition: all 0.3s ease-in-out;
+    }
+
+    /* Encabezado de la tarjeta */
+    .card-header {
+        background: linear-gradient(90deg, #007bff, #0056b3); /* Gradiente más profundo para el header */
+        color: white;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 1.5rem 1.5rem 0 0 !important;
+        padding: 1.5rem;
+    }
+
+    /* Controles de Formulario (Inputs, Selects, Textareas) */
+    .form-control, .form-select, .input-group-text {
+        background-color: rgba(255, 255, 255, 0.95); /* Fondo casi opaco para mejor lectura */
+        border: 1px solid #ced4da;
+        border-radius: 0.75rem; /* Bordes más suaves */
+        padding: 0.75rem 1rem;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .form-control:focus, .form-select:focus {
+        background-color: #ffffff;
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.3);
+        outline: 0;
+    }
+
+    .form-label {
+        font-weight: 700;
+        color: #343a40;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Título de Sección */
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #007bff;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid rgba(0, 123, 255, 0.3); /* Transparente para complementar el vidrio */
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    /* Botones */
+    .btn {
+        padding: 0.6rem 1.5rem;
+        font-weight: 600;
+        border-radius: 0.75rem;
+        transition: all 0.3s ease-in-out;
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+
+    .btn-success:hover, .btn-success:focus {
+        background-color: #218838;
+        border-color: #1e7e34;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(40, 167, 69, 0.3);
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+
+    .btn-secondary:hover, .btn-secondary:focus {
+        background-color: #5a6268;
+        border-color: #545b62;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(108, 117, 125, 0.3);
+    }
+    
+    .btn-outline-light {
+        border-color: rgba(255, 255, 255, 0.5);
+        color: white;
+    }
+
+    .btn-outline-light:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+        border-color: white;
+    }
+
+    /* Ajuste para el select múltiple de personal */
+    #personalAdicionalSelect {
+        height: 150px;
+        background-color: rgba(255, 255, 255, 0.85); /* Coherente con el fondo de la tarjeta */
+    }
+
+    /* Estilo para las opciones deshabilitadas (el responsable) */
+    #personalAdicionalSelect option[disabled] {
+        background-color: #f0f0f0; /* Color gris claro */
+        color: #777; /* Texto atenuado */
+        cursor: not-allowed;
+    }
+
+    /* Contenedor de botones (footer) */
+    .btn-submit-container {
+        padding-top: 2rem;
+        padding-bottom: 0.5rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    /* Clase para el contenedor principal de la página (ya definida en el body) */
+    .container-dashboard {
+        padding-top: 3rem;
+        padding-bottom: 3rem;
+    }
+</style>
+</head>
+
+<body class="bg-light">
+  {% include 'mensajes.html' %}
+
+  
+
+  <div class="container my-5">
+    <div class="card border-0 card-shadow">
+      <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+        <h4 class="mb-0"><i class="bi bi-pencil-square me-2"></i> Editar Proyecto</h4>
+        <a href="{{ url_for('proyectos.manage_proyectos') }}" class="btn btn-outline-light btn-sm">
+          <i class="bi bi-arrow-left me-1"></i> Volver
+        </a>
+      </div>
+
+      <div class="card-body p-4"> <!-- Aumenté el padding -->
+        <form method="POST" action="{{ url_for('proyectos.editar_proyecto', id_proyecto=proyecto.id_proyecto) }}">
+          <div class="row g-4"> <!-- Aumenté el gap -->
+
+            <!-- Información General -->
+            <div class="col-12">
+              <div class="section-title">
+                <i class="bi bi-info-circle"></i>
+                Información General
+              </div>
+            </div>
+
+            <!-- Nombre -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Nombre del Proyecto *</label>
+              <input type="text" class="form-control" name="nombre" value="{{ proyecto.nombre }}" required>
+            </div>
+
+            <!-- Lugar -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Lugar *</label>
+              <input type="text" class="form-control" name="lugar" value="{{ proyecto.lugar }}" required>
+            </div>
+
+            <!-- Responsable -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Responsable *</label>
+              <select class="form-select" name="responsable_id" required>
+                {% for p in personal %}
+                <option value="{{ p.id }}" {% if p.id==proyecto.responsable_id %}selected{% endif %}>{{ p.nombre }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Estado -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Estado *</label>
+              <select class="form-select" name="estado" required>
+                <option value="Pendiente" {% if proyecto.estado=="PENDIENTE" %}selected{% endif %}>Pendiente</option>
+                <option value="En Progreso" {% if proyecto.estado=="EN_PROGRESO" %}selected{% endif %}>En progreso
+                </option>
+                <option value="Finalizado" {% if proyecto.estado=="FINALIZADO" %}selected{% endif %}>Finalizado</option>
+              </select>
+            </div>
+
+            <!-- Fechas -->
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Fecha de Inicio *</label>
+              <input type="date" class="form-control" name="fecha_inicio"
+                value="{{ proyecto.fecha_inicio.strftime('%Y-%m-%d') }}" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Fecha de Fin *</label>
+              <input type="date" class="form-control" name="fecha_fin"
+                value="{{ proyecto.fecha_fin.strftime('%Y-%m-%d') }}" required>
+            </div>
+
+            <!-- Descripción -->
+            <div class="col-12">
+              <label class="form-label fw-semibold">Descripción</label>
+              <textarea class="form-control" name="descripcion" rows="3">{{ proyecto.descripcion }}</textarea>
+            </div>
+
+            <!-- Personal -->
+            <div class="col-12">
+              <div class="section-title">
+                <i class="bi bi-people"></i>
+                Personal Asignado
+              </div>
+            </div>
+
+            <div class="col-md-12"> <!-- Hice que el personal ocupe todo el ancho -->
+              <label class="form-label fw-semibold">Personal adicional</label>
+              <select multiple class="form-select" name="personal_id" id="personalAdicionalSelect">
+                {% for p in personal %}
+                <option value="{{ p.id }}" {% if p.id in personal_asignado_ids or p.id==proyecto.responsable_id
+                  %}selected{% endif %} {% if p.id==proyecto.responsable_id %}disabled{% endif %}>
+                  {{ p.nombre }} ({{ p.rol or 'Sin rol' }})
+                </option>
+                {% endfor %}
+              </select>
+              <small class="text-muted">Mantén pulsada la tecla <kbd>Ctrl</kbd> (Windows/Linux) o <kbd>Cmd</kbd> (Mac) para seleccionar o deseleccionar varios elementos.</small>
+            </div>
+
+          </div>
+
+          <!-- Botones -->
+          <div class="d-flex justify-content-end mt-4 btn-submit-container">
+            <a href="{{ url_for('proyectos.manage_proyectos') }}" class="btn btn-secondary me-2">Cancelar</a>
+            <button type="submit" class="btn btn-success px-4">
+              <i class="bi bi-check-lg me-1"></i> Guardar cambios
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.querySelector('form');
+        const personalSelect = document.getElementById('personalAdicionalSelect');
+
+        if (form && personalSelect) {
+            form.addEventListener('submit', function(event) {
+                // Iterar sobre las opciones del select múltiple
+                Array.from(personalSelect.options).forEach(option => {
+                    // Verificar si la opción es el responsable (está disabled y selected)
+                    if (option.disabled && option.selected) {
+                        // Crear un campo oculto para forzar el envío del ID del responsable
+                        const hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.name = personalSelect.name; // El nombre del select múltiple
+                        hiddenInput.value = option.value;
+                        form.appendChild(hiddenInput);
+                    }
+                });
+            });
+        }
+    });
+</script>
+</body>
+</html>
