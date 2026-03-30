@@ -1,12 +1,21 @@
 # Python
 __pycache__/
-*.pyc
-
-# Entorno
+*.py[cod]
+*$py.class
 .env
+.venv
+env/
+venv/
+ENV/
 
-# VSCode
+# Editor (VS Code / PyCharm)
 .vscode/
+.idea/
 
-# Logs
-*.log
+# Base de datos local (Opcional, si no quieres subir tu DB de prueba)
+*.db
+*.sqlite3
+
+# Migraciones (OJO: Las versiones de migrations SÍ se suelen subir, 
+# pero si quieres un repo limpio desde cero, puedes ignorarlas)
+migrations/
