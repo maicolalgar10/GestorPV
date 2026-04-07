@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, redirect, request, url_for, flash,
 from datetime import date, timedelta, datetime
 from decimal import Decimal
 from werkzeug.utils import secure_filename
-from models import db, Usuarios, Proyectos, Personal, Vehiculos, ProyectoPersonal, Materiales, SolicitudMateriales, Asistencia, Notificaciones, Cotizacion, DetalleSolicitudMaterial # Traemos la nueva propiedad/clase/enum del modelo
+from models import db, Usuarios, Proyectos, Personal, Vehiculos, ProyectoPersonal, Materiales, SolicitudMateriales, Asistencia, Notificaciones, Cotizacion, DetalleSolicitudMaterial, RequisicionOficina
 from frases import frase_del_dia
 from decorators import login_required, admin_required, admin_encargado_required, admin_bodega_required, admin_oficina_required
 from sqlalchemy import func
@@ -270,10 +270,32 @@ def dashboard_oficina():
         frase=frase,
         cotizaciones_historial=cotizaciones_historial,
         facturas=facturas,
-        notificaciones=notificaciones  # Cotización aceptada lista para facturar
+        notificaciones=notificaciones
     )
 
+# -----------------------------
+# DASHBOARD DE OFICINA -> MATERIALES
+# -----------------------------
+@dashboard_bp.route("/dashboard/oficina/materiales")
+@login_required
+@admin_oficina_required
+def gestion_materiales_oficina():
+    # Notificaciones (para la barra lateral/global)
+    notificaciones = Notificaciones.query.filter_by(
+        id_usuario_destino=session["user_id"], leido=False
+    ).order_by(Notificaciones.creado_en.desc()).all()
+
+    # Requisiciones de bodega a oficina
+    requisiciones_oficina = RequisicionOficina.query.order_by(RequisicionOficina.fecha_solicitud.desc()).all()
     
+    usuario = Usuarios.query.get(session.get("user_id"))
+
+    return render_template(
+        "gestion_materiales_oficina.html",
+        usuario=usuario,
+        notificaciones=notificaciones,
+        requisiciones_oficina=requisiciones_oficina
+    )
 # -----------------------------
 # DASHBOARD DE BODEGA
 # -----------------------------
@@ -298,6 +320,10 @@ def dashboard_bodega():
     #OBTENER DATOS PARA BODEGA
     materiales = Materiales.query.all()
     proyectos = Proyectos.query.all()
+
+    # Requisiciones a la Oficina de este bodeguero
+    from models import RequisicionOficina
+    mis_reqs_oficina = RequisicionOficina.query.filter_by(bodeguero_id=session['user_id']).order_by(RequisicionOficina.fecha_solicitud.desc()).all()
 
     # 1. Definimos la carga optimizada para no repetir código
     # Esto trae la solicitud + sus detalles + el nombre del material en una sola ráfaga a la DB
@@ -335,7 +361,8 @@ def dashboard_bodega():
         en_proceso=en_proceso,
         completados=completados,
         rechazados=rechazados,
-        notificaciones=notificaciones
+        notificaciones=notificaciones,
+        mis_reqs_oficina=mis_reqs_oficina
     )
 
 

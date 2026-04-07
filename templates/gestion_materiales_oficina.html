@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Materiales - Oficina</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary-grad: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+      --success-grad: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --warning-grad: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    }
+
+    body { background-color: #f3f4f6; font-family: 'Inter', sans-serif; color: #1f2937; }
+
+    .module-card {
+      background: white;
+      border: none;
+      border-radius: 20px;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+
+    .section-title {
+      font-weight: 700;
+      color: #374151;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  {% include 'mensajes.html' %}
+
+  <div class="container mt-4 pb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <a href="{{ url_for('dashboard.dashboard_oficina') }}" class="btn btn-sm btn-outline-secondary mb-2">
+            <i class="bi bi-arrow-left"></i> Volver a Dashboard
+        </a>
+        <h2 class="fw-bold m-0"><i class="bi bi-box-seam-fill text-warning"></i> Gestión de Materiales en Oficina</h2>
+        <p class="text-secondary small">Panel de Adquisición y Seguimiento | {{ usuario.nombre }}</p>
+      </div>
+      <div class="dropdown">
+        <button class="btn btn-white shadow-sm dropdown-toggle px-3 py-2 border-0 bg-white" data-bs-toggle="dropdown" style="border-radius: 12px;">
+          <i class="bi bi-person-circle text-primary"></i> Mi Perfil
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+          <li><a class="dropdown-item" href="{{ url_for('usuarios.perfil') }}">Ajustes</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item text-danger" href="{{ url_for('usuarios.logout') }}">Cerrar Sesión</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- MAIN DASHBOARD PARA MATERIALES -->
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="module-card p-4 h-100 border-start border-4 border-warning shadow-sm">
+          <h5 class="section-title"><i class="bi bi-clipboard-data text-warning"></i> Requisiciones Pendientes</h5>
+          
+          {% if requisiciones_oficina %}
+          <div style="max-height: 500px; overflow-y: auto;">
+            {% for req in requisiciones_oficina %}
+            <div class="p-3 border rounded bg-light mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div>
+                   <span class="badge bg-warning text-dark me-2">#{{ req.id }}</span>
+                   <small class="text-muted fw-bold"> Bodeguero: {{ req.bodeguero.nombre }}</small>
+                </div>
+                <small class="text-muted"><i class="bi bi-calendar"></i> {{ req.fecha_solicitud.strftime('%d/%m/%Y %H:%M') }}</small>
+              </div>
+              <p class="small mb-2 text-muted">{{ req.observaciones or "Sin observaciones generales." }}</p>
+              
+              <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top">
+                <span class="badge {{ 'bg-success' if req.estado == 'COMPRADA' else 'bg-secondary' }}">{{ req.estado }}</span>
+                <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#modalReq{{ req.id }}">
+                  Revisar Pedido Completo ({{ req.detalles|length }} items)
+                </button>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-check-circle" style="font-size: 3rem;"></i>
+                <p class="mt-2 text-secondary">No hay solicitudes de bodega actuales.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODALES DE REQUISICIÓN ================= -->
+  {% for req in requisiciones_oficina %}
+  <div class="modal fade" id="modalReq{{ req.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content border-0 shadow" style="border-radius: 20px;">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="fw-bold"><i class="bi bi-clipboard2-check text-warning"></i> Solicitud de Compra #{{ req.id }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body px-4">
+          <p class="small text-muted mb-3"><i class="bi bi-person"></i> Bodeguero: {{ req.bodeguero.nombre }}</p>
+          {% if req.observaciones %}
+          <div class="p-3 bg-light border rounded mb-3 small">
+            <strong>Observaciones:</strong><br/>
+            {{ req.observaciones }}
+          </div>
+          {% endif %}
+          
+          <h6 class="fw-bold mb-3">Materiales a Adquirir:</h6>
+          <div class="table-responsive">
+              <table class="table table-bordered table-sm align-middle">
+                  <thead class="table-light">
+                      <tr>
+                          <th style="width: 5%">#</th>
+                          <th style="width: 75%">Material Textual Requerido</th>
+                          <th style="width: 20%" class="text-center">Cantidad</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      {% for d in req.detalles %}
+                      <tr>
+                          <td class="text-secondary">{{ loop.index }}</td>
+                          <td class="fw-medium">{{ d.material_texto }}</td>
+                          <td class="text-center"><span class="badge bg-primary px-3">{{ d.cantidad }}</span></td>
+                      </tr>
+                      {% endfor %}
+                  </tbody>
+              </table>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          {% if req.estado == 'PENDIENTE' %}
+          <form action="{{ url_for('materiales.completar_requisicion_oficina', id=req.id) }}" method="POST" class="m-0 me-auto">
+            <button class="btn btn-outline-success" type="submit"><i class="bi bi-check-circle me-1"></i>Marcar como Comprada</button>
+          </form>
+          {% else %}
+            <span class="me-auto text-success fw-bold"><i class="bi bi-check-all"></i> Solicitud Procesada</span>
+          {% endif %}
+          <a href="{{ url_for('materiales.pdf_requisicion_oficina', id=req.id) }}" target="_blank" class="btn btn-outline-danger">
+            <i class="bi bi-file-earmark-pdf me-1"></i> PDF
+          </a>
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -109,7 +109,14 @@
         <h2 class="fw-bold m-0"><i class="bi bi-box-seam-fill text-primary me-2"></i>Control de Bodega</h2>
         <p class="text-muted small mb-0">Gestión de suministros y trazabilidad completa</p>
       </div>
-      <div class="dropdown">
+      <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-outline-secondary shadow-sm px-3 py-2" data-bs-toggle="modal" data-bs-target="#modalMisSolicitudesOficina" style="border-radius: 12px;">
+          <i class="bi bi-clock-history me-1"></i> Historial a Oficina
+        </button>
+        <button class="btn btn-primary shadow-sm px-3 py-2" data-bs-toggle="modal" data-bs-target="#modalSolicitarOficina" style="border-radius: 12px;">
+          <i class="bi bi-cart-plus me-1"></i> Solicitar a Oficina
+        </button>
+        <div class="dropdown">
         <button class="btn btn-white shadow-sm border-0 dropdown-toggle px-3 py-2" type="button" data-bs-toggle="dropdown" style="border-radius: 12px;">
           <i class="bi bi-person-circle me-1 text-primary"></i> {{ usuario.nombre }}
         </button>
@@ -118,6 +125,7 @@
           <li><hr class="dropdown-divider"></li>
           <li><a class="dropdown-item text-danger" href="{{ url_for('usuarios.logout') }}">Salir</a></li>
         </ul>
+        </div>
       </div>
     </div>
 
@@ -314,6 +322,142 @@
     </div>
   </div>
 
+  <!-- === MODAL SOLICITAR A OFICINA === -->
+  <div class="modal fade" id="modalSolicitarOficina" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content border-0 shadow" style="border-radius: 20px;">
+        <form method="POST" action="{{ url_for('materiales.solicitar_a_oficina') }}">
+          <div class="modal-header border-0">
+            <h5 class="fw-bold">
+              <i class="bi bi-send text-primary"></i> Solicitar Materiales a Oficina
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body px-4">
+            <p class="small text-muted">Solicita artículos que la Oficina deba adquirir para el stock de bodega.</p>
+            
+            <div class="mb-3">
+              <label class="form-label fw-bold">Observaciones Generales</label>
+              <textarea name="observaciones" class="form-control form-control-sm" rows="2" placeholder="Ej: Materiales para el proyecto X, herramientas faltantes..."></textarea>
+            </div>
+
+            <label class="form-label fw-bold">Materiales a Solicitar</label>
+            <div id="lista_requisicion">
+              <!-- Fila base -->
+              <div class="row g-2 mb-2 fila-requisicion">
+                <div class="col-md-8">
+                  <input type="text" name="material_texto[]" class="form-control form-control-sm" placeholder="Nombre general o descripción del material" required>
+                </div>
+                <div class="col-md-3">
+                  <input type="text" name="cantidad[]" class="form-control form-control-sm" placeholder="Ej: 5 Cajas" required>
+                </div>
+                <div class="col-md-1 text-end">
+                  <button type="button" class="btn btn-outline-danger btn-sm border-0 w-100 btn-eliminar-fila" disabled><i class="bi bi-trash"></i></button>
+                </div>
+              </div>
+            </div>
+            
+            <button type="button" class="btn btn-outline-primary btn-sm mt-1 mb-3" onclick="agregarFilaRequisicion()">
+              <i class="bi bi-plus-circle me-1"></i> Agregar otra fila
+            </button>
+            
+          </div>
+          <div class="modal-footer border-0">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary" id="btnSubmitReq" disabled>Enviar Solicitud</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- === MODAL HISTORIAL A OFICINA === -->
+  <div class="modal fade" id="modalMisSolicitudesOficina" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow" style="border-radius: 20px;">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="fw-bold"><i class="bi bi-list-check text-secondary"></i> Mis Peticiones a Oficina</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body px-4" style="max-height: 350px; overflow-y: auto;">
+          {% if mis_reqs_oficina %}
+            {% for req in mis_reqs_oficina %}
+              <div class="p-3 border rounded bg-light mb-2">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="badge bg-secondary text-white">#{{ req.id }}</span>
+                  <small class="text-muted">{{ req.fecha_solicitud.strftime('%d/%m/%Y') }}</small>
+                </div>
+                <p class="small mb-2">{{ req.observaciones or "Sin observaciones" }}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="small text-muted">{{ req.detalles|length }} Item(s)</span>
+                  {% if req.estado == 'PENDIENTE' %}
+                    <span class="badge bg-warning text-dark"><i class="bi bi-hourglass"></i> Pendiente</span>
+                  {% elif req.estado == 'COMPRADA' %}
+                    <span class="badge bg-success"><i class="bi bi-check-circle"></i> Comprada</span>
+                  {% else %}
+                    <span class="badge bg-danger">{{ req.estado }}</span>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p class="text-center text-muted small mt-3">Aún no has solicitado compras a la oficina.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    function validarFormularioReq() {
+      const inputs = document.querySelectorAll('input[name="material_texto[]"]');
+      const btn = document.getElementById('btnSubmitReq');
+      let esValido = false;
+      inputs.forEach(input => {
+        if (input.value.trim().length > 0) esValido = true;
+      });
+      btn.disabled = !esValido;
+    }
+
+    // Usamos delegación de eventos para capturar el tecleo en cualquier input
+    document.addEventListener("input", function(e) {
+      if (e.target && e.target.name === "material_texto[]") {
+        validarFormularioReq();
+      }
+    });
+
+    function agregarFilaRequisicion() {
+      const container = document.getElementById("lista_requisicion");
+      const row = document.createElement("div");
+      row.className = "row g-2 mb-2 fila-requisicion";
+      row.innerHTML = `
+        <div class="col-md-8">
+          <input type="text" name="material_texto[]" class="form-control form-control-sm" placeholder="Nombre general o descripción del material" required>
+        </div>
+        <div class="col-md-3">
+          <input type="text" name="cantidad[]" class="form-control form-control-sm" placeholder="Ej: 5 Cajas" required>
+        </div>
+        <div class="col-md-1 text-end">
+          <button type="button" class="btn btn-outline-danger btn-sm border-0 w-100" onclick="this.closest('.fila-requisicion').remove(); actualizarBotonesDinamicos(); validarFormularioReq();"><i class="bi bi-trash"></i></button>
+        </div>
+      `;
+      container.appendChild(row);
+      actualizarBotonesDinamicos();
+      validarFormularioReq();
+    }
+  
+    function actualizarBotonesDinamicos() {
+      const filas = document.querySelectorAll(".fila-requisicion");
+      if (filas.length > 1) {
+        filas[0].querySelector("button").disabled = false;
+        filas[0].querySelector("button").onclick = function() { this.closest('.fila-requisicion').remove(); actualizarBotonesDinamicos(); validarFormularioReq(); };
+      } else if(filas.length === 1) {
+        filas[0].querySelector("button").disabled = true;
+        filas[0].querySelector("button").onclick = null;
+      }
+    }
+  </script>
 </body>
 </html>

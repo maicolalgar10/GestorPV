@@ -530,18 +530,24 @@
                               </div>
 
                               <div class="col-md-6">
-                                <label class="form-label">📸 Tomar foto en vivo</label>
-                                <div class="d-flex flex-column">
-                                  <video id="video-{{ actividad.id_actividad }}" width="220" height="160" autoplay></video>
-
-                                  <button type="button" class="btn btn-secondary mt-2 btn-sm"
-                                    onclick="tomarFoto('{{ actividad.id_actividad }}')">
-                                    <i class="bi bi-camera"></i> Capturar
-                                  </button>
-
-                                  <canvas id="canvas-{{ actividad.id_actividad }}" width="220" height="160"></canvas>
-                                  <input type="hidden" name="captura_base64"
-                                    id="captura_base64-{{ actividad.id_actividad }}">
+                                <label class="form-label fw-bold text-dark"><i class="bi bi-camera-fill text-primary"></i> Evidencia Fotográfica</label>
+                                <div class="d-flex flex-column align-items-center bg-light p-3 rounded border">
+                                  <video id="video-{{ actividad.id_actividad }}" class="rounded shadow-sm mb-3" style="width: 100%; max-width: 400px; background: #000;" autoplay playsinline></video>
+                                  
+                                  <div class="d-flex gap-4 justify-content-center w-100 align-items-center">
+                                    <button type="button" class="btn btn-outline-secondary rounded-circle shadow-sm" style="width: 50px; height: 50px;" onclick="switchCamera('{{ actividad.id_actividad }}')" title="Cambiar Cámara">
+                                      <i class="bi bi-arrow-repeat fs-5"></i>
+                                    </button>
+                                    
+                                    <button type="button" class="btn btn-danger rounded-circle shadow" style="width: 75px; height: 75px; border: 4px solid #fecaca;" onclick="tomarFoto('{{ actividad.id_actividad }}')" title="Capturar Foto">
+                                      <i class="bi bi-camera-fill fs-2"></i>
+                                    </button>
+                                  </div>
+                                  
+                                  <p class="small text-muted mt-3 mb-0" id="status-cam-{{ actividad.id_actividad }}">Esperando captura...</p>
+                                  
+                                  <canvas id="canvas-{{ actividad.id_actividad }}" style="display:none;"></canvas>
+                                  <input type="hidden" name="captura_base64" id="captura_base64-{{ actividad.id_actividad }}">
                                 </div>
                               </div>
                             </div>
@@ -863,30 +869,50 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // === 2. GESTIÓN DE CÁMARA (CORREGIDO) ===
-    // Activamos la cámara solo cuando el acordeón se expande
+    // === 2. GESTIÓN DE CÁMARA MEJORADA ===
+    window.currentFacingMode = 'environment'; // Por defecto trasera
+    
+    window.initCamera = function(videoEl) {
+        if (videoEl.srcObject) {
+            videoEl.srcObject.getTracks().forEach(t => t.stop());
+        }
+        
+        // Pedir HD min 720p
+        navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                facingMode: window.currentFacingMode,
+                width: { min: 1280, ideal: 1920 },
+                height: { min: 720, ideal: 1080 }
+            } 
+        })
+        .then(stream => {
+            videoEl.srcObject = stream;
+        })
+        .catch(err => {
+            console.warn("HD no soportado o cámara denegada, intentando fallback libre...", err);
+            // Fallback libre de resoluciones estrictas
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: window.currentFacingMode } })
+                .then(stream => { videoEl.srcObject = stream; })
+                .catch(e => {
+                    console.error("Error definitivo cámara:", e);
+                    alert("No se pudo acceder a la cámara. Revisa permisos.");
+                });
+        });
+    };
+
     const accordions = document.querySelectorAll('.accordion-collapse');
     accordions.forEach(acc => {
         acc.addEventListener('shown.bs.collapse', function () {
             const video = this.querySelector('video[id^="video-"]');
             if (video && !video.srcObject) {
-                navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-                    .then(stream => {
-                        video.srcObject = stream;
-                    })
-                    .catch(err => {
-                        console.error("Error al acceder a la cámara:", err);
-                        alert("No se pudo activar la cámara. Revisa los permisos.");
-                    });
+                window.initCamera(video);
             }
         });
 
-        // Opcional: Apagar la cámara al cerrar el acordeón para ahorrar batería
         acc.addEventListener('hidden.bs.collapse', function () {
             const video = this.querySelector('video[id^="video-"]');
             if (video && video.srcObject) {
-                const tracks = video.srcObject.getTracks();
-                tracks.forEach(track => track.stop());
+                video.srcObject.getTracks().forEach(track => track.stop());
                 video.srcObject = null;
             }
         });
@@ -974,21 +1000,71 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // === FUNCIONES GLOBALES (FUERA DEL DOMCONTENTLOADED) ===
 
-// Capturar foto del video
+window.switchCamera = function(idActividad) {
+    window.currentFacingMode = window.currentFacingMode === 'environment' ? 'user' : 'environment';
+    const video = document.getElementById('video-' + idActividad);
+    if(video) window.initCamera(video);
+};
+
+// Capturar foto del video con Metadatos (Watermark)
 function tomarFoto(idActividad) {
     const video = document.getElementById('video-' + idActividad);
     const canvas = document.getElementById('canvas-' + idActividad);
     const input = document.getElementById('captura_base64-' + idActividad);
+    const status = document.getElementById('status-cam-' + idActividad);
     
     if (video && canvas && input) {
-        const ctx = canvas.getContext('2d');
-        // Ajustar tamaño del canvas al video real
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        input.value = canvas.toDataURL('image/jpeg', 0.8);
-        alert('📷 Foto capturada correctamente.');
+        status.innerHTML = '<span class="text-primary fw-bold"><span class="spinner-border spinner-border-sm me-1"></span> Geolocalizando...</span>';
+        
+        // Timeout de 6 segundos para GPS para no bloquear al usuario por siempre
+        if(navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => processPhoto(video, canvas, input, status, pos.coords),
+                (err) => processPhoto(video, canvas, input, status, null),
+                { enableHighAccuracy: true, timeout: 6000 }
+            );
+        } else {
+            processPhoto(video, canvas, input, status, null);
+        }
     }
+}
+
+function processPhoto(video, canvas, input, status, coords) {
+    const ctx = canvas.getContext('2d');
+    // Usar la resolución original capturada del video HD
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+    
+    // Pintar frame del video
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Configurar tipografía para marca de agua visible
+    const fontSize = Math.max(22, Math.floor(canvas.width * 0.035));
+    ctx.font = `bold ${fontSize}px sans-serif`;
+    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.shadowColor = "rgba(0, 0, 0, 0.85)";
+    ctx.shadowBlur = Math.floor(fontSize / 3);
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+    
+    const xPadding = Math.floor(canvas.width * 0.03);
+    let currentY = canvas.height - Math.floor(canvas.height * 0.04);
+    
+    // Data textual
+    const dateStr = new Date().toLocaleString('es-CO');
+    
+    ctx.fillText(`🕒 ${dateStr}`, xPadding, currentY);
+    currentY -= (fontSize + 10);
+    
+    if(coords) {
+        ctx.fillText(`📍 GPS: ${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`, xPadding, currentY);
+    } else {
+        ctx.fillText(`📍 Ubicación Desconocida`, xPadding, currentY);
+    }
+    
+    // Exportar con calidad 0.85 para ahorrar bytes a pesar de ser HD
+    input.value = canvas.toDataURL('image/jpeg', 0.85);
+    status.innerHTML = '<span class="text-success fw-bold"><i class="bi bi-check-circle-fill"></i> ¡Evidencia Capturada!</span>';
 }
 
 // Menú de perfil

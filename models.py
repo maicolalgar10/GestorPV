@@ -697,3 +697,31 @@ class DetalleSolicitudMaterial(db.Model):
     # Relaciones
     solicitud = db.relationship("SolicitudMateriales", back_populates="detalles")
     material = db.relationship("Materiales")
+
+# ===========================================
+# 18. Requisiciones a Oficina (Bodega -> Oficina)
+# ===========================================
+class RequisicionOficina(db.Model):
+    __tablename__ = "requisiciones_oficina"
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    bodeguero_id = db.Column(db.Integer, db.ForeignKey("usuarios.id_usuario"), nullable=False)
+    fecha_solicitud = db.Column(db.DateTime, default=datetime.utcnow)
+    estado = db.Column(
+        db.Enum('PENDIENTE', 'APROBADA', 'COMPRADA', 'RECHAZADA', name='estado_req_oficina_enum'),
+        default='PENDIENTE'
+    )
+    observaciones = db.Column(db.Text, nullable=True)
+
+    bodeguero = db.relationship("Usuarios", backref="requisiciones_realizadas")
+    detalles = db.relationship("DetalleRequisicionOficina", back_populates="requisicion", cascade="all, delete-orphan")
+
+class DetalleRequisicionOficina(db.Model):
+    __tablename__ = "detalle_requisicion_oficina"
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    requisicion_id = db.Column(db.Integer, db.ForeignKey("requisiciones_oficina.id"), nullable=False)
+    material_texto = db.Column(db.String(255), nullable=False)
+    cantidad = db.Column(db.String(100), nullable=False)
+
+    requisicion = db.relationship("RequisicionOficina", back_populates="detalles")

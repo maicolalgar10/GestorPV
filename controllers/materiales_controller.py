@@ -1,11 +1,13 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
-from models import db, Materiales, MaterialesProyecto, Proyectos, SolicitudMateriales, Notificaciones, Usuarios, DetalleSolicitudMaterial
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app, send_file
+from models import db, Materiales, MaterialesProyecto, Proyectos, SolicitudMateriales, Notificaciones, Usuarios, DetalleSolicitudMaterial, RequisicionOficina, DetalleRequisicionOficina
 from datetime import datetime, date
 from decorators import login_required, admin_required, admin_bodega_required
 import os
 from werkzeug.utils import secure_filename
 from pathlib import Path
 from sqlalchemy.exc import IntegrityError
+from fpdf import FPDF
+from io import BytesIO
 
 
 
@@ -479,3 +481,186 @@ def procesar_entrega_bodega(id_solicitud):
         print(f"Error: {e}") # Para debugging
 
     return redirect(url_for('materiales.solicitudes_bodega'))
+
+# ----------------------------
+# REQUISICIONES BODEGA -> OFICINA
+# ----------------------------
+@materiales_bp.route('/materiales/solicitar_a_oficina', methods=['POST'])
+@login_required
+def solicitar_a_oficina():
+    # Aseguramos que solo bodega pueda solicitar
+    if session.get("rol") not in ["BODEGA", "ADMIN"]:
+        flash("No tienes permiso para realizar esta acción.", "danger")
+        return redirect(url_for("dashboard.dashboard"))
+
+    observaciones = request.form.get("observaciones", "")
+    materiales_texto = request.form.getlist("material_texto[]")
+    cantidades = request.form.getlist("cantidad[]")
+    
+    if not materiales_texto or not cantidades:
+        flash("La solicitud debe incluir al menos un material", "danger")
+        return redirect(url_for("dashboard.dashboard_bodega"))
+
+    try:
+        nueva_requisicion = RequisicionOficina(
+            bodeguero_id=session["user_id"],
+            observaciones=observaciones,
+            estado='PENDIENTE',
+            fecha_solicitud=datetime.utcnow()
+        )
+        db.session.add(nueva_requisicion)
+        db.session.flush() # Obtener ID emitido
+        
+        items_validos = 0
+        for md_texto, md_cantidad in zip(materiales_texto, cantidades):
+            if md_texto.strip() and md_cantidad.strip():
+                detalle = DetalleRequisicionOficina(
+                    requisicion_id=nueva_requisicion.id,
+                    material_texto=md_texto.strip(),
+                    cantidad=md_cantidad.strip()
+                )
+                db.session.add(detalle)
+                items_validos += 1
+                
+        if items_validos == 0:
+            db.session.rollback()
+            flash("Debes agregar al menos un material con un nombre y cantidad válidos.", "warning")
+            return redirect(url_for("dashboard.dashboard_bodega"))
+            
+        # Enviar Notificación a usuarios de OFICINA
+        usuarios_oficina = Usuarios.query.filter(Usuarios.rol.in_(['OFICINA', 'ADMIN'])).all()
+        for u in usuarios_oficina:
+             notif = Notificaciones(
+                  id_usuario_destino=u.id_usuario,
+                  mensaje=f"Bodega ha ingresado la Requisición #{nueva_requisicion.id} de Materiales.",
+                  leido=False
+             )
+             db.session.add(notif)
+             
+        db.session.commit()
+        flash(f"Requisición #{nueva_requisicion.id} enviada exitosamente a la oficina", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al enviar la requisición: {str(e)}", "danger")
+        
+    return redirect(url_for("dashboard.dashboard_bodega"))
+
+@materiales_bp.route('/oficina/requisiciones/<int:id>/completar', methods=['POST'])
+@login_required
+def completar_requisicion_oficina(id):
+    if session.get("rol") not in ["OFICINA", "ADMIN"]:
+        flash("Acceso denegado.", "danger")
+        return redirect(url_for("dashboard.dashboard"))
+        
+    req = RequisicionOficina.query.get_or_404(id)
+    try:
+        req.estado = 'COMPRADA'
+        
+        # Alerta al bodeguero
+        notif = Notificaciones(
+            id_usuario_destino=req.bodeguero_id,
+            mensaje=f"Tu solicitud a oficina #{req.id} ha sido completada/comprada.",
+            leido=False
+        )
+        db.session.add(notif)
+        
+        db.session.commit()
+        flash(f"Requisición #{req.id} completada exitosamente.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al completar: {str(e)}", "danger")
+        
+    return redirect(url_for("dashboard.dashboard_oficina"))
+
+@materiales_bp.route('/oficina/requisiciones/<int:id>/pdf', methods=['GET'])
+@login_required
+def pdf_requisicion_oficina(id):
+    req = RequisicionOficina.query.get_or_404(id)
+    
+    # Crear PDF usando fpdf2 con márgenes
+    pdf = FPDF(format="A4")
+    pdf.add_page()
+    pdf.set_margins(15, 15, 15)
+    
+    # Encabezado (Logo o Titulo corporativo)
+    pdf.set_font("Helvetica", style="B", size=18)
+    pdf.set_text_color(40, 40, 40)
+    pdf.cell(0, 10, "CORSEING", align="L")
+    
+    pdf.set_font("Helvetica", style="B", size=14)
+    pdf.set_text_color(100, 100, 100)
+    pdf.cell(0, 10, f"REQUISICIÓN DE BODEGA N° {req.id}", align="R")
+    pdf.ln(12)
+    pdf.line(15, pdf.get_y(), 195, pdf.get_y())
+    pdf.ln(8)
+    
+    # Info general
+    pdf.set_font("Helvetica", style="B", size=10)
+    pdf.set_text_color(50, 50, 50)
+    pdf.cell(40, 8, "Fecha Solicitud:")
+    pdf.set_font("Helvetica", size=10)
+    pdf.cell(50, 8, f"{req.fecha_solicitud.strftime('%d/%m/%Y %H:%M')}")
+    pdf.ln(6)
+    
+    pdf.set_font("Helvetica", style="B", size=10)
+    pdf.cell(40, 8, "Solicitante:")
+    pdf.set_font("Helvetica", size=10)
+    pdf.cell(0, 8, f"{req.bodeguero.nombre}")
+    pdf.ln(6)
+    
+    pdf.set_font("Helvetica", style="B", size=10)
+    pdf.cell(40, 8, "Estado del Pedido:")
+    pdf.set_font("Helvetica", size=10)
+    pdf.cell(0, 8, f"{req.estado}")
+    pdf.ln(12)
+    
+    if req.observaciones:
+        pdf.set_fill_color(245, 245, 245)
+        pdf.set_font("Helvetica", style="B", size=10)
+        pdf.cell(0, 8, " Observaciones Generales:", border=0, fill=True)
+        pdf.ln(8)
+        pdf.set_font("Helvetica", size=10)
+        pdf.multi_cell(0, 8, req.observaciones)
+        pdf.ln(6)
+        
+    pdf.set_font("Helvetica", style="B", size=12)
+    pdf.set_text_color(40, 40, 40)
+    pdf.cell(0, 10, "LISTA DE ÍTEMS REQUERIDOS:")
+    pdf.ln(10)
+    
+    # Cabecera tabla
+    pdf.set_fill_color(220, 220, 220)
+    pdf.set_text_color(0, 0, 0)
+    pdf.set_font("Helvetica", style="B", size=10)
+    pdf.cell(15, 10, "#", border=1, fill=True, align="C")
+    pdf.cell(125, 10, "Descripción / Nombre del Material", border=1, fill=True, align="C")
+    pdf.cell(40, 10, "Cantidad Solicitada", border=1, fill=True, align="C")
+    pdf.ln(10)
+    
+    # Filas de tabla
+    pdf.set_font("Helvetica", size=10)
+    for i, d in enumerate(req.detalles, 1):
+        # Ajustamos a max text len, si un texto excede de 70 caracteres lo cortamos en PDF convencional
+        # para que no rompa la estructura tabular fija, o se puede construir en dos lineas.
+        texto_limpio = str(d.material_texto)
+        if len(texto_limpio) > 70:
+            texto_limpio = texto_limpio[:67] + "..."
+            
+        pdf.cell(15, 8, str(i), border=1, align="C")
+        pdf.cell(125, 8, texto_limpio, border=1) 
+        pdf.cell(40, 8, str(d.cantidad), border=1, align="C")
+        pdf.ln(8)
+        
+    pdf.ln(15)
+    pdf.set_font("Helvetica", style="I", size=9)
+    pdf.set_text_color(150, 150, 150)
+    pdf.cell(0, 5, "Documento autogenerado por el Sistema de Gestión Corseing", align="C")
+        
+    # Salida
+    byte_string = pdf.output()
+    return send_file(
+        BytesIO(byte_string),
+        download_name=f"Requisicion_{req.id}_Corseing.pdf",
+        as_attachment=True,
+        mimetype="application/pdf"
+    )
