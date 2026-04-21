@@ -571,7 +571,9 @@ def eliminar_material_proyecto(id_material_proyecto):
 @login_required
 @admin_required
 def proyectos_finalizados():
-    proyectos = Proyectos.query.filter_by(estado="FINALIZADO", visible=True).all()  #  FILTRAR VISIBLES
+    proyectos = Proyectos.query.options(
+        db.joinedload(Proyectos.responsable)
+    ).filter_by(estado="FINALIZADO", visible=True).all()  #  FILTRAR VISIBLES
     return render_template("proyectos_fin.html", proyectos=proyectos)
 
 
@@ -582,7 +584,9 @@ def proyectos_finalizados():
 @login_required
 @admin_required
 def proyectos_progreso():
-    proyectos = Proyectos.query.filter(Proyectos.estado != "FINALIZADO", Proyectos.visible == True).all()  #  FILTRAR VISIBLES
+    proyectos = Proyectos.query.options(
+        db.joinedload(Proyectos.responsable)
+    ).filter(Proyectos.estado != "FINALIZADO", Proyectos.visible == True).all()  #  FILTRAR VISIBLES
     return render_template("proyectos_pro.html", proyectos=proyectos)
 
 

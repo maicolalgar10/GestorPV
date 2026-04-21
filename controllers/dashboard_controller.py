@@ -182,6 +182,7 @@ def dashboard_trabajador():
     proyectos_asignados = (
         db.session.query(Proyectos)
         .options(selectinload(Proyectos.materiales)) # <-- Fuerza a cargar la relación actualizada
+        .options(joinedload(Proyectos.responsable))
         .join(ProyectoPersonal)
         .filter(ProyectoPersonal.personal_id == personal_id)
         .filter(Proyectos.visible == True)

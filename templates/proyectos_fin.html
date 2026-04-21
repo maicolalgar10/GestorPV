@@ -124,7 +124,7 @@
                         <td>{{ p.id_proyecto }}</td>
                         <td>{{ p.nombre }}</td>
                         <td>{{ p.lugar }}</td>
-                        <td>{{ p.responsable.nombre if p.responsable else "No asignado" }}</td>
+                        <td>{{ p.responsable.nombre if p.responsable else "No asignado (ID: " ~ p.responsable_id ~ ")" }}</td>
                         <td>{{ p.fecha_inicio }}</td>
                         <td>{{ p.fecha_fin }}</td>
                         <td>{{ p.descripcion or "Sin descripción" }}</td>
