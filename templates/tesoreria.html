@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tesorería - Gestión de Oficina</title>
+
+  <!-- React & Babel -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Para hacer peticiones HTTP fáciles -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+
+  <!-- Inyección de Datos desde Jinja -->
+  <script>
+    // Configuración de CSRF si existe
+    window.csrf_token = "{{ csrf_token() if csrf_token else '' }}";
+
+    // Datos calculados desde el backend, pasados crudos a JSON
+    const CONTRACTS = {{ contratos_json | tojson | safe }};
+    const MOVEMENTS = {{ movimientos_json | tojson | safe }};
+    const BANKS = {{ bancos_json | tojson | safe }};
+
+    const UPCOMING = []; // Aquí podríamos calcular facturas pendientes de cobrar
+  </script>
+
+  <div id="root"></div>
+
+  <script type="text/babel">
+    {% raw %}
+    const { useState, useEffect } = React;
+
+    const fmt = (n) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(Math.abs(n));
+    const fmtShort = (n) => {
+      const abs = Math.abs(n);
+      if (abs >= 1e9) return `$${(abs / 1e9).toFixed(2)}B`;
+      if (abs >= 1e6) return `$${(abs / 1e6).toFixed(0)}M`;
+      return `$${(abs / 1e3).toFixed(0)}K`;
+    };
+
+    const CATEGORY_COLORS = {
+      anticipo: "#4F8EF7", acta: "#00D4AA", nomina: "#F7C94F",
+      materiales: "#FF8C42", maquinaria: "#B47AE5", subcontrato: "#FF6B6B",
+      seguros: "#6BE5FF", general: "#8A9BB0"
+    };
+
+    const CATEGORY_LABELS = {
+      anticipo: "Anticipo", acta: "Acta Parcial", nomina: "Nómina",
+      materiales: "Materiales", maquinaria: "Maquinaria", subcontrato: "Subcontrato",
+      seguros: "Seguros", general: "General"
+    };
+
+    function Tesoreria() {
+      const [activeTab, setActiveTab] = useState("dashboard");
+      const [selectedContract, setSelectedContract] = useState(null);
+      const [filterType, setFilterType] = useState("todos");
+      const [searchTerm, setSearchTerm] = useState("");
+      const [sidebarOpen, setSidebarOpen] = useState(true);
+      const [showNewMovement, setShowNewMovement] = useState(false);
+      const [showNewBank, setShowNewBank] = useState(false);
+      
+      const maskAccount = (acc) => {
+        if (!acc) return "****";
+        if (acc.length <= 4) return acc;
+        return "****-" + acc.slice(-4);
+      };
+      
+      // Integración JS con endpoint /api/tesoreria/resumen
+      const [apiResumen, setApiResumen] = useState({
+        saldo_consolidado: 0,
+        contratos_activos_valor_total: 0,
+        total_facturado_bruto: 0,
+        pendiente_facturar: 0
+      });
+
+      const [newMov, setNewMov] = useState({ 
+        concept: "", 
+        contract: "", 
+        type: "ingreso", 
+        amount: "", 
+        bank: BANKS[0]?.id || "", 
+        category: "acta", 
+        date: new Date().toISOString().split('T')[0] 
+      });
+
+      useEffect(() => {
+        // Cargar resumen de tesorería desde la API
+        fetch('/tesoreria/api/resumen')
+          .then(res => res.json())
+          .then(data => {
+            if (data.status === 'success') {
+              setApiResumen({
+                saldo_consolidado: parseFloat(data.data.saldo_consolidado),
+                contratos_activos_valor_total: parseFloat(data.data.contratos_activos_valor_total),
+                total_facturado_bruto: parseFloat(data.data.total_facturado_bruto),
+                pendiente_facturar: parseFloat(data.data.pendiente_facturar)
+              });
+            }
+          })
+          .catch(err => console.error("Error fetching resumen API", err));
+      }, []);
+
+      const totalBalance = apiResumen.saldo_consolidado > 0 ? apiResumen.saldo_consolidado : BANKS.reduce((s, b) => s + b.balance, 0);
+      const totalIngresos = MOVEMENTS.filter(m => m.type === "ingreso").reduce((s, m) => s + m.amount, 0);
+      const totalEgresos = MOVEMENTS.filter(m => m.type === "egreso").reduce((s, m) => s + Math.abs(m.amount), 0);
+      
+      const filteredMovements = MOVEMENTS.filter(m => {
+        const matchType = filterType === "todos" || m.type === filterType;
+        const matchSearch = m.concept.toLowerCase().includes(searchTerm.toLowerCase()) || m.contract.toLowerCase().includes(searchTerm.toLowerCase());
+        return matchType && matchSearch;
+      });
+
+      const tabs = [
+        { id: "dashboard", icon: "◈", label: "Dashboard" },
+        { id: "contratos", icon: "⬡", label: "Contratos" },
+        { id: "movimientos", icon: "⇅", label: "Movimientos" },
+        { id: "bancos", icon: "◻", label: "Bancos" },
+        { id: "proyecciones", icon: "📈", label: "Proyecciones" }
+      ];
+
+      return (
+        <div style={{ fontFamily: "'DM Mono', 'Courier New', monospace", background: "#0A0E1A", minHeight: "100vh", color: "#E8EAF2", display: "flex", overflow: "hidden" }}>
+          <style>{`
+            @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #0D1220; } ::-webkit-scrollbar-thumb { background: #2A3050; border-radius: 2px; }
+            .tab-btn { background: none; border: none; cursor: pointer; transition: all 0.2s; }
+            .tab-btn:hover { background: rgba(79,142,247,0.1) !important; }
+            .tab-btn.active { background: rgba(79,142,247,0.15) !important; border-left: 2px solid #4F8EF7 !important; }
+            .card { background: #111827; border: 1px solid #1E2A40; border-radius: 12px; transition: all 0.2s; }
+            .card:hover { border-color: #2A3A58; }
+            .glow-text { text-shadow: 0 0 20px rgba(0,212,170,0.4); }
+            .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; letter-spacing: 0.5px; }
+            .btn-primary { background: linear-gradient(135deg, #4F8EF7, #2D6FE8); border: none; color: white; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; transition: all 0.2s; }
+            .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(79,142,247,0.4); }
+            .inp { background: #0D1220; border: 1px solid #1E2A40; border-radius: 8px; color: #E8EAF2; padding: 8px 12px; font-family: inherit; font-size: 13px; outline: none; transition: border 0.2s; }
+            .inp:focus { border-color: #4F8EF7; }
+            .inp option { background: #111827; }
+            .progress-bar { background: #1E2A40; border-radius: 4px; height: 6px; overflow: hidden; }
+            .progress-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
+            .fade-in { animation: fadeIn 0.4s ease forwards; }
+            @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+            .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+          `}</style>
+
+          {/* SIDEBAR */}
+          <div style={{ width: sidebarOpen ? 220 : 64, background: "#0D1220", borderRight: "1px solid #1A2035", transition: "width 0.3s", flexShrink: 0, display: "flex", flexDirection: "column" }}>
+            <div style={{ padding: "20px 16px", borderBottom: "1px solid #1A2035", display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 32, height: 32, background: "linear-gradient(135deg, #4F8EF7, #00D4AA)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>⬡</div>
+              {sidebarOpen && <div>
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 13, color: "#E8EAF2", lineHeight: 1.2 }}>VIALTECH</div>
+                <div style={{ fontSize: 9, color: "#4A5568", letterSpacing: "0.1em", textTransform: "uppercase" }}>Tesorería</div>
+              </div>}
+            </div>
+
+            <nav style={{ flex: 1, padding: "16px 8px" }}>
+              {tabs.map(t => (
+                <button key={t.id} className={`tab-btn ${activeTab === t.id ? "active" : ""}`}
+                  onClick={() => setActiveTab(t.id)}
+                  style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 8, color: activeTab === t.id ? "#4F8EF7" : "#6B7A9A", marginBottom: 4, borderLeft: "2px solid transparent", justifyContent: sidebarOpen ? "flex-start" : "center" }}>
+                  <span style={{ fontSize: 16, flexShrink: 0 }}>{t.icon}</span>
+                  {sidebarOpen && <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 500 }}>{t.label}</span>}
+                </button>
+              ))}
+            </nav>
+            
+            <div style={{ padding: "16px 8px" }}>
+                <a href="/dashboard/oficina" className="tab-btn" style={{ textDecoration: 'none', width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 8, color: "#F7C94F", justifyContent: sidebarOpen ? "flex-start" : "center" }}>
+                    <span style={{ fontSize: 16, flexShrink: 0 }}>◂</span>
+                    {sidebarOpen && <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 500 }}>Volver al Dashboard</span>}
+                </a>
+            </div>
+
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ background: "none", border: "none", color: "#4A5568", cursor: "pointer", padding: 16, fontSize: 16 }}>
+              {sidebarOpen ? "◁" : "▷"}
+            </button>
+          </div>
+
+          {/* MAIN */}
+          <div style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
+            <div style={{ padding: "16px 28px", borderBottom: "1px solid #1A2035", display: "flex", alignItems: "center", justifyContent: "space-between", background: "#0D1220", position: "sticky", top: 0, zIndex: 100 }}>
+              <div>
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 15, fontWeight: 600, color: "#E8EAF2" }}>{tabs.find(t => t.id === activeTab)?.label}</div>
+                <div style={{ fontSize: 11, color: "#4A5568" }}>Gestión de Contratos y Movimientos</div>
+              </div>
+              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                <div style={{ background: "#111827", border: "1px solid #1E2A40", borderRadius: 8, padding: "6px 14px", fontSize: 12, color: "#00D4AA", display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ width: 6, height: 6, background: "#00D4AA", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 6px #00D4AA" }}></span>
+                  Saldo Total: <strong>{fmtShort(totalBalance)}</strong>
+                </div>
+                <button className="btn-primary" onClick={() => setShowNewMovement(true)}>+ Movimiento</button>
+              </div>
+            </div>
+
+            <div style={{ padding: "24px 28px", flex: 1 }}>
+              
+              {/* ============ DASHBOARD ============ */}
+              {activeTab === "dashboard" && (
+                <div className="fade-in">
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
+                    {[
+                      { label: "Saldo Consolidado", value: fmtShort(totalBalance), sub: `${BANKS.length} cuentas bancarias`, color: "#00D4AA", icon: "◈" },
+                      { label: "Total Facturado Bruto", value: fmtShort(apiResumen.total_facturado_bruto), sub: "Ingresos Brutos", color: "#4F8EF7", icon: "↑" },
+                      { label: "Pendiente por Facturar", value: fmtShort(apiResumen.pendiente_facturar), sub: "Según contratos", color: "#F7C94F", icon: "↓" },
+                      { label: "Contratos Activos", value: CONTRACTS.filter(c=>c.status=='activo').length, sub: `${fmtShort(apiResumen.contratos_activos_valor_total)} en ejecución`, color: "#B47AE5", icon: "⬡" },
+                    ].map((kpi, i) => (
+                      <div key={i} className="card" style={{ padding: 20 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                          <div style={{ fontSize: 11, color: "#6B7A9A", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'Space Grotesk', sans-serif" }}>{kpi.label}</div>
+                          <span style={{ color: kpi.color, fontSize: 18 }}>{kpi.icon}</span>
+                        </div>
+                        <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 26, fontWeight: 700, color: kpi.color, marginBottom: 4 }}>{kpi.value}</div>
+                        <div style={{ fontSize: 11, color: "#4A5568" }}>{kpi.sub}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 16, marginBottom: 16 }}>
+                    <div className="card" style={{ padding: 20 }}>
+                      <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 600, marginBottom: 16, color: "#B8C0D4", display: "flex", justifyContent: "space-between" }}>
+                        <span>Contratos en Ejecución</span>
+                        <span style={{ fontSize: 11, color: "#4A5568", cursor: "pointer" }} onClick={() => setActiveTab("contratos")}>Ver todos →</span>
+                      </div>
+                      {CONTRACTS.filter(c => c.status === "activo").slice(0,4).map((c, i) => (
+                        <div key={c.id} style={{ marginBottom: 16, cursor: "pointer" }} onClick={() => { setSelectedContract(c); setActiveTab("contratos"); }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, alignItems: "flex-end" }}>
+                            <div>
+                              <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 12, fontWeight: 600, color: "#E8EAF2", marginBottom: 2 }}>{c.name}</div>
+                              <div style={{ fontSize: 10, color: "#4A5568" }}>{c.client} · C-{c.id}</div>
+                            </div>
+                            <div style={{ textAlign: "right" }}>
+                              <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 600, color: c.color }}>{c.advance}%</div>
+                              <div style={{ fontSize: 10, color: "#4A5568" }}>{fmtShort(c.received)} / {fmtShort(c.value)}</div>
+                            </div>
+                          </div>
+                          <div className="progress-bar">
+                            <div className="progress-fill" style={{ width: `${c.advance}%`, background: `linear-gradient(90deg, ${c.color}80, ${c.color})` }}></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="card" style={{ padding: 20 }}>
+                      <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 600, marginBottom: 16, color: "#B8C0D4" }}>Posición Bancaria</div>
+                      {BANKS.map((b, i) => {
+                        const pct = totalBalance > 0 ? (b.balance / totalBalance) * 100 : 0;
+                        return (
+                          <div key={i} style={{ marginBottom: 18 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, alignItems: "center" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                <div style={{ width: 10, height: 10, background: b.color, borderRadius: 2 }}></div>
+                                <div>
+                                  <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 12, fontWeight: 600, color: "#E8EAF2" }}>{b.name}</div>
+                                  <div style={{ fontSize: 10, color: "#4A5568" }}>{maskAccount(b.account)}</div>
+                                </div>
+                              </div>
+                              <div style={{ textAlign: "right" }}>
+                                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 600, color: "#E8EAF2" }}>{fmtShort(b.balance)}</div>
+                                <div style={{ fontSize: 10, color: "#4A5568" }}>{pct.toFixed(1)}%</div>
+                              </div>
+                            </div>
+                            <div className="progress-bar">
+                              <div className="progress-fill" style={{ width: `${pct}%`, background: b.color }}></div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div style={{ marginTop: 16, padding: "12px 0", borderTop: "1px solid #1E2A40", display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 12, color: "#6B7A9A" }}>TOTAL DISPONIBLE</span>
+                        <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, fontWeight: 700, color: "#00D4AA" }}>{fmt(totalBalance)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ============ CONTRATOS ============ */}
+              {activeTab === "contratos" && (
+                <div className="fade-in">
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    {CONTRACTS.map(c => (
+                      <div key={c.id} className="card" style={{ padding: 20, cursor: "pointer", border: selectedContract?.id === c.id ? `1px solid ${c.color}60` : "1px solid #1E2A40" }}
+                        onClick={() => setSelectedContract(selectedContract?.id === c.id ? null : c)}>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 16, alignItems: "start" }}>
+                          <div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                              <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, fontWeight: 700, color: "#E8EAF2" }}>{c.name}</span>
+                              <span className="badge" style={{ background: c.status === "activo" ? "#00D4AA20" : c.status === "cerrado" ? "#4F8EF720" : "#F7C94F20", color: c.status === "activo" ? "#00D4AA" : c.status === "cerrado" ? "#4F8EF7" : "#F7C94F" }}>
+                                {c.status.toUpperCase()}
+                              </span>
+                            </div>
+                            <div style={{ display: "flex", gap: 20, marginBottom: 12 }}>
+                              <span style={{ fontSize: 11, color: "#4A5568" }}>ID: <span style={{ color: "#6B7A9A" }}>C-{c.id}</span></span>
+                              <span style={{ fontSize: 11, color: "#4A5568" }}>Cliente: <span style={{ color: "#6B7A9A" }}>{c.client}</span></span>
+                            </div>
+                            <div className="progress-bar" style={{ marginBottom: 6 }}>
+                              <div className="progress-fill" style={{ width: `${c.advance}%`, background: `linear-gradient(90deg, ${c.color}60, ${c.color})` }}></div>
+                            </div>
+                            <div style={{ display: "flex", gap: 24, fontSize: 11, color: "#4A5568" }}>
+                              <span>Facturado Bruto: <span style={{ color: "#00D4AA", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600 }}>{fmt(c.received)}</span></span>
+                              <span>Pendiente: <span style={{ color: "#F7C94F", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600 }}>{fmt(c.pending)}</span></span>
+                            </div>
+                          </div>
+                          <div style={{ textAlign: "right" }}>
+                            <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 22, fontWeight: 700, color: c.color }}>{c.advance}%</div>
+                            <div style={{ fontSize: 11, color: "#4A5568", marginBottom: 4 }}>Avance</div>
+                            <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, fontWeight: 600, color: "#E8EAF2" }}>{fmtShort(c.value)}</div>
+                            <div style={{ fontSize: 10, color: "#4A5568" }}>Valor contrato</div>
+                          </div>
+                        </div>
+
+                        {selectedContract?.id === c.id && (
+                          <div style={{ marginTop: 16, paddingTop: 16, borderTop: `1px solid ${c.color}30`, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+                            <div style={{ background: "#0D1220", padding: 12, borderRadius: 8 }}>
+                              <div style={{ fontSize: 10, color: "#4A5568", marginBottom: 4 }}>Valor Total</div>
+                              <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 600, color: "#4F8EF7" }}>{fmt(c.value)}</div>
+                            </div>
+                            <div style={{ background: "#0D1220", padding: 12, borderRadius: 8 }}>
+                              <div style={{ fontSize: 10, color: "#4A5568", marginBottom: 4 }}>Anticipo Amortizado</div>
+                              <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 600, color: "#B47AE5" }}>{fmt(c.amortizacion_acumulada)}</div>
+                              <div style={{ fontSize: 9, color: "#4A5568" }}>Tasa: {c.porcentaje_anticipo}%</div>
+                            </div>
+                            <div style={{ background: "#0D1220", padding: 12, borderRadius: 8 }}>
+                              <div style={{ fontSize: 10, color: "#4A5568", marginBottom: 4 }}>Retención Garantía</div>
+                              <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 600, color: "#F7C94F" }}>{fmt(c.retencion_acumulada)}</div>
+                              <div style={{ fontSize: 9, color: "#4A5568" }}>Tasa: {c.porcentaje_retencion}%</div>
+                            </div>
+                            <div style={{ background: "#0D1220", padding: 12, borderRadius: 8 }}>
+                              <div style={{ fontSize: 10, color: "#4A5568", marginBottom: 4 }}>Neto en Bancos</div>
+                              <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 600, color: "#00D4AA" }}>{fmt(c.received - c.amortizacion_acumulada - c.retencion_acumulada)}</div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ============ MOVIMIENTOS ============ */}
+              {activeTab === "movimientos" && (
+                <div className="fade-in">
+                  <div style={{ display: "flex", gap: 12, marginBottom: 20, alignItems: "center", flexWrap: "wrap" }}>
+                    <input className="inp" placeholder="Buscar movimiento..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={{ flex: 1, minWidth: 200 }} />
+                    <div style={{ display: "flex", gap: 6 }}>
+                      {["todos", "ingreso", "egreso"].map(t => (
+                        <button key={t} onClick={() => setFilterType(t)} style={{ background: filterType === t ? "#4F8EF7" : "#111827", border: `1px solid ${filterType === t ? "#4F8EF7" : "#1E2A40"}`, color: filterType === t ? "white" : "#6B7A9A", padding: "7px 16px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit", fontSize: 12, textTransform: "capitalize" }}>
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                    <button className="btn-primary" onClick={() => setShowNewMovement(true)}>+ Registrar</button>
+                  </div>
+
+                  <div className="card" style={{ overflow: "hidden" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                      <thead>
+                        <tr style={{ borderBottom: "1px solid #1E2A40" }}>
+                          {["Fecha", "Concepto", "Contrato", "Categoría", "Banco", "Valor Neto"].map(h => (
+                            <th key={h} style={{ padding: "12px 16px", fontSize: 10, color: "#4A5568", textAlign: "left", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600 }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredMovements.map((m, i) => (
+                          <tr key={m.id} style={{ borderBottom: "1px solid #0F1826", transition: "background 0.15s" }}
+                            onMouseEnter={e => e.currentTarget.style.background = "#111827"}
+                            onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                            <td style={{ padding: "12px 16px", fontSize: 12, color: "#6B7A9A" }}>{m.date}</td>
+                            <td style={{ padding: "12px 16px", fontSize: 12, fontFamily: "'Space Grotesk', sans-serif", fontWeight: 500, color: "#E8EAF2", maxWidth: 260 }}>
+                              <div style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.concept}</div>
+                            </td>
+                            <td style={{ padding: "12px 16px", fontSize: 11, color: "#6B7A9A" }}>{m.contract !== 'GENERAL' ? `C-${m.contract}` : 'GENERAL'}</td>
+                            <td style={{ padding: "12px 16px" }}>
+                              <span className="badge" style={{ background: `${CATEGORY_COLORS[m.category] || CATEGORY_COLORS['general']}20`, color: CATEGORY_COLORS[m.category] || CATEGORY_COLORS['general'] }}>{CATEGORY_LABELS[m.category] || m.category}</span>
+                            </td>
+                            <td style={{ padding: "12px 16px", fontSize: 12, color: "#6B7A9A" }}>{m.bank}</td>
+                            <td style={{ padding: "12px 16px", fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 600, color: m.type === "ingreso" ? "#00D4AA" : "#FF6B6B", whiteSpace: "nowrap" }}>
+                              {m.type === "ingreso" ? "+" : "-"}{fmt(m.amount)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* ============ BANCOS ============ */}
+              {activeTab === "bancos" && (
+                <div className="fade-in">
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 24, alignItems: "center" }}>
+                    <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700, color: "#E8EAF2" }}>Cuentas Bancarias</div>
+                    <button className="btn-primary" onClick={() => setShowNewBank(true)}>+ Nuevo Banco</button>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
+                    {BANKS.map((b, i) => (
+                      <div key={i} className="card" style={{ padding: 24, borderTop: `3px solid ${b.color}` }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+                          <div>
+                            <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, fontWeight: 700, color: "#E8EAF2", marginBottom: 4 }}>{b.name}</div>
+                            <div style={{ fontSize: 12, color: "#4A5568" }}>Cuenta: {maskAccount(b.account)}</div>
+                          </div>
+                          <div style={{ width: 40, height: 40, background: `${b.color}20`, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <span style={{ fontSize: 18, color: b.color }}>◻</span>
+                          </div>
+                        </div>
+                        <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 28, fontWeight: 700, color: b.color, marginBottom: 8 }}>{fmtShort(b.balance)}</div>
+                        <div style={{ fontSize: 12, color: "#6B7A9A", marginBottom: 16 }}>{fmt(b.balance)}</div>
+                        <div className="progress-bar">
+                          <div className="progress-fill" style={{ width: `${(b.balance / totalBalance) * 100}%`, background: b.color }}></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* ============ PROYECCIONES ============ */}
+              {activeTab === "proyecciones" && (
+                <div className="fade-in">
+                  <div style={{ marginBottom: 24 }}>
+                    <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700, color: "#E8EAF2" }}>Proyecciones de Flujo de Caja</div>
+                    <div style={{ fontSize: 12, color: "#4A5568" }}>Análisis de cuentas por cobrar según contratos vigentes</div>
+                  </div>
+                  <div className="card" style={{ padding: 24 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                      {CONTRACTS.filter(c => c.pending > 0).map(c => {
+                        const totalPending = CONTRACTS.reduce((sum, c) => sum + (c.pending > 0 ? c.pending : 0), 0);
+                        const pct = totalPending > 0 ? (c.pending / totalPending) * 100 : 0;
+                        return (
+                          <div key={c.id}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                              <div>
+                                <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 600, color: "#E8EAF2", marginRight: 8 }}>{c.name}</span>
+                                <span style={{ fontSize: 11, color: "#4A5568" }}>{c.client}</span>
+                              </div>
+                              <div style={{ textAlign: "right" }}>
+                                <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, fontWeight: 600, color: c.color }}>{fmt(c.pending)}</span>
+                              </div>
+                            </div>
+                            <div className="progress-bar" style={{ height: 8, background: "#111827" }}>
+                              <div className="progress-fill" style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${c.color}60, ${c.color})` }}></div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {CONTRACTS.filter(c => c.pending > 0).length === 0 && (
+                        <div style={{ textAlign: "center", padding: 40, color: "#6B7A9A" }}>No hay saldos pendientes por cobrar en los contratos activos.</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* MODAL NUEVO MOVIMIENTO (ACTUALIZADO A FORMULARIO REAL POST) */}
+          {showNewMovement && (
+            <div className="modal-overlay" onClick={() => setShowNewMovement(false)}>
+              <div style={{ background: "#111827", border: "1px solid #1E2A40", borderRadius: 16, padding: 28, width: 480, animation: "fadeIn 0.2s ease" }} onClick={e => e.stopPropagation()}>
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, fontWeight: 700, color: "#E8EAF2", marginBottom: 24 }}>Registrar Movimiento Real</div>
+                
+                <form action="/tesoreria/movimiento/registrar" method="POST" encType="multipart/form-data">
+                  <input type="hidden" name="csrf_token" value={window.csrf_token} />
+                  
+                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    <div>
+                      <div style={{ fontSize: 11, color: "#4A5568", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Fecha</div>
+                      <input className="inp" type="date" name="fecha_movimiento" defaultValue={newMov.date} style={{ width: "100%" }} required />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, color: "#4A5568", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Número / Concepto</div>
+                      <input className="inp" name="numero_documento" placeholder="Número de factura, acta, etc." style={{ width: "100%" }} required />
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#4A5568", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Tipo</div>
+                        <select className="inp" name="tipo" style={{ width: "100%" }} required>
+                          <option value="INGRESO">Ingreso</option>
+                          <option value="EGRESO">Egreso</option>
+                        </select>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#4A5568", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Categoría</div>
+                        <select className="inp" name="categoria" style={{ width: "100%" }} required>
+                          {Object.entries(CATEGORY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#4A5568", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Contrato</div>
+                        <select className="inp" name="contrato_id" style={{ width: "100%" }}>
+                          <option value="">Ninguno (General)</option>
+                          {CONTRACTS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#4A5568", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Banco Destino/Origen</div>
+                        <select className="inp" name="banco_id" style={{ width: "100%" }} required>
+                          {BANKS.map(b => <option key={b.id} value={b.id}>{b.name} ({b.account})</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, color: "#4A5568", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Valor Bruto (COP)</div>
+                      <input className="inp" type="number" name="valor_bruto" placeholder="0" step="0.01" style={{ width: "100%" }} required />
+                      <div style={{ fontSize: 10, color: "#4A5568", marginTop: 4 }}>* Si es Acta de Ingreso, se le restará automáticamente la Amortización y Garantía pactada en el Contrato.</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, color: "#4A5568", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Archivo de Soporte</div>
+                      <input className="inp" type="file" name="archivo_soporte" style={{ width: "100%" }} />
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 24 }}>
+                    <button type="button" onClick={() => setShowNewMovement(false)} style={{ background: "none", border: "1px solid #1E2A40", color: "#6B7A9A", padding: "8px 20px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit", fontSize: 13 }}>Cancelar</button>
+                    <button type="submit" className="btn-primary">Guardar Oficialmente</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* MODAL NUEVO BANCO */}
+          {showNewBank && (
+            <div className="modal-overlay" onClick={() => setShowNewBank(false)}>
+              <div style={{ background: "#111827", border: "1px solid #1E2A40", borderRadius: 16, padding: 28, width: 400, animation: "fadeIn 0.2s ease" }} onClick={e => e.stopPropagation()}>
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, fontWeight: 700, color: "#E8EAF2", marginBottom: 24 }}>Registrar Nuevo Banco</div>
+                
+                <form action="/tesoreria/bancos/crear" method="POST">
+                  <input type="hidden" name="csrf_token" value={window.csrf_token} />
+                  
+                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    <div>
+                      <div style={{ fontSize: 11, color: "#4A5568", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Nombre del Banco</div>
+                      <input className="inp" name="nombre_banco" placeholder="Ej: Davivienda, Bancolombia" style={{ width: "100%" }} required />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, color: "#4A5568", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Número de Cuenta</div>
+                      <input className="inp" name="numero_cuenta" placeholder="Ej: 123456789" style={{ width: "100%" }} required />
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#4A5568", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Saldo Inicial</div>
+                        <input className="inp" type="number" step="0.01" name="saldo_inicial" defaultValue="0" style={{ width: "100%" }} required />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#4A5568", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Color Tarjeta</div>
+                        <input type="color" name="color" defaultValue="#4F8EF7" style={{ width: "100%", height: 35, border: "none", background: "none", cursor: "pointer" }} />
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 24 }}>
+                    <button type="button" onClick={() => setShowNewBank(false)} style={{ background: "none", border: "1px solid #1E2A40", color: "#6B7A9A", padding: "8px 20px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit", fontSize: 13 }}>Cancelar</button>
+                    <button type="submit" className="btn-primary">Crear Banco</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<Tesoreria />);
+    {% endraw %}
+  </script>
+</body>
+</html>

@@ -242,35 +242,37 @@ def manage_proyectos():
         # Calcular avance real por actividades
         avance_real = round((completadas / total_actividades) * 100, 2) if total_actividades > 0 else 0
 
-        # Determinar estado visual
-        estado_visual = "FINALIZADO" if avance_real >= 100 else "EN_PROGRESO"
+        # Determinar estado visual (SOLO para la UI, NO se persiste en la BD)
+        # El estado real del proyecto solo lo cambia el Admin manualmente.
         dias_atraso = 0
         dias_restantes = 0
         mensaje_estado = ""
 
-        if avance_real >= 100:
-            if not p.fecha_fin_real:
-                p.fecha_fin_real = hoy
-            p.estado = "FINALIZADO"
-            estado_visual = "FINALIZADO"
-            diferencia = (p.fecha_fin_real - p.fecha_fin).days
+        # Usar el estado real de la BD como base
+        estado_visual = p.estado or "PENDIENTE"
+
+        if p.estado == "FINALIZADO":
+            fecha_ref = p.fecha_fin_real or p.fecha_fin
+            diferencia = (fecha_ref - p.fecha_fin).days
             if diferencia < 0:
                 mensaje_estado = f"✅ Finalizado {abs(diferencia)} día{'s' if abs(diferencia) != 1 else ''} antes del tiempo"
             elif diferencia == 0:
                 mensaje_estado = "✅ Finalizado justo a tiempo"
             else:
                 mensaje_estado = f"✅ Finalizado con {diferencia} día{'s' if diferencia != 1 else ''} de retraso"
+        elif avance_real >= 100:
+            # Todas las actividades completadas pero el Admin aún no cerró el proyecto
+            estado_visual = "EN_PROGRESO"
+            mensaje_estado = f"🟢 Actividades al 100% — pendiente de cierre por el Admin"
         else:
             diferencia = (hoy - p.fecha_fin).days
             if diferencia > 0:
                 dias_atraso = diferencia
-                p.estado = "ATRASADO"
                 estado_visual = "ATRASADO"
                 mensaje_estado = f"🔴 Atrasado {dias_atraso} días — Avance {int(avance_real)}%"
             else:
                 dias_restantes = abs(diferencia)
-                p.estado = "EN_PROGRESO"
-                estado_visual = "EN_PROGRESO"
+                estado_visual = p.estado if p.estado in ("EN_PROGRESO", "PENDIENTE", "ATRASADO") else "EN_PROGRESO"
                 mensaje_estado = f"🟡 En progreso — faltan {dias_restantes} días — Avance {int(avance_real)}%"
 
         # Materiales y vehículos
@@ -310,16 +312,9 @@ def manage_proyectos():
             "materiales_asignados": {m["id"]: m["cantidad"] for m in materiales_data}
         })
 
-    # Separar proyectos
+    # Separar proyectos por estado_visual (no modifica la BD)
     proyectos_activos = [p for p in proyectos_data if p['estado_visual'] != 'FINALIZADO']
     proyectos_finalizados = [p for p in proyectos_data if p['estado_visual'] == 'FINALIZADO']
-
-    # Guardar cambios si se actualizó el estado
-    try:
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        print(f"⚠️ Error al guardar estados: {e}")
 
     return render_template(
         'proyectos.html',

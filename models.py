@@ -571,17 +571,17 @@ class Cotizacion(db.Model):
 
     imagen_cotizacion = db.Column(db.String(250), nullable=True)
 
-    factura = db.relationship(
-        "Factura",
+    contrato = db.relationship(
+        "Contrato",
         uselist=False,
         back_populates="cotizacion"
     )
 # ===========================================
 
 
-# 17. Facturas
-class Factura(db.Model):
-    __tablename__ = "facturas"
+# 17. Contratos (Antes Facturas)
+class Contrato(db.Model):
+    __tablename__ = "contratos"
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -596,87 +596,92 @@ class Factura(db.Model):
     proyecto = db.Column(db.String(150), nullable=False)
 
     estado = db.Column(
-        db.Enum("PENDIENTE", "EN_PROCESO", "FACTURADO", name="estado_factura_real_enum"),
-        default="PENDIENTE",
+        db.Enum("activo", "pausado", "cerrado", name="estado_contrato_enum"),
+        default="activo",
         nullable=False
     )
 
-    total = db.Column(db.Numeric(12, 2), nullable=False)
-    anticipo = db.Column(db.Numeric(12, 2), default=0)
-    total_sin_iva = db.Column(db.Numeric(12, 2), default=0)
+    valor_total = db.Column(db.Numeric(12, 2), nullable=False)
+    anticipo_porcentaje = db.Column(db.Numeric(5, 2), default=0) # ej: 20.00
+    valor_anticipo = db.Column(db.Numeric(12, 2), default=0) # Calculado
+    retencion_garantia_porcentaje = db.Column(db.Numeric(5, 2), default=0) # ej: 10.00
+    
+    total_sin_iva = db.Column(db.Numeric(12, 2), default=0) # Manteniendo el campo base opcional
 
     cotizacion = db.relationship(
         "Cotizacion",
-        back_populates="factura"
+        back_populates="contrato"
     )
 
+# ===========================================
+# 17.1 Bancos
+# ===========================================
+class Bancos(db.Model):
+    __tablename__ = "bancos"
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    nombre_banco = db.Column(db.String(150), nullable=False)
+    numero_cuenta = db.Column(db.String(100), nullable=False)
+    saldo_actual = db.Column(db.Numeric(12, 2), default=0, nullable=False)
+    color = db.Column(db.String(7), nullable=True, default="#004481")
+    
+    movimientos = db.relationship("Movimientos", back_populates="banco", cascade="all, delete-orphan")
+
 
 # ===========================================
-# 16. Actas de Cobro (Registro de Pagos)
+# 16. Movimientos (Registro de Tesorería)
 # ===========================================
-class Actas(db.Model):
-    __tablename__ = "actas"
+class Movimientos(db.Model):
+    __tablename__ = "movimientos"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
-    factura_id = db.Column(
+    contrato_id = db.Column(
         db.Integer,
-        db.ForeignKey("facturas.id", ondelete="CASCADE"),
+        db.ForeignKey("contratos.id", ondelete="CASCADE"),
+        nullable=True # Puede ser nulo si es un gasto que no pertenece a un contrato
+    )
+    
+    banco_id = db.Column(
+        db.Integer,
+        db.ForeignKey("bancos.id", ondelete="CASCADE"),
         nullable=False
     )
     
-    #  Relación con cuenta de cobro (solo para consignaciones)
-    cuenta_cobro_id = db.Column(
-        db.Integer,
-        db.ForeignKey("actas.id", ondelete="CASCADE"),
-        nullable=True
+    tipo = db.Column(
+        db.Enum('INGRESO', 'EGRESO', name='tipo_movimiento_enum'),
+        nullable=False
     )
-    
-    tipo_documento = db.Column(
+
+    categoria = db.Column(
         db.Enum(
-            "CUENTA_COBRO",
-            "FACTURA",
-            name="tipo_documento_acta_enum"
+            'anticipo', 'acta', 'nomina', 'materiales', 'maquinaria', 'subcontrato', 'seguros', 'saldo_inicial',
+            name='categoria_movimiento_enum'
         ),
         nullable=False
     )
+    
+    valor_bruto = db.Column(db.Numeric(12, 2), nullable=False)
+    amortizacion_anticipo = db.Column(db.Numeric(12, 2), default=0)
+    retencion_garantia = db.Column(db.Numeric(12, 2), default=0)
+    valor_neto = db.Column(db.Numeric(12, 2), nullable=False)
 
-    # PARA CUENTA DE COBRO
-    cantidad = db.Column(db.Numeric(12, 2), nullable=True)
-    fecha_envio = db.Column(db.Date, nullable=True)
-
-    # PARA FACTURA
-    valor_consignado = db.Column(db.Numeric(12, 2), nullable=True)
-    fecha_recepcion = db.Column(db.Date, nullable=True)
-
+    fecha_movimiento = db.Column(db.Date, nullable=False, default=datetime.utcnow)
     numero_documento = db.Column(db.String(100), nullable=True)
     archivo_soporte = db.Column(db.String(255), nullable=True)
 
     creado_en = db.Column(db.DateTime, default=datetime.utcnow)
 
-    factura = db.relationship(
-        "Factura",
-        backref=db.backref("actas", cascade="all, delete-orphan")
+    contrato = db.relationship(
+        "Contrato",
+        backref=db.backref("movimientos", cascade="all, delete-orphan")
     )
     
-        #  Relación padre → hijo (Cuenta de Cobro → Consignaciones)
-    cuenta_cobro = db.relationship(
-        "Actas",
-        remote_side=[id],
-        backref=db.backref(
-            "consignaciones",
-            cascade="all, delete-orphan"
-        )
+    banco = db.relationship(
+        "Bancos",
+        back_populates="movimientos"
     )
 
-    # PROPIEDAD INTELIGENTE
-    @property
-    def valor_real(self):
-        if self.tipo_documento == "CUENTA_COBRO":
-            return self.cantidad or 0
-        elif self.tipo_documento == "FACTURA":
-            return self.valor_consignado or 0
-        return 0
 
 
 class DetalleSolicitudMaterial(db.Model):

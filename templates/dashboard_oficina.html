@@ -153,16 +153,19 @@
       
       <div class="col-lg-8">
         <div class="module-card p-4">
-          <h5 class="section-title"><i class="bi bi-receipt text-danger"></i> Seguimiento de Facturación</h5>
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="section-title m-0"><i class="bi bi-wallet2 text-success"></i> Tesorería y Contratos</h5>
+            <a href="{{ url_for('tesoreria.ver_tesoreria') }}" class="btn btn-outline-success btn-sm rounded-pill px-3">
+              <i class="bi bi-box-arrow-up-right me-1"></i> Abrir Tesorería
+            </a>
+          </div>
           <div class="table-responsive">
             <table class="table table-hover align-middle">
               <thead class="table-light">
                 <tr>
                   <th>Proyecto</th>
                   <th>Cliente</th>
-                  <th>Total</th>
-                  <th>Anticipo</th>
-                  <th>Saldo</th>
+                  <th>Valor Total</th>
                   <th>Estado</th>
                   <th class="text-end">Acción</th>
                 </tr>
@@ -175,142 +178,34 @@
                     </td>
                     <td>{{ f.cotizacion.cliente }}</td>
                     
-                    <td>${{ "{:,.2f}".format(f.total) }}</td>
-                    <td>
-                      {% if f %}
-                        {% set total_consignado = 0 %}
-                        {% for a in f.actas %}
-                          {% if a.tipo_documento == "FACTURA" %}
-                            {% set total_consignado = total_consignado + (a.valor_consignado or 0) %}
-                          {% endif %}
-                        {% endfor %}
-
-                        {% set total_pagado = f.anticipo + total_consignado %}
-                        ${{ "{:,.2f}".format(total_pagado) }}
-                      {% else %}
-                        -
-                      {% endif %}
-                    </td>
-
-                    <td>
-                      {% if f %}
-                        {% set total_consignado = 0 %}
-                        {% for a in f.actas %}
-                          {% if a.tipo_documento == "FACTURA" %}
-                            {% set total_consignado = total_consignado + (a.valor_consignado or 0) %}
-                          {% endif %}
-                        {% endfor %}
-
-                        {% set total_pagado = (f.anticipo or 0) + total_consignado %}
-
-                        <span class="text-danger fw-bold">
-                          ${{ "{:,.2f}".format((f.total or 0) - total_pagado) }}
-                        </span>
-                      {% else %}
-                        -
-                      {% endif %}
-                    </td>
+                    <td>${{ "{:,.2f}".format(f.valor_total) }}</td>
 
                     <td class="text-center">
-                      {% if f %}
-                        
-                        {% if f.actas|length == 0 %}
-                          <span class="badge bg-light text-secondary border">
-                            Sin pagos
-                          </span>
-
-                        {% elif f.estado == 'PENDIENTE' %}
-                          <span class="badge bg-light text-danger border border-danger">
-                            Pendiente
-                          </span>
-
-                        {% elif f.estado == 'EN_PROCESO' %}
-                          <span class="badge bg-light text-warning border border-warning">
-                            En Proceso
-                          </span>
-
-                        {% elif f.estado == 'FACTURADO' %}
-                          <span class="badge bg-light text-success border border-success">
-                            Facturado
-                          </span>
-
-                        {% endif %}
-
-                      {% else %}
-                        <span class="badge bg-light text-muted border">
-                          Sin factura
+                      {% if f.estado == 'activo' %}
+                        <span class="badge bg-light text-success border border-success">
+                          Activo
+                        </span>
+                      {% elif f.estado == 'pausado' %}
+                        <span class="badge bg-light text-warning border border-warning">
+                          Pausado
+                        </span>
+                      {% elif f.estado == 'cerrado' %}
+                        <span class="badge bg-light text-secondary border">
+                          Cerrado
                         </span>
                       {% endif %}
                     </td>
 
-
                     <td class="text-end">
-                      <a href="{{ url_for('facturas.ver_factura', factura_id=f.id) }}"
+                      <a href="{{ url_for('tesoreria.ver_tesoreria') }}"
                         class="btn btn-primary btn-sm rounded-pill px-3">
-                        Revisar
+                        Ver Detalles
                       </a>
                     </td>
 
                   </tr>
 
-                  {% if f.actas %}
-                  <tr>
-                      <td colspan="7" class="p-0 border-0">
-                          <div class="collapse" id="detalle{{ f.id }}">
-                              <div class="detail-row p-4">
-                                  <h6 class="fw-bold mb-3 text-secondary ps-2 border-start border-4 border-primary">
-                                      Detalle de Anticipos y Facturas
-                                  </h6>
 
-                                  <div class="row g-3">
-                                      {% for acta in f.actas %}
-                                      <div class="col-md-6"> <div class="acta-card p-3 d-flex justify-content-between align-items-center shadow-sm">
-                                              
-                                              <div>
-                                                  <div class="d-flex align-items-center mb-1">
-                                                      <span class="badge bg-primary rounded-pill me-2">Acta #{{ loop.index }}</span>
-                                                      <span class="text-muted small">Ref: {{ acta.numero_documento }}</span>
-                                                  </div>
-                                                  <h5 class="text-success fw-bold mb-1">
-                                                      {% if acta.tipo_documento == "FACTURA" %}
-                                                        ${{ "{:,.0f}".format(acta.valor_consignado or 0) }}
-                                                      {% else %}
-                                                        ${{ "{:,.0f}".format(acta.cantidad or 0) }}
-                                                      {% endif %}
-                                                  </h5>
-                                                  <small class="text-muted">
-                                                      <i class="bi bi-calendar-event me-1"></i>
-                                                      {{ acta.fecha_recepcion.strftime('%d de %B de %Y') if acta.fecha_recepcion else 'Fecha N/A' }}
-                                                  </small>
-                                              </div>
-
-                                              <div>
-                                                  {% if acta.archivo_soporte %}
-                                                      <a href="{{ url_for('static', filename='uploads/actas/' + acta.archivo_soporte) }}" target="_blank" class="soporte-preview" title="Ver Soporte">
-                                                          {% if acta.archivo_soporte.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')) %}
-                                                              <img src="{{ url_for('static', filename='uploads/actas/' + acta.archivo_soporte) }}" alt="Soporte">
-                                                          {% else %}
-                                                              <i class="bi bi-file-earmark-pdf fs-3 text-danger"></i>
-                                                              <span>PDF</span>
-                                                          {% endif %}
-                                                      </a>
-                                                  {% else %}
-                                                      <div class="soporte-preview" style="cursor: default;">
-                                                          <i class="bi bi-image text-muted fs-4"></i>
-                                                          <span class="text-muted" style="font-size: 0.6rem;">Sin img</span>
-                                                      </div>
-                                                  {% endif %}
-                                              </div>
-
-                                          </div>
-                                      </div>
-                                      {% endfor %}
-                                  </div>
-                              </div>
-                          </div>
-                      </td>
-                  </tr>
-                  {% endif %}
 
                 {% endfor %}
               </tbody>
@@ -366,15 +261,9 @@
                         {% endif %}
 
 
-                        {% if c.estado == "ACEPTADA" and not c.factura %}
-                        <button
-                          type="button"
-                          class="btn btn-light btn-sm border me-1 text-success"
-                          title="Crear factura"
-                          data-bs-toggle="modal"
-                          data-bs-target="#modalFactura"
-                          onclick="document.getElementById('factura_cotizacion_id').value='{{ c.id }}'">
-                          <i class="bi bi-receipt"></i>
+                        {% if c.estado == "ACEPTADA" and not c.contrato %}
+                        <button type="button" class="btn btn-light btn-sm border me-1 text-success" title="Configurar Contrato" onclick="abrirModalContrato({{ c.id }}, '{{ c.proyecto | replace("'", "\\'") }}')">
+                            <i class="bi bi-file-earmark-text"></i> Generar Contrato
                         </button>
                         {% endif %}
 
@@ -392,7 +281,7 @@
                     </div>
                   </td>
 
-                  <td class="text-end">${{ "{:,.0f}".format(c.factura.total or 0) }}</td>
+                  <td class="text-end">${{ "{:,.0f}".format(c.contrato.valor_total if c.contrato else 0) }}</td>
 
                   <td class="text-center">
                     {% if c.estado == "PENDIENTE" %}
@@ -472,82 +361,74 @@
     </div>
   </div>
 
-<!-- ================= MODAL FACTURA ================= -->
-<div class="modal fade" id="modalFactura" tabindex="-1">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow" style="border-radius: 20px;">
+  <!-- ==============================================
+       MODAL GENERAR CONTRATO
+  =============================================== -->
+  <div class="modal fade" id="modalGenerarContrato" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg">
+        <form method="POST" id="formGenerarContrato" action="">
+          <!-- HEADER -->
+          <div class="modal-header bg-dark text-white border-0">
+            <div>
+              <h5 class="modal-title fw-bold mb-0">Configurar Contrato</h5>
+              <div class="small text-white-50" id="contratoProyectoTexto"></div>
+            </div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
 
-      <form method="POST" action="{{ url_for('facturas.crear_factura') }}">
-        
-        <input type="hidden" name="cotizacion_id" id="factura_cotizacion_id">
+          <!-- BODY -->
+          <div class="modal-body bg-light">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Valor Total (Monto pactado)</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" step="0.01" min="0" name="valor_total" id="contratoValorTotal" class="form-control" required oninput="calcularAnticipoPesos()">
+              </div>
+            </div>
 
-        <div class="modal-header">
-          <h5 class="modal-title fw-bold">Crear factura</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold">% de Anticipo</label>
+                <div class="input-group">
+                  <input type="number" step="0.01" min="0" max="100" name="anticipo_porcentaje" id="contratoAnticipoPorcentaje" class="form-control" value="0" required oninput="calcularAnticipoPesos()">
+                  <span class="input-group-text">%</span>
+                </div>
+                <div class="form-text text-success fw-bold mt-1" id="anticipoPesosText">$0</div>
+              </div>
 
-        <div class="modal-body">
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold">% Retención Garantía</label>
+                <div class="input-group">
+                  <input type="number" step="0.01" min="0" max="100" name="retencion_garantia_porcentaje" class="form-control" value="0" required>
+                  <span class="input-group-text">%</span>
+                </div>
+              </div>
+            </div>
 
-          <div class="mb-3">
-            <label class="form-label fw-semibold">Valor total oferta económica</label>
-            <div class="input-group">
-              <span class="input-group-text">$</span>
-              <input type="number" name="total" class="form-control" min="0" step="0.01" required>
+            <!-- SELECCIÓN DE BANCO -->
+            <div class="mb-3" id="divBancoAnticipo" style="display: none;">
+              <label class="form-label fw-semibold text-primary"><i class="bi bi-bank"></i> Banco destino para el Anticipo</label>
+              <select name="banco_id" class="form-select border-primary" id="selectBancoAnticipo">
+                <option value="">Seleccione un banco (Requerido si hay anticipo)</option>
+                {% for b in bancos %}
+                  <option value="{{ b.id }}">{{ b.nombre_banco }} ({{ b.numero_cuenta }})</option>
+                {% endfor %}
+              </select>
             </div>
           </div>
 
-          <div class="mb-3">
-            <label class="form-label fw-semibold">Porcentaje de anticipo</label>
-            <div class="input-group">
-              <input
-                type="number"
-                name="porcentaje_anticipo"
-                id="porcentaje_anticipo"
-                class="form-control"
-                min="0"
-                max="100"
-                step="0.01"
-                value="0"
-                required
-              >
-              <span class="input-group-text">%</span>
-            </div>
+          <!-- FOOTER -->
+          <div class="modal-footer border-0">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-dark">
+              <i class="bi bi-file-earmark-check"></i> Activar Contrato
+            </button>
           </div>
-
-          <div class="mb-2">
-            <small class="text-muted">
-              Anticipo calculado:
-              <strong id="previewAnticipo">$0</strong>
-            </small>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label fw-semibold">Total sin IVA</label>
-            <div class="input-group">
-              <span class="input-group-text">$</span>
-              <input
-                type="number"
-                name="total_sin_iva"
-                class="form-control"
-                min="0"
-                step="0.01"
-                required
-              >
-            </div>
-          </div>
-
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-success">Crear factura</button>
-        </div>
-
-      </form>
-
+        </form>
+      </div>
     </div>
   </div>
-</div>
 
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -616,53 +497,44 @@
 
 
   <script>
-    function eliminarItem(btn){
-      btn.closest("tr").remove();
-      calcularTodo();
+    function abrirModalContrato(cotizacionId, proyectoNombre) {
+      document.getElementById('contratoProyectoTexto').innerText = proyectoNombre;
+      const form = document.getElementById('formGenerarContrato');
+      // Set the dynamic action URL
+      form.action = `/tesoreria/contratos/desde-cotizacion/${cotizacionId}`;
+      
+      // Reset fields
+      document.getElementById('contratoValorTotal').value = '';
+      document.getElementById('contratoAnticipoPorcentaje').value = '0';
+      document.getElementById('selectBancoAnticipo').value = '';
+      calcularAnticipoPesos();
+      
+      new bootstrap.Modal(document.getElementById('modalGenerarContrato')).show();
     }
 
-    function calcularTodo(){
-      let suma = 0;
-      document.querySelectorAll("#itemsCotizados tr").forEach(row => {
-        // Reconstruimos el subtotal basándonos en los inputs para mayor precisión
-        // O leemos el texto formateado (menos preciso pero más rápido si ya está calculado)
-        const txt = row.querySelector(".subtotal").innerText;
-        suma += parseInt(txt.replace(/[$.]/g,'')) || 0; // Elimina $ y puntos
-      });
-      total = suma;
-      document.getElementById("totalCotizacion").innerText = formato(total);
+    function calcularAnticipoPesos() {
+      const valorTotal = parseFloat(document.getElementById('contratoValorTotal').value) || 0;
+      const porcentaje = parseFloat(document.getElementById('contratoAnticipoPorcentaje').value) || 0;
+      
+      const anticipoCalculado = (valorTotal * porcentaje) / 100;
+      document.getElementById('anticipoPesosText').innerText = '$' + anticipoCalculado.toLocaleString('es-CO');
+      
+      const divBanco = document.getElementById('divBancoAnticipo');
+      const selectBanco = document.getElementById('selectBancoAnticipo');
+      
+      if (porcentaje > 0 && valorTotal > 0) {
+        divBanco.style.display = 'block';
+        selectBanco.required = true;
+      } else {
+        divBanco.style.display = 'none';
+        selectBanco.required = false;
+        selectBanco.value = '';
+      }
     }
   </script>
 
-  <script>
-    // Inputs
-    const totalInput = document.querySelector('#modalFactura input[name="total"]');
-    const totalSinIvaInput = document.querySelector('#modalFactura input[name="total_sin_iva"]');
 
-    const porcentajeAnticipoInput = document.getElementById('porcentaje_anticipo');
 
-    // Previews
-    const previewAnticipo = document.getElementById('previewAnticipo');
-
-    function actualizarPreviews() {
-      const total = parseFloat(totalInput.value) || 0;
-      const totalSinIva = parseFloat(totalSinIvaInput.value) || 0;
-
-      const pAnticipo = parseFloat(porcentajeAnticipoInput.value) || 0;
-
-      // Cálculos (SOLO visuales)
-      const anticipo = (total * pAnticipo) / 100;
-
-      previewAnticipo.innerText = '$' + anticipo.toLocaleString('es-CO', {
-        minimumFractionDigits: 2
-      });
-    }
-
-    // Eventos
-    totalInput.addEventListener('input', actualizarPreviews);
-    totalSinIvaInput.addEventListener('input', actualizarPreviews);
-    porcentajeAnticipoInput.addEventListener('input', actualizarPreviews);
-  </script>
 
 
 </body>

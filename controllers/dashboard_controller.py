@@ -190,9 +190,12 @@ def dashboard_trabajador():
         .all()
     )
 
+    # Solo excluir proyectos que el Admin haya cerrado MANUALMENTE (estado = FINALIZADO).
+    # Los proyectos EN_PROGRESO, PENDIENTE y ATRASADO siempre se muestran al trabajador
+    # para que pueda seguir registrando avances hasta que el Admin los cierre.
     proyectos_activos = [
         p for p in proyectos_asignados
-        if not p.estado or p.estado.strip().upper() != "FINALIZADO"
+        if p.estado is None or p.estado.strip().upper() != "FINALIZADO"
     ]
 
     es_responsable=any(p.responsable_id == personal_id for p in proyectos_activos)
@@ -244,12 +247,12 @@ def dashboard_oficina():
         .all()
     )
 
-    # 📌 Seguimiento de facturación (solo con factura)
-    from models import Factura
+    # 📌 Seguimiento de tesorería (solo con contrato)
+    from models import Contrato
 
-    facturas = (
-        Factura.query
-        .order_by(Factura.id.desc())
+    contratos = (
+        Contrato.query
+        .order_by(Contrato.id.desc())
         .limit(5)
         .all()
     )
@@ -263,15 +266,20 @@ def dashboard_oficina():
     usuario = Usuarios.query.get(session.get("user_id"))
     
     print("TOTAL COTIZACIONES:", Cotizacion.query.count())
-    print("CON FACTURA:", Cotizacion.query.filter(Cotizacion.factura.has()).count())
+    print("CON CONTRATO:", Cotizacion.query.filter(Cotizacion.contrato.has()).count())
+
+    # 📌 Bancos disponibles para el nuevo modal
+    from models import Bancos
+    bancos = Bancos.query.all()
 
     return render_template(
         "dashboard_oficina.html",
         usuario=usuario,
         frase=frase,
         cotizaciones_historial=cotizaciones_historial,
-        facturas=facturas,
-        notificaciones=notificaciones
+        contratos=contratos,
+        notificaciones=notificaciones,
+        bancos=bancos
     )
 
 # -----------------------------

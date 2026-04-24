@@ -9,7 +9,7 @@ from .avances_controller import avances_bp
 from .actividades_controller import actividades_bp
 from .horarios_controller import horarios_bp
 from .cotizaciones_controller import cotizaciones_bp
-from .facturas_controller import facturas_bp
+from .tesoreria_controller import tesoreria_bp
 
 def register_controllers(app):
     app.register_blueprint(dashboard_bp)
@@ -23,4 +23,4 @@ def register_controllers(app):
     app.register_blueprint(actividades_bp)
     app.register_blueprint(horarios_bp)
     app.register_blueprint(cotizaciones_bp)
-    app.register_blueprint(facturas_bp)
+    app.register_blueprint(tesoreria_bp)

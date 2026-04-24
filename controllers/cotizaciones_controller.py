@@ -2,7 +2,7 @@ from datetime import datetime
 import os
 from flask import Blueprint, request, redirect, url_for, flash
 from decorators import login_required
-from models import db, Cotizacion, Factura, Usuarios, Notificaciones
+from models import db, Cotizacion, Contrato, Usuarios, Notificaciones
 from werkzeug.utils import secure_filename
 
 cotizaciones_bp = Blueprint("cotizaciones", __name__)
@@ -64,9 +64,9 @@ def cambiar_estado_cotizacion(id, estado):
         return redirect(url_for("dashboard.dashboard_oficina"))
 
     # 🔒 Bloquear si ya fue facturada
-    existe_factura = Factura.query.filter_by(cotizacion_id=cotizacion.id).first()
-    if existe_factura:
-        flash("Esta cotización ya fue facturada", "warning")
+    existe_contrato = Contrato.query.filter_by(cotizacion_id=cotizacion.id).first()
+    if existe_contrato:
+        flash("Esta cotización ya tiene un contrato asociado", "warning")
         return redirect(url_for("dashboard.dashboard_oficina"))
 
     cotizacion.estado = estado
@@ -98,10 +98,10 @@ def eliminar_cotizacion(id):
     cotizacion = Cotizacion.query.get_or_404(id)
 
     try:
-        # 🔒 Buscar factura asociada por cotizacion_id
-        factura = Factura.query.filter_by(cotizacion_id=cotizacion.id).first()
-        if factura:
-            db.session.delete(factura)
+        # 🔒 Buscar contrato asociado por cotizacion_id
+        contrato = Contrato.query.filter_by(cotizacion_id=cotizacion.id).first()
+        if contrato:
+            db.session.delete(contrato)
 
         # 🖼️ borrar imagen si existe
         if cotizacion.imagen_cotizacion:
@@ -113,7 +113,7 @@ def eliminar_cotizacion(id):
         db.session.delete(cotizacion)
         db.session.commit()
 
-        flash("Cotización y factura eliminadas correctamente ✅", "success")
+        flash("Cotización y contrato eliminados correctamente ✅", "success")
 
     except Exception as e:
         db.session.rollback()
