@@ -82,8 +82,8 @@ def create_app():
         except:
             return str(value)
 
-    print("📧 Mailjet inicializado correctamente")
-    print("📨 MAILJET_SENDER:", app.config.get("MAILJET_SENDER_EMAIL"))
+    print("[Mailjet] Mailjet inicializado correctamente")
+    print("[Mailjet] MAILJET_SENDER:", app.config.get("MAILJET_SENDER_EMAIL"))
 
     return app
 

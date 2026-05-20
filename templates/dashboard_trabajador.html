@@ -228,6 +228,9 @@
         border-bottom-right-radius: 12px !important;
         padding: 1.5rem !important;
     }
+    .actividad-card [aria-expanded="true"] .bi-chevron-down {
+        transform: rotate(180deg);
+    }
 </style>
 </head>
 
@@ -411,28 +414,30 @@
                   {% if proyecto.actividades %}
                   <div class="accordion mb-3" id="actividadesAccordion{{ proyecto.id_proyecto }}">
                     {% for actividad in proyecto.actividades %}
-                    <div class="card actividad-card shadow-sm">
-                      <h2 class="accordion-header" id="headingActividad{{ actividad.id_actividad }}">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                          data-bs-target="#collapseActividad{{ actividad.id_actividad }}" aria-expanded="false"
-                          aria-controls="collapseActividad{{ actividad.id_actividad }}">
-                          <div class="d-flex flex-column w-100">
-                            <strong>
-                              {{ actividad.nombre }} ({{ actividad.unidades_avanzadas|formato_miles }} / {{ actividad.unidades_totales|formato_miles }} unidades)
-                            </strong>
-                            <small class="text-muted">{{ actividad.descripcion or "Sin descripción" }}</small>
-                          </div>
-                          <div class="text-end ms-auto">
-                            {% set progreso = actividad.porcentaje_progreso %} <span class="badge bg-success progress-badge">{{ progreso }}%</span>
-                          </div>
+                    <div class="card actividad-card mb-4 shadow-sm p-3">
+                      <!-- Clickable area to toggle collapse -->
+                      <div class="d-flex justify-content-between align-items-center" 
+                           data-bs-toggle="collapse" 
+                           data-bs-target="#collapseActividad{{ actividad.id_actividad }}" 
+                           aria-expanded="false" 
+                           aria-controls="collapseActividad{{ actividad.id_actividad }}"
+                           style="cursor: pointer;">
+                        <div class="d-flex flex-column w-100">
+                          <strong>
+                            {{ actividad.nombre }} ({{ actividad.unidades_avanzadas|formato_miles }} / {{ actividad.unidades_totales|formato_miles }} unidades)
+                          </strong>
+                          <small class="text-muted">{{ actividad.descripcion or "Sin descripción" }}</small>
+                        </div>
+                        <div class="text-end ms-auto me-3 d-flex align-items-center gap-2">
+                          {% set progreso = actividad.porcentaje_progreso %}
+                          <span class="badge bg-success progress-badge">{{ progreso }}%</span>
+                          <i class="bi bi-chevron-down text-muted" style="transition: transform 0.2s;"></i>
+                        </div>
+                      </div>
 
-                        </button>
-                      </h2>
-
-                      <div id="collapseActividad{{ actividad.id_actividad }}" class="accordion-collapse collapse"
-                        aria-labelledby="headingActividad{{ actividad.id_actividad }}"
+                      <div id="collapseActividad{{ actividad.id_actividad }}" class="collapse mt-3"
                         data-bs-parent="#actividadesAccordion{{ proyecto.id_proyecto }}">
-                        <div class="accordion-body">
+                        <div class="pt-2">
 
                           <div class="progress mb-3">
                             <div class="progress-bar" role="progressbar" style="width: {{ progreso }}%;"></div>
@@ -441,11 +446,13 @@
                           <div class="mb-3">
                             {% set faltan = (actividad.unidades_totales or 0) - (actividad.unidades_avanzadas or 0) %}
                             {% if faltan <= 0 %}
-                              <span class="badge" style="background-color: #dcfce7; color: #16a34a; font-size: 0.85rem; padding: 6px 12px;">
+                              <span class="badge shadow-sm" style="background-color: #dcfce7; color: #16a34a; font-size: 0.85rem; padding: 6px 12px; border: 1px solid rgba(22,163,74,0.15);">
                                 <i class="bi bi-check-circle-fill"></i> ¡Completado!
                               </span>
                             {% else %}
-                              <span class="text-muted small fw-semibold">Faltan: {{ faltan|formato_miles }} unidades</span>
+                              <span class="text-muted small fw-semibold">
+                                <i class="bi bi-info-circle"></i> Faltan: {{ faltan|formato_miles }} unidades
+                              </span>
                             {% endif %}
                           </div>
 
