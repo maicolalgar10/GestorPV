@@ -190,12 +190,11 @@ def dashboard_trabajador():
         .all()
     )
 
-    # Solo excluir proyectos que el Admin haya cerrado MANUALMENTE (estado = FINALIZADO).
-    # Los proyectos EN_PROGRESO, PENDIENTE y ATRASADO siempre se muestran al trabajador
-    # para que pueda seguir registrando avances hasta que el Admin los cierre.
+    # Ahora permitimos que el trabajador vea TODO lo que tiene asignado y sea visible, 
+    # sin importar si el estado cambió automáticamente a FINALIZADO.
     proyectos_activos = [
         p for p in proyectos_asignados
-        if p.estado is None or p.estado.strip().upper() != "FINALIZADO"
+        if p.visible == True
     ]
 
     es_responsable=any(p.responsable_id == personal_id for p in proyectos_activos)
