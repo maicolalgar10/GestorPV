@@ -353,7 +353,7 @@ background: rgba(255, 255, 255, 0.85);
                 <div class="flex-grow-1">
                   <div class="d-flex justify-content-between">
                     <span class="fw-semibold">{{ actividad.nombre }}</span>
-                    <small class="text-muted">{{ actividad.avanzado }}/{{ actividad.unidades_totales }} unidades</small>
+                    <small class="text-muted">{{ actividad.avanzado|formato_miles }} / {{ actividad.unidades_totales|formato_miles }} unidades</small>
                   </div>
 
                   <div class="progress" style="height: 20px;">
@@ -811,7 +811,7 @@ background: rgba(255, 255, 255, 0.85);
                 <div class="flex-grow-1">
                   <div class="d-flex justify-content-between">
                     <span class="fw-semibold">{{ actividad.nombre }}</span>
-                    <small class="text-muted">{{ actividad.avanzado }}/{{ actividad.unidades_totales }} unidades</small>
+                    <small class="text-muted">{{ actividad.avanzado|formato_miles }} / {{ actividad.unidades_totales|formato_miles }} unidades</small>
                   </div>
 
                   <div class="progress" style="height: 20px;">

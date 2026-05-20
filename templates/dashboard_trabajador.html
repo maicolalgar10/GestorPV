@@ -195,6 +195,39 @@
     .tab-content {
         margin-top: 20px;
     }
+
+    /* Estilos Premium para las Tarjetas de Actividades */
+    .actividad-card {
+        margin-bottom: 1.5rem !important;
+        border: 1px solid rgba(0, 0, 0, 0.08) !important;
+        background: #ffffff !important;
+        border-radius: 12px !important;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .actividad-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+    }
+    .actividad-card .accordion-button {
+        background-color: transparent !important;
+        color: #333 !important;
+        box-shadow: none !important;
+        padding: 1.25rem 1.5rem !important;
+        border-radius: 12px !important;
+    }
+    .actividad-card .accordion-button:not(.collapsed) {
+        background-color: rgba(3, 169, 244, 0.03) !important;
+        color: #0288d1 !important;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+        border-bottom-left-radius: 0px !important;
+        border-bottom-right-radius: 0px !important;
+    }
+    .actividad-card .accordion-body {
+        background-color: #fafafa !important;
+        border-bottom-left-radius: 12px !important;
+        border-bottom-right-radius: 12px !important;
+        padding: 1.5rem !important;
+    }
 </style>
 </head>
 
@@ -378,15 +411,15 @@
                   {% if proyecto.actividades %}
                   <div class="accordion mb-3" id="actividadesAccordion{{ proyecto.id_proyecto }}">
                     {% for actividad in proyecto.actividades %}
-                    <div class="accordion-item mb-2 shadow-sm">
+                    <div class="card actividad-card shadow-sm">
                       <h2 class="accordion-header" id="headingActividad{{ actividad.id_actividad }}">
                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
                           data-bs-target="#collapseActividad{{ actividad.id_actividad }}" aria-expanded="false"
                           aria-controls="collapseActividad{{ actividad.id_actividad }}">
                           <div class="d-flex flex-column w-100">
                             <strong>
-          {{ actividad.nombre }} ({{ actividad.unidades_avanzadas }}/{{ actividad.unidades_totales }} unidades)
-        </strong>
+                              {{ actividad.nombre }} ({{ actividad.unidades_avanzadas|formato_miles }} / {{ actividad.unidades_totales|formato_miles }} unidades)
+                            </strong>
                             <small class="text-muted">{{ actividad.descripcion or "Sin descripción" }}</small>
                           </div>
                           <div class="text-end ms-auto">
@@ -402,8 +435,19 @@
                         <div class="accordion-body">
 
                           <div class="progress mb-3">
-                          <div class="progress-bar" role="progressbar" style="width: {{ progreso }}%;"></div>
-        </div>
+                            <div class="progress-bar" role="progressbar" style="width: {{ progreso }}%;"></div>
+                          </div>
+
+                          <div class="mb-3">
+                            {% set faltan = (actividad.unidades_totales or 0) - (actividad.unidades_avanzadas or 0) %}
+                            {% if faltan <= 0 %}
+                              <span class="badge" style="background-color: #dcfce7; color: #16a34a; font-size: 0.85rem; padding: 6px 12px;">
+                                <i class="bi bi-check-circle-fill"></i> ¡Completado!
+                              </span>
+                            {% else %}
+                              <span class="text-muted small fw-semibold">Faltan: {{ faltan|formato_miles }} unidades</span>
+                            {% endif %}
+                          </div>
 
                           <!-- =============== FORMULARIO ENVIO DATOS AVANCES ==============  -->
                           {% if es_responsable %}

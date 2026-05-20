@@ -72,6 +72,16 @@ def create_app():
         except:
             return str(value)
 
+    # Filtro formato de miles estilo colombiano
+    @app.template_filter("formato_miles")
+    def formato_miles(value):
+        if value is None:
+            return "0"
+        try:
+            return f"{int(value):,}".replace(",", ".")
+        except:
+            return str(value)
+
     print("📧 Mailjet inicializado correctamente")
     print("📨 MAILJET_SENDER:", app.config.get("MAILJET_SENDER_EMAIL"))
 

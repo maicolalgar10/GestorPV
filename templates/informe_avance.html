@@ -63,7 +63,7 @@
       <tr>
         <td>{{ actividad.nombre }}</td>
         <td>{{ avance.fecha.strftime("%Y-%m-%d") }}</td>
-        <td class="fw-bold">{{ avance.unidades_avanzadas }}</td>
+        <td class="fw-bold">{{ avance.unidades_avanzadas|formato_miles }}</td>
         <td>{{ avance.mensaje or "—" }}</td>
         <td>
           {% if avance.usuario %}
