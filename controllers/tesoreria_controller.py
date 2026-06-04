@@ -139,7 +139,10 @@ def editar_contrato(id_contrato):
             
             # Actualizar Banco
             if movimiento_anticipo.banco:
-                movimiento_anticipo.banco.saldo_actual = (movimiento_anticipo.banco.saldo_actual or Decimal("0")) + diferencia_anticipo
+                if movimiento_anticipo.tipo == 'INGRESO':
+                    movimiento_anticipo.banco.saldo_actual = (movimiento_anticipo.banco.saldo_actual or Decimal("0")) + diferencia_anticipo
+                elif movimiento_anticipo.tipo == 'EGRESO':
+                    movimiento_anticipo.banco.saldo_actual = (movimiento_anticipo.banco.saldo_actual or Decimal("0")) - diferencia_anticipo
 
         db.session.commit()
         flash("Contrato y Tesorería actualizados exitosamente ✅", "success")
@@ -191,7 +194,8 @@ def ver_tesoreria():
             "type": m.tipo.lower(),
             "amount": float(m.valor_neto or 0) if m.tipo == 'INGRESO' else float(-(m.valor_neto or 0)),
             "bank": m.banco.nombre_banco if m.banco else 'N/A',
-            "category": m.categoria
+            "category": m.categoria,
+            "archivo_soporte": m.archivo_soporte
         })
 
     bancos_list = []
@@ -221,6 +225,8 @@ def registrar_movimiento():
         contrato = Contrato.query.get(int(contrato_id_raw)) if contrato_id_raw else None
         
         tipo = request.form.get("tipo") # INGRESO o EGRESO
+        if tipo:
+            tipo = tipo.upper()
         categoria = request.form.get("categoria") # acta, nomina, anticipo...
         valor_bruto = Decimal(request.form.get("valor_bruto", 0))
         fecha_str = request.form.get("fecha_movimiento")
@@ -270,9 +276,9 @@ def registrar_movimiento():
         
         # Actualizar Saldo Bancario
         if tipo == "INGRESO":
-            banco.saldo_actual += valor_neto
+            banco.saldo_actual = (banco.saldo_actual or Decimal("0")) + valor_neto
         elif tipo == "EGRESO":
-            banco.saldo_actual -= valor_neto
+            banco.saldo_actual = (banco.saldo_actual or Decimal("0")) - valor_neto
             
         db.session.commit()
         flash("Movimiento registrado y saldo actualizado ✅", "success")
