@@ -98,6 +98,58 @@ def crear_contrato_desde_cotizacion(id_cotizacion):
         flash("Hubo un error al generar el contrato", "danger")
         return redirect(request.referrer)
 
+@tesoreria_bp.route("/contratos/editar/<int:id_contrato>", methods=["POST"])
+@login_required
+def editar_contrato(id_contrato):
+    contrato = Contrato.query.get_or_404(id_contrato)
+    
+    try:
+        nuevo_valor_total = Decimal(request.form.get("valor_total", contrato.valor_total))
+        nuevo_anticipo_porc = Decimal(request.form.get("anticipo_porcentaje", contrato.anticipo_porcentaje))
+        nueva_retencion_porc = Decimal(request.form.get("retencion_garantia_porcentaje", contrato.retencion_garantia_porcentaje))
+
+        if nuevo_valor_total <= 0:
+            flash("El valor total del contrato debe ser mayor a 0", "danger")
+            return redirect(request.referrer)
+
+        if nuevo_anticipo_porc < 0 or nuevo_anticipo_porc > 100:
+            flash("El porcentaje de anticipo debe estar entre 0 y 100", "danger")
+            return redirect(request.referrer)
+            
+        if nueva_retencion_porc < 0 or nueva_retencion_porc > 100:
+            flash("El porcentaje de retención debe estar entre 0 y 100", "danger")
+            return redirect(request.referrer)
+
+        # Recalcular anticipo
+        nuevo_valor_anticipo = (nuevo_valor_total * nuevo_anticipo_porc) / Decimal("100")
+        diferencia_anticipo = nuevo_valor_anticipo - (contrato.valor_anticipo or Decimal("0"))
+
+        # Actualizar contrato
+        contrato.valor_total = nuevo_valor_total
+        contrato.anticipo_porcentaje = nuevo_anticipo_porc
+        contrato.retencion_garantia_porcentaje = nueva_retencion_porc
+        contrato.valor_anticipo = nuevo_valor_anticipo
+
+        # Sincronizar Tesorería (Movimientos)
+        movimiento_anticipo = Movimientos.query.filter_by(contrato_id=contrato.id, categoria='anticipo').first()
+        
+        if movimiento_anticipo:
+            movimiento_anticipo.valor_bruto = nuevo_valor_anticipo
+            movimiento_anticipo.valor_neto = nuevo_valor_anticipo
+            
+            # Actualizar Banco
+            if movimiento_anticipo.banco:
+                movimiento_anticipo.banco.saldo_actual = (movimiento_anticipo.banco.saldo_actual or Decimal("0")) + diferencia_anticipo
+
+        db.session.commit()
+        flash("Contrato y Tesorería actualizados exitosamente ✅", "success")
+    except Exception as e:
+        db.session.rollback()
+        print("⚠️ Error al editar contrato:", e)
+        flash("Hubo un error al actualizar el contrato", "danger")
+        
+    return redirect(request.referrer)
+
 @tesoreria_bp.route("/")
 @login_required
 def ver_tesoreria():
