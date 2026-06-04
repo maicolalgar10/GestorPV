@@ -73,7 +73,7 @@
       const handleSyncBank = async (bankId) => {
         setSyncingBankId(bankId);
         try {
-          const res = await axios.get(`/api/bancos/${bankId}/sincronizar_en_vivo`);
+          const res = await axios.get(`/tesoreria/api/bancos/${bankId}/sincronizar_en_vivo`);
           if (res.data.status === "success") {
             setSyncData({ bankId: bankId, ...res.data.data });
             setShowSyncModal(true);
