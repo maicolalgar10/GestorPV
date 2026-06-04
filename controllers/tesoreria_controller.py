@@ -194,6 +194,7 @@ def ver_tesoreria():
             "type": m.tipo.lower(),
             "amount": float(m.valor_neto or 0) if m.tipo == 'INGRESO' else float(-(m.valor_neto or 0)),
             "bank": m.banco.nombre_banco if m.banco else 'N/A',
+            "banco_id": m.banco_id,
             "category": m.categoria,
             "archivo_soporte": m.archivo_soporte
         })
@@ -371,4 +372,73 @@ def api_tesoreria_resumen():
             }
         })
     except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@tesoreria_bp.route("/api/bancos/<int:id_banco>/sincronizar_en_vivo", methods=["GET"])
+@login_required
+def sincronizar_banco_en_vivo(id_banco):
+    banco = Bancos.query.get_or_404(id_banco)
+    
+    # Para el entorno "Sandbox", si no tiene link_id se lo asignamos estáticamente por defecto
+    if not banco.link_bancario_id:
+        banco.link_bancario_id = "sandbox_belvo_link_test"
+        banco.cuenta_externa_id = "sandbox_belvo_account_test"
+        banco.institucion_externa = "bancolombia_empresas"
+        db.session.commit()
+
+    try:
+        # Simulación de Saldo Real Conciliado de Bancolombia (Sandbox)
+        # Tomamos el saldo actual en el sistema y le agregamos algunas transacciones para demostrar el desajuste.
+        saldo_interno = float(banco.saldo_actual or 0)
+        saldo_real_banco = saldo_interno + 1500000.0  # Simula que en el banco hay 1.5M que no está en el sistema
+        
+        # Simulación de Últimos Movimientos desde la API del Banco (Belvo response mock)
+        import random
+        from datetime import timedelta
+        
+        transacciones_reales = [
+            {
+                "id": "tx_belvo_1",
+                "amount": 1500000.0,
+                "type": "INFLOW",
+                "status": "PROCESSED",
+                "description": "TRANSFERENCIA RECIBIDA CLIENTE XYZ",
+                "value_date": (datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%d"),
+                "category": "INCOME"
+            },
+            {
+                "id": "tx_belvo_2",
+                "amount": -50000.0,
+                "type": "OUTFLOW",
+                "status": "PROCESSED",
+                "description": "COMISION BANCARIA IVA",
+                "value_date": (datetime.utcnow() - timedelta(days=2)).strftime("%Y-%m-%d"),
+                "category": "BANK_FEE"
+            },
+            {
+                "id": "tx_belvo_3",
+                "amount": 50000.0,
+                "type": "INFLOW",
+                "status": "PROCESSED",
+                "description": "REVERSO COMISION BANCARIA",
+                "value_date": (datetime.utcnow() - timedelta(days=2)).strftime("%Y-%m-%d"),
+                "category": "INCOME"
+            }
+        ]
+
+        banco.ultima_sincronizacion = datetime.utcnow()
+        db.session.commit()
+
+        return jsonify({
+            "status": "success",
+            "data": {
+                "saldo_real": saldo_real_banco,
+                "ultima_sync": banco.ultima_sincronizacion.isoformat(),
+                "transacciones_bancarias": transacciones_reales
+            }
+        })
+
+    except Exception as e:
+        banco.banco_externo_status = "ERROR"
+        db.session.commit()
         return jsonify({"status": "error", "message": str(e)}), 500

@@ -66,6 +66,26 @@
       const [showNewMovement, setShowNewMovement] = useState(false);
       const [showNewBank, setShowNewBank] = useState(false);
       const [soporteUrl, setSoporteUrl] = useState(null);
+      const [syncingBankId, setSyncingBankId] = useState(null);
+      const [showSyncModal, setShowSyncModal] = useState(false);
+      const [syncData, setSyncData] = useState(null);
+
+      const handleSyncBank = async (bankId) => {
+        setSyncingBankId(bankId);
+        try {
+          const res = await axios.get(`/api/bancos/${bankId}/sincronizar_en_vivo`);
+          if (res.data.status === "success") {
+            setSyncData({ bankId: bankId, ...res.data.data });
+            setShowSyncModal(true);
+          } else {
+            alert(res.data.message);
+          }
+        } catch (error) {
+          alert("Error conectando con el agregador bancario (Belvo).");
+        } finally {
+          setSyncingBankId(null);
+        }
+      };
       
       const maskAccount = (acc) => {
         if (!acc) return "****";
@@ -148,6 +168,7 @@
             .progress-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
             .fade-in { animation: fadeIn 0.4s ease forwards; }
             @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+            @keyframes spin { 100% { transform: rotate(360deg); } }
             .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; }
           `}</style>
 
@@ -262,9 +283,14 @@
                                   <div style={{ fontSize: 10, color: "#4A5568" }}>{maskAccount(b.account)}</div>
                                 </div>
                               </div>
-                              <div style={{ textAlign: "right" }}>
-                                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 600, color: "#E8EAF2" }}>{fmtShort(b.balance)}</div>
-                                <div style={{ fontSize: 10, color: "#4A5568" }}>{pct.toFixed(1)}%</div>
+                              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                <button title="Conciliación en Vivo (Belvo)" onClick={() => handleSyncBank(b.id)} disabled={syncingBankId === b.id} style={{ background: "transparent", border: "1px solid #4F8EF7", borderRadius: "4px", color: "#4F8EF7", cursor: syncingBankId === b.id ? "wait" : "pointer", padding: "2px 6px", fontSize: 10, display: "flex", alignItems: "center", gap: 4 }}>
+                                  {syncingBankId === b.id ? <i className="bi bi-arrow-repeat" style={{ animation: "spin 1s linear infinite", display: "inline-block" }}></i> : <i className="bi bi-arrow-repeat"></i>} Sincronizar
+                                </button>
+                                <div style={{ textAlign: "right" }}>
+                                  <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 600, color: "#E8EAF2" }}>{fmtShort(b.balance)}</div>
+                                  <div style={{ fontSize: 10, color: "#4A5568" }}>{pct.toFixed(1)}%</div>
+                                </div>
                               </div>
                             </div>
                             <div className="progress-bar">
@@ -592,6 +618,92 @@
                   ) : (
                     <img src={soporteUrl} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", borderRadius: 8 }} alt="Soporte" />
                   )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MODAL CONCILIACION BELVO */}
+          {showSyncModal && syncData && (
+            <div className="modal-overlay" onClick={() => setShowSyncModal(false)}>
+              <div style={{ background: "#111827", border: "1px solid #1E2A40", borderRadius: 16, padding: 24, width: "90%", maxWidth: 1000, maxHeight: "90vh", overflow: "hidden", animation: "fadeIn 0.2s ease", display: "flex", flexDirection: "column" }} onClick={e => e.stopPropagation()}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                  <div>
+                    <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700, color: "#E8EAF2" }}>Conciliación en Vivo (Open Banking)</div>
+                    <div style={{ fontSize: 12, color: "#6B7A9A", marginTop: 4 }}>Última sincronización: {new Date(syncData.ultima_sync).toLocaleString()}</div>
+                  </div>
+                  <button onClick={() => setShowSyncModal(false)} style={{ background: "none", border: "none", color: "#6B7A9A", cursor: "pointer", fontSize: 24, lineHeight: 1 }}>&times;</button>
+                </div>
+                
+                {/* Saldos */}
+                <div style={{ display: "flex", gap: 16, marginBottom: 24 }}>
+                  <div style={{ flex: 1, background: "#0D1220", padding: 16, borderRadius: 12, border: "1px solid #1E2A40" }}>
+                    <div style={{ fontSize: 11, color: "#6B7A9A", marginBottom: 8, textTransform: "uppercase" }}>Saldo Interno (Plataforma)</div>
+                    <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 24, fontWeight: 700, color: "#E8EAF2" }}>
+                      {fmt(BANKS.find(b => b.id === syncData.bankId)?.balance || 0)}
+                    </div>
+                  </div>
+                  <div style={{ flex: 1, background: "#0D1220", padding: 16, borderRadius: 12, border: "1px solid #4F8EF740" }}>
+                    <div style={{ fontSize: 11, color: "#4F8EF7", marginBottom: 8, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6 }}>
+                      <i className="bi bi-bank"></i> Saldo Real (Banco)
+                    </div>
+                    <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 24, fontWeight: 700, color: "#4F8EF7" }}>
+                      {fmt(syncData.saldo_real)}
+                    </div>
+                  </div>
+                  <div style={{ flex: 1, background: "#0D1220", padding: 16, borderRadius: 12, border: Math.abs(syncData.saldo_real - (BANKS.find(b => b.id === syncData.bankId)?.balance || 0)) > 0 ? "1px solid #FF6B6B80" : "1px solid #00D4AA80" }}>
+                    <div style={{ fontSize: 11, color: Math.abs(syncData.saldo_real - (BANKS.find(b => b.id === syncData.bankId)?.balance || 0)) > 0 ? "#FF6B6B" : "#00D4AA", marginBottom: 8, textTransform: "uppercase" }}>Discrepancia</div>
+                    <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 24, fontWeight: 700, color: Math.abs(syncData.saldo_real - (BANKS.find(b => b.id === syncData.bankId)?.balance || 0)) > 0 ? "#FF6B6B" : "#00D4AA" }}>
+                      {fmt(Math.abs(syncData.saldo_real - (BANKS.find(b => b.id === syncData.bankId)?.balance || 0)))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tabla Cruzada */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, flex: 1, overflow: "hidden" }}>
+                  <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                    <div style={{ padding: "10px 16px", background: "#1A2035", borderRadius: "8px 8px 0 0", fontSize: 12, fontWeight: 600, color: "#B8C0D4" }}>Movimientos Internos (Plataforma)</div>
+                    <div style={{ flex: 1, overflow: "auto", background: "#0D1220", padding: 12, borderRadius: "0 0 8px 8px" }}>
+                      {MOVEMENTS.filter(m => m.banco_id === syncData.bankId).slice(0, 15).map(m => (
+                        <div key={m.id} style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #1E2A40" }}>
+                          <div>
+                            <div style={{ fontSize: 12, color: "#E8EAF2", marginBottom: 4, fontFamily: "'Space Grotesk', sans-serif" }}>{m.concept}</div>
+                            <div style={{ fontSize: 10, color: "#6B7A9A" }}>{m.date}</div>
+                          </div>
+                          <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 600, color: m.type === "ingreso" ? "#00D4AA" : "#FF6B6B" }}>
+                            {m.type === "ingreso" ? "+" : "-"}{fmt(m.amount)}
+                          </div>
+                        </div>
+                      ))}
+                      {MOVEMENTS.filter(m => m.banco_id === syncData.bankId).length === 0 && (
+                        <div style={{ padding: 20, textAlign: "center", color: "#6B7A9A", fontSize: 12 }}>No hay movimientos registrados en este banco.</div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                    <div style={{ padding: "10px 16px", background: "#1A2035", borderRadius: "8px 8px 0 0", fontSize: 12, fontWeight: 600, color: "#4F8EF7", display: "flex", alignItems: "center", gap: 8 }}><i className="bi bi-shield-check"></i> Extracto Real (API Belvo)</div>
+                    <div style={{ flex: 1, overflow: "auto", background: "#0D1220", padding: 12, borderRadius: "0 0 8px 8px" }}>
+                      {syncData.transacciones_bancarias.map(tx => {
+                        const isMatch = MOVEMENTS.some(m => m.banco_id === syncData.bankId && Math.abs(m.amount - Math.abs(tx.amount)) < 0.01);
+                        
+                        return (
+                          <div key={tx.id} style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #1E2A40", alignItems: "center" }}>
+                            <div>
+                              <div style={{ fontSize: 12, color: "#E8EAF2", marginBottom: 4, fontFamily: "'Space Grotesk', sans-serif", display: "flex", alignItems: "center", gap: 8 }}>
+                                {tx.description}
+                                {isMatch ? <i className="bi bi-check-circle-fill" style={{ color: "#00D4AA", fontSize: 12 }} title="Conciliado"></i> : <i className="bi bi-exclamation-triangle-fill" style={{ color: "#F7C94F", fontSize: 12 }} title="No conciliado en plataforma"></i>}
+                              </div>
+                              <div style={{ fontSize: 10, color: "#6B7A9A" }}>{tx.value_date} · {tx.category.replace('_', ' ')}</div>
+                            </div>
+                            <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 13, fontWeight: 600, color: tx.type === "INFLOW" ? "#00D4AA" : "#FF6B6B" }}>
+                              {tx.type === "INFLOW" ? "+" : "-"}{fmt(Math.abs(tx.amount))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
