@@ -32,6 +32,8 @@ def create_app():
     db.init_app(app)
     Migrate(app, db)
     Bcrypt(app)
+    # Inicializar CSRF
+    CSRFProtect(app)
     # Compresión de respuestas (gzip/deflate)
     Compress(app)
 

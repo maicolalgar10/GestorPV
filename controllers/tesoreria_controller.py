@@ -1,15 +1,21 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
-from decorators import login_required
+from decorators import login_required, admin_required
 from models import db, Contrato, Cotizacion, Movimientos, Bancos
 from werkzeug.utils import secure_filename
 from decimal import Decimal
 import os
 from datetime import datetime
+import requests
+from requests.auth import HTTPBasicAuth
 
 tesoreria_bp = Blueprint("tesoreria", __name__, url_prefix="/tesoreria")
 
+def allowed_support_file(filename):
+    ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "pdf"}
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
 @tesoreria_bp.route("/contratos/desde-cotizacion/<int:id_cotizacion>", methods=["POST"])
-@login_required
+@admin_required
 def crear_contrato_desde_cotizacion(id_cotizacion):
     cotizacion = Cotizacion.query.get_or_404(id_cotizacion)
 
@@ -99,7 +105,7 @@ def crear_contrato_desde_cotizacion(id_cotizacion):
         return redirect(request.referrer)
 
 @tesoreria_bp.route("/contratos/editar/<int:id_contrato>", methods=["POST"])
-@login_required
+@admin_required
 def editar_contrato(id_contrato):
     contrato = Contrato.query.get_or_404(id_contrato)
     
@@ -154,7 +160,7 @@ def editar_contrato(id_contrato):
     return redirect(request.referrer)
 
 @tesoreria_bp.route("/")
-@login_required
+@admin_required
 def ver_tesoreria():
     contratos = Contrato.query.order_by(Contrato.id.desc()).all()
     bancos = Bancos.query.all()
@@ -215,7 +221,7 @@ def ver_tesoreria():
                            bancos_json=bancos_list)
 
 @tesoreria_bp.route("/movimiento/registrar", methods=["POST"])
-@login_required
+@admin_required
 def registrar_movimiento():
     # Este endpoint recibe un movimiento general. Puede o no tener contrato
     contrato_id_raw = request.form.get("contrato_id")
@@ -251,6 +257,10 @@ def registrar_movimiento():
         # Subida de archivo
         nombre_archivo = None
         if archivo and archivo.filename:
+            if not allowed_support_file(archivo.filename):
+                flash("Tipo de archivo de soporte no permitido por razones de seguridad.", "danger")
+                return redirect(request.referrer)
+
             filename = secure_filename(
                 f"movimiento_{categoria}_{numero}_{archivo.filename}"
             )
@@ -292,7 +302,7 @@ def registrar_movimiento():
     return redirect(request.referrer)
 
 @tesoreria_bp.route("/bancos/crear", methods=["POST"])
-@login_required
+@admin_required
 def crear_banco():
     nombre_banco = request.form.get("nombre_banco")
     numero_cuenta = request.form.get("numero_cuenta")
@@ -340,7 +350,7 @@ def crear_banco():
     return redirect(request.referrer)
 
 @tesoreria_bp.route("/api/resumen")
-@login_required
+@admin_required
 def api_tesoreria_resumen():
     try:
         # Sumar saldos de todos los bancos
@@ -375,49 +385,72 @@ def api_tesoreria_resumen():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @tesoreria_bp.route("/api/bancos/<int:id_banco>/sincronizar_en_vivo", methods=["GET"])
-@login_required
+@admin_required
 def sincronizar_banco_en_vivo(id_banco):
     banco = Bancos.query.get_or_404(id_banco)
     
+    # Verificamos si el banco tiene un link_bancario_id
+    if not banco.link_bancario_id:
+        return jsonify({
+            "status": "error",
+            "code": "MISSING_LINK",
+            "message": "Este banco aún no está vinculado con Belvo. Por favor, inicie el proceso de vinculación."
+        }), 400
+
     try:
-        # Modo Sandbox / Desarrollo 100% resiliente:
-        # No guardamos nada en la base de datos para evitar errores de conexión o migración.
-        # Simulamos la respuesta de Belvo directamente.
+        # Configuración de credenciales de Belvo
+        belvo_secret_id = os.environ.get("BELVO_SECRET_ID")
+        belvo_secret_password = os.environ.get("BELVO_SECRET_PASSWORD")
+        belvo_env = os.environ.get("BELVO_ENVIRONMENT", "sandbox")
         
-        saldo_interno = float(banco.saldo_actual or 0)
-        saldo_real_banco = saldo_interno + 1500000.0  # Simula que en el banco hay 1.5M que no está en el sistema
+        if not belvo_secret_id or not belvo_secret_password:
+            raise Exception("Las credenciales de Belvo no están configuradas en el servidor.")
+            
+        base_url = f"https://{belvo_env}.belvo.com"
         
+        auth = HTTPBasicAuth(belvo_secret_id, belvo_secret_password)
+        link_id = banco.link_bancario_id
+
+        # 1. Obtener Cuentas (para el saldo actual)
+        accounts_url = f"{base_url}/api/accounts/?link={link_id}"
+        response_accounts = requests.get(accounts_url, auth=auth)
+        
+        if response_accounts.status_code != 200:
+            raise Exception(f"Error al obtener cuentas de Belvo: {response_accounts.text}")
+            
+        accounts_data = response_accounts.json().get("results", [])
+        
+        if not accounts_data:
+            raise Exception("No se encontraron cuentas asociadas a este Link ID en Belvo.")
+            
+        # Tomamos la primera cuenta por defecto
+        cuenta_belvo = accounts_data[0]
+        saldo_real_banco = cuenta_belvo.get("balance", {}).get("current", float(banco.saldo_actual or 0))
+
+        # 2. Obtener Transacciones
+        # Por defecto, traemos los últimos 30 días
         from datetime import timedelta
+        date_from = (datetime.utcnow() - timedelta(days=30)).strftime("%Y-%m-%d")
         
-        transacciones_reales = [
-            {
-                "id": "tx_belvo_1",
-                "amount": 1500000.0,
-                "type": "INFLOW",
-                "status": "PROCESSED",
-                "description": "TRANSFERENCIA RECIBIDA CLIENTE XYZ",
-                "value_date": (datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%d"),
-                "category": "INCOME"
-            },
-            {
-                "id": "tx_belvo_2",
-                "amount": -50000.0,
-                "type": "OUTFLOW",
-                "status": "PROCESSED",
-                "description": "COMISION BANCARIA IVA",
-                "value_date": (datetime.utcnow() - timedelta(days=2)).strftime("%Y-%m-%d"),
-                "category": "BANK_FEE"
-            },
-            {
-                "id": "tx_belvo_3",
-                "amount": 50000.0,
-                "type": "INFLOW",
-                "status": "PROCESSED",
-                "description": "REVERSO COMISION BANCARIA",
-                "value_date": (datetime.utcnow() - timedelta(days=2)).strftime("%Y-%m-%d"),
-                "category": "INCOME"
-            }
-        ]
+        transactions_url = f"{base_url}/api/transactions/?link={link_id}&date_from={date_from}"
+        response_transactions = requests.get(transactions_url, auth=auth)
+        
+        if response_transactions.status_code != 200:
+            raise Exception(f"Error al obtener transacciones de Belvo: {response_transactions.text}")
+            
+        transactions_data = response_transactions.json().get("results", [])
+        
+        transacciones_reales = []
+        for tx in transactions_data:
+            transacciones_reales.append({
+                "id": tx.get("id"),
+                "amount": tx.get("amount"),
+                "type": tx.get("type"), # 'INFLOW' or 'OUTFLOW'
+                "status": tx.get("status"), # 'PROCESSED', 'PENDING'
+                "description": tx.get("description", "Sin descripción"),
+                "value_date": tx.get("value_date"),
+                "category": tx.get("category", "OTHER")
+            })
 
         return jsonify({
             "status": "success",
@@ -429,14 +462,84 @@ def sincronizar_banco_en_vivo(id_banco):
         }), 200
 
     except Exception as e:
-        # En caso de un error inesperado, logueamos pero devolvemos 200 OK con data simulada mínima para que la UI funcione
-        db.session.rollback()
+        print(f"⚠️ Error en sincronización Belvo: {e}")
+        return jsonify({
+            "status": "error",
+            "message": f"Error al sincronizar con Belvo: {str(e)}"
+        }), 500
+
+@tesoreria_bp.route("/api/bancos/<int:id_banco>/vincular", methods=["POST"])
+@admin_required
+def vincular_banco_belvo(id_banco):
+    banco = Bancos.query.get_or_404(id_banco)
+    
+    data = request.get_json()
+    if not data:
+        return jsonify({"status": "error", "message": "No se enviaron datos JSON"}), 400
+        
+    link_id = data.get("link_id")
+    institucion = data.get("institution")
+    
+    if not link_id:
+        return jsonify({"status": "error", "message": "El link_id es requerido"}), 400
+        
+    try:
+        banco.link_bancario_id = link_id
+        if institucion:
+            banco.institucion_externa = institucion
+            
+        banco.banco_externo_status = "VALID"
+        db.session.commit()
+        
         return jsonify({
             "status": "success",
-            "data": {
-                "saldo_real": float(banco.saldo_actual or 0) + 1500000.0,
-                "ultima_sync": datetime.utcnow().isoformat(),
-                "transacciones_bancarias": []
-            },
-            "warning": str(e)
+            "message": "Banco vinculado correctamente a Belvo",
+            "link_id": link_id
         }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"⚠️ Error al vincular banco: {e}")
+        return jsonify({
+            "status": "error",
+            "message": "Error interno al guardar la vinculación"
+        }), 500
+
+@tesoreria_bp.route("/api/belvo/token", methods=["GET"])
+@admin_required
+def obtener_token_belvo():
+    try:
+        belvo_secret_id = os.environ.get("BELVO_SECRET_ID")
+        belvo_secret_password = os.environ.get("BELVO_SECRET_PASSWORD")
+        belvo_env = os.environ.get("BELVO_ENVIRONMENT", "sandbox")
+        
+        if not belvo_secret_id or not belvo_secret_password:
+            return jsonify({"status": "error", "message": "Credenciales de Belvo faltantes"}), 500
+            
+        base_url = f"https://{belvo_env}.belvo.com"
+        token_url = f"{base_url}/api/token/"
+        
+        # Payload requerido por Belvo para generar el token del Widget
+        payload = {
+            "id": belvo_secret_id,
+            "password": belvo_secret_password,
+            "scopes": "read_institutions,write_links,read_links"
+        }
+        
+        response = requests.post(token_url, json=payload)
+        
+        if response.status_code != 200 and response.status_code != 201:
+            raise Exception(f"Fallo al obtener token: {response.text}")
+            
+        data = response.json()
+        return jsonify({
+            "status": "success",
+            "access_token": data.get("access", "")
+        }), 200
+        
+    except Exception as e:
+        print(f"⚠️ Error al obtener widget token de Belvo: {e}")
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500

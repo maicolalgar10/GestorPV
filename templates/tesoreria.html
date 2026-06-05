@@ -15,6 +15,9 @@
 
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  
+  <!-- Belvo Connect Widget -->
+  <script src="https://cdn.belvo.io/belvo-widget-1.x.x.js"></script>
 </head>
 <body>
 
@@ -22,6 +25,9 @@
   <script>
     // Configuración de CSRF si existe
     window.csrf_token = "{{ csrf_token() if csrf_token else '' }}";
+    if (window.csrf_token && typeof axios !== 'undefined') {
+      axios.defaults.headers.common['X-CSRFToken'] = window.csrf_token;
+    }
 
     // Datos calculados desde el backend, pasados crudos a JSON
     const CONTRACTS = {{ contratos_json | tojson | safe }};
@@ -70,6 +76,51 @@
       const [showSyncModal, setShowSyncModal] = useState(false);
       const [syncData, setSyncData] = useState(null);
 
+      const startBelvoWidget = async (bankId) => {
+        try {
+          // Petición al backend para obtener el token oficial de Belvo
+          const tokenRes = await axios.get('/tesoreria/api/belvo/token');
+          
+          if (tokenRes.data.status !== "success" || !tokenRes.data.access_token) {
+            throw new Error(tokenRes.data.message || "No se pudo obtener el token de Belvo");
+          }
+          
+          const accessToken = tokenRes.data.access_token;
+          
+          belvo.createWidget(accessToken, {
+            locale: "es",
+            country_codes: ["CO"],
+            environment: "sandbox",
+            callback: (link, institution) => {
+              // Guardar el link en Supabase a través del endpoint /vincular
+              axios.post(`/tesoreria/api/bancos/${bankId}/vincular`, {
+                link_id: link,
+                institution: institution
+              }).then(res => {
+                if (res.data.status === "success") {
+                  alert("✅ Banco vinculado exitosamente a Belvo. Ahora puedes sincronizar.");
+                  // Opcional: Trigger sync automáticamente
+                } else {
+                  alert("Error al vincular: " + res.data.message);
+                }
+              }).catch(err => {
+                console.error(err);
+                alert("Error al guardar la vinculación.");
+              });
+            },
+            onExit: (data) => {
+              console.log("Salida del widget de Belvo", data);
+            },
+            onEvent: (data) => {
+              console.log("Evento Belvo:", data);
+            }
+          }).build();
+        } catch (error) {
+          alert("Error al iniciar Belvo Widget.");
+          console.error(error);
+        }
+      };
+
       const handleSyncBank = async (bankId) => {
         setSyncingBankId(bankId);
         try {
@@ -81,7 +132,15 @@
             alert(res.data.message);
           }
         } catch (error) {
-          alert("Error conectando con el agregador bancario (Belvo).");
+          if (error.response && error.response.data && error.response.data.code === "MISSING_LINK") {
+            // Activar Widget Belvo
+            const confirmar = window.confirm(error.response.data.message + "\n\n¿Deseas vincular el banco ahora usando Belvo?");
+            if (confirmar) {
+              startBelvoWidget(bankId);
+            }
+          } else {
+            alert(error.response?.data?.message || "Error conectando con el agregador bancario (Belvo).");
+          }
         } finally {
           setSyncingBankId(null);
         }
