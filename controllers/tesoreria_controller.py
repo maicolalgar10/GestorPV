@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
-from decorators import login_required, admin_required
+from decorators import login_required, admin_oficina_required
 from models import db, Contrato, Cotizacion, Movimientos, Bancos
 from werkzeug.utils import secure_filename
 from decimal import Decimal
@@ -15,7 +15,7 @@ def allowed_support_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @tesoreria_bp.route("/contratos/desde-cotizacion/<int:id_cotizacion>", methods=["POST"])
-@admin_required
+@admin_oficina_required
 def crear_contrato_desde_cotizacion(id_cotizacion):
     cotizacion = Cotizacion.query.get_or_404(id_cotizacion)
 
@@ -105,7 +105,7 @@ def crear_contrato_desde_cotizacion(id_cotizacion):
         return redirect(request.referrer)
 
 @tesoreria_bp.route("/contratos/editar/<int:id_contrato>", methods=["POST"])
-@admin_required
+@admin_oficina_required
 def editar_contrato(id_contrato):
     contrato = Contrato.query.get_or_404(id_contrato)
     
@@ -160,7 +160,7 @@ def editar_contrato(id_contrato):
     return redirect(request.referrer)
 
 @tesoreria_bp.route("/")
-@admin_required
+@admin_oficina_required
 def ver_tesoreria():
     contratos = Contrato.query.order_by(Contrato.id.desc()).all()
     bancos = Bancos.query.all()
@@ -221,7 +221,7 @@ def ver_tesoreria():
                            bancos_json=bancos_list)
 
 @tesoreria_bp.route("/movimiento/registrar", methods=["POST"])
-@admin_required
+@admin_oficina_required
 def registrar_movimiento():
     # Este endpoint recibe un movimiento general. Puede o no tener contrato
     contrato_id_raw = request.form.get("contrato_id")
@@ -302,7 +302,7 @@ def registrar_movimiento():
     return redirect(request.referrer)
 
 @tesoreria_bp.route("/bancos/crear", methods=["POST"])
-@admin_required
+@admin_oficina_required
 def crear_banco():
     nombre_banco = request.form.get("nombre_banco")
     numero_cuenta = request.form.get("numero_cuenta")
@@ -350,7 +350,7 @@ def crear_banco():
     return redirect(request.referrer)
 
 @tesoreria_bp.route("/api/resumen")
-@admin_required
+@admin_oficina_required
 def api_tesoreria_resumen():
     try:
         # Sumar saldos de todos los bancos
@@ -385,7 +385,7 @@ def api_tesoreria_resumen():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @tesoreria_bp.route("/api/bancos/<int:id_banco>/sincronizar_en_vivo", methods=["GET"])
-@admin_required
+@admin_oficina_required
 def sincronizar_banco_en_vivo(id_banco):
     banco = Bancos.query.get_or_404(id_banco)
     
@@ -469,7 +469,7 @@ def sincronizar_banco_en_vivo(id_banco):
         }), 500
 
 @tesoreria_bp.route("/api/bancos/<int:id_banco>/vincular", methods=["POST"])
-@admin_required
+@admin_oficina_required
 def vincular_banco_belvo(id_banco):
     banco = Bancos.query.get_or_404(id_banco)
     
@@ -506,7 +506,7 @@ def vincular_banco_belvo(id_banco):
         }), 500
 
 @tesoreria_bp.route("/api/belvo/token", methods=["GET"])
-@admin_required
+@admin_oficina_required
 def obtener_token_belvo():
     try:
         belvo_secret_id = os.environ.get("BELVO_SECRET_ID")

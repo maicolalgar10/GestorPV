@@ -64,8 +64,8 @@ def admin_oficina_required(f):
             return redirect(url_for('usuarios.login'))
 
         rol = session.get('rol', 'EMPLEADO')
-        if rol not in ['ADMIN', 'OFICINA']:
-            flash('Acceso denegado. Requiere rol de Administrador o Oficina.', 'danger')
+        if rol not in ['ADMIN', 'OFICINA', 'ADMINISTRATIVO']:
+            flash('Acceso denegado. Requiere rol de Administrador o Administrativo.', 'danger')
             return redirect(url_for('dashboard.dashboard'))
 
         return f(*args, **kwargs)
