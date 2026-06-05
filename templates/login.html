@@ -63,6 +63,7 @@
     
 
     <form method="post" class="login-form d-grid gap-3">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <input type="text" 
        name="contacto" 
        class="form-control" 
