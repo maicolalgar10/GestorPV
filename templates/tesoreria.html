@@ -164,7 +164,7 @@ function Tesoreria() {
         onEvent: data => {
           console.log("Evento Belvo:", data);
         }
-      }).build(); // Belvo automatically opens on build
+      }).build('#belvo'); // Belvo automatically opens on build
     } catch (error) {
       console.error("Error al iniciar Belvo Widget:", error);
       alert(error.message || "Ocurrió un error al cargar el widget de Belvo.");
@@ -1996,5 +1996,6 @@ function Tesoreria() {
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(/*#__PURE__*/React.createElement(Tesoreria, null));
 </script>
+<div id="belvo"></div>
 </body>
 </html>
