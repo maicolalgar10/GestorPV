@@ -50,6 +50,7 @@ def create_app():
             '\'self\'',
             '\'unsafe-inline\'',
             '\'unsafe-eval\'',
+            'https://cdn.belvo.io',
             'https:',
             'http:'
         ],
@@ -74,11 +75,14 @@ def create_app():
         ],
         'connect-src': [
             '\'self\'',
+            'https://api.belvo.co',
+            'https://sandbox.belvo.co',
             'https:',
             'http:'
         ],
         'frame-src': [
             '\'self\'',
+            'https://cdn.belvo.io',
             'https:',
             'http:'
         ]
