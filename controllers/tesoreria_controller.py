@@ -389,8 +389,8 @@ def api_tesoreria_resumen():
 def sincronizar_banco_en_vivo(id_banco):
     banco = Bancos.query.get_or_404(id_banco)
     
-    # Verificamos si el banco tiene un link_bancario_id
-    if not banco.link_bancario_id:
+    # Verificamos si el banco tiene un belvo_link_id
+    if not banco.belvo_link_id:
         return jsonify({
             "status": "error",
             "code": "MISSING_LINK",
@@ -409,7 +409,7 @@ def sincronizar_banco_en_vivo(id_banco):
         base_url = f"https://{belvo_env}.belvo.com"
         
         auth = HTTPBasicAuth(belvo_secret_id, belvo_secret_password)
-        link_id = banco.link_bancario_id
+        link_id = banco.belvo_link_id
 
         # 1. Obtener Cuentas (para el saldo actual)
         accounts_url = f"{base_url}/api/accounts/?link={link_id}"
@@ -484,9 +484,9 @@ def vincular_banco_belvo(id_banco):
         return jsonify({"status": "error", "message": "El link_id es requerido"}), 400
         
     try:
-        banco.link_bancario_id = link_id
+        banco.belvo_link_id = link_id
         if institucion:
-            banco.institucion_externa = institucion
+            banco.belvo_institution = institucion
             
         banco.banco_externo_status = "VALID"
         db.session.commit()
@@ -505,7 +505,7 @@ def vincular_banco_belvo(id_banco):
             "message": "Error interno al guardar la vinculación"
         }), 500
 
-@tesoreria_bp.route("/api/belvo/token", methods=["GET"])
+@tesoreria_bp.route("/api/belvo/token", methods=["POST"])
 @admin_oficina_required
 def obtener_token_belvo():
     try:

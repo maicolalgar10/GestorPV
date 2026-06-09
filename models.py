@@ -632,6 +632,10 @@ class Bancos(db.Model):
     banco_externo_status = db.Column(db.String(50), nullable=True)  # Ej: 'VALID', 'INVALID_PASSWORD'
     ultima_sincronizacion = db.Column(db.DateTime, nullable=True)   # Fecha de la última lectura exitosa
     
+    # Nuevos campos específicos para Belvo
+    belvo_link_id = db.Column(db.String(100), nullable=True)
+    belvo_institution = db.Column(db.String(100), nullable=True)
+    
     movimientos = db.relationship("Movimientos", back_populates="banco", cascade="all, delete-orphan")
 
 
