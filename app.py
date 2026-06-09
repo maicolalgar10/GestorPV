@@ -54,12 +54,18 @@ def create_app():
             '\'self\'',
             'https://api.belvo.co',
             'https://sandbox.belvo.co',
+            'https://sandbox.belvo.com',
+            'https://statics.belvo.io',
+            'https://cdn-global.configcat.com',
+            'https://api-js.mixpanel.com',
+            'https://browser-intake-datadoghq.com',
             'https://cdn.jsdelivr.net',
             'https://unpkg.com'
         ],
         'frame-src': [
             '\'self\'',
-            'https://cdn.belvo.io'
+            'https://cdn.belvo.io',
+            'https://sandbox.belvo.com'
         ],
         'style-src': [
             '\'self\'',
@@ -76,6 +82,7 @@ def create_app():
             '\'self\'',
             'data:',
             'blob:',
+            'https://statics.belvo.io',
             '*'
         ]
     }
