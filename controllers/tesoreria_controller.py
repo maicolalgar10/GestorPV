@@ -212,7 +212,8 @@ def ver_tesoreria():
             "name": b.nombre_banco,
             "balance": float(b.saldo_actual or 0),
             "account": b.numero_cuenta,
-            "color": b.color or '#004481'
+            "color": b.color or '#004481',
+            "belvo_link_id": b.belvo_link_id
         })
 
     return render_template("tesoreria.html", 
@@ -427,6 +428,13 @@ def sincronizar_banco_en_vivo(id_banco):
         cuenta_belvo = accounts_data[0]
         saldo_real_banco = cuenta_belvo.get("balance", {}).get("current", float(banco.saldo_actual or 0))
 
+        # Actualizar numero_cuenta si está vacío (creado desde Belvo)
+        if not banco.numero_cuenta or banco.numero_cuenta == "":
+            numero_belvo = cuenta_belvo.get("number") or cuenta_belvo.get("internal_identification") or ""
+            if numero_belvo:
+                banco.numero_cuenta = numero_belvo
+                db.session.commit()
+
         # 2. Obtener Transacciones
         # Por defecto, traemos los últimos 30 días
         from datetime import timedelta
@@ -500,6 +508,46 @@ def vincular_banco_belvo(id_banco):
     except Exception as e:
         db.session.rollback()
         print(f"⚠️ Error al vincular banco: {e}")
+        return jsonify({
+            "status": "error",
+            "message": "Error interno al guardar la vinculación"
+        }), 500
+
+@tesoreria_bp.route("/api/bancos/vincular_nuevo", methods=["POST"])
+@admin_oficina_required
+def vincular_banco_nuevo():
+    data = request.get_json()
+    if not data:
+        return jsonify({"status": "error", "message": "No se enviaron datos JSON"}), 400
+        
+    link_id = data.get("link_id")
+    institucion = data.get("institution")
+    
+    if not link_id or not institucion:
+        return jsonify({"status": "error", "message": "El link_id y institution son requeridos"}), 400
+        
+    try:
+        nuevo_banco = Bancos(
+            nombre_banco=institucion,
+            numero_cuenta="",
+            saldo_actual=0,
+            color="#00D4AA",
+            belvo_link_id=link_id,
+            belvo_institution=institucion,
+            banco_externo_status="VALID"
+        )
+        db.session.add(nuevo_banco)
+        db.session.commit()
+        
+        return jsonify({
+            "status": "success",
+            "message": "Banco vinculado y creado correctamente desde Belvo",
+            "banco_id": nuevo_banco.id
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"⚠️ Error al crear banco vía Belvo: {e}")
         return jsonify({
             "status": "error",
             "message": "Error interno al guardar la vinculación"
