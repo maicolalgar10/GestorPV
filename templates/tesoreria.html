@@ -87,10 +87,6 @@ function Tesoreria() {
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [syncData, setSyncData] = useState(null);
   const startBelvoWidget = async bankId => {
-    if (typeof window.belvo === 'undefined') {
-      alert("El SDK de Belvo no está cargado. Asegúrate de que la URL del CDN sea correcta o recarga la página.");
-      return;
-    }
     try {
       // Petición al backend para obtener el token oficial de Belvo
       const tokenRes = await axios.get('/tesoreria/api/belvo/token', {
@@ -133,10 +129,9 @@ function Tesoreria() {
         onEvent: data => {
           console.log("Evento Belvo:", data);
         }
-      }).build();
+      }).build(); // Belvo automatically opens on build
     } catch (error) {
-      alert("Error al iniciar Belvo Widget.");
-      console.error(error);
+      console.error("Error al iniciar Belvo Widget:", error);
     }
   };
   const handleSyncBank = async bankId => {
@@ -159,11 +154,7 @@ function Tesoreria() {
     } catch (error) {
       console.error("Error real del backend:", error.response ? error.response.data : error);
       if (error.response && error.response.data && error.response.data.code === "MISSING_LINK") {
-        // Activar Widget Belvo
-        const confirmar = window.confirm(error.response.data.message + "\n\n¿Deseas vincular el banco ahora usando Belvo?");
-        if (confirmar) {
-          startBelvoWidget(bankId);
-        }
+        startBelvoWidget(bankId);
       }
     } finally {
       setSyncingBankId(null);
