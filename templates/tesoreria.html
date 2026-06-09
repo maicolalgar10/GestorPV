@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   
   <!-- Belvo Connect Widget -->
-  <script src="https://cdn.belvo.io/belvo-widget-1.js"></script>
+  <script src="https://cdn.belvo.io/belvo-widget-1-stable.js"></script>
 </head>
 <body>
 
@@ -77,6 +77,11 @@
       const [syncData, setSyncData] = useState(null);
 
       const startBelvoWidget = async (bankId) => {
+        if (typeof window.belvo === 'undefined') {
+          alert("El SDK de Belvo no está cargado. Asegúrate de que la URL del CDN sea correcta o recarga la página.");
+          return;
+        }
+
         try {
           // Petición al backend para obtener el token oficial de Belvo
           const tokenRes = await axios.get('/tesoreria/api/belvo/token', {
