@@ -38,56 +38,49 @@ def create_app():
     # Configuración de Política de Seguridad de Contenido (CSP)
     from flask_talisman import Talisman
     csp = {
-        'default-src': [
-            '\'self\'',
-            '\'unsafe-inline\'',
-            'https:',
-            'http:',
-            'data:',
-            'blob:'
-        ],
+        'default-src': '\'self\'',
         'script-src': [
             '\'self\'',
             '\'unsafe-inline\'',
             '\'unsafe-eval\'',
             'https://cdn.belvo.io',
-            'https:',
-            'http:'
+            'https://unpkg.com',
+            'https://cdn.jsdelivr.net'
         ],
         'style-src': [
             '\'self\'',
             '\'unsafe-inline\'',
-            'https:',
-            'http:'
+            'https://cdn.jsdelivr.net',
+            'https://fonts.googleapis.com'
         ],
         'img-src': [
             '\'self\'',
             'data:',
             'blob:',
-            'https:',
-            'http:'
-        ],
-        'font-src': [
-            '\'self\'',
-            'data:',
-            'https:',
-            'http:'
+            '*'
         ],
         'connect-src': [
             '\'self\'',
             'https://api.belvo.co',
-            'https://sandbox.belvo.co',
-            'https:',
-            'http:'
+            'https://sandbox.belvo.co'
         ],
         'frame-src': [
             '\'self\'',
-            'https://cdn.belvo.io',
-            'https:',
-            'http:'
+            'https://cdn.belvo.io'
+        ],
+        'font-src': [
+            '\'self\'',
+            'data:',
+            'https://cdn.jsdelivr.net',
+            'https://fonts.gstatic.com'
         ]
     }
-    Talisman(app, content_security_policy=csp, force_https=False)
+    
+    talisman = Talisman(
+        app,
+        content_security_policy=csp,
+        force_https=False
+    )
     
     # Compresión de respuestas (gzip/deflate)
     Compress(app)
