@@ -34,6 +34,57 @@ def create_app():
     Bcrypt(app)
     # Inicializar CSRF
     CSRFProtect(app)
+    
+    # Configuración de Política de Seguridad de Contenido (CSP)
+    from flask_talisman import Talisman
+    csp = {
+        'default-src': [
+            '\'self\'',
+            '\'unsafe-inline\'',
+            'https:',
+            'http:',
+            'data:',
+            'blob:'
+        ],
+        'script-src': [
+            '\'self\'',
+            '\'unsafe-inline\'',
+            '\'unsafe-eval\'',
+            'https:',
+            'http:'
+        ],
+        'style-src': [
+            '\'self\'',
+            '\'unsafe-inline\'',
+            'https:',
+            'http:'
+        ],
+        'img-src': [
+            '\'self\'',
+            'data:',
+            'blob:',
+            'https:',
+            'http:'
+        ],
+        'font-src': [
+            '\'self\'',
+            'data:',
+            'https:',
+            'http:'
+        ],
+        'connect-src': [
+            '\'self\'',
+            'https:',
+            'http:'
+        ],
+        'frame-src': [
+            '\'self\'',
+            'https:',
+            'http:'
+        ]
+    }
+    Talisman(app, content_security_policy=csp, force_https=False)
+    
     # Compresión de respuestas (gzip/deflate)
     Compress(app)
 

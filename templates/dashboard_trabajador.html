@@ -461,6 +461,7 @@
                           <form method="POST"
                             action="{{ url_for('avances.registrar_avance', id_actividad=actividad.id_actividad) }}"
                             enctype="multipart/form-data">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
                             <!-- =========================
                             DATOS PRINCIPALES
@@ -823,6 +824,7 @@
                 </div>
 
                 <form action="{{ url_for('materiales.crear_solicitud') }}" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <div class="modal-body pt-4">
                         <div class="mb-4">
                             <label class="form-label fw-bold text-secondary">Proyecto Destino</label>
