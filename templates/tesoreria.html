@@ -115,8 +115,8 @@ function Tesoreria() {
       window.belvoSDK.createWidget(accessToken, {
         locale: "es",
         access_mode: "recurrent",
-        institution_types: ["bank"],
-        country_codes: ["CO"],
+        institution_types: ['bank', 'fiscal'],
+        country_codes: ['CO', 'MX', 'BR'],
         environment: "sandbox",
         callback: async (link, institution) => {
           try {
