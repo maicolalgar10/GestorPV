@@ -625,13 +625,6 @@ class Bancos(db.Model):
     saldo_actual = db.Column(db.Numeric(12, 2), default=0, nullable=False)
     color = db.Column(db.String(7), nullable=True, default="#004481")
     
-    # === Open Banking Sincronización ===
-    link_bancario_id = db.Column(db.String(255), nullable=True)     # ID de la vinculación (ej: Belvo Link ID)
-    cuenta_externa_id = db.Column(db.String(255), nullable=True)    # ID exacto de la cuenta dentro del banco
-    institucion_externa = db.Column(db.String(100), nullable=True)  # Ej: 'bancolombia_business'
-    banco_externo_status = db.Column(db.String(50), nullable=True)  # Ej: 'VALID', 'INVALID_PASSWORD'
-    ultima_sincronizacion = db.Column(db.DateTime, nullable=True)   # Fecha de la última lectura exitosa
-    
     # Nuevos campos específicos para Belvo
     belvo_link_id = db.Column(db.String(100), nullable=True)
     belvo_institution = db.Column(db.String(100), nullable=True)

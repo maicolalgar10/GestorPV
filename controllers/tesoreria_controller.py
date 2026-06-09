@@ -496,7 +496,6 @@ def vincular_banco_belvo(id_banco):
         if institucion:
             banco.belvo_institution = institucion
             
-        banco.banco_externo_status = "VALID"
         db.session.commit()
         
         return jsonify({
@@ -533,8 +532,7 @@ def vincular_banco_nuevo():
             saldo_actual=0,
             color="#00D4AA",
             belvo_link_id=link_id,
-            belvo_institution=institucion,
-            banco_externo_status="VALID"
+            belvo_institution=institucion
         )
         db.session.add(nuevo_banco)
         db.session.commit()
@@ -551,6 +549,45 @@ def vincular_banco_nuevo():
         return jsonify({
             "status": "error",
             "message": "Error interno al guardar la vinculación"
+        }), 500
+
+@tesoreria_bp.route("/api/bancos/<int:id_banco>", methods=["DELETE"])
+@admin_oficina_required
+def eliminar_banco(id_banco):
+    banco = Bancos.query.get_or_404(id_banco)
+    
+    try:
+        # 1. Eliminar link en Belvo si existe
+        if banco.belvo_link_id:
+            belvo_secret_id = os.environ.get("BELVO_SECRET_ID")
+            belvo_secret_password = os.environ.get("BELVO_SECRET_PASSWORD")
+            belvo_env = os.environ.get("BELVO_ENVIRONMENT", "sandbox")
+            base_url = f"https://{belvo_env}.belvo.com"
+            
+            import requests
+            from requests.auth import HTTPBasicAuth
+            
+            url = f"{base_url}/api/links/{banco.belvo_link_id}/"
+            resp = requests.delete(url, auth=HTTPBasicAuth(belvo_secret_id, belvo_secret_password))
+            
+            if resp.status_code not in (204, 200, 404):
+                print(f"⚠️ Aviso: no se pudo eliminar el link en Belvo: {resp.status_code} - {resp.text}")
+        
+        # 2. Eliminar de BD (Cascade elimina movimientos automáticamente)
+        db.session.delete(banco)
+        db.session.commit()
+        
+        return jsonify({
+            "status": "success",
+            "message": "Banco y movimientos eliminados correctamente."
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"⚠️ Error al eliminar banco: {e}")
+        return jsonify({
+            "status": "error",
+            "message": "Error interno al eliminar el banco"
         }), 500
 
 @tesoreria_bp.route("/api/belvo/token", methods=["POST"])

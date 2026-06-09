@@ -201,6 +201,24 @@ function Tesoreria() {
     }
   };
   
+  const handleDeleteBank = async bankId => {
+    if (window.confirm("¿Estás seguro de que deseas eliminar este banco permanentemente? Esto borrará también todos los movimientos asociados y desconectará la cuenta de Belvo.")) {
+      try {
+        const res = await axios.delete(`/tesoreria/api/bancos/${bankId}`, {
+          headers: { 'X-CSRFToken': window.csrf_token }
+        });
+        if (res.data.status === "success") {
+          window.location.reload();
+        } else {
+          alert("Error: " + res.data.message);
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Ocurrió un error al intentar eliminar el banco.");
+      }
+    }
+  };
+
   const handleSyncBank = async bankId => {
     setSyncingBankId(bankId);
     try {
@@ -746,7 +764,24 @@ function Tesoreria() {
       }
     }) : /*#__PURE__*/React.createElement("i", {
       className: "bi bi-arrow-repeat"
-    }), " Ver en vivo"), /*#__PURE__*/React.createElement("div", {
+    }), " Ver en vivo"), /*#__PURE__*/React.createElement("button", {
+      title: "Eliminar banco",
+      onClick: () => handleDeleteBank(b.id),
+      style: {
+        background: "transparent",
+        border: "1px solid #E53E3E",
+        borderRadius: "4px",
+        color: "#E53E3E",
+        cursor: "pointer",
+        padding: "2px 6px",
+        fontSize: 10,
+        display: "flex",
+        alignItems: "center",
+        gap: 4
+      }
+    }, /*#__PURE__*/React.createElement("i", {
+      className: "bi bi-trash"
+    }), " Eliminar"), /*#__PURE__*/React.createElement("div", {
       style: {
         textAlign: "right"
       }
