@@ -157,14 +157,13 @@ function Tesoreria() {
         alert(res.data.message);
       }
     } catch (error) {
+      console.error("Error real del backend:", error.response ? error.response.data : error);
       if (error.response && error.response.data && error.response.data.code === "MISSING_LINK") {
         // Activar Widget Belvo
         const confirmar = window.confirm(error.response.data.message + "\n\n¿Deseas vincular el banco ahora usando Belvo?");
         if (confirmar) {
           startBelvoWidget(bankId);
         }
-      } else {
-        alert(error.response?.data?.message || "Error conectando con el agregador bancario (Belvo).");
       }
     } finally {
       setSyncingBankId(null);
