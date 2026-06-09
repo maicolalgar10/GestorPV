@@ -18,4 +18,4 @@ ENV/
 
 # Migraciones (OJO: Las versiones de migrations SÍ se suelen subir, 
 # pero si quieres un repo limpio desde cero, puedes ignorarlas)
-migrations/
+# migrations/
