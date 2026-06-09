@@ -98,7 +98,7 @@ function Tesoreria() {
         throw new Error(tokenRes.data.message || "No se pudo obtener el token de Belvo");
       }
       const accessToken = tokenRes.data.access_token;
-      window.belvo.createWidget(accessToken, {
+      window.Belvo.createWidget(accessToken, {
         locale: "es",
         country_codes: ["CO"],
         environment: "sandbox",
