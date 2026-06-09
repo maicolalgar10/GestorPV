@@ -38,41 +38,45 @@ def create_app():
     # Configuración de Política de Seguridad de Contenido (CSP)
     from flask_talisman import Talisman
     csp = {
-        'default-src': '\'self\'',
+        'default-src': [
+            '\'self\'',
+            'https://gestorpvcorseing.onrender.com'
+        ],
         'script-src': [
             '\'self\'',
             '\'unsafe-inline\'',
             '\'unsafe-eval\'',
             'https://cdn.belvo.io',
-            'https://unpkg.com',
-            'https://cdn.jsdelivr.net'
+            'https://cdn.jsdelivr.net',
+            'https://unpkg.com'
+        ],
+        'connect-src': [
+            '\'self\'',
+            'https://api.belvo.co',
+            'https://sandbox.belvo.co',
+            'https://cdn.jsdelivr.net',
+            'https://unpkg.com'
+        ],
+        'frame-src': [
+            '\'self\'',
+            'https://cdn.belvo.io'
         ],
         'style-src': [
             '\'self\'',
             '\'unsafe-inline\'',
-            'https://cdn.jsdelivr.net',
-            'https://fonts.googleapis.com'
+            'https://fonts.googleapis.com',
+            'https://cdn.jsdelivr.net'
+        ],
+        'font-src': [
+            '\'self\'',
+            'https://fonts.gstatic.com',
+            'https://cdn.jsdelivr.net'
         ],
         'img-src': [
             '\'self\'',
             'data:',
             'blob:',
             '*'
-        ],
-        'connect-src': [
-            '\'self\'',
-            'https://api.belvo.co',
-            'https://sandbox.belvo.co'
-        ],
-        'frame-src': [
-            '\'self\'',
-            'https://cdn.belvo.io'
-        ],
-        'font-src': [
-            '\'self\'',
-            'data:',
-            'https://cdn.jsdelivr.net',
-            'https://fonts.gstatic.com'
         ]
     }
     
