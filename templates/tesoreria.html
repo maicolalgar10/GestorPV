@@ -23,7 +23,7 @@
   <!-- Inyección de Datos desde Jinja -->
   <script>
     // Configuración de CSRF si existe
-    window.csrf_token = "{{ csrf_token() if csrf_token else '' }}";
+    window.csrf_token = "{{ csrf_token() }}";
     if (window.csrf_token && typeof axios !== 'undefined') {
       axios.defaults.headers.common['X-CSRFToken'] = window.csrf_token;
     }
@@ -175,7 +175,7 @@ function Tesoreria() {
                const vincularRes = await axios.post(`/tesoreria/api/bancos/vincular_nuevo`, {
                 link_id: link_id,
                 institution: institution_name
-              }, { headers: { 'X-CSRFToken': window.csrf_token } });
+              }, { headers: { 'X-CSRFToken': window.csrf_token, 'Content-Type': 'application/json' } });
               
               console.log("Respuesta vincular_nuevo:", vincularRes.data);
 
@@ -192,7 +192,8 @@ function Tesoreria() {
                 institution: institution_name
               }, {
                 headers: {
-                  'X-CSRFToken': window.csrf_token
+                  'X-CSRFToken': window.csrf_token,
+                  'Content-Type': 'application/json'
                 }
               });
               
