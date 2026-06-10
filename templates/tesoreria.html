@@ -243,6 +243,16 @@ function Tesoreria() {
         setBankErrors(prev => ({...prev, [bankId]: false}));
         setSyncingBankId(null);
       } else if (res.data.status === "sin_datos" || res.data.status === "error") {
+        const bankInfo = BANKS.find(b => b.id === bankId);
+        if (bankInfo && bankInfo.belvo_link_id) {
+          setSyncData({
+            bankId: bankId,
+            expired: true
+          });
+          setShowSyncModal(true);
+        } else {
+          startBelvoWidget(bankId);
+        }
         setBankErrors(prev => ({...prev, [bankId]: true}));
         setSyncingBankId(null);
       } else {
@@ -1679,7 +1689,32 @@ function Tesoreria() {
   })))), showSyncModal && syncData && /*#__PURE__*/React.createElement("div", {
     className: "modal-overlay",
     onClick: () => setShowSyncModal(false)
-  }, /*#__PURE__*/React.createElement("div", {
+  }, syncData.expired ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#111827",
+      border: "1px solid #1E2A40",
+      borderRadius: 16,
+      padding: 40,
+      width: "90%",
+      maxWidth: 500,
+      textAlign: "center",
+      color: "#E8EAF2",
+      animation: "fadeIn 0.2s ease",
+      display: "flex",
+      flexDirection: "column"
+    },
+    onClick: e => e.stopPropagation()
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "bi bi-exclamation-circle",
+    style: { fontSize: 48, color: "#F7C94F", marginBottom: 16 }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: { fontSize: 20, fontWeight: 700, fontFamily: "'Space Grotesk', sans-serif", marginBottom: 8 }
+  }, "Conexi\xF3n Expirada"), /*#__PURE__*/React.createElement("div", {
+    style: { fontSize: 14, color: "#6B7A9A", marginBottom: 24 }
+  }, "La conexi\xF3n segura con tu banco ha expirado. Haz clic en reconectar para volver a iniciar sesi\xF3n y reanudar la sincronizaci\xF3n."), /*#__PURE__*/React.createElement("button", {
+    className: "btn-primary",
+    onClick: () => { setShowSyncModal(false); startBelvoWidget(syncData.bankId); }
+  }, "Reconectar Banco")) : /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#111827",
       border: "1px solid #1E2A40",
@@ -1888,13 +1923,36 @@ function Tesoreria() {
     className: "bi bi-shield-check"
   }), " Extracto Real (API Belvo)"), /*#__PURE__*/React.createElement("div", {
     style: {
+      padding: "12px 16px",
+      background: "#111827",
+      borderBottom: "1px solid #1E2A40",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: { fontSize: 10, color: "#6B7A9A", textTransform: "uppercase" }
+  }, "Saldo Actual"), /*#__PURE__*/React.createElement("div", {
+    style: { fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, fontWeight: 700, color: "#4F8EF7" }
+  }, fmt(syncData.saldo_real))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: { fontSize: 10, color: "#6B7A9A", textTransform: "uppercase" }
+  }, "Total Ingresos"), /*#__PURE__*/React.createElement("div", {
+    style: { fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, fontWeight: 700, color: "#00D4AA" }
+  }, fmt(syncData.transacciones_bancarias.filter(t => t.type === 'INFLOW').reduce((sum, t) => sum + Math.abs(t.amount), 0)))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: { fontSize: 10, color: "#6B7A9A", textTransform: "uppercase" }
+  }, "Total Egresos"), /*#__PURE__*/React.createElement("div", {
+    style: { fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, fontWeight: 700, color: "#FF6B6B" }
+  }, fmt(syncData.transacciones_bancarias.filter(t => t.type === 'OUTFLOW').reduce((sum, t) => sum + Math.abs(t.amount), 0))))), /*#__PURE__*/React.createElement("div", {
+    style: {
       flex: 1,
       overflow: "auto",
       background: "#0D1220",
       padding: 12,
       borderRadius: "0 0 8px 8px"
     }
-  }, syncData.transacciones_bancarias.map(tx => {
+  }, syncData.transacciones_bancarias.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    style: { padding: 20, textAlign: "center", color: "#6B7A9A", fontSize: 12 }
+  }, "No hay transacciones en los \xFAltimos 30 d\xEDas") : syncData.transacciones_bancarias.map(tx => {
     const isMatch = MOVEMENTS.some(m => m.banco_id === syncData.bankId && Math.abs(m.amount - Math.abs(tx.amount)) < 0.01);
     return /*#__PURE__*/React.createElement("div", {
       key: tx.id,
