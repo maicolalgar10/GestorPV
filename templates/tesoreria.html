@@ -175,7 +175,7 @@ function Tesoreria() {
                const vincularRes = await axios.post(`/tesoreria/api/bancos/vincular_nuevo`, {
                 link_id: link_id,
                 institution: institution_name
-              }, { headers: { 'X-CSRFToken': window.csrf_token, 'Content-Type': 'application/json' } });
+              }, { headers: { 'X-CSRFToken': window.csrf_token, 'Content-Type': 'application/json' }, timeout: 8000 });
               
               console.log("Respuesta vincular_nuevo:", vincularRes.data);
 
@@ -202,7 +202,8 @@ function Tesoreria() {
                 headers: {
                   'X-CSRFToken': window.csrf_token,
                   'Content-Type': 'application/json'
-                }
+                },
+                timeout: 8000
               });
               
             if (vincularRes.data.status === "success") {
@@ -231,6 +232,7 @@ function Tesoreria() {
             console.log("ERROR vincular - status:", error.response?.status);
             console.log("ERROR vincular - data:", JSON.stringify(error.response?.data));
             console.log("ERROR vincular - headers:", JSON.stringify(error.response?.headers));
+            console.log("ERROR vincular - message:", error.message);
             alert("Error al guardar la vinculación o al sincronizar.");
           } finally {
             setSyncingBankId(null);
