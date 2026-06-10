@@ -60,7 +60,8 @@ def create_app():
             'https://api-js.mixpanel.com',
             'https://browser-intake-datadoghq.com',
             'https://cdn.jsdelivr.net',
-            'https://unpkg.com'
+            'https://unpkg.com',
+            'https://api.hsforms.com'
         ],
         'frame-src': [
             '\'self\'',
