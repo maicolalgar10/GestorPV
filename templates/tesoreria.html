@@ -168,17 +168,22 @@ function Tesoreria() {
           }
 
           try {
+            console.log("Llamando a vincular banco, bankId:", bankId);
+            console.log("Payload:", {link_id: link_id, institution: institution_name});
+
             if (!bankId) {
                const vincularRes = await axios.post(`/tesoreria/api/bancos/vincular_nuevo`, {
                 link_id: link_id,
                 institution: institution_name
               }, { headers: { 'X-CSRFToken': window.csrf_token } });
               
+              console.log("Respuesta vincular_nuevo:", vincularRes.data);
+
               if (vincularRes.data.status === "success") {
                 alert("✅ Banco creado y vinculado exitosamente desde Belvo.");
                 window.location.reload();
               } else {
-                alert("Error al vincular: " + vincularRes.data.message);
+                alert("Error al vincular: " + vincularRes.data.error || vincularRes.data.message || JSON.stringify(vincularRes.data));
               }
             } else {
               // Guardar el link en el backend
