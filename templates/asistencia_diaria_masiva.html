@@ -139,6 +139,7 @@
 
     <!-- FORM GENERAL -->
     <form method="POST" action="{{ url_for('asistencia.registro_diario_masivo', fecha=fecha_seleccionada) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="fecha" value="{{ fecha_seleccionada }}">
 
         <!-- BOTÓN FLOTANTE -->

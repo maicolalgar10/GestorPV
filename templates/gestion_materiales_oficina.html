@@ -141,6 +141,7 @@
         <div class="modal-footer border-0 pt-0">
           {% if req.estado == 'PENDIENTE' %}
           <form action="{{ url_for('materiales.completar_requisicion_oficina', id=req.id) }}" method="POST" class="m-0 me-auto">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="btn btn-outline-success" type="submit"><i class="bi bi-check-circle me-1"></i>Marcar como Comprada</button>
           </form>
           {% else %}

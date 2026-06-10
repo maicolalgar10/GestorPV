@@ -217,6 +217,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form method="POST" action="{{ url_for('vehiculos.cambiar_asignacion', id_vehiculo=v.id_vehiculo) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="modal-body pt-4">
                         <div class="mb-3 p-2 bg-light rounded">
                             <strong>Vehículo:</strong> {{ v.marca }} {{ v.modelo }} <span class="badge bg-primary">{{ v.placa }}</span>

@@ -26,6 +26,7 @@
       <div class="col-md-8">
         <div class="card shadow-sm p-4">
           <form method="POST" action="{{ url_for('usuarios.configuracion_perfil') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="mb-3">
               <label for="nombre" class="form-label fw-semibold">Nombre</label>
               <input type="text" class="form-control" id="nombre" name="nombre" value="{{ usuario.nombre }}" required>

@@ -80,6 +80,7 @@
     <form method="POST"
           action="{{ url_for('asistencia.asistencia_trabajador', personal_id=trabajador.id, fecha=fecha_str) }}"
           class="card card-custom shadow-sm p-4 mb-4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
       <input type="hidden" name="fecha" value="{{ fecha_str }}">
 

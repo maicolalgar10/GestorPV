@@ -192,6 +192,7 @@
                     <div class="p-4 pt-0 border-top border-light mt-2">
                         <form method="POST" action="{{ url_for('horarios.gestion_asignaciones_diarias') }}"
                             class="mt-3">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <div class="row g-3">
                                 <div class="col-md-3">
                                     <label class="form-label small fw-bold">Fecha</label>
@@ -269,6 +270,7 @@
                                 <form method="POST"
                                     action="{{ url_for('horarios.eliminar_asignacion_diaria', id=t.id_asignacion_diaria) }}"
                                     onsubmit="return confirm('¿Eliminar?');" class="m-0 p-0">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="btn btn-link text-danger p-0 m-0"
                                         style="line-height: 1;">
                                         <i class="bi bi-x-circle-fill"></i>

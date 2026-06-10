@@ -172,6 +172,7 @@
 
       <div class="card-body p-4"> <!-- Aumenté el padding -->
         <form method="POST" action="{{ url_for('proyectos.editar_proyecto', id_proyecto=proyecto.id_proyecto) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="row g-4"> <!-- Aumenté el gap -->
 
             <!-- Información General -->

@@ -66,6 +66,7 @@
         <h4 class="mb-4"><i class="bi bi-clock"></i> Registrar Hora de Entrada</h4>
 
         <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
           <!-- Trabajador (solo lectura) -->
           <div class="mb-3">

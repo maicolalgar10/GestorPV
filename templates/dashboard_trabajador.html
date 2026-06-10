@@ -701,6 +701,7 @@
                       
                       <form action="{{ url_for('materiales.ocultar_solicitud_trabajador', id_solicitud=solicitud.id_solicitud) }}" 
                             method="POST" onsubmit="return confirm('¿Seguro que deseas eliminar esta solicitud?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Eliminar Solicitud">
                           <i class="bi bi-trash"></i>
                         </button>

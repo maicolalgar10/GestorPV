@@ -147,7 +147,8 @@
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
-                                <form id="delete-form-{{ m.id_material }}" action="{{ url_for('materiales.delete_material', id=m.id_material) }}" method="POST" style="display:none;"></form>
+                                <form id="delete-form-{{ m.id_material }}" action="{{ url_for('materiales.delete_material', id=m.id_material) }}" method="POST" style="display:none;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"></form>
                             </div>
                         </div>
                     </div>
@@ -175,6 +176,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form action="{{ url_for('materiales.nuevo_material') }}" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="modal-body px-4">
                         <div class="mb-3">
                             <label class="form-label fw-bold text-secondary small">Nombre del Material</label>
@@ -213,6 +215,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form action="{{ url_for('materiales.editar_material', id=m.id_material) }}" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="modal-body px-4">
                         <div class="mb-3">
                             <label class="form-label fw-bold text-secondary small">Nombre del Material</label>

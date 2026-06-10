@@ -389,6 +389,7 @@
       </div>
 
       <form method="POST" enctype="multipart/form-data" id="profileForm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="mb-4">
           <label for="foto" class="form-label">
             <i class="bi bi-image-fill me-2"></i>Cambiar foto de perfil

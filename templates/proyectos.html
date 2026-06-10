@@ -413,6 +413,7 @@ background: rgba(255, 255, 255, 0.85);
                     <form method="POST"
                       action="{{ url_for('actividades.eliminar_actividad', id_actividad=actividad.id) }}"
                       onsubmit="return confirm('¿Seguro que quieres eliminar esta actividad?');" class="d-inline">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                       <button type="submit" class="btn btn-sm btn-outline-danger">
                         <i class="bi bi-trash"></i>
                       </button>
@@ -433,6 +434,7 @@ background: rgba(255, 255, 255, 0.85);
                     </div>
                     <form method="POST"
                       action="{{ url_for('actividades.editar_actividad', id_actividad=actividad.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                       <div class="modal-body">
                         <div class="mb-3">
                           <label class="form-label">Nombre</label>
@@ -508,6 +510,7 @@ background: rgba(255, 255, 255, 0.85);
                     </div>
                     <form method="POST"
                       action="{{ url_for('proyectos.actualizar_personal_proyecto', id_proyecto=item.proyecto.id_proyecto) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                       <div class="modal-body">
                         <div class="row g-2">
                           {% for p in personal %}
@@ -585,6 +588,7 @@ background: rgba(255, 255, 255, 0.85);
                     </div>
                     <form method="POST"
                       action="{{ url_for('proyectos.actualizar_materiales_proyecto', id_proyecto=item.proyecto.id_proyecto) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                       <div class="modal-body">
                         <div class="row g-2">
                           {% for m in materiales %}
@@ -665,6 +669,7 @@ background: rgba(255, 255, 255, 0.85);
                     </div>
                     <form method="POST"
                       action="{{ url_for('proyectos.actualizar_vehiculos_proyecto', id_proyecto=item.proyecto.id_proyecto) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                       <div class="modal-body">
                         <div class="row g-2">
                           {% for v in vehiculos %}
@@ -710,6 +715,7 @@ background: rgba(255, 255, 255, 0.85);
                   <i class="bi bi-pencil"></i> Editar
                 </a>
                 <form method="POST" action="{{ url_for('proyectos.hide_proyecto', id_proyecto=item.proyecto.id_proyecto) }}" class="d-inline" onsubmit="return confirm('¿Ocultar proyecto {{ item.proyecto.nombre }}? Se mantendrán todos los datos para análisis.')">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <button type="submit" class="btn btn-sm btn-outline-warning">
     <i class="bi bi-eye-slash"></i> Ocultar
   </button>
@@ -890,6 +896,7 @@ background: rgba(255, 255, 255, 0.85);
                     <form method="POST"
                       action="{{ url_for('actividades.eliminar_actividad', id_actividad=actividad.id) }}"
                       onsubmit="return confirm('¿Seguro que quieres eliminar esta actividad?');" class="d-inline">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                       <button type="submit" class="btn btn-sm btn-outline-danger">
                         <i class="bi bi-trash"></i>
                       </button>
@@ -910,6 +917,7 @@ background: rgba(255, 255, 255, 0.85);
                     </div>
                     <form method="POST"
                       action="{{ url_for('actividades.editar_actividad', id_actividad=actividad.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                       <div class="modal-body">
                         <div class="mb-3">
                           <label class="form-label">Nombre</label>
@@ -985,6 +993,7 @@ background: rgba(255, 255, 255, 0.85);
                     </div>
                     <form method="POST"
                       action="{{ url_for('proyectos.actualizar_personal_proyecto', id_proyecto=item.proyecto.id_proyecto) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                       <div class="modal-body">
                         <div class="row g-2">
                           {% for p in personal %}
@@ -1062,6 +1071,7 @@ background: rgba(255, 255, 255, 0.85);
                     </div>
                     <form method="POST"
                       action="{{ url_for('proyectos.actualizar_materiales_proyecto', id_proyecto=item.proyecto.id_proyecto) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                       <div class="modal-body">
                         <div class="row g-2">
                           {% for m in materiales %}
@@ -1142,6 +1152,7 @@ background: rgba(255, 255, 255, 0.85);
                     </div>
                     <form method="POST"
                       action="{{ url_for('proyectos.actualizar_vehiculos_proyecto', id_proyecto=item.proyecto.id_proyecto) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                       <div class="modal-body">
                         <div class="row g-2">
                           {% for v in vehiculos %}
@@ -1189,6 +1200,7 @@ background: rgba(255, 255, 255, 0.85);
                 <form method="POST"
                   action="{{ url_for('proyectos.hide_proyecto', id_proyecto=item.proyecto.id_proyecto) }}"
                   onsubmit="return confirm('¿Seguro que quieres eliminar el proyecto {{ item.proyecto.nombre }}?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button type="submit" class="btn btn-sm btn-outline-danger">
                     <i class="bi bi-trash"></i> Eliminar
                   </button>
@@ -1249,6 +1261,7 @@ background: rgba(255, 255, 255, 0.85);
 
             <!-- IMPORTANTE: los names de materiales deben coincidir con lo que espera el controller -->
             <form method="POST" action="{{ url_for('proyectos.manage_proyectos') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <div class="modal-body">
                 <div class="row g-3">
 

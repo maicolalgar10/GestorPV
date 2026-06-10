@@ -275,6 +275,7 @@
                       <form action="{{ url_for('personal.delete_personal', id=p.id) }}" method="POST"
                         style="display:inline-block"
                         onsubmit="return confirm('¿Seguro que quieres eliminar a {{ p.nombre }}?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
                           <i class="bi bi-trash"></i>
                         </button>
@@ -310,6 +311,7 @@
         </div>
         <div class="modal-body pt-4">
           <form action="{{ url_for('personal.manage_personal') }}" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="row g-3">
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Nombre Completo</label>
@@ -394,6 +396,7 @@
         </div>
         <div class="modal-body pt-4">
           <form action="{{ url_for('personal.editar_personal', id=p.id) }}" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="row g-3">
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Nombre</label>

@@ -63,6 +63,7 @@
     <!-- Formulario de recuperación -->
     <!-- Formulario de recuperación -->
 <form method="POST" action="{{ url_for('usuarios.olvide_contrasena') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <div class="mb-3">
     <label class="form-label">Número de contacto (teléfono)</label>
     <input type="text" name="telefono" class="form-control" 

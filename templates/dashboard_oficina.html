@@ -250,9 +250,11 @@
                     <div class="mt-1">
                         {% if c.estado == "PENDIENTE" %}
                         <form method="POST" action="{{ url_for('cotizaciones.cambiar_estado_cotizacion', id=c.id, estado='ACEPTADA') }}" class="d-inline">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button class="btn btn-success btn-sm p-0 px-1" title="Aceptar">✔</button>
                         </form>
                         <form method="POST" action="{{ url_for('cotizaciones.cambiar_estado_cotizacion', id=c.id, estado='RECHAZADA') }}" class="d-inline">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button class="btn btn-danger btn-sm p-0 px-1" title="Rechazar">✖</button>
                         </form>
                         {% endif %}
@@ -279,6 +281,7 @@
                               action="{{ url_for('cotizaciones.eliminar_cotizacion', id=c.id) }}"
                               class="d-inline"
                               onsubmit="return confirm('¿Seguro que deseas eliminar esta cotización? Esta acción no se puede deshacer.')">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button class="btn btn-light btn-sm border p-0 px-1 text-danger"
                                     title="Eliminar cotización">
                                 <i class="bi bi-trash"></i>
@@ -324,6 +327,7 @@
               method="POST"
               action="{{ url_for('cotizaciones.crear_cotizacion') }}"
               enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
           <!-- HEADER -->
           <div class="modal-header border-0">
@@ -374,6 +378,7 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow-lg">
         <form method="POST" id="formGenerarContrato" action="">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <!-- HEADER -->
           <div class="modal-header bg-dark text-white border-0">
             <div>
@@ -560,6 +565,7 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow-lg">
         <form method="POST" id="formEditarContrato" action="">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <!-- HEADER -->
           <div class="modal-header bg-warning text-dark border-0">
             <div>

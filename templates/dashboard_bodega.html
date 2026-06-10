@@ -222,6 +222,7 @@
             <div class="collapse {{ 'show' if tab_id == 'en_proceso' }}" id="list_{{ tab_id }}_{{ solicitud.id_solicitud }}">
               <!-- INICIO DEL FORMULARIO DE DESPACHO -->
               <form id="form_despacho_{{ solicitud.id_solicitud }}" method="POST" action="{{ url_for('materiales.procesar_entrega_bodega', id_solicitud=solicitud.id_solicitud) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   
                   <div class="p-3 border rounded-3 bg-white mb-3 shadow-sm">
                       <table class="table table-hover align-middle mb-0">
@@ -298,15 +299,18 @@
               {% if show_actions %}
                 {% if tab_id == 'pendientes' %}
                   <form method="POST" action="{{ url_for('materiales.marcar_en_proceso', id_solicitud=solicitud.id_solicitud) }}" class="m-0">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-primary btn-sm px-3 rounded-pill fw-bold">Preparar Pedido</button>
                   </form>
                   <form method="POST" action="{{ url_for('materiales.marcar_rechazado', id_solicitud=solicitud.id_solicitud) }}" class="m-0" onsubmit="return confirm('¿Seguro que deseas rechazar esta solicitud?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-link btn-sm text-danger text-decoration-none fw-bold p-0 px-2">Rechazar</button>
                   </form>
                 {% endif %}
               {% else %}
                 <!-- Botón de archivar (opcional si lo manejas en el backend) -->
                 <form method="POST" action="{{ url_for('materiales.ocultar_solicitud_bodega', id_solicitud=solicitud.id_solicitud) }}" class="m-0">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button type="submit" class="btn btn-sm btn-outline-secondary border-0 py-0" style="font-size: 0.7rem;">
                     <i class="bi bi-eye-slash me-1"></i>Archivar
                   </button>
@@ -327,6 +331,7 @@
     <div class="modal-dialog modal-lg">
       <div class="modal-content border-0 shadow" style="border-radius: 20px;">
         <form method="POST" action="{{ url_for('materiales.solicitar_a_oficina') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="modal-header border-0">
             <h5 class="fw-bold">
               <i class="bi bi-send text-primary"></i> Solicitar Materiales a Oficina
