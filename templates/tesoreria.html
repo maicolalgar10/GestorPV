@@ -180,6 +180,14 @@ function Tesoreria() {
               console.log("Respuesta vincular_nuevo:", vincularRes.data);
 
               if (vincularRes.data.status === "success") {
+                try {
+                  const newBankId = vincularRes.data.banco_id;
+                  await axios.get(`/tesoreria/api/bancos/${newBankId}/sincronizar_en_vivo`, {
+                    headers: { 'X-CSRFToken': window.csrf_token }
+                  });
+                } catch(e) {
+                  console.error("Error sincronizando banco nuevo post-creación", e);
+                }
                 alert("✅ Banco creado y vinculado exitosamente desde Belvo.");
                 window.location.reload();
               } else {
