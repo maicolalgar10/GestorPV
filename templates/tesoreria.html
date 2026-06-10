@@ -140,13 +140,38 @@ function Tesoreria() {
         institution_types: ['bank', 'fiscal'],
         country_codes: ['CO', 'MX', 'BR'],
         environment: "sandbox",
-        callback: async (link, institution) => {
-          console.log("BELVO CALLBACK - link:", link, "institution:", institution);
+        callback: async (...args) => {
+          console.log("BELVO CALLBACK ARGS:", JSON.stringify(args));
+          
+          let link_id, institution_name;
+          
+          if (typeof args[0] === 'string') {
+            // Forma antigua: callback(link_id, institution)
+            link_id = args[0];
+            institution_name = args[1];
+          } else if (args[0] && args[0].link) {
+            // Forma objeto: callback({link, institution})
+            link_id = args[0].link;
+            institution_name = args[0].institution;
+          } else if (args[0] && args[0].id) {
+            // Forma alternativa: callback({id, institution})
+            link_id = args[0].id;
+            institution_name = args[0].institution;
+          }
+          
+          console.log("link_id detectado:", link_id);
+          console.log("institution detectada:", institution_name);
+          
+          if (!link_id) {
+            alert("Error: no se pudo obtener el link_id de Belvo. Ver consola.");
+            return;
+          }
+
           try {
             if (!bankId) {
-              const vincularRes = await axios.post(`/tesoreria/api/bancos/vincular_nuevo`, {
-                link_id: link,
-                institution: institution
+               const vincularRes = await axios.post(`/tesoreria/api/bancos/vincular_nuevo`, {
+                link_id: link_id,
+                institution: institution_name
               }, { headers: { 'X-CSRFToken': window.csrf_token } });
               
               if (vincularRes.data.status === "success") {
@@ -158,8 +183,8 @@ function Tesoreria() {
             } else {
               // Guardar el link en el backend
               const vincularRes = await axios.post(`/tesoreria/api/bancos/${bankId}/vincular`, {
-                link_id: link,
-                institution: institution
+                link_id: link_id,
+                institution: institution_name
               }, {
                 headers: {
                   'X-CSRFToken': window.csrf_token
