@@ -141,6 +141,7 @@ function Tesoreria() {
         country_codes: ['CO', 'MX', 'BR'],
         environment: "sandbox",
         callback: async (link, institution) => {
+          console.log("BELVO CALLBACK - link:", link, "institution:", institution);
           try {
             if (!bankId) {
               const vincularRes = await axios.post(`/tesoreria/api/bancos/vincular_nuevo`, {
