@@ -730,6 +730,7 @@ background: rgba(255, 255, 255, 0.85);
             </div>
             <form method="POST"
               action="{{ url_for('proyectos.agregar_actividad', id_proyecto=item.proyecto.id_proyecto) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <div class="modal-body">
                 <div class="mb-3">
                   <label class="form-label">Nombre</label>
@@ -1208,6 +1209,7 @@ background: rgba(255, 255, 255, 0.85);
             </div>
             <form method="POST"
               action="{{ url_for('proyectos.agregar_actividad', id_proyecto=item.proyecto.id_proyecto) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <div class="modal-body">
                 <div class="mb-3">
                   <label class="form-label">Nombre</label>
