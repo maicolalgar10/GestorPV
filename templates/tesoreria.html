@@ -87,6 +87,7 @@ function Tesoreria() {
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [syncData, setSyncData] = useState(null);
   const [liveBalances, setLiveBalances] = useState({});
+  const [bankErrors, setBankErrors] = useState({});
 
   React.useEffect(() => {
     BANKS.forEach(b => {
@@ -95,8 +96,14 @@ function Tesoreria() {
           .then(res => {
             if(res.data.status === "success") {
               setLiveBalances(prev => ({...prev, [b.id]: res.data.data.saldo_real}));
+              setBankErrors(prev => ({...prev, [b.id]: false}));
+            } else if(res.data.status === "sin_datos" || res.data.status === "error") {
+              setBankErrors(prev => ({...prev, [b.id]: true}));
             }
-          }).catch(err => console.error("Error fetching live balance", err));
+          }).catch(err => {
+            console.error("Error fetching live balance", err);
+            setBankErrors(prev => ({...prev, [b.id]: true}));
+          });
       }
     });
   }, []);
@@ -233,9 +240,13 @@ function Tesoreria() {
           ...res.data.data
         });
         setShowSyncModal(true);
+        setBankErrors(prev => ({...prev, [bankId]: false}));
+        setSyncingBankId(null);
+      } else if (res.data.status === "sin_datos" || res.data.status === "error") {
+        setBankErrors(prev => ({...prev, [bankId]: true}));
         setSyncingBankId(null);
       } else {
-        alert(res.data.message);
+        alert(res.data.message || "Error desconocido");
         setSyncingBankId(null);
       }
     } catch (error) {
@@ -727,9 +738,16 @@ function Tesoreria() {
         fontFamily: "'Space Grotesk', sans-serif",
         fontSize: 12,
         fontWeight: 600,
-        color: "#E8EAF2"
+        color: "#E8EAF2",
+        display: "flex",
+        alignItems: "center",
+        gap: 6
       }
-    }, b.name), /*#__PURE__*/React.createElement("div", {
+    }, b.name, bankErrors[b.id] && /*#__PURE__*/React.createElement("span", {
+      title: "Reconectar banco",
+      style: { cursor: "pointer", fontSize: 14 },
+      onClick: () => startBelvoWidget(b.id)
+    }, "\u26A0\uFE0F")), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 10,
         color: "#4A5568"

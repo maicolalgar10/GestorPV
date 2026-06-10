@@ -416,13 +416,23 @@ def sincronizar_banco_en_vivo(id_banco):
         accounts_url = f"{base_url}/api/accounts/?link={link_id}"
         response_accounts = requests.get(accounts_url, auth=auth)
         
-        if response_accounts.status_code != 200:
+        if response_accounts.status_code in [401, 404]:
+            return jsonify({
+                "status": "sin_datos",
+                "saldo_real": float(banco.saldo_actual or 0),
+                "transacciones_bancarias": []
+            }), 200
+        elif response_accounts.status_code != 200:
             raise Exception(f"Error al obtener cuentas de Belvo: {response_accounts.text}")
             
         accounts_data = response_accounts.json().get("results", [])
         
         if not accounts_data:
-            raise Exception("No se encontraron cuentas asociadas a este Link ID en Belvo.")
+            return jsonify({
+                "status": "sin_datos",
+                "saldo_real": float(banco.saldo_actual or 0),
+                "transacciones_bancarias": []
+            }), 200
             
         # Tomamos la primera cuenta por defecto
         cuenta_belvo = accounts_data[0]
