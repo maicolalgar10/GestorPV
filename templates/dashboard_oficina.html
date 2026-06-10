@@ -260,7 +260,7 @@
                         {% endif %}
 
                         {% if c.imagen_cotizacion %}
-                          <a href="{{ url_for('static', filename='uploads/cotizaciones/' ~ c.imagen_cotizacion) }}"
+                          <a href="{{ c.imagen_cotizacion if c.imagen_cotizacion.startswith('http') else url_for('static', filename='uploads/cotizaciones/' ~ c.imagen_cotizacion) }}"
                             target="_blank"
                             class="btn btn-light btn-sm border me-1"
                             title="Ver imagen de cotización">

@@ -4,11 +4,10 @@ from flask import Blueprint, request, redirect, url_for, flash
 from decorators import login_required
 from models import db, Cotizacion, Contrato, Usuarios, Notificaciones
 from werkzeug.utils import secure_filename
+from supabase_client import supabase
+import uuid
 
 cotizaciones_bp = Blueprint("cotizaciones", __name__)
-
-UPLOAD_FOLDER = "static/uploads/cotizaciones"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
 # ================================
@@ -30,9 +29,20 @@ def crear_cotizacion():
         ruta_imagen = None
         if imagen and imagen.filename:
             filename = secure_filename(imagen.filename)
-            ruta_imagen = os.path.join(UPLOAD_FOLDER, filename)
-            imagen.save(ruta_imagen)
-            ruta_imagen = filename
+            # Agregar UUID para evitar colisiones
+            unique_filename = f"{uuid.uuid4().hex}_{filename}"
+            
+            if supabase:
+                # Leer el archivo como bytes
+                file_bytes = imagen.read()
+                # Subir al bucket 'uploads' dentro de la carpeta 'cotizaciones'
+                res = supabase.storage.from_("uploads").upload(f"cotizaciones/{unique_filename}", file_bytes)
+                
+                # Obtener la URL pública
+                public_url = supabase.storage.from_("uploads").get_public_url(f"cotizaciones/{unique_filename}")
+                ruta_imagen = public_url
+            else:
+                flash("Supabase no está configurado. No se subió la imagen.", "warning")
 
         cotizacion = Cotizacion(
             cliente=cliente,
@@ -104,10 +114,15 @@ def eliminar_cotizacion(id):
             db.session.delete(contrato)
 
         # 🖼️ borrar imagen si existe
-        if cotizacion.imagen_cotizacion:
-            path_imagen = os.path.join(UPLOAD_FOLDER, cotizacion.imagen_cotizacion)
-            if os.path.exists(path_imagen):
-                os.remove(path_imagen)
+        if cotizacion.imagen_cotizacion and supabase:
+            # Extraer el path de la URL pública si es de Supabase
+            if "supabase.co" in cotizacion.imagen_cotizacion:
+                try:
+                    # El path usualmente está después de '/public/uploads/'
+                    path_part = cotizacion.imagen_cotizacion.split("/public/uploads/")[-1]
+                    supabase.storage.from_("uploads").remove([path_part])
+                except Exception as e:
+                    print("Error al borrar imagen en Supabase:", e)
 
         # 📄 borrar cotización
         db.session.delete(cotizacion)
