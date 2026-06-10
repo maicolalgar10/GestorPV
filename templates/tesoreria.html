@@ -217,8 +217,11 @@ function Tesoreria() {
               alert("Error al vincular: " + vincularRes.data.message);
             }
             }
-          } catch (err) {
-            console.error(err);
+          } catch (error) {
+            console.error(error);
+            console.log("ERROR vincular - status:", error.response?.status);
+            console.log("ERROR vincular - data:", JSON.stringify(error.response?.data));
+            console.log("ERROR vincular - headers:", JSON.stringify(error.response?.headers));
             alert("Error al guardar la vinculación o al sincronizar.");
           } finally {
             setSyncingBankId(null);
