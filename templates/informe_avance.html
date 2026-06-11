@@ -78,13 +78,21 @@
         <td>
           {% if avance.evidencias %}
             {% for evidencia in avance.evidencias %}
-              {% set ruta = evidencia.ruta_archivo.replace('\\', '/') %}
-              {% set ruta_relativa = ruta.replace('static/', '') %}
-              <img src="{{ url_for('static', filename=ruta_relativa) }}"
-                   class="img-thumbnail me-1"
-                   data-bs-toggle="modal"
-                   data-bs-target="#modalImagen"
-                   data-imagen="{{ url_for('static', filename=ruta_relativa) }}">
+              {% if evidencia.ruta_archivo.startswith('http') %}
+                <img src="{{ evidencia.ruta_archivo }}"
+                     class="img-thumbnail me-1"
+                     data-bs-toggle="modal"
+                     data-bs-target="#modalImagen"
+                     data-imagen="{{ evidencia.ruta_archivo }}">
+              {% else %}
+                {% set ruta = evidencia.ruta_archivo.replace('\\', '/') %}
+                {% set ruta_relativa = ruta.replace('static/', '') %}
+                <img src="{{ url_for('static', filename=ruta_relativa) }}"
+                     class="img-thumbnail me-1"
+                     data-bs-toggle="modal"
+                     data-bs-target="#modalImagen"
+                     data-imagen="{{ url_for('static', filename=ruta_relativa) }}">
+              {% endif %}
             {% endfor %}
           {% else %}
             <span class="text-muted fst-italic">Sin evidencias</span>

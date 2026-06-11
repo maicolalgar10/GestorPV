@@ -119,6 +119,10 @@ function BancosApp() {
             link_id = args[0].id;
             institution_name = args[0].institution;
           }
+          console.log("CALLBACK link:", link_id);
+          console.log("CALLBACK institution:", institution_name);
+          console.log("CALLBACK bankId:", bankId);
+          
           if (!link_id) {
             alert("Error: no se pudo obtener el link_id de Belvo. Ver consola.");
             return;

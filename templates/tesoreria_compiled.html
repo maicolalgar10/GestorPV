@@ -1085,7 +1085,7 @@ function Tesoreria() {
       textAlign: "center"
     }
   }, m.archivo_soporte ? /*#__PURE__*/React.createElement("button", {
-    onClick: () => setSoporteUrl('/static/uploads/tesoreria/' + m.archivo_soporte),
+    onClick: () => setSoporteUrl(m.archivo_soporte.startsWith('http') ? m.archivo_soporte : '/static/uploads/tesoreria/' + m.archivo_soporte),
     title: "Ver Soporte",
     style: {
       background: "transparent",

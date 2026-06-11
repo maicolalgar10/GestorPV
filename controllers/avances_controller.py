@@ -3,6 +3,9 @@ from models import db, Actividades, Avances, Proyectos, AvanceMaterial, Evidenci
 from datetime import datetime
 import os, base64
 from werkzeug.utils import secure_filename
+import uuid
+import requests
+from supabase_client import supabase
 from frases import obtener_frase
 from decorators import login_required, admin_required, admin_encargado_required
 from flask import send_file
@@ -106,22 +109,41 @@ def registrar_avance(id_actividad):
 
 
         # ==================================================
-        # Guardar evidencias (galería o cámara)
+        # Guardar evidencias (galería o cámara) en Supabase
         # ==================================================
         files = request.files.getlist("evidencias")
 
         # 1️⃣ Archivos desde galería
         for file in files:
             if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                ruta_relativa = os.path.join("uploads", "evidencias", filename)
-                ruta_completa = os.path.join("static", ruta_relativa)
-                os.makedirs(os.path.dirname(ruta_completa), exist_ok=True)
-                file.save(ruta_completa)
+                original_filename = secure_filename(file.filename)
+                ext = original_filename.rsplit('.', 1)[1].lower() if '.' in original_filename else 'jpg'
+                filename = f"{uuid.uuid4().hex}.{ext}"
+                
+                # Leer el archivo en memoria
+                file_bytes = file.read()
+                
+                if supabase:
+                    # Subir a Supabase
+                    supabase.storage.from_("evidencias").upload(
+                        path=filename, 
+                        file=file_bytes, 
+                        file_options={"content-type": file.content_type}
+                    )
+                    # Obtener URL pública
+                    public_url = supabase.storage.from_("evidencias").get_public_url(filename)
+                else:
+                    # Fallback local por si acaso no hay keys
+                    ruta_relativa = os.path.join("uploads", "evidencias", filename)
+                    ruta_completa = os.path.join("static", ruta_relativa)
+                    os.makedirs(os.path.dirname(ruta_completa), exist_ok=True)
+                    with open(ruta_completa, "wb") as f:
+                        f.write(file_bytes)
+                    public_url = ruta_relativa
 
                 evidencia = Evidencias(
                     id_avance=nuevo_avance.id_avance,
-                    ruta_archivo=ruta_relativa,
+                    ruta_archivo=public_url,
                     tipo="imagen"
                 )
                 db.session.add(evidencia)
@@ -130,17 +152,27 @@ def registrar_avance(id_actividad):
         imagen_capturada = request.form.get("captura_base64")
         if imagen_capturada:
             img_data = base64.b64decode(imagen_capturada.split(",")[1])
-            filename = f"captura_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
-            ruta_relativa = os.path.join("uploads", "evidencias", filename)
-            ruta_completa = os.path.join("static", ruta_relativa)
-            os.makedirs(os.path.dirname(ruta_completa), exist_ok=True)
-
-            with open(ruta_completa, "wb") as f:
-                f.write(img_data)
+            filename = f"captura_{uuid.uuid4().hex}.jpg"
+            
+            if supabase:
+                # Subir a Supabase
+                supabase.storage.from_("evidencias").upload(
+                    path=filename, 
+                    file=img_data, 
+                    file_options={"content-type": "image/jpeg"}
+                )
+                public_url = supabase.storage.from_("evidencias").get_public_url(filename)
+            else:
+                ruta_relativa = os.path.join("uploads", "evidencias", filename)
+                ruta_completa = os.path.join("static", ruta_relativa)
+                os.makedirs(os.path.dirname(ruta_completa), exist_ok=True)
+                with open(ruta_completa, "wb") as f:
+                    f.write(img_data)
+                public_url = ruta_relativa
 
             evidencia = Evidencias(
                 id_avance=nuevo_avance.id_avance,
-                ruta_archivo=ruta_relativa,
+                ruta_archivo=public_url,
                 tipo="imagen"
             )
             db.session.add(evidencia)
@@ -290,23 +322,33 @@ def exportar_informe_excel(id_proyecto):
         # 📷 INSERTAR IMÁGENES (columna K)
         if avance.evidencias:
             for evidencia in avance.evidencias:
-                ruta_imagen = os.path.join("static", evidencia.ruta_archivo)
-
-                if os.path.exists(ruta_imagen):
-                    img = ExcelImage(ruta_imagen)
-
-                    # Tamaño de la imagen (ajústalo si quieres)
-                    img.width = 120
-                    img.height = 90
-
-                    # Anclar imagen a columna K
-                    celda_img = f"K{fila}"
-                    ws.add_image(img, celda_img)
-
-                    # Ajustar altura de la fila para que se vea bien
-                    ws.row_dimensions[fila].height = 75
-
-                    break  # 👈 solo una imagen por avance (quita esto si quieres varias)
+                if evidencia.ruta_archivo.startswith('http'):
+                    # Es URL de Supabase, descargar en memoria
+                    try:
+                        response = requests.get(evidencia.ruta_archivo)
+                        if response.status_code == 200:
+                            img_stream = BytesIO(response.content)
+                            img = ExcelImage(img_stream)
+                            
+                            img.width = 120
+                            img.height = 90
+                            celda_img = f"K{fila}"
+                            ws.add_image(img, celda_img)
+                            ws.row_dimensions[fila].height = 75
+                            break
+                    except Exception as e:
+                        print("Error descargando imagen de Supabase para Excel:", e)
+                else:
+                    # Archivo local por retrocompatibilidad
+                    ruta_imagen = os.path.join("static", evidencia.ruta_archivo)
+                    if os.path.exists(ruta_imagen):
+                        img = ExcelImage(ruta_imagen)
+                        img.width = 120
+                        img.height = 90
+                        celda_img = f"K{fila}"
+                        ws.add_image(img, celda_img)
+                        ws.row_dimensions[fila].height = 75
+                        break
 
         fila += 1
 
