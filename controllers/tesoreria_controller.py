@@ -237,7 +237,7 @@ def ver_bancos():
             "color": b.color or '#004481',
             "belvo_link_id": b.belvo_link_id
         })
-    return render_template("bancos.html", bancos_json=bancos_list)
+    return render_template("bancos.html", bancos_json=bancos_list, contratos_json=[], movimientos_json=[])
 
 @tesoreria_bp.route("/movimiento/registrar", methods=["POST"])
 @admin_oficina_required

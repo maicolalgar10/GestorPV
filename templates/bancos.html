@@ -28,12 +28,7 @@
       axios.defaults.headers.common['X-CSRFToken'] = window.csrf_token;
     }
 
-    // Datos calculados desde el backend, pasados crudos a JSON
-    const CONTRACTS = {{ contratos_json | tojson | safe }};
-    const MOVEMENTS = {{ movimientos_json | tojson | safe }};
     const BANKS = {{ bancos_json | tojson | safe }};
-
-    const UPCOMING = []; // Aquí podríamos calcular facturas pendientes de cobrar
   </script>
 
   <div id="root"></div>
@@ -43,77 +38,52 @@ const {
   useState,
   useEffect
 } = React;
-const fmt = n => new Intl.NumberFormat("es-CO", {
-  style: "currency",
-  currency: "COP",
-  maximumFractionDigits: 0
-}).format(Math.abs(n));
 const fmtShort = n => {
   const abs = Math.abs(n);
   if (abs >= 1e9) return `$${(abs / 1e9).toFixed(2)}B`;
   if (abs >= 1e6) return `$${(abs / 1e6).toFixed(0)}M`;
   return `$${(abs / 1e3).toFixed(0)}K`;
 };
-const CATEGORY_COLORS = {
-  anticipo: "#4F8EF7",
-  acta: "#00D4AA",
-  nomina: "#F7C94F",
-  materiales: "#FF8C42",
-  maquinaria: "#B47AE5",
-  subcontrato: "#FF6B6B",
-  seguros: "#6BE5FF",
-  general: "#8A9BB0"
-};
-const CATEGORY_LABELS = {
-  anticipo: "Anticipo",
-  acta: "Acta Parcial",
-  nomina: "Nómina",
-  materiales: "Materiales",
-  maquinaria: "Maquinaria",
-  subcontrato: "Subcontrato",
-  seguros: "Seguros",
-  general: "General"
-};
-function Tesoreria() {
-  const [activeTab, setActiveTab] = useState("bancos");
-  const [selectedContract, setSelectedContract] = useState(null);
-  const [filterType, setFilterType] = useState("todos");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [showNewMovement, setShowNewMovement] = useState(false);
-  const [showNewBank, setShowNewBank] = useState(false);
-  const [soporteUrl, setSoporteUrl] = useState(null);
+function BancosApp() {
   const [syncingBankId, setSyncingBankId] = useState(null);
-  const [showSyncModal, setShowSyncModal] = useState(false);
-  const [syncData, setSyncData] = useState(null);
   const [liveBalances, setLiveBalances] = useState({});
   const [bankErrors, setBankErrors] = useState({});
-
-  React.useEffect(() => {
+  useEffect(() => {
     BANKS.forEach(b => {
       if (b.belvo_link_id) {
-        axios.get(`/tesoreria/api/bancos/${b.id}/sincronizar_en_vivo`, { headers: { 'X-CSRFToken': window.csrf_token } })
-          .then(res => {
-            if(res.data.status === "success") {
-              setLiveBalances(prev => ({...prev, [b.id]: res.data.data.saldo_real}));
-              setBankErrors(prev => ({...prev, [b.id]: false}));
-            } else if(res.data.status === "sin_datos" || res.data.status === "error") {
-              setBankErrors(prev => ({...prev, [b.id]: true}));
-            }
-          }).catch(err => {
-            console.error("Error fetching live balance", err);
-            setBankErrors(prev => ({...prev, [b.id]: true}));
-          });
+        axios.get(`/tesoreria/api/bancos/${b.id}/sincronizar_en_vivo`, {
+          headers: {
+            'X-CSRFToken': window.csrf_token
+          }
+        }).then(res => {
+          if (res.data.status === "success") {
+            setLiveBalances(prev => ({
+              ...prev,
+              [b.id]: res.data.data.saldo_real
+            }));
+            setBankErrors(prev => ({
+              ...prev,
+              [b.id]: false
+            }));
+          } else if (res.data.status === "sin_datos" || res.data.status === "error") {
+            setBankErrors(prev => ({
+              ...prev,
+              [b.id]: true
+            }));
+          }
+        }).catch(err => {
+          console.error("Error fetching live balance", err);
+          setBankErrors(prev => ({
+            ...prev,
+            [b.id]: true
+          }));
+        });
       }
     });
   }, []);
-
   const startBelvoWidget = async (bankId = null) => {
     try {
-      // Mantenemos el botón de sincronizar en estado de carga
-      setSyncingBankId(bankId);
-      
-      // Polling para esperar a que Belvo esté cargado (máx 50 intentos = 5s)
+      setSyncingBankId(bankId || 'new');
       let attempts = 0;
       while (typeof window.belvoSDK === 'undefined' && attempts < 50) {
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -122,8 +92,6 @@ function Tesoreria() {
       if (typeof window.belvoSDK === 'undefined') {
         throw new Error("El SDK de Belvo no pudo cargar después de 5 segundos.");
       }
-
-      // Petición al backend para obtener el token oficial de Belvo
       const tokenRes = await axios.post('/tesoreria/api/belvo/token', {}, {
         headers: {
           'X-CSRFToken': window.csrf_token
@@ -133,7 +101,6 @@ function Tesoreria() {
         throw new Error(tokenRes.data.message || "No se pudo obtener el token de Belvo");
       }
       const accessToken = tokenRes.data.access_token;
-      
       window.belvoSDK.createWidget(accessToken, {
         locale: "es",
         access_mode: "recurrent",
@@ -141,60 +108,40 @@ function Tesoreria() {
         country_codes: ['CO', 'MX', 'BR'],
         environment: "sandbox",
         callback: async (...args) => {
-          console.log("BELVO CALLBACK ARGS:", JSON.stringify(args));
-          
           let link_id, institution_name;
-          
           if (typeof args[0] === 'string') {
-            // Forma antigua: callback(link_id, institution)
             link_id = args[0];
             institution_name = args[1];
           } else if (args[0] && args[0].link) {
-            // Forma objeto: callback({link, institution})
             link_id = args[0].link;
             institution_name = args[0].institution;
           } else if (args[0] && args[0].id) {
-            // Forma alternativa: callback({id, institution})
             link_id = args[0].id;
             institution_name = args[0].institution;
           }
-          
-          console.log("link_id detectado:", link_id);
-          console.log("institution detectada:", institution_name);
-          
           if (!link_id) {
             alert("Error: no se pudo obtener el link_id de Belvo. Ver consola.");
             return;
           }
-
           try {
-            console.log("Llamando a vincular banco, bankId:", bankId);
-            console.log("Payload:", {link_id: link_id, institution: institution_name});
-
-            if (!bankId) {
-               const vincularRes = await axios.post(`/tesoreria/api/bancos/vincular_nuevo`, {
+            if (!bankId || bankId === 'new') {
+              const vincularRes = await axios.post(`/tesoreria/api/bancos/vincular_nuevo`, {
                 link_id: link_id,
                 institution: institution_name
-              }, { headers: { 'X-CSRFToken': window.csrf_token, 'Content-Type': 'application/json' }, timeout: 8000 });
-              
-              console.log("Respuesta vincular_nuevo:", vincularRes.data);
-
+              }, {
+                headers: {
+                  'X-CSRFToken': window.csrf_token,
+                  'Content-Type': 'application/json'
+                },
+                timeout: 8000
+              });
               if (vincularRes.data.status === "success") {
-                try {
-                  const newBankId = vincularRes.data.banco_id;
-                  await axios.get(`/tesoreria/api/bancos/${newBankId}/sincronizar_en_vivo`, {
-                    headers: { 'X-CSRFToken': window.csrf_token }
-                  });
-                } catch(e) {
-                  console.error("Error sincronizando banco nuevo post-creación", e);
-                }
                 alert("✅ Banco creado y vinculado exitosamente desde Belvo.");
                 window.location.reload();
               } else {
-                alert("Error al vincular: " + vincularRes.data.error || vincularRes.data.message || JSON.stringify(vincularRes.data));
+                alert("Error al vincular: " + (vincularRes.data.error || vincularRes.data.message || JSON.stringify(vincularRes.data)));
               }
             } else {
-              // Guardar el link en el backend
               const vincularRes = await axios.post(`/tesoreria/api/bancos/${bankId}/vincular`, {
                 link_id: link_id,
                 institution: institution_name
@@ -205,59 +152,36 @@ function Tesoreria() {
                 },
                 timeout: 8000
               });
-              
-            if (vincularRes.data.status === "success") {
-              // Sincronizar saldo inmediatamente después de vincular
-              const syncRes = await axios.get(`/tesoreria/api/bancos/${bankId}/sincronizar_en_vivo`, {
-                headers: {
-                  'X-CSRFToken': window.csrf_token
-                }
-              });
-              
-              if (syncRes.data.status === "success") {
-                setSyncData({
-                  bankId: bankId,
-                  ...syncRes.data.data
-                });
-                setShowSyncModal(true);
+              if (vincularRes.data.status === "success") {
+                alert("Banco vinculado con éxito");
+                window.location.reload();
               } else {
-                alert(syncRes.data.message);
+                alert("Error al vincular: " + vincularRes.data.message);
               }
-            } else {
-              alert("Error al vincular: " + vincularRes.data.message);
-            }
             }
           } catch (error) {
-            console.error(error);
-            console.log("ERROR vincular - status:", error.response?.status);
-            console.log("ERROR vincular - data:", JSON.stringify(error.response?.data));
-            console.log("ERROR vincular - headers:", JSON.stringify(error.response?.headers));
-            console.log("ERROR vincular - message:", error.message);
             alert("Error al guardar la vinculación o al sincronizar.");
           } finally {
             setSyncingBankId(null);
           }
         },
         onExit: data => {
-          console.log("Salida del widget de Belvo", data);
           setSyncingBankId(null);
         },
-        onEvent: data => {
-          console.log("Evento Belvo:", data);
-        }
-      }).build('#belvo'); // Belvo automatically opens on build
+        onEvent: data => {}
+      }).build('#belvo');
     } catch (error) {
-      console.error("Error al iniciar Belvo Widget:", error);
       alert(error.message || "Ocurrió un error al cargar el widget de Belvo.");
       setSyncingBankId(null);
     }
   };
-  
   const handleDeleteBank = async bankId => {
     if (window.confirm("¿Estás seguro de que deseas eliminar este banco permanentemente? Esto borrará también todos los movimientos asociados y desconectará la cuenta de Belvo.")) {
       try {
         const res = await axios.delete(`/tesoreria/api/bancos/${bankId}`, {
-          headers: { 'X-CSRFToken': window.csrf_token }
+          headers: {
+            'X-CSRFToken': window.csrf_token
+          }
         });
         if (res.data.status === "success") {
           window.location.reload();
@@ -270,7 +194,6 @@ function Tesoreria() {
       }
     }
   };
-
   const handleSyncBank = async bankId => {
     setSyncingBankId(bankId);
     try {
@@ -280,39 +203,32 @@ function Tesoreria() {
         }
       });
       if (res.data.status === "success") {
-        setSyncData({
-          bankId: bankId,
-          ...res.data.data
-        });
-        setShowSyncModal(true);
-        setBankErrors(prev => ({...prev, [bankId]: false}));
-        setSyncingBankId(null);
+        setLiveBalances(prev => ({
+          ...prev,
+          [bankId]: res.data.data.saldo_real
+        }));
+        setBankErrors(prev => ({
+          ...prev,
+          [bankId]: false
+        }));
+        alert("Sincronización exitosa");
       } else if (res.data.status === "sin_datos" || res.data.status === "error") {
-        const bankInfo = BANKS.find(b => b.id === bankId);
-        if (bankInfo && bankInfo.belvo_link_id) {
-          setSyncData({
-            bankId: bankId,
-            expired: true
-          });
-          setShowSyncModal(true);
-        } else {
-          startBelvoWidget(bankId);
-        }
-        setBankErrors(prev => ({...prev, [bankId]: true}));
-        setSyncingBankId(null);
+        setBankErrors(prev => ({
+          ...prev,
+          [bankId]: true
+        }));
+        startBelvoWidget(bankId);
       } else {
         alert(res.data.message || "Error desconocido");
-        setSyncingBankId(null);
       }
     } catch (error) {
-      console.error("Error real del backend:", error.response ? error.response.data : error);
       if (error.response && error.response.data && error.response.data.code === "MISSING_LINK") {
-        // Ejecuta el flujo del widget. startBelvoWidget se encargará de quitar el syncingBankId al final.
         startBelvoWidget(bankId);
       } else {
         alert("Ocurrió un error al sincronizar.");
-        setSyncingBankId(null);
       }
+    } finally {
+      setSyncingBankId(null);
     }
   };
   const maskAccount = acc => {
@@ -320,50 +236,8 @@ function Tesoreria() {
     if (acc.length <= 4) return acc;
     return "****-" + acc.slice(-4);
   };
-
-  // Integración JS con endpoint /api/tesoreria/resumen
-  const [apiResumen, setApiResumen] = useState({
-    saldo_consolidado: 0,
-    contratos_activos_valor_total: 0,
-    total_facturado_bruto: 0,
-    pendiente_facturar: 0
-  });
-  const [newMov, setNewMov] = useState({
-    concept: "",
-    contract: "",
-    type: "ingreso",
-    amount: "",
-    bank: BANKS[0]?.id || "",
-    category: "acta",
-    date: new Date().toISOString().split('T')[0]
-  });
-  useEffect(() => {
-    // Cargar resumen de tesorería desde la API
-    fetch('/tesoreria/api/resumen').then(res => res.json()).then(data => {
-      if (data.status === 'success') {
-        setApiResumen({
-          saldo_consolidado: parseFloat(data.data.saldo_consolidado),
-          contratos_activos_valor_total: parseFloat(data.data.contratos_activos_valor_total),
-          total_facturado_bruto: parseFloat(data.data.total_facturado_bruto),
-          pendiente_facturar: parseFloat(data.data.pendiente_facturar)
-        });
-      }
-    }).catch(err => console.error("Error fetching resumen API", err));
-  }, []);
-  const getBankBalance = (b) => liveBalances[b.id] !== undefined ? liveBalances[b.id] : b.balance;
+  const getBankBalance = b => liveBalances[b.id] !== undefined ? liveBalances[b.id] : b.balance;
   const totalBalance = BANKS.reduce((s, b) => s + getBankBalance(b), 0);
-  const totalIngresos = MOVEMENTS.filter(m => m.type === "ingreso").reduce((s, m) => s + m.amount, 0);
-  const totalEgresos = MOVEMENTS.filter(m => m.type === "egreso").reduce((s, m) => s + Math.abs(m.amount), 0);
-  const filteredMovements = MOVEMENTS.filter(m => {
-    const matchType = filterType === "todos" || m.type === filterType;
-    const matchSearch = m.concept.toLowerCase().includes(searchTerm.toLowerCase()) || m.contract.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchType && matchSearch;
-  });
-  const tabs = [{
-    id: "bancos",
-    icon: "◻",
-    label: "Bancos"
-  }];
   return /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "'DM Mono', 'Courier New', monospace",
@@ -377,30 +251,20 @@ function Tesoreria() {
             @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
             * { box-sizing: border-box; margin: 0; padding: 0; }
             ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #0D1220; } ::-webkit-scrollbar-thumb { background: #2A3050; border-radius: 2px; }
-            .tab-btn { background: none; border: none; cursor: pointer; transition: all 0.2s; }
-            .tab-btn:hover { background: rgba(79,142,247,0.1) !important; }
-            .tab-btn.active { background: rgba(79,142,247,0.15) !important; border-left: 2px solid #4F8EF7 !important; }
             .card { background: #111827; border: 1px solid #1E2A40; border-radius: 12px; transition: all 0.2s; }
             .card:hover { border-color: #2A3A58; }
-            .glow-text { text-shadow: 0 0 20px rgba(0,212,170,0.4); }
-            .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; letter-spacing: 0.5px; }
             .btn-primary { background: linear-gradient(135deg, #4F8EF7, #2D6FE8); border: none; color: white; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; transition: all 0.2s; }
             .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(79,142,247,0.4); }
-            .inp { background: #0D1220; border: 1px solid #1E2A40; border-radius: 8px; color: #E8EAF2; padding: 8px 12px; font-family: inherit; font-size: 13px; outline: none; transition: border 0.2s; }
-            .inp:focus { border-color: #4F8EF7; }
-            .inp option { background: #111827; }
-            .progress-bar { background: #1E2A40; border-radius: 4px; height: 6px; overflow: hidden; }
-            .progress-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
             .fade-in { animation: fadeIn 0.4s ease forwards; }
             @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
             @keyframes spin { 100% { transform: rotate(360deg); } }
-            .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+            .tab-btn { background: none; border: none; cursor: pointer; transition: all 0.2s; }
+            .tab-btn:hover { background: rgba(79,142,247,0.1) !important; }
           `), /*#__PURE__*/React.createElement("div", {
     style: {
-      width: sidebarOpen ? 220 : 64,
+      width: 220,
       background: "#0D1220",
       borderRight: "1px solid #1A2035",
-      transition: "width 0.3s",
       flexShrink: 0,
       display: "flex",
       flexDirection: "column"
@@ -425,7 +289,7 @@ function Tesoreria() {
       fontSize: 16,
       flexShrink: 0
     }
-  }, "\u2B21"), sidebarOpen && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, "\u2B21"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "'Space Grotesk', sans-serif",
       fontWeight: 700,
@@ -445,10 +309,8 @@ function Tesoreria() {
       flex: 1,
       padding: "16px 8px"
     }
-  }, tabs.map(t => /*#__PURE__*/React.createElement("button", {
-    key: t.id,
-    className: `tab-btn ${activeTab === t.id ? "active" : ""}`,
-    onClick: () => setActiveTab(t.id),
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "tab-btn",
     style: {
       width: "100%",
       display: "flex",
@@ -456,23 +318,24 @@ function Tesoreria() {
       gap: 12,
       padding: "10px 12px",
       borderRadius: 8,
-      color: activeTab === t.id ? "#4F8EF7" : "#6B7A9A",
+      color: "#4F8EF7",
       marginBottom: 4,
-      borderLeft: "2px solid transparent",
-      justifyContent: sidebarOpen ? "flex-start" : "center"
+      borderLeft: "2px solid #4F8EF7",
+      background: "rgba(79,142,247,0.15)",
+      justifyContent: "flex-start"
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 16,
       flexShrink: 0
     }
-  }, t.icon), sidebarOpen && /*#__PURE__*/React.createElement("span", {
+  }, "\u25FB"), /*#__PURE__*/React.createElement("span", {
     style: {
       fontFamily: "'Space Grotesk', sans-serif",
       fontSize: 13,
       fontWeight: 500
     }
-  }, t.label)))), /*#__PURE__*/React.createElement("div", {
+  }, "Bancos"))), /*#__PURE__*/React.createElement("div", {
     style: {
       padding: "16px 8px"
     }
@@ -488,30 +351,20 @@ function Tesoreria() {
       padding: "10px 12px",
       borderRadius: 8,
       color: "#F7C94F",
-      justifyContent: sidebarOpen ? "flex-start" : "center"
+      justifyContent: "flex-start"
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 16,
       flexShrink: 0
     }
-  }, "\u25C2"), sidebarOpen && /*#__PURE__*/React.createElement("span", {
+  }, "\u25C2"), /*#__PURE__*/React.createElement("span", {
     style: {
       fontFamily: "'Space Grotesk', sans-serif",
       fontSize: 13,
       fontWeight: 500
     }
-  }, "Volver al Dashboard"))), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setSidebarOpen(!sidebarOpen),
-    style: {
-      background: "none",
-      border: "none",
-      color: "#4A5568",
-      cursor: "pointer",
-      padding: 16,
-      fontSize: 16
-    }
-  }, sidebarOpen ? "◁" : "▷")), /*#__PURE__*/React.createElement("div", {
+  }, "Volver al Dashboard")))), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
       overflow: "auto",
@@ -537,12 +390,12 @@ function Tesoreria() {
       fontWeight: 600,
       color: "#E8EAF2"
     }
-  }, tabs.find(t => t.id === activeTab)?.label), /*#__PURE__*/React.createElement("div", {
+  }, "Bancos y Cuentas"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "#4A5568"
     }
-  }, "Gesti\xF3n de Contratos y Movimientos")), /*#__PURE__*/React.createElement("div", {
+  }, "Gesti\xF3n de instituciones financieras")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 12,
@@ -569,697 +422,12 @@ function Tesoreria() {
       display: "inline-block",
       boxShadow: "0 0 6px #00D4AA"
     }
-  }), "Saldo Total: ", /*#__PURE__*/React.createElement("strong", null, fmtShort(totalBalance))), /*#__PURE__*/React.createElement("button", {
-    className: "btn-primary",
-    onClick: () => setShowNewMovement(true)
-  }, "+ Movimiento"))), /*#__PURE__*/React.createElement("div", {
+  }), "Saldo Total: ", /*#__PURE__*/React.createElement("strong", null, fmtShort(totalBalance))))), /*#__PURE__*/React.createElement("div", {
     style: {
       padding: "24px 28px",
       flex: 1
     }
-  }, activeTab === "dashboard" && /*#__PURE__*/React.createElement("div", {
-    className: "fade-in"
   }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "repeat(4, 1fr)",
-      gap: 16,
-      marginBottom: 24
-    }
-  }, [{
-    label: "Saldo Consolidado",
-    value: fmtShort(totalBalance),
-    sub: `${BANKS.length} cuentas bancarias`,
-    color: "#00D4AA",
-    icon: "◈"
-  }, {
-    label: "Total Facturado Bruto",
-    value: fmtShort(apiResumen.total_facturado_bruto),
-    sub: "Ingresos Brutos",
-    color: "#4F8EF7",
-    icon: "↑"
-  }, {
-    label: "Pendiente por Facturar",
-    value: fmtShort(apiResumen.pendiente_facturar),
-    sub: "Según contratos",
-    color: "#F7C94F",
-    icon: "↓"
-  }, {
-    label: "Contratos Activos",
-    value: CONTRACTS.filter(c => c.status == 'activo').length,
-    sub: `${fmtShort(apiResumen.contratos_activos_valor_total)} en ejecución`,
-    color: "#B47AE5",
-    icon: "⬡"
-  }].map((kpi, i) => /*#__PURE__*/React.createElement("div", {
-    key: i,
-    className: "card",
-    style: {
-      padding: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "flex-start",
-      marginBottom: 12
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#6B7A9A",
-      textTransform: "uppercase",
-      letterSpacing: "0.08em",
-      fontFamily: "'Space Grotesk', sans-serif"
-    }
-  }, kpi.label), /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: kpi.color,
-      fontSize: 18
-    }
-  }, kpi.icon)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 26,
-      fontWeight: 700,
-      color: kpi.color,
-      marginBottom: 4
-    }
-  }, kpi.value), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#4A5568"
-    }
-  }, kpi.sub)))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "1.4fr 1fr",
-      gap: 16,
-      marginBottom: 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      padding: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 13,
-      fontWeight: 600,
-      marginBottom: 16,
-      color: "#B8C0D4",
-      display: "flex",
-      justifyContent: "space-between"
-    }
-  }, /*#__PURE__*/React.createElement("span", null, "Contratos en Ejecuci\xF3n"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 11,
-      color: "#4A5568",
-      cursor: "pointer"
-    },
-    onClick: () => setActiveTab("contratos")
-  }, "Ver todos \u2192")), CONTRACTS.filter(c => c.status === "activo").slice(0, 4).map((c, i) => /*#__PURE__*/React.createElement("div", {
-    key: c.id,
-    style: {
-      marginBottom: 16,
-      cursor: "pointer"
-    },
-    onClick: () => {
-      setSelectedContract(c);
-      setActiveTab("contratos");
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      marginBottom: 6,
-      alignItems: "flex-end"
-    }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 12,
-      fontWeight: 600,
-      color: "#E8EAF2",
-      marginBottom: 2
-    }
-  }, c.name), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: "#4A5568"
-    }
-  }, c.client, " \xB7 C-", c.id)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: "right"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 13,
-      fontWeight: 600,
-      color: c.color
-    }
-  }, c.advance, "%"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: "#4A5568"
-    }
-  }, fmtShort(c.received), " / ", fmtShort(c.value)))), /*#__PURE__*/React.createElement("div", {
-    className: "progress-bar"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "progress-fill",
-    style: {
-      width: `${c.advance}%`,
-      background: `linear-gradient(90deg, ${c.color}80, ${c.color})`
-    }
-  }))))), /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      padding: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 13,
-      fontWeight: 600,
-      marginBottom: 16,
-      color: "#B8C0D4"
-    }
-  }, "Posici\xF3n Bancaria"), BANKS.map((b, i) => {
-    const pct = totalBalance > 0 ? getBankBalance(b) / totalBalance * 100 : 0;
-    return /*#__PURE__*/React.createElement("div", {
-      key: i,
-      style: {
-        marginBottom: 18
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        justifyContent: "space-between",
-        marginBottom: 6,
-        alignItems: "center"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 10
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: 10,
-        height: 10,
-        background: b.color,
-        borderRadius: 2
-      }
-    }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontFamily: "'Space Grotesk', sans-serif",
-        fontSize: 12,
-        fontWeight: 600,
-        color: "#E8EAF2",
-        display: "flex",
-        alignItems: "center",
-        gap: 6
-      }
-    }, b.name, bankErrors[b.id] && /*#__PURE__*/React.createElement("span", {
-      title: "Reconectar banco",
-      style: { cursor: "pointer", fontSize: 14 },
-      onClick: () => startBelvoWidget(b.id)
-    }, "\u26A0\uFE0F")), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 10,
-        color: "#4A5568"
-      }
-    }, maskAccount(b.account)))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 12
-      }
-    }, /*#__PURE__*/React.createElement("button", {
-      title: "Conciliaci\xF3n en Vivo (Belvo)",
-      onClick: () => handleSyncBank(b.id),
-      disabled: syncingBankId === b.id,
-      style: {
-        background: "transparent",
-        border: "1px solid #4F8EF7",
-        borderRadius: "4px",
-        color: "#4F8EF7",
-        cursor: syncingBankId === b.id ? "wait" : "pointer",
-        padding: "2px 6px",
-        fontSize: 10,
-        display: "flex",
-        alignItems: "center",
-        gap: 4
-      }
-    }, syncingBankId === b.id ? /*#__PURE__*/React.createElement("i", {
-      className: "bi bi-arrow-repeat",
-      style: {
-        animation: "spin 1s linear infinite",
-        display: "inline-block"
-      }
-    }) : /*#__PURE__*/React.createElement("i", {
-      className: "bi bi-arrow-repeat"
-    }), " Ver en vivo"), /*#__PURE__*/React.createElement("button", {
-      title: "Eliminar banco",
-      onClick: () => handleDeleteBank(b.id),
-      style: {
-        background: "transparent",
-        border: "1px solid #E53E3E",
-        borderRadius: "4px",
-        color: "#E53E3E",
-        cursor: "pointer",
-        padding: "2px 6px",
-        fontSize: 10,
-        display: "flex",
-        alignItems: "center",
-        gap: 4
-      }
-    }, /*#__PURE__*/React.createElement("i", {
-      className: "bi bi-trash"
-    }), " Eliminar"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        textAlign: "right"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontFamily: "'Space Grotesk', sans-serif",
-        fontSize: 13,
-        fontWeight: 600,
-        color: "#E8EAF2"
-      }
-    }, fmtShort(getBankBalance(b))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 10,
-        color: "#4A5568"
-      }
-    }, pct.toFixed(1), "%")))), /*#__PURE__*/React.createElement("div", {
-      className: "progress-bar"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "progress-fill",
-      style: {
-        width: `${pct}%`,
-        background: b.color
-      }
-    })));
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 16,
-      padding: "12px 0",
-      borderTop: "1px solid #1E2A40",
-      display: "flex",
-      justifyContent: "space-between"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 12,
-      color: "#6B7A9A"
-    }
-  }, "TOTAL DISPONIBLE"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 14,
-      fontWeight: 700,
-      color: "#00D4AA"
-    }
-  }, fmt(totalBalance)))))), activeTab === "contratos" && /*#__PURE__*/React.createElement("div", {
-    className: "fade-in"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 12
-    }
-  }, CONTRACTS.map(c => /*#__PURE__*/React.createElement("div", {
-    key: c.id,
-    className: "card",
-    style: {
-      padding: 20,
-      cursor: "pointer",
-      border: selectedContract?.id === c.id ? `1px solid ${c.color}60` : "1px solid #1E2A40"
-    },
-    onClick: () => setSelectedContract(selectedContract?.id === c.id ? null : c)
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "1fr auto",
-      gap: 16,
-      alignItems: "start"
-    }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 10,
-      marginBottom: 8
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 14,
-      fontWeight: 700,
-      color: "#E8EAF2"
-    }
-  }, c.name), /*#__PURE__*/React.createElement("span", {
-    className: "badge",
-    style: {
-      background: c.status === "activo" ? "#00D4AA20" : c.status === "cerrado" ? "#4F8EF720" : "#F7C94F20",
-      color: c.status === "activo" ? "#00D4AA" : c.status === "cerrado" ? "#4F8EF7" : "#F7C94F"
-    }
-  }, c.status.toUpperCase())), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 20,
-      marginBottom: 12
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 11,
-      color: "#4A5568"
-    }
-  }, "ID: ", /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "#6B7A9A"
-    }
-  }, "C-", c.id)), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 11,
-      color: "#4A5568"
-    }
-  }, "Cliente: ", /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "#6B7A9A"
-    }
-  }, c.client))), /*#__PURE__*/React.createElement("div", {
-    className: "progress-bar",
-    style: {
-      marginBottom: 6
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "progress-fill",
-    style: {
-      width: `${c.advance}%`,
-      background: `linear-gradient(90deg, ${c.color}60, ${c.color})`
-    }
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 24,
-      fontSize: 11,
-      color: "#4A5568"
-    }
-  }, /*#__PURE__*/React.createElement("span", null, "Facturado Bruto: ", /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "#00D4AA",
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontWeight: 600
-    }
-  }, fmt(c.received))), /*#__PURE__*/React.createElement("span", null, "Pendiente: ", /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "#F7C94F",
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontWeight: 600
-    }
-  }, fmt(c.pending))))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: "right"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 22,
-      fontWeight: 700,
-      color: c.color
-    }
-  }, c.advance, "%"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#4A5568",
-      marginBottom: 4
-    }
-  }, "Avance"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 14,
-      fontWeight: 600,
-      color: "#E8EAF2"
-    }
-  }, fmtShort(c.value)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: "#4A5568"
-    }
-  }, "Valor contrato"))), selectedContract?.id === c.id && /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 16,
-      paddingTop: 16,
-      borderTop: `1px solid ${c.color}30`,
-      display: "grid",
-      gridTemplateColumns: "repeat(4, 1fr)",
-      gap: 12
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#0D1220",
-      padding: 12,
-      borderRadius: 8
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: "#4A5568",
-      marginBottom: 4
-    }
-  }, "Valor Total"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 13,
-      fontWeight: 600,
-      color: "#4F8EF7"
-    }
-  }, fmt(c.value))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#0D1220",
-      padding: 12,
-      borderRadius: 8
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: "#4A5568",
-      marginBottom: 4
-    }
-  }, "Anticipo Amortizado"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 13,
-      fontWeight: 600,
-      color: "#B47AE5"
-    }
-  }, fmt(c.amortizacion_acumulada)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 9,
-      color: "#4A5568"
-    }
-  }, "Tasa: ", c.porcentaje_anticipo, "%")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#0D1220",
-      padding: 12,
-      borderRadius: 8
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: "#4A5568",
-      marginBottom: 4
-    }
-  }, "Retenci\xF3n Garant\xEDa"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 13,
-      fontWeight: 600,
-      color: "#F7C94F"
-    }
-  }, fmt(c.retencion_acumulada)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 9,
-      color: "#4A5568"
-    }
-  }, "Tasa: ", c.porcentaje_retencion, "%")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#0D1220",
-      padding: 12,
-      borderRadius: 8
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: "#4A5568",
-      marginBottom: 4
-    }
-  }, "Neto en Bancos"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 13,
-      fontWeight: 600,
-      color: "#00D4AA"
-    }
-  }, fmt(c.received - c.amortizacion_acumulada - c.retencion_acumulada)))))))), activeTab === "movimientos" && /*#__PURE__*/React.createElement("div", {
-    className: "fade-in"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 12,
-      marginBottom: 20,
-      alignItems: "center",
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("input", {
-    className: "inp",
-    placeholder: "Buscar movimiento...",
-    value: searchTerm,
-    onChange: e => setSearchTerm(e.target.value),
-    style: {
-      flex: 1,
-      minWidth: 200
-    }
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 6
-    }
-  }, ["todos", "ingreso", "egreso"].map(t => /*#__PURE__*/React.createElement("button", {
-    key: t,
-    onClick: () => setFilterType(t),
-    style: {
-      background: filterType === t ? "#4F8EF7" : "#111827",
-      border: `1px solid ${filterType === t ? "#4F8EF7" : "#1E2A40"}`,
-      color: filterType === t ? "white" : "#6B7A9A",
-      padding: "7px 16px",
-      borderRadius: 8,
-      cursor: "pointer",
-      fontFamily: "inherit",
-      fontSize: 12,
-      textTransform: "capitalize"
-    }
-  }, t))), /*#__PURE__*/React.createElement("button", {
-    className: "btn-primary",
-    onClick: () => setShowNewMovement(true)
-  }, "+ Registrar")), /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement("table", {
-    style: {
-      width: "100%",
-      borderCollapse: "collapse"
-    }
-  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
-    style: {
-      borderBottom: "1px solid #1E2A40"
-    }
-  }, ["Fecha", "Concepto", "Contrato", "Categoría", "Banco", "Valor Neto", "Soporte"].map(h => /*#__PURE__*/React.createElement("th", {
-    key: h,
-    style: {
-      padding: "12px 16px",
-      fontSize: 10,
-      color: "#4A5568",
-      textAlign: "left",
-      textTransform: "uppercase",
-      letterSpacing: "0.08em",
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontWeight: 600
-    }
-  }, h)))), /*#__PURE__*/React.createElement("tbody", null, filteredMovements.map((m, i) => /*#__PURE__*/React.createElement("tr", {
-    key: m.id,
-    style: {
-      borderBottom: "1px solid #0F1826",
-      transition: "background 0.15s"
-    },
-    onMouseEnter: e => e.currentTarget.style.background = "#111827",
-    onMouseLeave: e => e.currentTarget.style.background = "transparent"
-  }, /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "12px 16px",
-      fontSize: 12,
-      color: "#6B7A9A"
-    }
-  }, m.date), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "12px 16px",
-      fontSize: 12,
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontWeight: 500,
-      color: "#E8EAF2",
-      maxWidth: 260
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      whiteSpace: "nowrap",
-      overflow: "hidden",
-      textOverflow: "ellipsis"
-    }
-  }, m.concept)), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "12px 16px",
-      fontSize: 11,
-      color: "#6B7A9A"
-    }
-  }, m.contract !== 'GENERAL' ? `C-${m.contract}` : 'GENERAL'), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "12px 16px"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "badge",
-    style: {
-      background: `${CATEGORY_COLORS[m.category] || CATEGORY_COLORS['general']}20`,
-      color: CATEGORY_COLORS[m.category] || CATEGORY_COLORS['general']
-    }
-  }, CATEGORY_LABELS[m.category] || m.category)), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "12px 16px",
-      fontSize: 12,
-      color: "#6B7A9A"
-    }
-  }, m.bank), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "12px 16px",
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 13,
-      fontWeight: 600,
-      color: m.type === "ingreso" ? "#00D4AA" : "#FF6B6B",
-      whiteSpace: "nowrap"
-    }
-  }, m.type === "ingreso" ? "+" : "-", fmt(m.amount)), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "12px 16px",
-      textAlign: "center"
-    }
-  }, m.archivo_soporte ? /*#__PURE__*/React.createElement("button", {
-    onClick: () => setSoporteUrl(m.archivo_soporte.startsWith('http') ? m.archivo_soporte : '/static/uploads/tesoreria/' + m.archivo_soporte),
-    title: "Ver Soporte",
-    style: {
-      background: "transparent",
-      border: "none",
-      color: "#4F8EF7",
-      cursor: "pointer",
-      fontSize: 16
-    }
-  }, /*#__PURE__*/React.createElement("i", {
-    className: "bi bi-eye"
-  })) : /*#__PURE__*/React.createElement("span", {
-    title: "Sin soporte",
-    style: {
-      color: "#4A5568",
-      fontSize: 16,
-      cursor: "not-allowed"
-    }
-  }, /*#__PURE__*/React.createElement("i", {
-    className: "bi bi-eye"
-  }))))))))), activeTab === "bancos" && /*#__PURE__*/React.createElement("div", {
     className: "fade-in"
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1277,763 +445,177 @@ function Tesoreria() {
     }
   }, "Cuentas Bancarias"), /*#__PURE__*/React.createElement("button", {
     className: "btn-primary",
-    onClick: () => startBelvoWidget()
-  }, "+ Nuevo Banco")), /*#__PURE__*/React.createElement("div", {
+    onClick: () => startBelvoWidget(),
+    disabled: syncingBankId === 'new'
+  }, syncingBankId === 'new' ? "Cargando..." : "+ Nuevo Banco")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "repeat(3, 1fr)",
-      gap: 16,
-      marginBottom: 24
+      gap: 16
     }
   }, BANKS.map((b, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     className: "card",
     style: {
-      padding: 24,
-      borderTop: `3px solid ${b.color}`
+      padding: 20,
+      position: "relative"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "flex-start",
-      marginBottom: 20
+      marginBottom: 16
     }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 16,
-      fontWeight: 700,
-      color: "#E8EAF2",
-      marginBottom: 4
+      display: "flex",
+      alignItems: "center",
+      gap: 12
     }
-  }, b.name), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "#4A5568"
-    }
-  }, "Cuenta: ", maskAccount(b.account))), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       width: 40,
       height: 40,
-      background: `${b.color}20`,
+      background: b.color + '20',
       borderRadius: 8,
       display: "flex",
       alignItems: "center",
-      justifyContent: "center"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 18,
-      color: b.color
-    }
-  }, "\u25FB"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 28,
-      fontWeight: 700,
-      color: b.color,
-      marginBottom: 8
-    }
-  }, fmtShort(getBankBalance(b))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "#6B7A9A",
-      marginBottom: 16
-    }
-  }, fmt(getBankBalance(b))), /*#__PURE__*/React.createElement("div", {
-    className: "progress-bar"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "progress-fill",
-    style: {
-      width: `${getBankBalance(b) / totalBalance * 100}%`,
-      background: b.color
-    }
-  })))))), activeTab === "proyecciones" && /*#__PURE__*/React.createElement("div", {
-    className: "fade-in"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginBottom: 24
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 20,
-      fontWeight: 700,
-      color: "#E8EAF2"
-    }
-  }, "Proyecciones de Flujo de Caja"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "#4A5568"
-    }
-  }, "An\xE1lisis de cuentas por cobrar seg\xFAn contratos vigentes")), /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      padding: 24
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 16
-    }
-  }, CONTRACTS.filter(c => c.pending > 0).map(c => {
-    const totalPending = CONTRACTS.reduce((sum, c) => sum + (c.pending > 0 ? c.pending : 0), 0);
-    const pct = totalPending > 0 ? c.pending / totalPending * 100 : 0;
-    return /*#__PURE__*/React.createElement("div", {
-      key: c.id
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        justifyContent: "space-between",
-        marginBottom: 6
-      }
-    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontFamily: "'Space Grotesk', sans-serif",
-        fontSize: 13,
-        fontWeight: 600,
-        color: "#E8EAF2",
-        marginRight: 8
-      }
-    }, c.name), /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 11,
-        color: "#4A5568"
-      }
-    }, c.client)), /*#__PURE__*/React.createElement("div", {
-      style: {
-        textAlign: "right"
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontFamily: "'Space Grotesk', sans-serif",
-        fontSize: 14,
-        fontWeight: 600,
-        color: c.color
-      }
-    }, fmt(c.pending)))), /*#__PURE__*/React.createElement("div", {
-      className: "progress-bar",
-      style: {
-        height: 8,
-        background: "#111827"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "progress-fill",
-      style: {
-        width: `${pct}%`,
-        background: `linear-gradient(90deg, ${c.color}60, ${c.color})`
-      }
-    })));
-  }), CONTRACTS.filter(c => c.pending > 0).length === 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: "center",
-      padding: 40,
-      color: "#6B7A9A"
-    }
-  }, "No hay saldos pendientes por cobrar en los contratos activos.")))))), showNewMovement && /*#__PURE__*/React.createElement("div", {
-    className: "modal-overlay",
-    onClick: () => setShowNewMovement(false)
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#111827",
-      border: "1px solid #1E2A40",
-      borderRadius: 16,
-      padding: 28,
-      width: 480,
-      animation: "fadeIn 0.2s ease"
-    },
-    onClick: e => e.stopPropagation()
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 16,
-      fontWeight: 700,
-      color: "#E8EAF2",
-      marginBottom: 24
-    }
-  }, "Registrar Movimiento Real"), /*#__PURE__*/React.createElement("form", {
-    action: "/tesoreria/movimiento/registrar",
-    method: "POST",
-    encType: "multipart/form-data"
-  }, /*#__PURE__*/React.createElement("input", {
-    type: "hidden",
-    name: "csrf_token",
-    value: window.csrf_token
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 14
-    }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#4A5568",
-      marginBottom: 6,
-      textTransform: "uppercase",
-      letterSpacing: "0.05em"
-    }
-  }, "Fecha"), /*#__PURE__*/React.createElement("input", {
-    className: "inp",
-    type: "date",
-    name: "fecha_movimiento",
-    defaultValue: newMov.date,
-    style: {
-      width: "100%"
-    },
-    required: true
-  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#4A5568",
-      marginBottom: 6,
-      textTransform: "uppercase",
-      letterSpacing: "0.05em"
-    }
-  }, "N\xFAmero / Concepto"), /*#__PURE__*/React.createElement("input", {
-    className: "inp",
-    name: "numero_documento",
-    placeholder: "N\xFAmero de factura, acta, etc.",
-    style: {
-      width: "100%"
-    },
-    required: true
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: 12
-    }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#4A5568",
-      marginBottom: 6,
-      textTransform: "uppercase",
-      letterSpacing: "0.05em"
-    }
-  }, "Tipo"), /*#__PURE__*/React.createElement("select", {
-    className: "inp",
-    name: "tipo",
-    style: {
-      width: "100%"
-    },
-    required: true
-  }, /*#__PURE__*/React.createElement("option", {
-    value: "INGRESO"
-  }, "Ingreso"), /*#__PURE__*/React.createElement("option", {
-    value: "EGRESO"
-  }, "Egreso"))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#4A5568",
-      marginBottom: 6,
-      textTransform: "uppercase",
-      letterSpacing: "0.05em"
-    }
-  }, "Categor\xEDa"), /*#__PURE__*/React.createElement("select", {
-    className: "inp",
-    name: "categoria",
-    style: {
-      width: "100%"
-    },
-    required: true
-  }, Object.entries(CATEGORY_LABELS).map(([k, v]) => /*#__PURE__*/React.createElement("option", {
-    key: k,
-    value: k
-  }, v))))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: 12
-    }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#4A5568",
-      marginBottom: 6,
-      textTransform: "uppercase",
-      letterSpacing: "0.05em"
-    }
-  }, "Contrato"), /*#__PURE__*/React.createElement("select", {
-    className: "inp",
-    name: "contrato_id",
-    style: {
-      width: "100%"
-    }
-  }, /*#__PURE__*/React.createElement("option", {
-    value: ""
-  }, "Ninguno (General)"), CONTRACTS.map(c => /*#__PURE__*/React.createElement("option", {
-    key: c.id,
-    value: c.id
-  }, c.name)))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#4A5568",
-      marginBottom: 6,
-      textTransform: "uppercase",
-      letterSpacing: "0.05em"
-    }
-  }, "Banco Destino/Origen"), /*#__PURE__*/React.createElement("select", {
-    className: "inp",
-    name: "banco_id",
-    style: {
-      width: "100%"
-    },
-    required: true
-  }, BANKS.map(b => /*#__PURE__*/React.createElement("option", {
-    key: b.id,
-    value: b.id
-  }, b.name, " (", b.account, ")"))))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#4A5568",
-      marginBottom: 6,
-      textTransform: "uppercase",
-      letterSpacing: "0.05em"
-    }
-  }, "Valor Bruto (COP)"), /*#__PURE__*/React.createElement("input", {
-    className: "inp",
-    type: "number",
-    name: "valor_bruto",
-    placeholder: "0",
-    step: "0.01",
-    style: {
-      width: "100%"
-    },
-    required: true
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: "#4A5568",
-      marginTop: 4
-    }
-  }, "* Si es Acta de Ingreso, se le restar\xE1 autom\xE1ticamente la Amortizaci\xF3n y Garant\xEDa pactada en el Contrato.")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#4A5568",
-      marginBottom: 6,
-      textTransform: "uppercase",
-      letterSpacing: "0.05em"
-    }
-  }, "Archivo de Soporte"), /*#__PURE__*/React.createElement("input", {
-    className: "inp",
-    type: "file",
-    name: "archivo_soporte",
-    style: {
-      width: "100%"
-    }
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "flex-end",
-      gap: 10,
-      marginTop: 24
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    type: "button",
-    onClick: () => setShowNewMovement(false),
-    style: {
-      background: "none",
-      border: "1px solid #1E2A40",
-      color: "#6B7A9A",
-      padding: "8px 20px",
-      borderRadius: 8,
-      cursor: "pointer",
-      fontFamily: "inherit",
-      fontSize: 13
-    }
-  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
-    type: "submit",
-    className: "btn-primary"
-  }, "Guardar Oficialmente"))))), soporteUrl && /*#__PURE__*/React.createElement("div", {
-    className: "modal-overlay",
-    onClick: () => setSoporteUrl(null)
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#111827",
-      border: "1px solid #1E2A40",
-      borderRadius: 16,
-      padding: 20,
-      width: "80%",
-      maxWidth: 900,
-      height: "80vh",
-      animation: "fadeIn 0.2s ease",
-      display: "flex",
-      flexDirection: "column"
-    },
-    onClick: e => e.stopPropagation()
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 16,
-      fontWeight: 700,
-      color: "#E8EAF2"
-    }
-  }, "Documento Soporte"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setSoporteUrl(null),
-    style: {
-      background: "none",
-      border: "none",
-      color: "#6B7A9A",
-      cursor: "pointer",
-      fontSize: 24,
-      lineHeight: 1
-    }
-  }, "\xD7")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      background: "#0D1220",
-      borderRadius: 8,
-      overflow: "hidden",
-      display: "flex",
       justifyContent: "center",
-      alignItems: "center"
-    }
-  }, soporteUrl.toLowerCase().endsWith('.pdf') ? /*#__PURE__*/React.createElement("iframe", {
-    src: soporteUrl,
-    style: {
-      width: "100%",
-      height: "100%",
-      border: "none"
-    }
-  }) : /*#__PURE__*/React.createElement("img", {
-    src: soporteUrl,
-    style: {
-      maxWidth: "100%",
-      maxHeight: "100%",
-      objectFit: "contain",
-      borderRadius: 8
-    },
-    alt: "Soporte"
-  })))), showSyncModal && syncData && /*#__PURE__*/React.createElement("div", {
-    className: "modal-overlay",
-    onClick: () => setShowSyncModal(false)
-  }, syncData.expired ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#111827",
-      border: "1px solid #1E2A40",
-      borderRadius: 16,
-      padding: 40,
-      width: "90%",
-      maxWidth: 500,
-      textAlign: "center",
-      color: "#E8EAF2",
-      animation: "fadeIn 0.2s ease",
-      display: "flex",
-      flexDirection: "column"
-    },
-    onClick: e => e.stopPropagation()
-  }, /*#__PURE__*/React.createElement("i", {
-    className: "bi bi-exclamation-circle",
-    style: { fontSize: 48, color: "#F7C94F", marginBottom: 16 }
-  }), /*#__PURE__*/React.createElement("div", {
-    style: { fontSize: 20, fontWeight: 700, fontFamily: "'Space Grotesk', sans-serif", marginBottom: 8 }
-  }, "Conexi\xF3n Expirada"), /*#__PURE__*/React.createElement("div", {
-    style: { fontSize: 14, color: "#6B7A9A", marginBottom: 24 }
-  }, "La conexi\xF3n segura con tu banco ha expirado. Haz clic en reconectar para volver a iniciar sesi\xF3n y reanudar la sincronizaci\xF3n."), /*#__PURE__*/React.createElement("button", {
-    className: "btn-primary",
-    onClick: () => { setShowSyncModal(false); startBelvoWidget(syncData.bankId); }
-  }, "Reconectar Banco")) : /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#111827",
-      border: "1px solid #1E2A40",
-      borderRadius: 16,
-      padding: 24,
-      width: "90%",
-      maxWidth: 1000,
-      maxHeight: "90vh",
-      overflow: "hidden",
-      animation: "fadeIn 0.2s ease",
-      display: "flex",
-      flexDirection: "column"
-    },
-    onClick: e => e.stopPropagation()
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 20,
-      fontWeight: 700,
-      color: "#E8EAF2"
-    }
-  }, "Conciliaci\xF3n en Vivo (Open Banking)"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "#6B7A9A",
-      marginTop: 4
-    }
-  }, "\xDAltima sincronizaci\xF3n: ", new Date(syncData.ultima_sync).toLocaleString())), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setShowSyncModal(false),
-    style: {
-      background: "none",
-      border: "none",
-      color: "#6B7A9A",
-      cursor: "pointer",
-      fontSize: 24,
-      lineHeight: 1
-    }
-  }, "\xD7")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 16,
-      marginBottom: 24
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      background: "#0D1220",
-      padding: 16,
-      borderRadius: 12,
-      border: "1px solid #1E2A40"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#6B7A9A",
-      marginBottom: 8,
-      textTransform: "uppercase"
-    }
-  }, "Saldo Interno (Plataforma)"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 24,
-      fontWeight: 700,
-      color: "#E8EAF2"
-    }
-  }, fmt(BANKS.find(b => b.id === syncData.bankId)?.balance || 0))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      background: "#0D1220",
-      padding: 16,
-      borderRadius: 12,
-      border: "1px solid #4F8EF740"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#4F8EF7",
-      marginBottom: 8,
-      textTransform: "uppercase",
-      display: "flex",
-      alignItems: "center",
-      gap: 6
+      color: b.color,
+      fontSize: 18
     }
   }, /*#__PURE__*/React.createElement("i", {
     className: "bi bi-bank"
-  }), " Saldo Real (Banco)"), /*#__PURE__*/React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 24,
-      fontWeight: 700,
-      color: "#4F8EF7"
+      fontSize: 14,
+      fontWeight: 600,
+      color: "#E8EAF2",
+      marginBottom: 2
     }
-  }, fmt(syncData.saldo_real))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      background: "#0D1220",
-      padding: 16,
-      borderRadius: 12,
-      border: Math.abs(syncData.saldo_real - (BANKS.find(b => b.id === syncData.bankId)?.balance || 0)) > 0 ? "1px solid #FF6B6B80" : "1px solid #00D4AA80"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, b.name), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
-      color: Math.abs(syncData.saldo_real - (BANKS.find(b => b.id === syncData.bankId)?.balance || 0)) > 0 ? "#FF6B6B" : "#00D4AA",
-      marginBottom: 8,
-      textTransform: "uppercase"
+      color: "#6B7A9A",
+      fontFamily: "monospace"
     }
-  }, "Discrepancia"), /*#__PURE__*/React.createElement("div", {
+  }, maskAccount(b.account)))), b.belvo_link_id ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: bankErrors[b.id] ? "rgba(255, 107, 107, 0.1)" : "rgba(0, 212, 170, 0.1)",
+      color: bankErrors[b.id] ? "#FF6B6B" : "#00D4AA",
+      padding: "4px 8px",
+      borderRadius: 4,
+      fontSize: 10,
+      fontWeight: 600,
+      display: "flex",
+      alignItems: "center",
+      gap: 4
+    }
+  }, bankErrors[b.id] ? /*#__PURE__*/React.createElement("i", {
+    className: "bi bi-exclamation-triangle"
+  }) : /*#__PURE__*/React.createElement("i", {
+    className: "bi bi-check-circle"
+  }), bankErrors[b.id] ? "Reconectar" : "Conectado") : /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "rgba(247, 201, 79, 0.1)",
+      color: "#F7C94F",
+      padding: "4px 8px",
+      borderRadius: 4,
+      fontSize: 10,
+      fontWeight: 600,
+      display: "flex",
+      alignItems: "center",
+      gap: 4
+    }
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "bi bi-link-45deg"
+  }), " Sin vincular")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "'Space Grotesk', sans-serif",
       fontSize: 24,
       fontWeight: 700,
-      color: Math.abs(syncData.saldo_real - (BANKS.find(b => b.id === syncData.bankId)?.balance || 0)) > 0 ? "#FF6B6B" : "#00D4AA"
-    }
-  }, fmt(Math.abs(syncData.saldo_real - (BANKS.find(b => b.id === syncData.bankId)?.balance || 0)))))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: 20,
-      flex: 1,
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: "10px 16px",
-      background: "#1A2035",
-      borderRadius: "8px 8px 0 0",
-      fontSize: 12,
-      fontWeight: 600,
-      color: "#B8C0D4"
-    }
-  }, "Movimientos Internos (Plataforma)"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      overflow: "auto",
-      background: "#0D1220",
-      padding: 12,
-      borderRadius: "0 0 8px 8px"
-    }
-  }, MOVEMENTS.filter(m => m.banco_id === syncData.bankId).slice(0, 15).map(m => /*#__PURE__*/React.createElement("div", {
-    key: m.id,
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      padding: "12px 0",
-      borderBottom: "1px solid #1E2A40"
-    }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
       color: "#E8EAF2",
-      marginBottom: 4,
-      fontFamily: "'Space Grotesk', sans-serif"
+      marginBottom: 24
     }
-  }, m.concept), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: "#6B7A9A"
-    }
-  }, m.date)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 13,
-      fontWeight: 600,
-      color: m.type === "ingreso" ? "#00D4AA" : "#FF6B6B"
-    }
-  }, m.type === "ingreso" ? "+" : "-", fmt(m.amount)))), MOVEMENTS.filter(m => m.banco_id === syncData.bankId).length === 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: 20,
-      textAlign: "center",
-      color: "#6B7A9A",
-      fontSize: 12
-    }
-  }, "No hay movimientos registrados en este banco."))), /*#__PURE__*/React.createElement("div", {
+  }, new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    maximumFractionDigits: 0
+  }).format(getBankBalance(b))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
-      flexDirection: "column",
-      overflow: "hidden"
+      gap: 8,
+      borderTop: "1px solid #1E2A40",
+      paddingTop: 16
     }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleSyncBank(b.id),
+    disabled: syncingBankId === b.id,
     style: {
-      padding: "10px 16px",
-      background: "#1A2035",
-      borderRadius: "8px 8px 0 0",
+      flex: 1,
+      background: "#1E2A40",
+      border: "none",
+      color: "#E8EAF2",
+      padding: "8px",
+      borderRadius: 6,
       fontSize: 12,
-      fontWeight: 600,
-      color: "#4F8EF7",
+      cursor: "pointer",
       display: "flex",
       alignItems: "center",
-      gap: 8
+      justifyContent: "center",
+      gap: 6
     }
   }, /*#__PURE__*/React.createElement("i", {
-    className: "bi bi-shield-check"
-  }), " Extracto Real (API Belvo)"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: "12px 16px",
-      background: "#111827",
-      borderBottom: "1px solid #1E2A40",
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center"
-    }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: { fontSize: 10, color: "#6B7A9A", textTransform: "uppercase" }
-  }, "Saldo Actual"), /*#__PURE__*/React.createElement("div", {
-    style: { fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, fontWeight: 700, color: "#4F8EF7" }
-  }, fmt(syncData.saldo_real))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: { fontSize: 10, color: "#6B7A9A", textTransform: "uppercase" }
-  }, "Total Ingresos"), /*#__PURE__*/React.createElement("div", {
-    style: { fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, fontWeight: 700, color: "#00D4AA" }
-  }, fmt(syncData.transacciones_bancarias.filter(t => t.type === 'INFLOW').reduce((sum, t) => sum + Math.abs(t.amount), 0)))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: { fontSize: 10, color: "#6B7A9A", textTransform: "uppercase" }
-  }, "Total Egresos"), /*#__PURE__*/React.createElement("div", {
-    style: { fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, fontWeight: 700, color: "#FF6B6B" }
-  }, fmt(syncData.transacciones_bancarias.filter(t => t.type === 'OUTFLOW').reduce((sum, t) => sum + Math.abs(t.amount), 0))))), /*#__PURE__*/React.createElement("div", {
+    className: `bi bi-arrow-repeat ${syncingBankId === b.id ? "rotate" : ""}`,
+    style: syncingBankId === b.id ? {
+      animation: "spin 1s linear infinite"
+    } : {}
+  }), syncingBankId === b.id ? "Sinc..." : "Sincronizar"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => alert('Consulta de movimientos en construcción'),
     style: {
       flex: 1,
-      overflow: "auto",
-      background: "#0D1220",
-      padding: 12,
-      borderRadius: "0 0 8px 8px"
+      background: "transparent",
+      border: "1px solid #1E2A40",
+      color: "#E8EAF2",
+      padding: "8px",
+      borderRadius: 6,
+      fontSize: 12,
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6
     }
-  }, syncData.transacciones_bancarias.length === 0 ? /*#__PURE__*/React.createElement("div", {
-    style: { padding: 20, textAlign: "center", color: "#6B7A9A", fontSize: 12 }
-  }, "No hay transacciones en los \xFAltimos 30 d\xEDas") : syncData.transacciones_bancarias.map(tx => {
-    const isMatch = MOVEMENTS.some(m => m.banco_id === syncData.bankId && Math.abs(m.amount - Math.abs(tx.amount)) < 0.01);
-    return /*#__PURE__*/React.createElement("div", {
-      key: tx.id,
-      style: {
-        display: "flex",
-        justifyContent: "space-between",
-        padding: "12px 0",
-        borderBottom: "1px solid #1E2A40",
-        alignItems: "center"
-      }
-    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 12,
-        color: "#E8EAF2",
-        marginBottom: 4,
-        fontFamily: "'Space Grotesk', sans-serif",
-        display: "flex",
-        alignItems: "center",
-        gap: 8
-      }
-    }, tx.description, isMatch ? /*#__PURE__*/React.createElement("i", {
-      className: "bi bi-check-circle-fill",
-      style: {
-        color: "#00D4AA",
-        fontSize: 12
-      },
-      title: "Conciliado"
-    }) : /*#__PURE__*/React.createElement("i", {
-      className: "bi bi-exclamation-triangle-fill",
-      style: {
-        color: "#F7C94F",
-        fontSize: 12
-      },
-      title: "No conciliado en plataforma"
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 10,
-        color: "#6B7A9A"
-      }
-    }, tx.value_date, " \xB7 ", tx.category.replace('_', ' '))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontFamily: "'Space Grotesk', sans-serif",
-        fontSize: 13,
-        fontWeight: 600,
-        color: tx.type === "INFLOW" ? "#00D4AA" : "#FF6B6B"
-      }
-    }, tx.type === "INFLOW" ? "+" : "-", fmt(Math.abs(tx.amount))));
-  })))))));
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "bi bi-list-ul"
+  }), " Movimientos"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => handleDeleteBank(b.id),
+    style: {
+      background: "rgba(255, 107, 107, 0.1)",
+      border: "none",
+      color: "#FF6B6B",
+      padding: "8px 12px",
+      borderRadius: 6,
+      fontSize: 12,
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center"
+    },
+    title: "Eliminar Banco"
+  }, /*#__PURE__*/React.createElement("i", {
+    className: "bi bi-trash"
+  }))))))))), /*#__PURE__*/React.createElement("div", {
+    id: "belvo",
+    style: {
+      display: 'none'
+    }
+  }));
 }
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(/*#__PURE__*/React.createElement(Tesoreria, null));
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(/*#__PURE__*/React.createElement(BancosApp, null));
 </script>
-<div id="belvo"></div>
 </body>
 </html>
