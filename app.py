@@ -147,9 +147,9 @@ def create_app():
     print("[Mailjet] Mailjet inicializado correctamente")
     print("[Mailjet] MAILJET_SENDER:", app.config.get("MAILJET_SENDER_EMAIL"))
 
-    return app
-
     app.config['CORREO_GLOBAL'] = 'corseing@gmail.com'
+
+    return app
 
 
 

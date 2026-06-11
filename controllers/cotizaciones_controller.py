@@ -1,7 +1,7 @@
 from datetime import datetime
 import os
 from flask import Blueprint, request, redirect, url_for, flash
-from decorators import login_required
+from decorators import login_required, admin_oficina_required
 from models import db, Cotizacion, Contrato, Usuarios, Notificaciones
 from werkzeug.utils import secure_filename
 from supabase_client import supabase
@@ -15,6 +15,7 @@ cotizaciones_bp = Blueprint("cotizaciones", __name__)
 # ================================
 @cotizaciones_bp.route("/cotizaciones", methods=["POST"])
 @login_required
+@admin_oficina_required
 def crear_cotizacion():
     try:
         cliente = request.form.get("cliente")
@@ -28,9 +29,10 @@ def crear_cotizacion():
 
         ruta_imagen = None
         if imagen and imagen.filename:
-            filename = secure_filename(imagen.filename)
-            # Agregar UUID para evitar colisiones
-            unique_filename = f"{uuid.uuid4().hex}_{filename}"
+            original_filename = secure_filename(imagen.filename)
+            ext = original_filename.rsplit('.', 1)[1].lower() if '.' in original_filename else 'jpg'
+            # Usar solo UUID y la extensión (estilo paranoico)
+            unique_filename = f"cotizacion_{uuid.uuid4().hex}.{ext}"
             
             if supabase:
                 # Leer el archivo como bytes
@@ -66,6 +68,7 @@ def crear_cotizacion():
 
 @cotizaciones_bp.route("/cotizaciones/<int:id>/estado/<string:estado>", methods=["POST"])
 @login_required
+@admin_oficina_required
 def cambiar_estado_cotizacion(id, estado):
     cotizacion = Cotizacion.query.get_or_404(id)
 
@@ -104,6 +107,7 @@ def cambiar_estado_cotizacion(id, estado):
 
 @cotizaciones_bp.route("/cotizaciones/<int:id>/eliminar", methods=["POST"])
 @login_required
+@admin_oficina_required
 def eliminar_cotizacion(id):
     cotizacion = Cotizacion.query.get_or_404(id)
 
