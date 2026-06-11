@@ -594,17 +594,11 @@ function Tesoreria() {
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
-      gridTemplateColumns: "repeat(4, 1fr)",
+      gridTemplateColumns: "repeat(3, 1fr)",
       gap: 16,
       marginBottom: 24
     }
   }, [{
-    label: "Saldo Consolidado",
-    value: fmtShort(totalBalance),
-    sub: `${BANKS.length} cuentas bancarias`,
-    color: "#00D4AA",
-    icon: "◈"
-  }, {
     label: "Total Facturado Bruto",
     value: fmtShort(apiResumen.total_facturado_bruto),
     sub: "Ingresos Brutos",
@@ -744,159 +738,7 @@ function Tesoreria() {
       width: `${c.advance}%`,
       background: `linear-gradient(90deg, ${c.color}80, ${c.color})`
     }
-  }))))), /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      padding: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 13,
-      fontWeight: 600,
-      marginBottom: 16,
-      color: "#B8C0D4"
-    }
-  }, "Posici\xF3n Bancaria"), BANKS.map((b, i) => {
-    const pct = totalBalance > 0 ? getBankBalance(b) / totalBalance * 100 : 0;
-    return /*#__PURE__*/React.createElement("div", {
-      key: i,
-      style: {
-        marginBottom: 18
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        justifyContent: "space-between",
-        marginBottom: 6,
-        alignItems: "center"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 10
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: 10,
-        height: 10,
-        background: b.color,
-        borderRadius: 2
-      }
-    }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontFamily: "'Space Grotesk', sans-serif",
-        fontSize: 12,
-        fontWeight: 600,
-        color: "#E8EAF2",
-        display: "flex",
-        alignItems: "center",
-        gap: 6
-      }
-    }, b.name, bankErrors[b.id] && /*#__PURE__*/React.createElement("span", {
-      title: "Reconectar banco",
-      style: { cursor: "pointer", fontSize: 14 },
-      onClick: () => startBelvoWidget(b.id)
-    }, "\u26A0\uFE0F")), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 10,
-        color: "#4A5568"
-      }
-    }, maskAccount(b.account)))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 12
-      }
-    }, /*#__PURE__*/React.createElement("button", {
-      title: "Conciliaci\xF3n en Vivo (Belvo)",
-      onClick: () => handleSyncBank(b.id),
-      disabled: syncingBankId === b.id,
-      style: {
-        background: "transparent",
-        border: "1px solid #4F8EF7",
-        borderRadius: "4px",
-        color: "#4F8EF7",
-        cursor: syncingBankId === b.id ? "wait" : "pointer",
-        padding: "2px 6px",
-        fontSize: 10,
-        display: "flex",
-        alignItems: "center",
-        gap: 4
-      }
-    }, syncingBankId === b.id ? /*#__PURE__*/React.createElement("i", {
-      className: "bi bi-arrow-repeat",
-      style: {
-        animation: "spin 1s linear infinite",
-        display: "inline-block"
-      }
-    }) : /*#__PURE__*/React.createElement("i", {
-      className: "bi bi-arrow-repeat"
-    }), " Ver en vivo"), /*#__PURE__*/React.createElement("button", {
-      title: "Eliminar banco",
-      onClick: () => handleDeleteBank(b.id),
-      style: {
-        background: "transparent",
-        border: "1px solid #E53E3E",
-        borderRadius: "4px",
-        color: "#E53E3E",
-        cursor: "pointer",
-        padding: "2px 6px",
-        fontSize: 10,
-        display: "flex",
-        alignItems: "center",
-        gap: 4
-      }
-    }, /*#__PURE__*/React.createElement("i", {
-      className: "bi bi-trash"
-    }), " Eliminar"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        textAlign: "right"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontFamily: "'Space Grotesk', sans-serif",
-        fontSize: 13,
-        fontWeight: 600,
-        color: "#E8EAF2"
-      }
-    }, fmtShort(getBankBalance(b))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 10,
-        color: "#4A5568"
-      }
-    }, pct.toFixed(1), "%")))), /*#__PURE__*/React.createElement("div", {
-      className: "progress-bar"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "progress-fill",
-      style: {
-        width: `${pct}%`,
-        background: b.color
-      }
-    })));
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 16,
-      padding: "12px 0",
-      borderTop: "1px solid #1E2A40",
-      display: "flex",
-      justifyContent: "space-between"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 12,
-      color: "#6B7A9A"
-    }
-  }, "TOTAL DISPONIBLE"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontSize: 14,
-      fontWeight: 700,
-      color: "#00D4AA"
-    }
-  }, fmt(totalBalance)))))), activeTab === "contratos" && /*#__PURE__*/React.createElement("div", {
+  }))))))), activeTab === "contratos" && /*#__PURE__*/React.createElement("div", {
     className: "fade-in"
   }, /*#__PURE__*/React.createElement("div", {
     style: {
