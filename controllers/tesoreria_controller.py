@@ -7,6 +7,8 @@ import os
 from datetime import datetime
 import requests
 from requests.auth import HTTPBasicAuth
+import uuid
+from supabase_client import supabase
 
 tesoreria_bp = Blueprint("tesoreria", __name__, url_prefix="/tesoreria")
 
@@ -221,6 +223,22 @@ def ver_tesoreria():
                            movimientos_json=movimientos_list, 
                            bancos_json=bancos_list)
 
+@tesoreria_bp.route("/bancos")
+@admin_oficina_required
+def ver_bancos():
+    bancos = Bancos.query.all()
+    bancos_list = []
+    for b in bancos:
+        bancos_list.append({
+            "id": b.id,
+            "name": b.nombre_banco,
+            "balance": float(b.saldo_actual or 0),
+            "account": b.numero_cuenta,
+            "color": b.color or '#004481',
+            "belvo_link_id": b.belvo_link_id
+        })
+    return render_template("bancos.html", bancos_json=bancos_list)
+
 @tesoreria_bp.route("/movimiento/registrar", methods=["POST"])
 @admin_oficina_required
 def registrar_movimiento():
@@ -262,13 +280,26 @@ def registrar_movimiento():
                 flash("Tipo de archivo de soporte no permitido por razones de seguridad.", "danger")
                 return redirect(request.referrer)
 
-            filename = secure_filename(
-                f"movimiento_{categoria}_{numero}_{archivo.filename}"
-            )
-            upload_path = os.path.join("static", "uploads", "tesoreria")
-            os.makedirs(upload_path, exist_ok=True)
-            archivo.save(os.path.join(upload_path, filename))
-            nombre_archivo = filename
+            original_filename = secure_filename(archivo.filename)
+            ext = original_filename.rsplit('.', 1)[1].lower() if '.' in original_filename else 'pdf'
+            filename = f"movimiento_{categoria}_{numero}_{uuid.uuid4().hex}.{ext}"
+            
+            file_bytes = archivo.read()
+            
+            if supabase:
+                # Subir a Supabase
+                supabase.storage.from_("tesoreria").upload(
+                    path=filename, 
+                    file=file_bytes, 
+                    file_options={"content-type": archivo.content_type}
+                )
+                nombre_archivo = supabase.storage.from_("tesoreria").get_public_url(filename)
+            else:
+                upload_path = os.path.join("static", "uploads", "tesoreria")
+                os.makedirs(upload_path, exist_ok=True)
+                with open(os.path.join(upload_path, filename), "wb") as f:
+                    f.write(file_bytes)
+                nombre_archivo = filename
             
         nuevo_movimiento = Movimientos(
             contrato_id=contrato.id if contrato else None,

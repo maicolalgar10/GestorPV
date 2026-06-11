@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tesorería - Gestión de Oficina</title>
+  <title>Bancos y Cuentas - Gestión de Oficina</title>
 
   <!-- React & Babel -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
@@ -75,7 +75,7 @@ const CATEGORY_LABELS = {
   general: "General"
 };
 function Tesoreria() {
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTab] = useState("bancos");
   const [selectedContract, setSelectedContract] = useState(null);
   const [filterType, setFilterType] = useState("todos");
   const [searchTerm, setSearchTerm] = useState("");
@@ -360,21 +360,9 @@ function Tesoreria() {
     return matchType && matchSearch;
   });
   const tabs = [{
-    id: "dashboard",
-    icon: "◈",
-    label: "Dashboard"
-  }, {
-    id: "contratos",
-    icon: "⬡",
-    label: "Contratos"
-  }, {
-    id: "movimientos",
-    icon: "⇅",
-    label: "Movimientos"
-  }, {
-    id: "proyecciones",
-    icon: "📈",
-    label: "Proyecciones"
+    id: "bancos",
+    icon: "◻",
+    label: "Bancos"
   }];
   return /*#__PURE__*/React.createElement("div", {
     style: {
@@ -452,7 +440,7 @@ function Tesoreria() {
       letterSpacing: "0.1em",
       textTransform: "uppercase"
     }
-  }, "Tesorer\xEDa"))), /*#__PURE__*/React.createElement("nav", {
+  }, "Bancos y Cuentas"))), /*#__PURE__*/React.createElement("nav", {
     style: {
       flex: 1,
       padding: "16px 8px"
