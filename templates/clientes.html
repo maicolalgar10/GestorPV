@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clientes - Gestión de Oficina</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --success-grad: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+    body { background-color: #f3f4f6; font-family: 'Inter', sans-serif; color: #1f2937; }
+
+    .page-header {
+      background: var(--success-grad);
+      border-radius: 20px;
+      color: white;
+      padding: 28px 32px;
+      margin-bottom: 28px;
+      box-shadow: 0 8px 32px rgba(16, 185, 129, 0.25);
+    }
+
+    .module-card {
+      background: white;
+      border: none;
+      border-radius: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+    }
+
+    .btn-back {
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.4);
+      color: white;
+      border-radius: 12px;
+      padding: 8px 18px;
+      font-size: 0.85rem;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s;
+    }
+    .btn-back:hover { background: rgba(255,255,255,0.35); color: white; }
+
+    .wip-banner {
+      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+      border: 1px solid #bbf7d0;
+      border-radius: 16px;
+      padding: 40px 24px;
+      text-align: center;
+    }
+    .wip-icon {
+      font-size: 4rem;
+      display: block;
+      margin-bottom: 16px;
+      color: #10b981;
+    }
+  </style>
+</head>
+<body>
+  {% include 'mensajes.html' %}
+
+  <div class="container mt-4 pb-5">
+
+    <!-- HEADER -->
+    <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div>
+        <h2 class="fw-bold m-0"><i class="bi bi-people-fill me-2"></i>Clientes</h2>
+        <p class="mb-0 opacity-75 small">Gestión de Oficina | {{ usuario.nombre }}</p>
+      </div>
+      <a href="{{ url_for('dashboard.dashboard_oficina') }}" class="btn-back text-decoration-none">
+        <i class="bi bi-arrow-left me-1"></i> Volver al Home
+      </a>
+    </div>
+
+    <!-- MÓDULO EN CONSTRUCCIÓN -->
+    <div class="module-card p-5">
+      <div class="wip-banner">
+        <i class="wip-icon bi bi-people-fill"></i>
+        <h4 class="fw-bold text-success mb-2">Módulo de Clientes</h4>
+        <p class="text-muted mb-4" style="max-width:460px; margin:0 auto;">
+          Este módulo está actualmente en desarrollo. Próximamente podrás registrar, consultar
+          y gestionar toda la información de tus clientes desde aquí.
+        </p>
+        <div class="d-flex gap-3 justify-content-center flex-wrap">
+          <span class="badge bg-success bg-opacity-10 text-success border border-success px-3 py-2">
+            <i class="bi bi-check2 me-1"></i> Vista maquetada
+          </span>
+          <span class="badge bg-warning bg-opacity-10 text-warning border border-warning px-3 py-2">
+            <i class="bi bi-hammer me-1"></i> En desarrollo
+          </span>
+        </div>
+      </div>
+
+      <!-- PREVIEW DE FUNCIONALIDADES FUTURAS -->
+      <div class="mt-5">
+        <h6 class="fw-bold text-muted text-uppercase small mb-4">
+          <i class="bi bi-lightning-charge me-1 text-warning"></i> Funcionalidades previstas
+        </h6>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="p-3 rounded-3 border bg-light d-flex align-items-center gap-3">
+              <i class="bi bi-person-plus-fill text-success fs-4"></i>
+              <div>
+                <div class="fw-semibold small">Registro de Clientes</div>
+                <div class="text-muted" style="font-size:0.78rem;">NIT, razón social, contacto</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="p-3 rounded-3 border bg-light d-flex align-items-center gap-3">
+              <i class="bi bi-file-earmark-text-fill text-primary fs-4"></i>
+              <div>
+                <div class="fw-semibold small">Historial de Contratos</div>
+                <div class="text-muted" style="font-size:0.78rem;">Cotizaciones y proyectos vinculados</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="p-3 rounded-3 border bg-light d-flex align-items-center gap-3">
+              <i class="bi bi-graph-up-arrow text-warning fs-4"></i>
+              <div>
+                <div class="fw-semibold small">Estadísticas</div>
+                <div class="text-muted" style="font-size:0.78rem;">Facturación por cliente</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FRASE DEL DÍA -->
+    <div class="text-center mt-5">
+      <span class="badge bg-white text-secondary p-3 rounded-pill shadow-sm">
+        <i class="bi bi-stars text-warning me-2"></i> {{ frase }}
+      </span>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

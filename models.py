@@ -733,4 +733,86 @@ class DetalleRequisicionOficina(db.Model):
     material_texto = db.Column(db.String(255), nullable=False)
     cantidad = db.Column(db.String(100), nullable=False)
 
-    requisicion = db.relationship("RequisicionOficina", back_populates="detalles")
+    requisicion = db.relationship("RequisicionOficina", back_populates="detalles")
+
+
+# ===========================================
+# 19. ProveedorFactura
+#     Módulo de gestión de facturas de proveedores.
+#     Los campos derivados (iva, valor_total, dias_mora,
+#     estado_factura, total_adeudado, estado_cuenta)
+#     se calculan como @property para garantizar
+#     consistencia sin columnas extra en la BD.
+# ===========================================
+class ProveedorFactura(db.Model):
+    __tablename__ = "proveedor_facturas"
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+
+    # ─── Identificación ─────────────────────────────────────────────
+    nombre_proveedor = db.Column(db.String(200), nullable=False, index=True)
+
+    # ─── Documentos (URLs de Supabase Storage) ──────────────────────
+    orden_compra_url      = db.Column(db.String(500), nullable=True)
+    comprobante_compra_url = db.Column(db.String(500), nullable=True)
+    banco_pago_url        = db.Column(db.String(500), nullable=True)
+
+    # ─── Fechas ──────────────────────────────────────────────────────
+    fecha_factura     = db.Column(db.Date, nullable=False)
+    plazo_dias        = db.Column(db.Integer, nullable=False, default=0)
+    fecha_vencimiento = db.Column(db.Date, nullable=False)
+    fecha_pago        = db.Column(db.Date, nullable=True)
+
+    # ─── Valores monetarios ──────────────────────────────────────────
+    valor_neto      = db.Column(db.Numeric(14, 2), nullable=False, default=0)
+    valor_cancelado = db.Column(db.Numeric(14, 2), nullable=False, default=0)
+    retencion       = db.Column(db.Numeric(14, 2), nullable=False, default=0)
+
+    # ─── Auditoría ───────────────────────────────────────────────────
+    creado_en = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # ─── Campos calculados (@property) ───────────────────────────────
+
+    @property
+    def iva(self):
+        """19% del valor_neto."""
+        return round(float(self.valor_neto or 0) * 0.19, 2)
+
+    @property
+    def valor_total(self):
+        """valor_neto + IVA."""
+        return round(float(self.valor_neto or 0) * 1.19, 2)
+
+    @property
+    def total_adeudado(self):
+        """(valor_total - retencion) - valor_cancelado."""
+        return round(
+            self.valor_total
+            - float(self.retencion or 0)
+            - float(self.valor_cancelado or 0),
+            2
+        )
+
+    @property
+    def estado_factura(self):
+        """VENCIDA si hoy supera fecha_vencimiento y aún se debe; VIGENTE en otro caso."""
+        from datetime import date
+        if self.estado_cuenta == "CANCELADO":
+            return "VIGENTE"
+        if self.fecha_vencimiento and date.today() > self.fecha_vencimiento:
+            return "VENCIDA"
+        return "VIGENTE"
+
+    @property
+    def dias_mora(self):
+        """Días transcurridos desde el vencimiento (solo si VENCIDA)."""
+        from datetime import date
+        if self.estado_factura == "VENCIDA" and self.fecha_vencimiento:
+            return (date.today() - self.fecha_vencimiento).days
+        return 0
+
+    @property
+    def estado_cuenta(self):
+        """CANCELADO si total_adeudado <= 0; SE DEBE en otro caso."""
+        return "CANCELADO" if self.total_adeudado <= 0 else "SE DEBE"
+

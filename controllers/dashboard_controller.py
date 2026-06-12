@@ -304,6 +304,195 @@ def gestion_materiales_oficina():
         notificaciones=notificaciones,
         requisiciones_oficina=requisiciones_oficina
     )
+# ============================================================
+# MÓDULO PROVEEDORES — 4 rutas
+# ============================================================
+
+# ─── GET /dashboard/proveedores ───────────────────────────
+@dashboard_bp.route("/dashboard/proveedores")
+@login_required
+@admin_oficina_required
+def proveedores():
+    from models import ProveedorFactura
+    usuario = Usuarios.query.get(session.get("user_id"))
+    notificaciones = Notificaciones.query.filter_by(
+        id_usuario_destino=session["user_id"], leido=False
+    ).order_by(Notificaciones.creado_en.desc()).all()
+    frase = frase_del_dia()
+
+    facturas = ProveedorFactura.query.order_by(ProveedorFactura.fecha_factura.desc()).all()
+
+    # Totales globales (usan los @property del modelo)
+    total_valor_neto      = sum(float(f.valor_neto or 0) for f in facturas)
+    total_iva             = sum(f.iva for f in facturas)
+    total_valor_total     = sum(f.valor_total for f in facturas)
+    total_retencion       = sum(float(f.retencion or 0) for f in facturas)
+    total_cancelado       = sum(float(f.valor_cancelado or 0) for f in facturas)
+    total_adeudado_global = sum(f.total_adeudado for f in facturas if f.estado_cuenta == "SE DEBE")
+
+    return render_template(
+        "proveedores.html",
+        usuario=usuario,
+        notificaciones=notificaciones,
+        frase=frase,
+        facturas=facturas,
+        total_valor_neto=total_valor_neto,
+        total_iva=total_iva,
+        total_valor_total=total_valor_total,
+        total_retencion=total_retencion,
+        total_cancelado=total_cancelado,
+        total_adeudado_global=total_adeudado_global,
+    )
+
+
+# ─── POST /dashboard/proveedores/nueva ────────────────────
+@dashboard_bp.route("/dashboard/proveedores/nueva", methods=["POST"])
+@login_required
+@admin_oficina_required
+def nueva_factura_proveedor():
+    from models import ProveedorFactura
+    from datetime import datetime as dt
+    from supabase_client import supabase
+    import uuid
+
+    def upload_file(file_field):
+        f = request.files.get(file_field)
+        if not f or f.filename == "":
+            return None
+        if supabase is None:
+            flash("Supabase no configurado. Archivo no subido.", "warning")
+            return None
+        try:
+            ext = f.filename.rsplit(".", 1)[-1].lower()
+            filename = f"{uuid.uuid4().hex}.{ext}"
+            path = f"proveedores/{filename}"
+            data = f.read()
+            supabase.storage.from_("documentos").upload(
+                path, data,
+                {"content-type": f.content_type, "upsert": "false"}
+            )
+            return supabase.storage.from_("documentos").get_public_url(path)
+        except Exception as e:
+            flash(f"Error subiendo archivo: {e}", "warning")
+            return None
+
+    try:
+        fecha_factura     = dt.strptime(request.form["fecha_factura"], "%Y-%m-%d").date()
+        fecha_vencimiento = dt.strptime(request.form["fecha_vencimiento"], "%Y-%m-%d").date()
+        fecha_pago_raw    = request.form.get("fecha_pago", "").strip()
+        fecha_pago        = dt.strptime(fecha_pago_raw, "%Y-%m-%d").date() if fecha_pago_raw else None
+
+        factura = ProveedorFactura(
+            nombre_proveedor       = request.form["nombre_proveedor"].strip(),
+            fecha_factura          = fecha_factura,
+            plazo_dias             = int(request.form.get("plazo_dias") or 0),
+            fecha_vencimiento      = fecha_vencimiento,
+            valor_neto             = float(request.form.get("valor_neto") or 0),
+            valor_cancelado        = float(request.form.get("valor_cancelado") or 0),
+            retencion              = float(request.form.get("retencion") or 0),
+            fecha_pago             = fecha_pago,
+            orden_compra_url       = upload_file("orden_compra"),
+            comprobante_compra_url = upload_file("comprobante_compra"),
+            banco_pago_url         = upload_file("banco_pago"),
+        )
+        db.session.add(factura)
+        db.session.commit()
+        flash("Factura de proveedor registrada correctamente.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al registrar la factura: {e}", "danger")
+
+    return redirect(url_for("dashboard.proveedores"))
+
+
+# ─── POST /dashboard/proveedores/<id>/editar ──────────────
+@dashboard_bp.route("/dashboard/proveedores/<int:id>/editar", methods=["POST"])
+@login_required
+@admin_oficina_required
+def editar_factura_proveedor(id):
+    from models import ProveedorFactura
+    from datetime import datetime as dt
+    from supabase_client import supabase
+    import uuid
+
+    factura = ProveedorFactura.query.get_or_404(id)
+
+    def upload_or_keep(file_field, current_url):
+        f = request.files.get(file_field)
+        if not f or f.filename == "":
+            return current_url
+        if supabase is None:
+            return current_url
+        try:
+            ext = f.filename.rsplit(".", 1)[-1].lower()
+            filename = f"{uuid.uuid4().hex}.{ext}"
+            path = f"proveedores/{filename}"
+            data = f.read()
+            supabase.storage.from_("documentos").upload(
+                path, data,
+                {"content-type": f.content_type, "upsert": "false"}
+            )
+            return supabase.storage.from_("documentos").get_public_url(path)
+        except Exception as e:
+            flash(f"Error subiendo archivo: {e}", "warning")
+            return current_url
+
+    try:
+        fecha_pago_raw = request.form.get("fecha_pago", "").strip()
+        factura.nombre_proveedor       = request.form["nombre_proveedor"].strip()
+        factura.fecha_factura          = dt.strptime(request.form["fecha_factura"], "%Y-%m-%d").date()
+        factura.plazo_dias             = int(request.form.get("plazo_dias") or 0)
+        factura.fecha_vencimiento      = dt.strptime(request.form["fecha_vencimiento"], "%Y-%m-%d").date()
+        factura.valor_neto             = float(request.form.get("valor_neto") or 0)
+        factura.valor_cancelado        = float(request.form.get("valor_cancelado") or 0)
+        factura.retencion              = float(request.form.get("retencion") or 0)
+        factura.fecha_pago             = dt.strptime(fecha_pago_raw, "%Y-%m-%d").date() if fecha_pago_raw else None
+        factura.orden_compra_url       = upload_or_keep("orden_compra", factura.orden_compra_url)
+        factura.comprobante_compra_url = upload_or_keep("comprobante_compra", factura.comprobante_compra_url)
+        factura.banco_pago_url         = upload_or_keep("banco_pago", factura.banco_pago_url)
+        db.session.commit()
+        flash("Factura actualizada correctamente.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al actualizar: {e}", "danger")
+
+    return redirect(url_for("dashboard.proveedores"))
+
+
+# ─── POST /dashboard/proveedores/<id>/eliminar ────────────
+@dashboard_bp.route("/dashboard/proveedores/<int:id>/eliminar", methods=["POST"])
+@login_required
+@admin_oficina_required
+def eliminar_factura_proveedor(id):
+    from models import ProveedorFactura
+    factura = ProveedorFactura.query.get_or_404(id)
+    try:
+        db.session.delete(factura)
+        db.session.commit()
+        flash("Factura eliminada correctamente.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al eliminar: {e}", "danger")
+    return redirect(url_for("dashboard.proveedores"))
+
+
+# ─── CLIENTES (maqueta — desarrollo posterior) ─────────────
+@dashboard_bp.route("/dashboard/clientes")
+@login_required
+@admin_oficina_required
+def clientes():
+    usuario = Usuarios.query.get(session.get("user_id"))
+    notificaciones = Notificaciones.query.filter_by(
+        id_usuario_destino=session["user_id"], leido=False
+    ).order_by(Notificaciones.creado_en.desc()).all()
+    frase = frase_del_dia()
+    return render_template(
+        "clientes.html",
+        usuario=usuario,
+        notificaciones=notificaciones,
+        frase=frase
+    )
+
 # -----------------------------
 # DASHBOARD DE BODEGA
 # -----------------------------
