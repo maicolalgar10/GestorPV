@@ -387,6 +387,9 @@ def nueva_factura_proveedor():
     from supabase_client import supabase
     import uuid
 
+    print("--- ARCHIVOS RECIBIDOS EN FLASK (NUEVA FACTURA) ---")
+    print(request.files)
+
     def upload_file(file_field):
         f = request.files.get(file_field)
         if not f or f.filename == "":
@@ -448,6 +451,9 @@ def editar_factura_proveedor(id):
     import uuid
 
     factura = ProveedorFactura.query.get_or_404(id)
+
+    print(f"--- ARCHIVOS RECIBIDOS EN FLASK (EDITAR FACTURA {id}) ---")
+    print(request.files)
 
     def upload_or_keep(file_field, current_url):
         f = request.files.get(file_field)

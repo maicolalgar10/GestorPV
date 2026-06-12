@@ -1137,6 +1137,16 @@ async function procesarFormulario(e, btnSelector) {
   
   try {
     const formData = new FormData(form);
+    
+    // 🚨 INYECCIÓN FORZADA: Agrega manualmente los archivos binarios reales
+    // Esto asegura que incluso si el navegador tiene un bug con FormData, los archivos viajen.
+    const fileInputs = form.querySelectorAll('input[type="file"]');
+    fileInputs.forEach(input => {
+      if (input.files && input.files.length > 0) {
+        formData.set(input.name, input.files[0]);
+      }
+    });
+
     const res = await fetch(form.action, {
       method: 'POST',
       body: formData
