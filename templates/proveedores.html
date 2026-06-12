@@ -593,7 +593,7 @@
               <div class="input-group">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
                 <input type="number" name="valor_neto" id="n_valor_neto" class="form-control"
-                       placeholder="0" min="0" step="1" required oninput="calcularIVA('n')">
+                       placeholder="0" min="0" step="any" required oninput="calcularIVA('n')">
               </div>
             </div>
 
@@ -617,7 +617,7 @@
               <label>Retención (%)</label>
               <div class="input-group">
                 <input type="number" name="retencion" id="n_retencion" class="form-control"
-                       placeholder="0" min="0" max="100" step="0.01" value="0" oninput="calcularIVA('n')">
+                       placeholder="0" min="0" max="100" step="any" value="0" oninput="calcularIVA('n')">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
               </div>
             </div>
@@ -643,7 +643,7 @@
               <div class="input-group">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
                 <input type="number" name="valor_cancelado" id="n_cancelado" class="form-control"
-                       placeholder="0" min="0" step="1" value="0" oninput="calcularIVA('n')">
+                       placeholder="0" min="0" step="any" value="0" oninput="calcularIVA('n')">
               </div>
             </div>
             <div class="col-md-4">
@@ -752,7 +752,7 @@
               <div class="input-group">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
                 <input type="number" name="valor_neto" id="e_valor_neto" class="form-control"
-                       min="0" step="1" required oninput="calcularIVA('e')">
+                       min="0" step="any" required oninput="calcularIVA('e')">
               </div>
             </div>
             <div class="col-md-3">
@@ -773,7 +773,7 @@
               <label>Retención (%)</label>
               <div class="input-group">
                 <input type="number" name="retencion" id="e_retencion" class="form-control"
-                       min="0" max="100" step="0.01" value="0" oninput="calcularIVA('e')">
+                       min="0" max="100" step="any" value="0" oninput="calcularIVA('e')">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
               </div>
             </div>
@@ -795,7 +795,7 @@
               <div class="input-group">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
                 <input type="number" name="valor_cancelado" id="e_cancelado" class="form-control"
-                       min="0" step="1" value="0" oninput="calcularIVA('e')">
+                       min="0" step="any" value="0" oninput="calcularIVA('e')">
               </div>
             </div>
             <div class="col-md-4">
@@ -836,7 +836,7 @@
           <button type="button" class="btn btn-sm btn-secondary rounded-pill px-4"
                   data-bs-dismiss="modal">Cancelar</button>
           <button type="submit" class="btn-confirm" style="background:linear-gradient(135deg,#d97706,#b45309);">
-            <i class="bi bi-save me-1"></i> Guardar Cambios
+            <i class="bi bi-cloud-arrow-up me-1"></i> Actualizar Factura
           </button>
         </div>
       </form>
