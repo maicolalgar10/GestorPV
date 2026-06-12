@@ -290,23 +290,29 @@ def perfil():
     if request.method == "POST":
         if "foto" in request.files:
             file = request.files["foto"]
-            if file and file.filename and allowed_file(file.filename):  # Verifica que el archivo tenga nombre
-                filename = secure_filename(file.filename)
+            if file and file.filename and allowed_file(file.filename):
+                from supabase_client import supabase
+                import uuid
                 
-                upload_path = os.path.join(current_app.config["UPLOAD_FOLDER"])
-                os.makedirs(upload_path, exist_ok=True)
-                
-                filepath = os.path.join(upload_path, filename)
-                file.save(filepath)
+                ext = file.filename.rsplit(".", 1)[-1].lower()
+                filename = f"{uuid.uuid4().hex}.{ext}"
+                path = f"perfiles/{filename}"
+                data = file.read()
 
-                # Guardar ruta relativa en BD
-                usuario.foto_perfil = f"/static/uploads/perfiles/{filename}"
-                db.session.commit()
+                try:
+                    supabase.storage.from_("uploads").upload(
+                        path, data,
+                        {"content-type": file.content_type, "upsert": "false"}
+                    )
+                    public_url = supabase.storage.from_("uploads").get_public_url(path)
+                    
+                    usuario.foto_perfil = public_url
+                    db.session.commit()
+                    session["foto_perfil"] = public_url
+                    flash("Foto de perfil actualizada", "success")
+                except Exception as e:
+                    flash(f"Error al subir foto de perfil: {e}", "danger")
 
-                # Actualizar sesión
-                session["foto_perfil"] = usuario.foto_perfil
-
-                flash("Foto de perfil actualizada", "success")
                 return redirect(url_for("dashboard.dashboard"))
             else:
                 flash("Por favor selecciona una imagen válida", "warning")

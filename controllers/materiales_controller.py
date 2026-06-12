@@ -228,20 +228,26 @@ def crear_solicitud():
             flash("Debes agregar al menos un material con cantidad válida.", "warning")
             return redirect(request.referrer)
 
-        # 5. Manejo del Archivo Adjunto (PDF/Excel/Imagen)
         archivo = request.files.get('archivo')
         if archivo and archivo.filename != '':
             if allowed_file(archivo.filename): # Asegúrate de tener esta función definida
-                filename = secure_filename(archivo.filename)
-                unique_filename = f"SOL_{nueva_solicitud.id_solicitud}_{datetime.now().strftime('%H%M%S')}_{filename}"
+                from supabase_client import supabase
+                import uuid
                 
-                # Ruta: static/uploads/solicitudes/
-                ruta_relativa = os.path.join("uploads", "solicitudes", unique_filename).replace("\\", "/")
-                ruta_completa =     os.path.join(current_app.root_path, "static", ruta_relativa)
-                
-                os.makedirs(os.path.dirname(ruta_completa), exist_ok=True)
-                archivo.save(ruta_completa)
-                nueva_solicitud.archivo_ruta = ruta_relativa
+                ext = archivo.filename.rsplit(".", 1)[-1].lower()
+                filename = f"SOL_{nueva_solicitud.id_solicitud}_{uuid.uuid4().hex}.{ext}"
+                path = f"materiales/{filename}"
+                data = archivo.read()
+
+                try:
+                    supabase.storage.from_("evidencias").upload(
+                        path, data,
+                        {"content-type": archivo.content_type, "upsert": "false"}
+                    )
+                    public_url = supabase.storage.from_("evidencias").get_public_url(path)
+                    nueva_solicitud.archivo_ruta = public_url
+                except Exception as e:
+                    flash(f"Error al subir el archivo de soporte a la nube: {e}", "warning")
             else:
                 flash("El formato de archivo no es permitido.", "danger")
 

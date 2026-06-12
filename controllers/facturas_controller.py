@@ -95,13 +95,21 @@ def registrar_cuenta_cobro(factura_id):
 
         nombre_archivo = None
         if archivo and archivo.filename:
-            filename = secure_filename(
-                f"cuenta_cobro_{factura_id}_{numero}_{archivo.filename}"
-            )
-            upload_path = os.path.join("static", "uploads", "actas")
-            os.makedirs(upload_path, exist_ok=True)
-            archivo.save(os.path.join(upload_path, filename))
-            nombre_archivo = filename
+            from supabase_client import supabase
+            import uuid
+            
+            ext = archivo.filename.rsplit(".", 1)[-1].lower()
+            filename = f"facturas/{uuid.uuid4().hex}_{ext}"
+            data = archivo.read()
+            
+            try:
+                supabase.storage.from_("tesoreria").upload(
+                    filename, data,
+                    {"content-type": archivo.content_type, "upsert": "false"}
+                )
+                nombre_archivo = supabase.storage.from_("tesoreria").get_public_url(filename)
+            except Exception as e:
+                flash(f"Error al subir el archivo de soporte a la nube: {e}", "warning")
 
         nueva_acta = Actas(
             factura_id=factura.id,
@@ -157,13 +165,21 @@ def registrar_consignacion(factura_id):
 
         nombre_archivo = None
         if archivo and archivo.filename:
-            filename = secure_filename(
-                f"consignacion_{factura_id}_{numero}_{archivo.filename}"
-            )
-            upload_path = os.path.join("static", "uploads", "actas")
-            os.makedirs(upload_path, exist_ok=True)
-            archivo.save(os.path.join(upload_path, filename))
-            nombre_archivo = filename
+            from supabase_client import supabase
+            import uuid
+            
+            ext = archivo.filename.rsplit(".", 1)[-1].lower()
+            filename = f"facturas/{uuid.uuid4().hex}_{ext}"
+            data = archivo.read()
+            
+            try:
+                supabase.storage.from_("tesoreria").upload(
+                    filename, data,
+                    {"content-type": archivo.content_type, "upsert": "false"}
+                )
+                nombre_archivo = supabase.storage.from_("tesoreria").get_public_url(filename)
+            except Exception as e:
+                flash(f"Error al subir el archivo de soporte a la nube: {e}", "warning")
 
         nueva_acta = Actas(
             factura_id=factura.id,
