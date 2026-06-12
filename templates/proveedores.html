@@ -376,7 +376,7 @@
             <th>Est. Factura</th>
             <th class="text-end">Valor Neto</th>
             <th class="text-end">IVA 19%</th>
-            <th class="text-end">Retención</th>
+            <th class="text-end">% Ret.</th>
             <th class="text-end">Valor Total</th>
             <th class="text-end">Cancelado</th>
             <th class="text-end">Total Adeudado</th>
@@ -419,7 +419,7 @@
             </td>
             <td class="text-end fw-semibold">${{ "{:,.0f}".format(f.valor_neto) | replace(",",".") }}</td>
             <td class="text-end text-muted">${{ "{:,.0f}".format(f.iva) | replace(",",".") }}</td>
-            <td class="text-end text-muted">${{ "{:,.0f}".format(f.retencion) | replace(",",".") }}</td>
+            <td class="text-end text-muted">${{ "{:,.0f}".format(f.retencion_pesos) | replace(",",".") }} <span class="badge bg-light text-secondary border border-secondary-subtle px-1 py-0 ms-1" style="font-size:0.65rem">{{ f.retencion }}%</span></td>
             <td class="text-end fw-semibold">${{ "{:,.0f}".format(f.valor_total) | replace(",",".") }}</td>
             <td class="text-end text-success fw-semibold">
               {% if f.valor_cancelado > 0 %}
@@ -600,18 +600,21 @@
             </div>
 
             <div class="col-md-3">
-              <label>Retención (valor en $)</label>
+              <label>Retención (%)</label>
               <div class="input-group">
-                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
                 <input type="number" name="retencion" id="n_retencion" class="form-control"
-                       placeholder="0" min="0" step="1" value="0" oninput="calcularIVA('n')">
+                       placeholder="0" min="0" max="100" step="0.01" value="0" oninput="calcularIVA('n')">
+                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
               </div>
             </div>
 
             <div class="col-md-3">
               <label>&nbsp;</label>
-              <div class="calc-box calc-total">
-                <div class="calc-label">Total Adeudado Estimado</div>
+              <div class="calc-box calc-total position-relative">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="calc-label">Total Adeudado Estimado</div>
+                  <div id="n_estado_badge"></div>
+                </div>
                 <div class="calc-val" id="n_adeudado_display">$0</div>
               </div>
             </div>
@@ -743,17 +746,20 @@
               </div>
             </div>
             <div class="col-md-3">
-              <label>Retención ($)</label>
+              <label>Retención (%)</label>
               <div class="input-group">
-                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
                 <input type="number" name="retencion" id="e_retencion" class="form-control"
-                       min="0" step="1" value="0" oninput="calcularIVA('e')">
+                       min="0" max="100" step="0.01" value="0" oninput="calcularIVA('e')">
+                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
               </div>
             </div>
             <div class="col-md-3">
               <label>&nbsp;</label>
-              <div class="calc-box calc-total">
-                <div class="calc-label">Total Adeudado Estimado</div>
+              <div class="calc-box calc-total position-relative">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="calc-label">Total Adeudado Estimado</div>
+                  <div id="e_estado_badge"></div>
+                </div>
                 <div class="calc-val" id="e_adeudado_display">$0</div>
               </div>
             </div>
@@ -826,16 +832,28 @@ function fmtPeso(num) {
 
 function calcularIVA(prefix) {
   const neto     = parseFloat(document.getElementById(prefix + '_valor_neto')?.value)  || 0;
-  const ret      = parseFloat(document.getElementById(prefix + '_retencion')?.value)   || 0;
+  const ret_porc = parseFloat(document.getElementById(prefix + '_retencion')?.value)   || 0;
   const cancelado= parseFloat(document.getElementById(prefix + '_cancelado')?.value)   || 0;
 
   const iva      = neto * 0.19;
   const total    = neto + iva;
-  const adeudado = total - ret - cancelado;
+  const ret_pesos= neto * (ret_porc / 100);
+  const adeudado = total - ret_pesos - cancelado;
+  
+  const final_adeudado = Math.max(adeudado, 0);
 
   document.getElementById(prefix + '_iva_display').innerText    = fmtPeso(iva);
   document.getElementById(prefix + '_total_display').innerText  = fmtPeso(total);
-  document.getElementById(prefix + '_adeudado_display').innerText = fmtPeso(Math.max(adeudado, 0));
+  document.getElementById(prefix + '_adeudado_display').innerText = fmtPeso(final_adeudado);
+
+  const badgeEstado = document.getElementById(prefix + '_estado_badge');
+  if (badgeEstado) {
+    if (final_adeudado <= 0 && cancelado > 0) {
+      badgeEstado.innerHTML = '<span class="badge bg-success" style="font-size:0.6rem;"><i class="bi bi-check-circle me-1"></i>CANCELADO</span>';
+    } else {
+      badgeEstado.innerHTML = '<span class="badge bg-danger" style="font-size:0.6rem;"><i class="bi bi-hourglass-split me-1"></i>SE DEBE</span>';
+    }
+  }
 }
 
 /* Cálculo automático de fecha de vencimiento */

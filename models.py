@@ -790,12 +790,20 @@ class ProveedorFactura(db.Model):
             return 0.0
 
     @property
+    def retencion_pesos(self):
+        """Valor en pesos de la retención calculada a partir del porcentaje."""
+        try:
+            return float(self.valor_neto or 0) * (float(self.retencion or 0) / 100.0)
+        except (ValueError, TypeError):
+            return 0.0
+
+    @property
     def total_adeudado(self):
-        """(valor_total - retencion) - valor_cancelado."""
+        """(valor_total - retencion_en_pesos) - valor_cancelado."""
         try:
             return round(
                 self.valor_total
-                - float(self.retencion or 0)
+                - self.retencion_pesos
                 - float(self.valor_cancelado or 0),
                 2
             )
@@ -804,7 +812,7 @@ class ProveedorFactura(db.Model):
 
     @property
     def estado_factura(self):
-        """VENCIDA si hoy supera fecha_vencimiento y aún se debe; VIGENTE en otro caso."""
+        """VENCIDA si supera fecha_vencimiento y aún se debe; VIGENTE en otro caso."""
         from datetime import date
         try:
             if self.estado_cuenta == "CANCELADO":
@@ -817,10 +825,20 @@ class ProveedorFactura(db.Model):
 
     @property
     def dias_mora(self):
-        """Días transcurridos desde el vencimiento (solo si VENCIDA)."""
+        """Días transcurridos desde el vencimiento."""
         from datetime import date
         try:
-            if self.estado_factura == "VENCIDA" and self.fecha_vencimiento:
+            if not self.fecha_vencimiento:
+                return 0
+                
+            # Si está cancelado, congelar la mora con la fecha de pago (si pagó tarde)
+            if self.estado_cuenta == "CANCELADO":
+                if self.fecha_pago and self.fecha_pago > self.fecha_vencimiento:
+                    return (self.fecha_pago - self.fecha_vencimiento).days
+                return 0
+                
+            # Si no está cancelado, usar fecha actual
+            if date.today() > self.fecha_vencimiento:
                 return (date.today() - self.fecha_vencimiento).days
         except Exception:
             pass
