@@ -682,8 +682,8 @@
             </div>
 
           </div><!-- /row -->
-        </div><!-- /modal-body -->
-      </form>
+        </form>
+      </div><!-- /modal-body -->
 
       <div class="modal-footer d-flex justify-content-end gap-2 mt-4 border-top pt-3 bg-dark" style="border-color:#3f3f5c !important;">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -700,18 +700,17 @@
 <div class="modal fade modal-dark" id="modalEditarFactura" tabindex="-1">
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
-      <form method="POST" id="formEditarFactura" action="" enctype="multipart/form-data">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-        <div class="modal-header" style="background:linear-gradient(135deg,#92400e,#b45309);">
-          <div>
-            <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Editar / Registrar Abono</h5>
-            <p class="mb-0 mt-1 opacity-60 small" id="e_subtitulo">—</p>
-          </div>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      <div class="modal-header" style="background:linear-gradient(135deg,#92400e,#b45309);">
+        <div>
+          <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Editar / Registrar Abono</h5>
+          <p class="mb-0 mt-1 opacity-60 small" id="e_subtitulo">—</p>
         </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
 
-        <div class="modal-body">
+      <div class="modal-body">
+        <form method="POST" id="formEditarFactura" action="" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="row g-3">
             <div class="col-md-4">
               <label>Nombre del Proveedor *</label>
@@ -836,8 +835,8 @@
               </div>
             </div>
           </div>
-        </div>
-      </form>
+        </form>
+      </div>
 
       <div class="modal-footer d-flex justify-content-end gap-2 mt-4 border-top pt-3 bg-dark" style="border-color:#3f3f5c !important;">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
