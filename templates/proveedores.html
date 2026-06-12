@@ -566,7 +566,17 @@
             </div>
             <div class="col-md-3">
               <label>Fecha de Vencimiento *</label>
-              <input type="date" name="fecha_vencimiento" id="n_fecha_vencimiento" class="form-control" required>
+              <input type="date" name="fecha_vencimiento" id="n_fecha_vencimiento" class="form-control" required readonly>
+            </div>
+            <div class="col-md-3">
+              <label>&nbsp;</label>
+              <div class="calc-box position-relative py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="calc-label">Estado Factura</div>
+                  <div id="n_estado_factura_badge"><span class="badge bg-light text-secondary">N/A</span></div>
+                </div>
+                <div class="calc-val fs-6 text-warning mt-1" id="n_mora_display">0 días mora</div>
+              </div>
             </div>
 
             <!-- ─ Valores ─────────────────────────────────── -->
@@ -718,7 +728,17 @@
             </div>
             <div class="col-md-3">
               <label>Fecha de Vencimiento *</label>
-              <input type="date" name="fecha_vencimiento" id="e_fecha_vencimiento" class="form-control" required>
+              <input type="date" name="fecha_vencimiento" id="e_fecha_vencimiento" class="form-control" required readonly>
+            </div>
+            <div class="col-md-3">
+              <label>&nbsp;</label>
+              <div class="calc-box position-relative py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="calc-label">Estado Factura</div>
+                  <div id="e_estado_factura_badge"><span class="badge bg-light text-secondary">N/A</span></div>
+                </div>
+                <div class="calc-val fs-6 text-warning mt-1" id="e_mora_display">0 días mora</div>
+              </div>
             </div>
 
             <div class="col-12"><div class="section-sep"><i class="bi bi-currency-dollar me-1"></i>Valores</div></div>
@@ -856,25 +876,54 @@ function calcularIVA(prefix) {
   }
 }
 
-/* Cálculo automático de fecha de vencimiento */
-function calcularVencimiento() {
-  const fi  = document.getElementById('n_fecha_factura').value;
-  const plz = parseInt(document.getElementById('n_plazo_dias').value) || 0;
-  if (fi && plz > 0) {
+/* Cálculo automático de fecha de vencimiento y Mora/Estado Factura */
+function calcularVencimiento() { _calcVencimiento('n'); }
+function calcularVencimientoE() { _calcVencimiento('e'); }
+
+function _calcVencimiento(prefix) {
+  const fi  = document.getElementById(prefix + '_fecha_factura').value;
+  const plz = parseInt(document.getElementById(prefix + '_plazo_dias').value) || 0;
+  if (fi) {
     const d = new Date(fi + 'T00:00:00');
     d.setDate(d.getDate() + plz);
-    document.getElementById('n_fecha_vencimiento').value = d.toISOString().split('T')[0];
+    const v = d.toISOString().split('T')[0];
+    document.getElementById(prefix + '_fecha_vencimiento').value = v;
+    
+    // Calcular mora en vivo
+    const hoy = new Date();
+    hoy.setHours(0,0,0,0);
+    const diffTime = hoy - d;
+    let mora = 0;
+    if (diffTime > 0) {
+      mora = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }
+    
+    // Ver si está cancelado para congelar
+    const adeudadoTxt = document.getElementById(prefix + '_adeudado_display').innerText;
+    const isCancelado = adeudadoTxt === '$0';
+    
+    const badge = document.getElementById(prefix + '_estado_factura_badge');
+    const moraDisplay = document.getElementById(prefix + '_mora_display');
+    
+    if (isCancelado) {
+        badge.innerHTML = '<span class="badge bg-success" style="font-size:0.6rem;">VIGENTE</span>';
+        moraDisplay.innerText = '0 días mora';
+    } else if (mora > 0) {
+        badge.innerHTML = '<span class="badge bg-danger" style="font-size:0.6rem;">VENCIDA</span>';
+        moraDisplay.innerText = mora + ' días mora';
+    } else {
+        badge.innerHTML = '<span class="badge bg-success" style="font-size:0.6rem;">VIGENTE</span>';
+        moraDisplay.innerText = '0 días mora';
+    }
   }
 }
-function calcularVencimientoE() {
-  const fi  = document.getElementById('e_fecha_factura').value;
-  const plz = parseInt(document.getElementById('e_plazo_dias').value) || 0;
-  if (fi && plz > 0) {
-    const d = new Date(fi + 'T00:00:00');
-    d.setDate(d.getDate() + plz);
-    document.getElementById('e_fecha_vencimiento').value = d.toISOString().split('T')[0];
-  }
-}
+
+// Interceptar calcularIVA para actualizar mora también
+const oldCalcularIVA = calcularIVA;
+calcularIVA = function(prefix) {
+    oldCalcularIVA(prefix);
+    _calcVencimiento(prefix);
+};
 
 /* ══════════════════════════════════════════════════════════
    MODAL EDITAR — pre-relleno de datos
@@ -901,14 +950,39 @@ function abrirModalEditar(id, nombre, fecha_factura, plazo, fecha_venc, valor_ne
 }
 
 /* ══════════════════════════════════════════════════════════
-   UPLOAD ZONE — mostrar nombre de archivo seleccionado
+   UPLOAD ZONE — Drag and Drop
 ══════════════════════════════════════════════════════════ */
 function mostrarNombreArchivo(input, labelId) {
   const lbl = document.getElementById(labelId);
   if (input.files && input.files[0]) {
     lbl.innerHTML = '<i class="bi bi-file-earmark-check me-1 text-success"></i>' + input.files[0].name;
+    input.closest('.upload-zone').style.borderColor = '#10b981';
   }
 }
+
+document.querySelectorAll('.upload-zone').forEach(zone => {
+  zone.addEventListener('dragover', e => {
+    e.preventDefault();
+    zone.style.borderColor = '#a5b4fc';
+    zone.style.backgroundColor = '#2d2d44';
+  });
+  zone.addEventListener('dragleave', e => {
+    e.preventDefault();
+    zone.style.borderColor = '';
+    zone.style.backgroundColor = '';
+  });
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.style.borderColor = '';
+    zone.style.backgroundColor = '';
+    const input = zone.querySelector('input[type="file"]');
+    if (e.dataTransfer.files.length > 0) {
+      input.files = e.dataTransfer.files;
+      const event = new Event('change');
+      input.dispatchEvent(event);
+    }
+  });
+});
 
 /* ══════════════════════════════════════════════════════════
    FILTROS EN TIEMPO REAL
