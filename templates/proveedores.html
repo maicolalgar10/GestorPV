@@ -468,7 +468,7 @@
             <td class="text-center" style="min-width:110px;">
               <button class="btn btn-sm btn-outline-primary rounded-pill px-2 me-1 mb-1"
                       title="Editar"
-                      onclick="abrirModalEditar({{ f.id }}, '{{ f.nombre_proveedor | replace("'","\\'")|replace('"','\\"') }}', '{{ f.fecha_factura }}', {{ f.plazo_dias }}, '{{ f.fecha_vencimiento }}', {{ f.valor_neto }}, {{ f.valor_cancelado }}, {{ f.retencion }}, '{{ f.fecha_pago or '' }}')">
+                      onclick="abrirModalEditar({{ f.id }}, '{{ f.nombre_proveedor | replace("'","\\'")|replace('"','\\"') }}', '{{ f.fecha_factura }}', {{ f.plazo_dias }}, '{{ f.fecha_vencimiento }}', {{ f.valor_neto }}, {{ f.valor_cancelado }}, {{ f.retencion }}, '{{ f.fecha_pago or '' }}', '{{ f.orden_compra_url or '' }}', '{{ f.comprobante_compra_url or '' }}', '{{ f.banco_pago_url or '' }}')">
                 <i class="bi bi-pencil-square"></i>
               </button>
               <form method="POST"
@@ -812,6 +812,9 @@
                        onchange="mostrarNombreArchivo(this,'e_lbl_oc')">
                 <label id="e_lbl_oc"><i class="bi bi-arrow-repeat me-1"></i>Mantener actual / Reemplazar</label>
               </div>
+              <div id="e_link_oc_container" class="mt-2 d-none">
+                 <a href="#" id="e_link_oc" target="_blank" class="btn btn-sm btn-outline-info w-100 fw-semibold"><i class="bi bi-eye me-1"></i> Ver Archivo Actual</a>
+              </div>
             </div>
             <div class="col-md-4">
               <label>Comprobante / Factura</label>
@@ -820,6 +823,9 @@
                        onchange="mostrarNombreArchivo(this,'e_lbl_cc')">
                 <label id="e_lbl_cc"><i class="bi bi-arrow-repeat me-1"></i>Mantener actual / Reemplazar</label>
               </div>
+              <div id="e_link_cc_container" class="mt-2 d-none">
+                 <a href="#" id="e_link_cc" target="_blank" class="btn btn-sm btn-outline-info w-100 fw-semibold"><i class="bi bi-eye me-1"></i> Ver Archivo Actual</a>
+              </div>
             </div>
             <div class="col-md-4">
               <label>Soporte Bancario</label>
@@ -827,6 +833,9 @@
                 <input type="file" name="banco_pago" accept=".pdf,.jpg,.jpeg,.png,.webp"
                        onchange="mostrarNombreArchivo(this,'e_lbl_bp')">
                 <label id="e_lbl_bp"><i class="bi bi-arrow-repeat me-1"></i>Mantener actual / Reemplazar</label>
+              </div>
+              <div id="e_link_bp_container" class="mt-2 d-none">
+                 <a href="#" id="e_link_bp" target="_blank" class="btn btn-sm btn-outline-info w-100 fw-semibold"><i class="bi bi-eye me-1"></i> Ver Archivo Actual</a>
               </div>
             </div>
           </div>
@@ -851,7 +860,8 @@
    CÁLCULOS EN TIEMPO REAL
 ══════════════════════════════════════════════════════════ */
 function fmtPeso(num) {
-  return '$' + Math.round(num).toLocaleString('es-CO');
+  // Evita truncar los centavos, muestra 2 decimales para rigurosidad contable
+  return '$' + parseFloat(num).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function calcularIVA(prefix) {
@@ -872,7 +882,8 @@ function calcularIVA(prefix) {
 
   const badgeEstado = document.getElementById(prefix + '_estado_badge');
   if (badgeEstado) {
-    if (final_adeudado <= 0 && cancelado > 0) {
+    // Tolerancia contable de 1 centavo por errores de punto flotante en JS
+    if (final_adeudado <= 0.01 && cancelado > 0) {
       badgeEstado.innerHTML = '<span class="badge bg-success" style="font-size:0.6rem;"><i class="bi bi-check-circle me-1"></i>CANCELADO</span>';
     } else {
       badgeEstado.innerHTML = '<span class="badge bg-danger" style="font-size:0.6rem;"><i class="bi bi-hourglass-split me-1"></i>SE DEBE</span>';
@@ -932,7 +943,7 @@ calcularIVA = function(prefix) {
 /* ══════════════════════════════════════════════════════════
    MODAL EDITAR — pre-relleno de datos
 ══════════════════════════════════════════════════════════ */
-function abrirModalEditar(id, nombre, fecha_factura, plazo, fecha_venc, valor_neto, valor_cancelado, retencion, fecha_pago) {
+function abrirModalEditar(id, nombre, fecha_factura, plazo, fecha_venc, valor_neto, valor_cancelado, retencion, fecha_pago, oc_url, cc_url, bp_url) {
   document.getElementById('formEditarFactura').action = '/dashboard/proveedores/' + id + '/editar';
   document.getElementById('e_subtitulo').innerText    = 'ID #' + id + ' — ' + nombre;
   document.getElementById('e_nombre').value           = nombre;
@@ -943,6 +954,21 @@ function abrirModalEditar(id, nombre, fecha_factura, plazo, fecha_venc, valor_ne
   document.getElementById('e_retencion').value        = retencion;
   document.getElementById('e_cancelado').value        = valor_cancelado;
   document.getElementById('e_fecha_pago').value       = fecha_pago;
+
+  // Renderizar Botones de 'Ver Archivo Actual' si existen en Supabase
+  const config = [
+    { url: oc_url, linkId: 'e_link_oc', containerId: 'e_link_oc_container' },
+    { url: cc_url, linkId: 'e_link_cc', containerId: 'e_link_cc_container' },
+    { url: bp_url, linkId: 'e_link_bp', containerId: 'e_link_bp_container' }
+  ];
+  config.forEach(item => {
+    if (item.url && item.url.trim() !== '' && item.url !== 'None') {
+      document.getElementById(item.containerId).classList.remove('d-none');
+      document.getElementById(item.linkId).href = item.url;
+    } else {
+      document.getElementById(item.containerId).classList.add('d-none');
+    }
+  });
 
   // Restablecer labels de archivos
   ['e_lbl_oc','e_lbl_cc','e_lbl_bp'].forEach(id => {
