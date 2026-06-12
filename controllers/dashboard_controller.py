@@ -399,11 +399,11 @@ def nueva_factura_proveedor():
             filename = f"{uuid.uuid4().hex}.{ext}"
             path = f"proveedores/{filename}"
             data = f.read()
-            supabase.storage.from_("documentos").upload(
+            supabase.storage.from_("tesoreria").upload(
                 path, data,
                 {"content-type": f.content_type, "upsert": "false"}
             )
-            return supabase.storage.from_("documentos").get_public_url(path)
+            return supabase.storage.from_("tesoreria").get_public_url(path)
         except Exception as e:
             flash(f"Error subiendo archivo: {e}", "warning")
             return None
@@ -460,11 +460,11 @@ def editar_factura_proveedor(id):
             filename = f"{uuid.uuid4().hex}.{ext}"
             path = f"proveedores/{filename}"
             data = f.read()
-            supabase.storage.from_("documentos").upload(
+            supabase.storage.from_("tesoreria").upload(
                 path, data,
                 {"content-type": f.content_type, "upsert": "false"}
             )
-            return supabase.storage.from_("documentos").get_public_url(path)
+            return supabase.storage.from_("tesoreria").get_public_url(path)
         except Exception as e:
             flash(f"Error subiendo archivo: {e}", "warning")
             return current_url
