@@ -313,7 +313,7 @@ def gestion_materiales_oficina():
 @login_required
 @admin_oficina_required
 def proveedores():
-    from models import ProveedorFactura
+    from models import ProveedorFactura, Proveedor
     usuario = Usuarios.query.get(session.get("user_id"))
     notificaciones = Notificaciones.query.filter_by(
         id_usuario_destino=session["user_id"], leido=False
@@ -321,6 +321,7 @@ def proveedores():
     frase = frase_del_dia()
 
     facturas = ProveedorFactura.query.order_by(ProveedorFactura.fecha_factura.desc()).all()
+    lista_proveedores = Proveedor.query.order_by(Proveedor.nombre.asc()).all()
 
     # Totales globales (usan los @property del modelo)
     total_valor_neto      = sum(float(f.valor_neto or 0) for f in facturas)
@@ -342,7 +343,38 @@ def proveedores():
         total_retencion=total_retencion,
         total_cancelado=total_cancelado,
         total_adeudado_global=total_adeudado_global,
+        proveedores=lista_proveedores,
     )
+
+# ─── POST /dashboard/proveedores/crear ────────────────────
+@dashboard_bp.route("/dashboard/proveedores/crear", methods=["POST"])
+@login_required
+@admin_oficina_required
+def crear_proveedor():
+    from models import Proveedor
+    try:
+        nombre = request.form.get("nombre", "").strip()
+        nit = request.form.get("nit", "").strip()
+        telefono = request.form.get("telefono", "").strip()
+
+        if not nombre:
+            flash("El nombre del proveedor es obligatorio.", "warning")
+            return redirect(url_for("dashboard.proveedores"))
+
+        existe = Proveedor.query.filter(Proveedor.nombre.ilike(nombre)).first()
+        if existe:
+            flash("Ya existe un proveedor con ese nombre.", "warning")
+            return redirect(url_for("dashboard.proveedores"))
+
+        nuevo = Proveedor(nombre=nombre, nit=nit, telefono=telefono)
+        db.session.add(nuevo)
+        db.session.commit()
+        flash("Proveedor registrado correctamente.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al registrar proveedor: {e}", "danger")
+
+    return redirect(url_for("dashboard.proveedores"))
 
 
 # ─── POST /dashboard/proveedores/nueva ────────────────────

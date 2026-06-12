@@ -737,6 +737,19 @@ class DetalleRequisicionOficina(db.Model):
 
 
 # ===========================================
+# 18. Proveedor
+#     Entidad base de proveedores (Directorio).
+# ===========================================
+class Proveedor(db.Model):
+    __tablename__ = "proveedores"
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    nombre = db.Column(db.String(200), nullable=False, unique=True, index=True)
+    nit = db.Column(db.String(50), nullable=True)
+    telefono = db.Column(db.String(50), nullable=True)
+    fecha_registro = db.Column(db.DateTime, default=datetime.utcnow)
+
+# ===========================================
 # 19. ProveedorFactura
 #     Módulo de gestión de facturas de proveedores.
 #     Los campos derivados (iva, valor_total, dias_mora,
