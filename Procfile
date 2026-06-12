@@ -1,1 +1,1 @@
-web: flask --app wsgi db upgrade && gunicorn wsgi:app
+web: bash start.sh
