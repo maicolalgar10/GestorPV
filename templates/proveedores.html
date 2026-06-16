@@ -579,12 +579,6 @@
 <div class="modal fade modal-dark" id="modalNuevaFactura" tabindex="-1">
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
-      <form method="POST"
-            action="{{ url_for('dashboard.nueva_factura_proveedor') }}"
-            enctype="multipart/form-data"
-            id="formNuevaFactura">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
         <!-- Header -->
         <div class="modal-header">
           <div>
@@ -596,6 +590,12 @@
 
         <!-- Body -->
         <div class="modal-body">
+          <form method="POST"
+                action="{{ url_for('dashboard.nueva_factura_proveedor') }}"
+                enctype="multipart/form-data"
+                id="formNuevaFactura">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
           <div class="row g-3">
 
             <!-- ─ Datos básicos ─────────────────────────── -->
