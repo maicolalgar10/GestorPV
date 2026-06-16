@@ -223,7 +223,7 @@ def registrar_avance(id_actividad):
         print("Error al registrar avance:", e)
         flash(f"Error: {str(e)}", "danger")
 
-    return redirect(url_for("dashboard.dashboard_trabajador"))
+    return redirect(url_for("dashboard.dashboard_trabajador") + f"#actividad-{id_actividad}")
 
 
 # ===============================================================
@@ -410,3 +410,28 @@ def seleccion_analisis():
     # Cambiamos Proyectos.creado_en por Proyectos.fecha_inicio
     proyectos = Proyectos.query.filter_by(visible=True).order_by(Proyectos.fecha_inicio.desc()).all()
     return render_template("seleccion_analisis.html", proyectos=proyectos)
+
+
+# ===============================================================
+# HISTORIAL DE AVANCES POR ACTIVIDAD (Trabajador)
+# ===============================================================
+@avances_bp.route("/historial/<int:id_actividad>")
+@login_required
+def historial_actividad(id_actividad):
+    id_usuario = session.get("user_id")
+    
+    if not id_usuario:
+        flash("Debes iniciar sesión para ver el historial.", "warning")
+        return redirect(url_for("auth.login"))
+
+    actividad = Actividades.query.get_or_404(id_actividad)
+    
+    # Obtener historial solo del trabajador actual para esta actividad
+    avances = (
+        db.session.query(Avances)
+        .filter_by(id_actividad=id_actividad, id_usuario=id_usuario)
+        .order_by(Avances.fecha.desc())
+        .all()
+    )
+    
+    return render_template("historial_avances.html", actividad=actividad, avances=avances)

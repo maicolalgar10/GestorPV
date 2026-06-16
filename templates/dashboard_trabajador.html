@@ -370,6 +370,15 @@
       <!-- ===========================PROYECTOS=========================== -->
         <div class="tab-pane fade show active" id="pills-avances" role="tabpanel">
           {% if proyectos %}
+            
+            <!-- Buscador de actividades -->
+            <div class="mb-4">
+               <div class="input-group shadow-sm" style="border-radius: 12px; overflow: hidden;">
+                   <span class="input-group-text bg-white border-end-0 border"><i class="bi bi-search text-muted"></i></span>
+                   <input type="text" id="buscadorActividades" class="form-control border-start-0 border" placeholder="🔍 Buscar actividad por nombre..." onkeyup="filtrarActividades()">
+               </div>
+            </div>
+
             {% for proyecto in proyectos %}
             <div class="accordion mb-4" id="proyectoAccordion{{ proyecto.id_proyecto }}">
               <div class="accordion-item shadow-sm">
@@ -414,7 +423,7 @@
                   {% if proyecto.actividades %}
                   <div class="accordion mb-3" id="actividadesAccordion{{ proyecto.id_proyecto }}">
                     {% for actividad in proyecto.actividades %}
-                    <div class="card actividad-card mb-4 shadow-sm p-3">
+                    <div class="card actividad-card mb-4 shadow-sm p-3" id="actividad-{{ actividad.id_actividad }}">
                       <!-- Clickable area to toggle collapse -->
                       <div class="d-flex justify-content-between align-items-center" 
                            data-bs-toggle="collapse" 
@@ -443,17 +452,23 @@
                             <div class="progress-bar" role="progressbar" style="width: {{ progreso }}%;"></div>
                           </div>
 
-                          <div class="mb-3">
-                            {% set faltan = (actividad.unidades_totales or 0) - (actividad.unidades_avanzadas or 0) %}
-                            {% if faltan <= 0 %}
-                              <span class="badge shadow-sm" style="background-color: #dcfce7; color: #16a34a; font-size: 0.85rem; padding: 6px 12px; border: 1px solid rgba(22,163,74,0.15);">
-                                <i class="bi bi-check-circle-fill"></i> ¡Completado!
-                              </span>
-                            {% else %}
-                              <span class="text-muted small fw-semibold">
-                                <i class="bi bi-info-circle"></i> Faltan: {{ faltan|formato_miles }} unidades
-                              </span>
-                            {% endif %}
+                          <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                              {% set faltan = (actividad.unidades_totales or 0) - (actividad.unidades_avanzadas or 0) %}
+                              {% if faltan <= 0 %}
+                                <span class="badge shadow-sm" style="background-color: #dcfce7; color: #16a34a; font-size: 0.85rem; padding: 6px 12px; border: 1px solid rgba(22,163,74,0.15);">
+                                  <i class="bi bi-check-circle-fill"></i> ¡Completado!
+                                </span>
+                              {% else %}
+                                <span class="text-muted small fw-semibold">
+                                  <i class="bi bi-info-circle"></i> Faltan: {{ faltan|formato_miles }} unidades
+                                </span>
+                              {% endif %}
+                            </div>
+                            
+                            <a href="{{ url_for('avances.historial_actividad', id_actividad=actividad.id_actividad) }}" class="btn btn-sm btn-outline-primary shadow-sm rounded-pill px-3">
+                              <i class="bi bi-clock-history"></i> Ver Historial
+                            </a>
                           </div>
 
                           <!-- =============== FORMULARIO ENVIO DATOS AVANCES ==============  -->
@@ -1136,6 +1151,24 @@ document.addEventListener("click", function (e) {
         menu.style.display = "none";
     }
 });
+
+// Filtrador de actividades
+function filtrarActividades() {
+    let input = document.getElementById('buscadorActividades').value.toLowerCase();
+    let actividades = document.querySelectorAll('.actividad-card');
+    
+    actividades.forEach(card => {
+        let tituloElemento = card.querySelector('strong');
+        if (tituloElemento) {
+            let texto = tituloElemento.innerText.toLowerCase();
+            if (texto.includes(input)) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        }
+    });
+}
 </script>
 
 
