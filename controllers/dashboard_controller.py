@@ -352,6 +352,32 @@ def proveedores():
         deuda_por_proveedor=deuda_por_proveedor,
     )
 
+# ─── GET /dashboard/proveedores/<nombre_proveedor> ────────
+@dashboard_bp.route("/dashboard/proveedores/<string:nombre_proveedor>")
+@login_required
+@admin_oficina_required
+def facturas_proveedor(nombre_proveedor):
+    from models import ProveedorFactura
+    usuario = Usuarios.query.get(session.get("user_id"))
+    notificaciones = Notificaciones.query.filter_by(
+        id_usuario_destino=session["user_id"], leido=False
+    ).order_by(Notificaciones.creado_en.desc()).all()
+    frase = frase_del_dia()
+
+    facturas = ProveedorFactura.query.filter_by(nombre_proveedor=nombre_proveedor).order_by(ProveedorFactura.fecha_factura.desc()).all()
+    
+    deuda_total = sum(f.total_adeudado for f in facturas)
+
+    return render_template(
+        "facturas_proveedor.html",
+        usuario=usuario,
+        notificaciones=notificaciones,
+        frase=frase,
+        facturas=facturas,
+        nombre_proveedor=nombre_proveedor,
+        deuda_total=deuda_total
+    )
+
 # ─── POST /dashboard/proveedores/crear ────────────────────
 @dashboard_bp.route("/dashboard/proveedores/crear", methods=["POST"])
 @login_required
