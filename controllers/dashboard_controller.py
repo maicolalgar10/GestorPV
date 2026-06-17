@@ -323,6 +323,11 @@ def proveedores():
     facturas = ProveedorFactura.query.order_by(ProveedorFactura.fecha_factura.desc()).all()
     lista_proveedores = Proveedor.query.order_by(Proveedor.nombre.asc()).all()
 
+    deuda_por_proveedor = {}
+    for factura in facturas:
+        nombre = factura.nombre_proveedor
+        deuda_por_proveedor[nombre] = deuda_por_proveedor.get(nombre, 0) + float(factura.total_adeudado)
+
     # Totales globales (usan los @property del modelo)
     total_valor_neto      = sum(float(f.valor_neto or 0) for f in facturas)
     total_iva             = sum(f.iva for f in facturas)
@@ -344,6 +349,7 @@ def proveedores():
         total_cancelado=total_cancelado,
         total_adeudado_global=total_adeudado_global,
         proveedores=lista_proveedores,
+        deuda_por_proveedor=deuda_por_proveedor,
     )
 
 # ─── POST /dashboard/proveedores/crear ────────────────────

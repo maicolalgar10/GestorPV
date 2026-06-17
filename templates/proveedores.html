@@ -370,7 +370,51 @@
   </div>
 
   <!-- ═══════════════════════════════════════════════════════
-       TABLA PRINCIPAL
+       DIRECTORIO DE PROVEEDORES
+  ═══════════════════════════════════════════════════════ -->
+  <div class="table-card mb-4">
+    <div class="card-header bg-white border-bottom py-3">
+      <h5 class="mb-0 fw-bold"><i class="bi bi-journal-bookmark-fill me-2 text-primary"></i>Directorio de Proveedores</h5>
+    </div>
+    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+      <table class="table table-hover mb-0" id="tablaDirectorio">
+        <thead style="position: sticky; top: 0; z-index: 1;">
+          <tr>
+            <th>ID</th>
+            <th>Proveedor</th>
+            <th>NIT</th>
+            <th>Teléfono</th>
+            <th class="text-end">Deuda Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in proveedores %}
+          <tr>
+            <td class="text-muted small">{{ p.id }}</td>
+            <td class="fw-semibold">{{ p.nombre }}</td>
+            <td>{{ p.nit or '—' }}</td>
+            <td>{{ p.telefono or '—' }}</td>
+            <td class="text-end">
+              {% set deuda = deuda_por_proveedor.get(p.nombre, 0) %}
+              {% if deuda <= 0 %}
+                <span class="badge bg-success">Paz y Salvo</span>
+              {% else %}
+                <span class="text-danger fw-bold">${{ "{:,.0f}".format(deuda) | replace(",",".") }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" class="text-center text-muted py-4">No hay proveedores registrados</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       TABLA PRINCIPAL DE FACTURAS
   ═══════════════════════════════════════════════════════ -->
   <div class="table-card">
     <div class="table-responsive">
