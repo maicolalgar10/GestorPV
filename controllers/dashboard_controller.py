@@ -334,7 +334,7 @@ def proveedores():
     total_valor_total     = sum(f.valor_total for f in facturas)
     total_retencion       = sum(f.retencion_pesos for f in facturas)
     total_cancelado       = sum(float(f.valor_cancelado or 0) for f in facturas)
-    total_adeudado_global = sum(f.total_adeudado for f in facturas if f.estado_cuenta == "SE DEBE")
+    total_adeudado_global = sum(deuda_por_proveedor.values())
 
     return render_template(
         "proveedores.html",
