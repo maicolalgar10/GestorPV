@@ -236,6 +236,21 @@
               <textarea class="form-control" name="descripcion" rows="3">{{ proyecto.descripcion }}</textarea>
             </div>
 
+            <!-- SubProyectos -->
+            <div class="col-12">
+              <label class="form-label fw-semibold">SubProyectos (Ciudades)</label>
+              <div id="subproyectos_container_editar">
+                {% for sp in proyecto.sub_proyectos %}
+                <div class="input-group mb-2">
+                  <input type="text" class="form-control" name="nombres_subproyectos[]" value="{{ sp.nombre_miniproyecto }}" readonly>
+                </div>
+                {% endfor %}
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="agregarSubproyecto('subproyectos_container_editar')">
+                <i class="bi bi-plus"></i> Agregar Ciudad/Miniproyecto
+              </button>
+            </div>
+
             <!-- Personal -->
             <div class="col-12">
               <div class="section-title">
@@ -295,6 +310,17 @@
             });
         }
     });
+
+    function agregarSubproyecto(containerId) {
+        const container = document.getElementById(containerId);
+        const div = document.createElement('div');
+        div.className = 'input-group mb-2';
+        div.innerHTML = `
+            <input type="text" class="form-control" name="nombres_subproyectos[]" placeholder="Nueva Ciudad/Miniproyecto">
+            <button class="btn btn-outline-danger" type="button" onclick="this.parentElement.remove()"><i class="bi bi-x"></i></button>
+        `;
+        container.appendChild(div);
+    }
 </script>
 </body>
 </html>

@@ -749,6 +749,14 @@ background: rgba(255, 255, 255, 0.85);
                 <div class="mb-3">
                   <label class="form-label">Unidades Totales</label>
                   <input type="number" class="form-control" name="unidades_totales" min="1" required>
+                <div class="mb-3">
+                  <label class="form-label">SubProyecto (Ciudad)</label>
+                  <select class="form-select" name="sub_proyecto_id">
+                    <option value="">-- Sin SubProyecto --</option>
+                    {% for sp in item.proyecto.sub_proyectos %}
+                    <option value="{{ sp.id }}">{{ sp.nombre_miniproyecto }}</option>
+                    {% endfor %}
+                  </select>
                 </div>
               </div>
               <div class="modal-footer">
@@ -843,7 +851,7 @@ background: rgba(255, 255, 255, 0.85);
 
               {% if item.actividades %}
               {% for actividad in item.actividades %}
-              <div class="card actividad-card mb-4 shadow-sm p-3">
+              <div class="card actividad-card mb-4 shadow-sm p-3" data-subproyecto-id="{{ actividad.sub_proyecto_id or 0 }}">
                 <div class="d-flex justify-content-between align-items-start mb-2">
                   <div>
                     <h6 class="fw-bold mb-1 text-dark">{{ actividad.nombre }}</h6>
@@ -931,6 +939,14 @@ background: rgba(255, 255, 255, 0.85);
                           <label class="form-label">Unidades Totales</label>
                           <input type="number" class="form-control" name="unidades_totales" min="1"
                             value="{{ actividad.unidades_totales }}" required>
+                        <div class="mb-3">
+                          <label class="form-label">SubProyecto (Ciudad)</label>
+                          <select class="form-select" name="sub_proyecto_id">
+                            <option value="">-- Sin SubProyecto --</option>
+                            {% for sp in item.proyecto.sub_proyectos %}
+                            <option value="{{ sp.id }}" {% if actividad.sub_proyecto_id == sp.id %}selected{% endif %}>{{ sp.nombre_miniproyecto }}</option>
+                            {% endfor %}
+                          </select>
                         </div>
                       </div>
                       <div class="modal-footer">
@@ -1329,6 +1345,18 @@ background: rgba(255, 255, 255, 0.85);
                     <textarea class="form-control" name="descripcion" rows="3"></textarea>
                   </div>
 
+                  <div class="col-12">
+                    <label class="form-label">SubProyectos (Ciudades)</label>
+                    <div id="subproyectos_container_nuevo">
+                      <div class="input-group mb-2">
+                        <input type="text" class="form-control" name="nombres_subproyectos[]" placeholder="Ej: Bogotá">
+                      </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="agregarSubproyecto('subproyectos_container_nuevo')">
+                      <i class="bi bi-plus"></i> Agregar Ciudad/Miniproyecto
+                    </button>
+                  </div>
+
                 </div>
               </div>
 
@@ -1407,6 +1435,30 @@ background: rgba(255, 255, 255, 0.85);
           // Inicializar en modales (para edición)
           document.addEventListener('shown.bs.modal', function (e) {
             initCheckboxes(e.target);
+          });
+
+          // Agregar Subproyecto
+          window.agregarSubproyecto = function(containerId) {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = 'input-group mb-2';
+            div.innerHTML = `
+              <input type="text" class="form-control" name="nombres_subproyectos[]" placeholder="Nueva Ciudad/Miniproyecto">
+              <button class="btn btn-outline-danger" type="button" onclick="this.parentElement.remove()"><i class="bi bi-x"></i></button>
+            `;
+            container.appendChild(div);
+          };
+
+          // Colores de Actividades por SubProyecto
+          const colores = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#6f42c1'];
+          document.querySelectorAll('.actividad-card').forEach(card => {
+            const spId = parseInt(card.getAttribute('data-subproyecto-id'), 10);
+            if (spId > 0) {
+              const color = colores[spId % colores.length];
+              card.style.borderLeft = `5px solid ${color}`;
+            } else {
+              card.style.borderLeft = `5px solid #858796`; // Sin subproyecto
+            }
           });
         });
       </script>

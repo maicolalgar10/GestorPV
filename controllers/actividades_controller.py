@@ -14,14 +14,14 @@ def agregar_actividad():
         descripcion = request.form.get('descripcion')
         unidades_totales = int(request.form.get('unidades_totaleas', 0))
         proyecto_id = request.form.get('proyecto_id')
-        ubicacion_id = request.form.get('ubicacion_id')  # opcional
+        sub_proyecto_id = request.form.get('sub_proyecto_id')  # opcional
 
         actividad = Actividades(
             nombre=nombre,
             descripcion=descripcion,
             unidades_totales=unidades_totales,
             id_proyecto=proyecto_id,
-            id_ubicacion=int(ubicacion_id) if ubicacion_id else None
+            sub_proyecto_id=int(sub_proyecto_id) if sub_proyecto_id else None
         )
 
         db.session.add(actividad)
@@ -45,6 +45,8 @@ def editar_actividad(id_actividad):
         actividad.nombre = request.form['nombre'].strip()
         actividad.descripcion = request.form.get('descripcion')
         actividad.unidades_totales = int(request.form.get('unidades_totales', 0))
+        sub_proyecto_id = request.form.get('sub_proyecto_id')
+        actividad.sub_proyecto_id = int(sub_proyecto_id) if sub_proyecto_id else None
         db.session.commit()
         flash("Actividad actualizada correctamente", "success")
     except Exception as e:

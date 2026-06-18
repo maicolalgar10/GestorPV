@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from models import (
     db, Proyectos, Personal, Vehiculos, ProyectoPersonal,
     Asistencia, VehiculoProyecto, Materiales, MaterialesProyecto,
-    Actividades, Avances, ProyectoUbicacion, MovimientoVehiculo,
+    Actividades, Avances, SubProyectos, MovimientoVehiculo,
     HistorialMateriales
 )
 from sqlalchemy import func, and_, or_
@@ -135,12 +135,22 @@ def manage_proyectos():
                                     cantidad=cantidad
                                 ))
                                 material.cantidad -= cantidad
-                            else:
                                 flash(
                                     f"Stock insuficiente de {material.nombre} "
                                     f"(Disponible: {material.cantidad}, Solicitado: {cantidad})",
                                     "warning"
                                 )
+
+            # ===============================================
+            # GUARDAR SUBPROYECTOS (CIUDADES / MINIPROYECTOS)
+            # ===============================================
+            nombres_subproyectos = request.form.getlist('nombres_subproyectos[]')
+            for nombre_sp in nombres_subproyectos:
+                if nombre_sp.strip():
+                    db.session.add(SubProyectos(
+                        proyecto_id=nuevo_proyecto.id_proyecto,
+                        nombre_miniproyecto=nombre_sp.strip()
+                    ))
 
             db.session.commit()
             flash("Proyecto creado correctamente con asignaciones y materiales", "success")
@@ -468,6 +478,24 @@ def editar_proyecto(id_proyecto):
                                 cantidad=cantidad
                             ))
 
+            # ================================
+            # ACTUALIZAR SUBPROYECTOS
+            # ================================
+            nombres_subproyectos = request.form.getlist('nombres_subproyectos[]')
+            
+            # Para no borrar actividades ya vinculadas, no haremos DROP completo. 
+            # Si se desea permitir eliminar, se requeriría confirmar que no tiene actividades.
+            # Por simplicidad, agregaremos los nuevos que vengan en el repeater y tengan ID vacío o no existan.
+            for nombre_sp in nombres_subproyectos:
+                if nombre_sp.strip():
+                    # Check if already exists for this project (basic deduplication)
+                    exists = SubProyectos.query.filter_by(proyecto_id=id_proyecto, nombre_miniproyecto=nombre_sp.strip()).first()
+                    if not exists:
+                        db.session.add(SubProyectos(
+                            proyecto_id=id_proyecto,
+                            nombre_miniproyecto=nombre_sp.strip()
+                        ))
+
             db.session.commit()
             flash("Proyecto actualizado correctamente", "success")
             return redirect(url_for('proyectos.manage_proyectos'))
@@ -610,9 +638,11 @@ def agregar_actividad(id_proyecto):
         nombre = request.form['nombre']
         descripcion = request.form.get('descripcion')
         unidades_totales = int(request.form.get('unidades_totales', 0))
+        sub_proyecto_id = request.form.get('sub_proyecto_id')
 
         nueva_actividad = Actividades(
             id_proyecto=id_proyecto,
+            sub_proyecto_id=int(sub_proyecto_id) if sub_proyecto_id else None,
             nombre=nombre,
             descripcion=descripcion,
             unidades_totales=unidades_totales
@@ -628,73 +658,7 @@ def agregar_actividad(id_proyecto):
     return redirect(url_for('proyectos.manage_proyectos'))
 
 
-# ===============================================================
-#  AGREGAR UBICACIÓN A UN PROYECTO
-# ===============================================================
-@proyectos_bp.route('/proyecto/<int:id_proyecto>/agregar_ubicacion', methods=['POST'])
-@login_required
-@admin_required
-def agregar_ubicacion(id_proyecto):
-    try:
-        nombre = request.form['nombre']
-        direccion = request.form.get('direccion')
-        fecha_inicio = dt.strptime(request.form['fecha_inicio'], "%Y-%m-%d").date()
-        fecha_fin_str = request.form.get('fecha_fin')
-        fecha_fin = dt.strptime(fecha_fin_str, "%Y-%m-%d").date() if fecha_fin_str else None
-        estado = request.form.get('estado', 'Planeado')
 
-        # Verificar si ya existe una ubicación con el mismo nombre en este proyecto
-        existe = ProyectoUbicacion.query.filter_by(proyecto_id=id_proyecto, nombre=nombre).first()
-        if existe:
-            flash(f"Ya existe una ubicación con el nombre '{nombre}' para este proyecto.", "warning")
-            return redirect(url_for('proyectos.manage_proyectos'))
-
-        nueva_ubicacion = ProyectoUbicacion(
-            proyecto_id=id_proyecto,
-            nombre=nombre,
-            direccion=direccion,
-            fecha_inicio=fecha_inicio,
-            fecha_fin=fecha_fin,
-            estado=estado,
-            progreso=0
-        )
-        db.session.add(nueva_ubicacion)
-        db.session.commit()
-        flash("Ubicación agregada correctamente al proyecto", "success")
-
-    except Exception as e:
-        db.session.rollback()
-        flash(f"Error al crear la ubicación: {str(e)}", "danger")
-    
-    return redirect(url_for('proyectos.manage_proyectos'))
-
-
-# ===============================================================
-#  EDITAR UBICACIÓN DE UN PROYECTO
-# ===============================================================
-@proyectos_bp.route('/proyecto/ubicacion/<int:id_ubicacion>/editar', methods=['POST'])
-@login_required
-@admin_required
-def editar_ubicacion(id_ubicacion):
-    ubicacion = ProyectoUbicacion.query.get_or_404(id_ubicacion)
-    
-    try:
-        ubicacion.nombre = request.form['nombre']
-        ubicacion.direccion = request.form.get('direccion')
-        ubicacion.fecha_inicio = dt.strptime(request.form['fecha_inicio'], "%Y-%m-%d").date()
-        fecha_fin_str = request.form.get('fecha_fin')
-        ubicacion.fecha_fin = dt.strptime(fecha_fin_str, "%Y-%m-%d").date() if fecha_fin_str else None
-        ubicacion.estado = request.form.get('estado', ubicacion.estado)
-        ubicacion.progreso = int(request.form.get('progreso', ubicacion.progreso))
-
-        db.session.commit()
-        flash("Ubicación actualizada correctamente", "success")
-
-    except Exception as e:
-        db.session.rollback()
-        flash(f"Error al editar la ubicación: {str(e)}", "danger")
-    
-    return redirect(url_for('proyectos.manage_proyectos'))
 
 
 # ===============================================================

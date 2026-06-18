@@ -94,7 +94,7 @@ class Proyectos(db.Model):
     materiales = db.relationship("MaterialesProyecto", back_populates="proyecto", cascade="all, delete-orphan")
     asistencias = db.relationship("Asistencia", back_populates="proyecto", cascade="all, delete-orphan")
     personal_asignado = db.relationship("ProyectoPersonal", back_populates="proyecto", cascade="all, delete-orphan")
-    ubicaciones = db.relationship("ProyectoUbicacion", back_populates="proyecto", cascade="all, delete-orphan")
+    sub_proyectos = db.relationship("SubProyectos", back_populates="proyecto", cascade="all, delete-orphan")
     horarios = db.relationship("Horario", back_populates="proyecto", cascade="all, delete-orphan")
     asignaciones_diarias = db.relationship("AsignacionDiaria", back_populates="proyecto", cascade="all, delete-orphan")
 
@@ -126,34 +126,21 @@ class Proyectos(db.Model):
 
 
 # ===========================================
-# 3.1 ProyectoUbicacion (avance por ciudad/zona)
+# 3.1 SubProyectos (Ciudades / Miniproyectos)
 # ===========================================
-class ProyectoUbicacion(db.Model):
-    __tablename__ = 'proyecto_ubicacion'
+class SubProyectos(db.Model):
+    __tablename__ = 'sub_proyectos'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     proyecto_id = db.Column(
-            db.Integer,
-            db.ForeignKey('proyectos.id_proyecto', ondelete='CASCADE', onupdate='CASCADE'),
-            nullable=False
-        )
-    nombre = db.Column(db.String(120), nullable=False)   # Ej: Bogotá
-    direccion = db.Column(db.String(200))                # Opcional: dirección exacta
-    fecha_inicio = db.Column(db.Date, nullable=False)
-    fecha_fin = db.Column(db.Date, nullable=True)
-    estado = db.Column(
-            db.Enum('Planeado', 'En ejecución', 'Finalizado', name='estado_ubicacion_enum'),
-            default='Planeado',
-            nullable=False
-        )
-    progreso = db.Column(db.Integer, default=0)  # % de avance
+        db.Integer,
+        db.ForeignKey('proyectos.id_proyecto', ondelete='CASCADE', onupdate='CASCADE'),
+        nullable=False
+    )
+    nombre_miniproyecto = db.Column(db.String(100), nullable=False)
 
-    proyecto = db.relationship('Proyectos', back_populates='ubicaciones')
-    actividades = db.relationship("Actividades", back_populates="ubicacion", cascade="all, delete-orphan")
-
-    __table_args__ = (
-            db.UniqueConstraint('proyecto_id', 'nombre', name='uix_proyecto_ubicacion_nombre'),
-        )
+    proyecto = db.relationship('Proyectos', back_populates='sub_proyectos')
+    actividades = db.relationship("Actividades", back_populates="sub_proyecto", cascade="all, delete-orphan")
 
 
 # ===========================================
@@ -164,7 +151,7 @@ class Actividades(db.Model):
 
     id_actividad = db.Column(db.Integer, primary_key=True, autoincrement=True)
     id_proyecto = db.Column(db.Integer, db.ForeignKey("proyectos.id_proyecto", ondelete="CASCADE"), nullable=False, index=True)  # ✅ ÍNDICE
-    id_ubicacion = db.Column(db.Integer, db.ForeignKey("proyecto_ubicacion.id", ondelete="CASCADE"), nullable=True)
+    sub_proyecto_id = db.Column(db.Integer, db.ForeignKey("sub_proyectos.id", ondelete="SET NULL"), nullable=True)
 
     nombre = db.Column(db.String(150), nullable=False)
     descripcion = db.Column(db.Text)
@@ -172,7 +159,7 @@ class Actividades(db.Model):
 
     # Relaciones
     proyecto = db.relationship("Proyectos", back_populates="actividades")
-    ubicacion = db.relationship("ProyectoUbicacion", back_populates="actividades")
+    sub_proyecto = db.relationship("SubProyectos", back_populates="actividades")
     avances = db.relationship("Avances", back_populates="actividad", cascade="all, delete-orphan")
 
     
