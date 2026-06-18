@@ -437,12 +437,12 @@
             <!-- SELECCIÓN DE BANCO -->
             <div class="mb-3" id="divBancoAnticipo" style="display: none;">
               <label class="form-label fw-semibold text-primary"><i class="bi bi-bank"></i> Banco destino para el Anticipo</label>
-              <select name="banco_id" class="form-select border-primary" id="selectBancoAnticipo">
-                <option value="">Seleccione un banco (Requerido si hay anticipo)</option>
+              <input type="text" name="banco_nombre" class="form-control border-primary" id="selectBancoAnticipo" list="bancosList" placeholder="Ingrese nombre del banco (Requerido si hay anticipo)">
+              <datalist id="bancosList">
                 {% for b in bancos %}
-                  <option value="{{ b.id }}">{{ b.nombre_banco }} ({{ b.numero_cuenta }})</option>
+                  <option value="{{ b.nombre_banco }} - {{ b.numero_cuenta }}"></option>
                 {% endfor %}
-              </select>
+              </datalist>
             </div>
           </div>
 

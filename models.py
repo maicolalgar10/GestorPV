@@ -628,8 +628,6 @@ class Bancos(db.Model):
     # Nuevos campos específicos para Belvo
     belvo_link_id = db.Column(db.String(100), nullable=True)
     belvo_institution = db.Column(db.String(100), nullable=True)
-    
-    movimientos = db.relationship("Movimientos", back_populates="banco", cascade="all, delete-orphan")
 
 
 # ===========================================
@@ -646,11 +644,7 @@ class Movimientos(db.Model):
         nullable=True # Puede ser nulo si es un gasto que no pertenece a un contrato
     )
     
-    banco_id = db.Column(
-        db.Integer,
-        db.ForeignKey("bancos.id", ondelete="CASCADE"),
-        nullable=False
-    )
+    banco = db.Column(db.String(100), nullable=True)
     
     tipo = db.Column(
         db.Enum('INGRESO', 'EGRESO', name='tipo_movimiento_enum'),
@@ -679,11 +673,6 @@ class Movimientos(db.Model):
     contrato = db.relationship(
         "Contrato",
         backref=db.backref("movimientos", cascade="all, delete-orphan")
-    )
-    
-    banco = db.relationship(
-        "Bancos",
-        back_populates="movimientos"
     )
 
 

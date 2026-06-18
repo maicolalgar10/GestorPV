@@ -33,7 +33,7 @@ def crear_contrato_desde_cotizacion(id_cotizacion):
         valor_total = Decimal(request.form.get("valor_total", 0))
         anticipo_porcentaje = Decimal(request.form.get("anticipo_porcentaje", 0))
         retencion_garantia_porcentaje = Decimal(request.form.get("retencion_garantia_porcentaje", 0))
-        banco_id = request.form.get("banco_id")
+        banco_nombre = request.form.get("banco_nombre")
 
         if valor_total <= 0:
             flash("El valor total del contrato debe ser mayor a 0", "danger")
@@ -67,20 +67,14 @@ def crear_contrato_desde_cotizacion(id_cotizacion):
 
         # Crear el movimiento inicial de anticipo si aplica
         if valor_anticipo > 0:
-            if not banco_id:
-                flash("Debe seleccionar un banco para registrar el anticipo", "danger")
-                db.session.rollback()
-                return redirect(request.referrer)
-
-            banco = Bancos.query.get(banco_id)
-            if not banco:
-                flash("El banco seleccionado no existe", "danger")
+            if not banco_nombre:
+                flash("Debe proporcionar un nombre de banco para registrar el anticipo", "danger")
                 db.session.rollback()
                 return redirect(request.referrer)
 
             movimiento_anticipo = Movimientos(
                 contrato_id=contrato.id,
-                banco_id=banco.id,
+                banco=banco_nombre,
                 tipo='INGRESO',
                 categoria='anticipo',
                 valor_bruto=valor_anticipo,
@@ -91,9 +85,6 @@ def crear_contrato_desde_cotizacion(id_cotizacion):
                 numero_documento="Anticipo Inicial",
             )
             db.session.add(movimiento_anticipo)
-            
-            # Actualizar saldo del banco
-            banco.saldo_actual = (banco.saldo_actual or 0) + valor_anticipo
 
         db.session.commit()
 
@@ -144,13 +135,6 @@ def editar_contrato(id_contrato):
         if movimiento_anticipo:
             movimiento_anticipo.valor_bruto = nuevo_valor_anticipo
             movimiento_anticipo.valor_neto = nuevo_valor_anticipo
-            
-            # Actualizar Banco
-            if movimiento_anticipo.banco:
-                if movimiento_anticipo.tipo == 'INGRESO':
-                    movimiento_anticipo.banco.saldo_actual = (movimiento_anticipo.banco.saldo_actual or Decimal("0")) + diferencia_anticipo
-                elif movimiento_anticipo.tipo == 'EGRESO':
-                    movimiento_anticipo.banco.saldo_actual = (movimiento_anticipo.banco.saldo_actual or Decimal("0")) - diferencia_anticipo
 
         db.session.commit()
         flash("Contrato y Tesorería actualizados exitosamente ✅", "success")
@@ -201,8 +185,7 @@ def ver_tesoreria():
             "contract": str(m.contrato_id) if m.contrato_id else 'GENERAL',
             "type": m.tipo.lower(),
             "amount": float(m.valor_neto or 0) if m.tipo == 'INGRESO' else float(-(m.valor_neto or 0)),
-            "bank": m.banco.nombre_banco if m.banco else 'N/A',
-            "banco_id": m.banco_id,
+            "bank": m.banco or 'N/A',
             "category": m.categoria,
             "archivo_soporte": m.archivo_soporte
         })
@@ -244,10 +227,9 @@ def ver_bancos():
 def registrar_movimiento():
     # Este endpoint recibe un movimiento general. Puede o no tener contrato
     contrato_id_raw = request.form.get("contrato_id")
-    banco_id_raw = request.form.get("banco_id")
+    banco_nombre = request.form.get("banco_nombre")
     
     try:
-        banco = Bancos.query.get_or_404(int(banco_id_raw))
         contrato = Contrato.query.get(int(contrato_id_raw)) if contrato_id_raw else None
         
         tipo = request.form.get("tipo") # INGRESO o EGRESO
@@ -303,7 +285,7 @@ def registrar_movimiento():
             
         nuevo_movimiento = Movimientos(
             contrato_id=contrato.id if contrato else None,
-            banco_id=banco.id,
+            banco=banco_nombre,
             tipo=tipo,
             categoria=categoria,
             valor_bruto=valor_bruto,
@@ -316,15 +298,9 @@ def registrar_movimiento():
         )
         
         db.session.add(nuevo_movimiento)
-        
-        # Actualizar Saldo Bancario
-        if tipo == "INGRESO":
-            banco.saldo_actual = (banco.saldo_actual or Decimal("0")) + valor_neto
-        elif tipo == "EGRESO":
-            banco.saldo_actual = (banco.saldo_actual or Decimal("0")) - valor_neto
             
         db.session.commit()
-        flash("Movimiento registrado y saldo actualizado ✅", "success")
+        flash("Movimiento registrado correctamente ✅", "success")
         
     except Exception as e:
         db.session.rollback()
@@ -358,7 +334,7 @@ def crear_banco():
         if saldo_inicial > 0:
             movimiento_inicial = Movimientos(
                 contrato_id=None,
-                banco_id=nuevo_banco.id,
+                banco=nuevo_banco.nombre_banco,
                 tipo='INGRESO',
                 categoria='saldo_inicial',
                 valor_bruto=saldo_inicial,

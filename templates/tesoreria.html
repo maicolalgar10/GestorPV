@@ -1430,17 +1430,21 @@ function Tesoreria() {
       textTransform: "uppercase",
       letterSpacing: "0.05em"
     }
-  }, "Banco Destino/Origen"), /*#__PURE__*/React.createElement("select", {
+  }, "Banco Destino/Origen"), /*#__PURE__*/React.createElement("input", {
     className: "inp",
-    name: "banco_id",
+    name: "banco_nombre",
+    list: "bancosListReact",
+    placeholder: "Ej: Bancolombia",
     style: {
       width: "100%"
     },
     required: true
+  }), /*#__PURE__*/React.createElement("datalist", {
+    id: "bancosListReact"
   }, BANKS.map(b => /*#__PURE__*/React.createElement("option", {
     key: b.id,
-    value: b.id
-  }, b.name, " (", b.account, ")"))))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    value: `${b.name} - ${b.account}`
+  }))))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "#4A5568",
