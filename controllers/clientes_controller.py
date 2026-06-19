@@ -104,3 +104,34 @@ def crear_reporte():
         flash('Error al crear el reporte. Verifica los datos.', 'danger')
 
     return redirect(url_for('clientes.index'))
+
+@clientes_bp.route('/crear', methods=['POST'])
+def crear_cliente():
+    if 'usuario_id' not in session:
+        return redirect(url_for('auth.login'))
+
+    try:
+        nombre_cliente = request.form.get('nombre_cliente')
+        nit = request.form.get('nit')
+        contacto = request.form.get('contacto')
+
+        if not nombre_cliente:
+            flash('El nombre del cliente es obligatorio.', 'warning')
+            return redirect(url_for('clientes.index'))
+
+        nuevo_cliente = Clientes(
+            nombre_cliente=nombre_cliente,
+            nit=nit,
+            contacto=contacto
+        )
+
+        db.session.add(nuevo_cliente)
+        db.session.commit()
+        
+        flash('Cliente registrado exitosamente.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al crear cliente: {e}")
+        flash('Error al registrar el cliente.', 'danger')
+
+    return redirect(url_for('clientes.index'))

@@ -157,6 +157,9 @@
       <a href="{{ url_for('dashboard.dashboard_oficina') }}" class="btn-back">
         <i class="bi bi-house me-1"></i> Inicio
       </a>
+      <button class="btn btn-outline-light rounded-pill fw-semibold border-opacity-50" data-bs-toggle="modal" data-bs-target="#modalCrearCliente">
+        <i class="bi bi-person-plus me-1"></i> Nuevo Cliente
+      </button>
       <button class="btn btn-light rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#modalCrearReporte">
         <i class="bi bi-plus-circle me-1"></i> Registrar Reporte
       </button>
@@ -348,6 +351,45 @@
       <div class="modal-footer d-flex justify-content-end gap-2 mt-4 border-top pt-3 bg-dark" style="border-color:#3f3f5c !important;">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
         <button type="submit" form="formCrearReporte" class="btn btn-confirm px-4"><i class="bi bi-save me-1"></i> Guardar Reporte</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CREAR CLIENTE (DARK) -->
+<div class="modal fade modal-dark" id="modalCrearCliente" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>Registrar Nuevo Cliente</h5>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <form method="POST" id="formCrearCliente" action="{{ url_for('clientes.crear_cliente') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="row g-3">
+            <div class="col-12">
+              <label>Nombre del Cliente o Razón Social *</label>
+              <input type="text" name="nombre_cliente" class="form-control" required placeholder="Ej. Constructora ABC S.A.S">
+            </div>
+            <div class="col-12">
+              <label>NIT / Documento</label>
+              <input type="text" name="nit" class="form-control" placeholder="Ej. 900.123.456-7">
+            </div>
+            <div class="col-12">
+              <label>Datos de Contacto</label>
+              <input type="text" name="contacto" class="form-control" placeholder="Teléfono, Correo, Persona a cargo">
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer d-flex justify-content-end gap-2 mt-2 border-top pt-3 bg-dark" style="border-color:#3f3f5c !important;">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" form="formCrearCliente" class="btn btn-confirm px-4"><i class="bi bi-save me-1"></i> Guardar Cliente</button>
       </div>
     </div>
   </div>
