@@ -309,6 +309,25 @@ def manage_proyectos():
             for t in personal_asignado
         ]
 
+        # Agrupar actividades por subproyecto en Python para evitar fallos del groupby de Jinja
+        act_agrupadas_dict = {}
+        for act in actividades_data:
+            sp_id = act.get("sub_proyecto_id")
+            if sp_id not in act_agrupadas_dict:
+                act_agrupadas_dict[sp_id] = []
+            act_agrupadas_dict[sp_id].append(act)
+
+        actividades_agrupadas = []
+        for sp_id, acts in act_agrupadas_dict.items():
+            actividades_agrupadas.append({
+                "sub_proyecto_id": sp_id,
+                "nombre_sub_proyecto": acts[0].get("nombre_sub_proyecto") if sp_id else "Actividades Generales",
+                "actividades": acts
+            })
+        
+        # Ordenar (primero las generales, luego por ID)
+        actividades_agrupadas.sort(key=lambda x: (1 if x["sub_proyecto_id"] is not None else 0, x["sub_proyecto_id"] or 0))
+
         proyectos_data.append({
             "proyecto": p,
             "progreso": progreso_fecha,
@@ -321,6 +340,7 @@ def manage_proyectos():
             "materiales": materiales_data,
             "vehiculos": vehiculos_data,
             "actividades": actividades_data,
+            "actividades_agrupadas": actividades_agrupadas,
             "materiales_asignados": {m["id"]: m["cantidad"] for m in materiales_data}
         })
 

@@ -361,10 +361,11 @@ background: rgba(255, 255, 255, 0.85);
               {% if item.actividades %}
               <div class="accordion accordion-flush" id="accordionActividades{{ item.proyecto.id_proyecto }}">
               {% set colores = ['#007bff', '#28a745', '#dc3545', '#ffc107', '#17a2b8', '#6610f2', '#e83e8c', '#fd7e14', '#20c997'] %}
-              {% for sub_proyecto_id, actividades_grupo in item.actividades|groupby('sub_proyecto_id') %}
-                {% set sp_id = sub_proyecto_id if sub_proyecto_id else 'None' %}
-                {% set color_grupo = colores[sub_proyecto_id % (colores|length)] if sub_proyecto_id else '#6c757d' %}
-                {% set nombre_grupo = actividades_grupo[0].nombre_sub_proyecto if sub_proyecto_id else 'Actividades Generales' %}
+              {% for grupo in item.actividades_agrupadas %}
+                {% set sp_id = grupo.sub_proyecto_id if grupo.sub_proyecto_id else 'None' %}
+                {% set color_grupo = colores[grupo.sub_proyecto_id % (colores|length)] if grupo.sub_proyecto_id else '#6c757d' %}
+                {% set nombre_grupo = grupo.nombre_sub_proyecto %}
+                {% set actividades_grupo = grupo.actividades %}
                 
                 <div class="accordion-item mb-3 shadow-sm" style="border-radius: 12px; border-left: 5px solid {{ color_grupo }}; overflow: hidden;">
                   <h2 class="accordion-header" id="headingAct{{ item.proyecto.id_proyecto }}-{{ sp_id }}">
