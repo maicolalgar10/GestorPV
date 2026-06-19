@@ -3,7 +3,7 @@ from datetime import datetime
 import os
 import uuid
 
-from models import db, Clientes, ReporteClientes, Usuarios, Contrato
+from models import db, Clientes, ReporteClientes, Usuarios, Contrato, ContratosClientes
 from supabase_client import supabase
 
 clientes_bp = Blueprint('clientes', __name__, url_prefix='/clientes')
@@ -41,8 +41,8 @@ def index():
         
     usuario = Usuarios.query.get(session['user_id'])
     
-    # 1. Traer todos los contratos existentes
-    contratos_lista = Contrato.query.all()
+    # 1. Traer todos los contratos de clientes existentes
+    contratos_lista = ContratosClientes.query.all()
     
     # 2. Traer todos los reportes (o podemos usar la relación de contratos en la vista)
     reportes_lista = ReporteClientes.query.all()
@@ -66,7 +66,7 @@ def crear_reporte():
         return redirect(url_for('usuarios.login'))
 
     try:
-        contrato_id = request.form.get('contrato_id')
+        contrato_cliente_id = request.form.get('contrato_cliente_id')
         valor_factura = float(request.form.get('valor_factura', 0))
         porcentaje_rete_garantia = float(request.form.get('porcentaje_rete_garantia', 0))
         retencion_ley = float(request.form.get('retencion_ley', 0))
@@ -85,7 +85,7 @@ def crear_reporte():
         url_comprobante = subir_archivo_supabase(comprobante_pago)
 
         nuevo_reporte = ReporteClientes(
-            contrato_id=contrato_id,
+            contrato_cliente_id=contrato_cliente_id,
             actas_pdf_url=url_actas,
             valor_factura=valor_factura,
             factura_pdf_url=url_factura,
@@ -137,37 +137,40 @@ def crear_cliente():
         print(f"Error al crear cliente: {str(e)}")
         return f"Error interno: {str(e)}", 500
 
-@clientes_bp.route('/crear_contrato_rapido', methods=['POST'])
-def crear_contrato_rapido():
+@clientes_bp.route('/crear_contrato_cliente', methods=['POST'])
+def crear_contrato_cliente():
     if 'user_id' not in session:
         return redirect(url_for('usuarios.login'))
 
     try:
         cliente_id = request.form.get('cliente_id')
-        proyecto_nombre = request.form.get('proyecto')
+        proyecto_nombre = request.form.get('nombre_proyecto')
         valor_total = float(request.form.get('valor_total', 0))
+        porcentaje_retegarantia = float(request.form.get('porcentaje_retegarantia', 0))
         
-        # Encontrar el cliente para guardar también el nombre en la columna 'cliente' de Contrato
+        # Archivo PDF del contrato (si lo hay)
+        contrato_pdf = request.files.get('contrato_pdf')
+        url_contrato = subir_archivo_supabase(contrato_pdf) if contrato_pdf else None
+        
         cliente = Clientes.query.get(cliente_id)
         if not cliente:
             flash("Cliente no encontrado", "danger")
             return redirect(url_for('clientes.index'))
 
-        nuevo_contrato = Contrato(
+        nuevo_contrato_cliente = ContratosClientes(
             cliente_id=cliente.id,
-            cliente=cliente.nombre_cliente,
-            proyecto=proyecto_nombre,
+            nombre_proyecto=proyecto_nombre,
             valor_total=valor_total,
-            estado="activo",
-            cotizacion_id=None # Contrato rápido sin cotización
+            porcentaje_retegarantia=porcentaje_retegarantia,
+            archivo_pdf=url_contrato
         )
 
-        db.session.add(nuevo_contrato)
+        db.session.add(nuevo_contrato_cliente)
         db.session.commit()
-        flash('Contrato creado exitosamente.', 'success')
+        flash('Contrato (Proyecto) creado exitosamente.', 'success')
     except Exception as e:
         db.session.rollback()
-        print(f"Error al crear contrato rápido: {e}")
+        print(f"Error al crear contrato cliente: {e}")
         flash(f'Error al crear contrato: {e}', 'danger')
 
     return redirect(url_for('clientes.index'))

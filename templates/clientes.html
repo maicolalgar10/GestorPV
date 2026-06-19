@@ -183,10 +183,10 @@
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ c.id }}" style="background: white; color: #1f2937; font-weight: 600;">
               <div class="d-flex w-100 justify-content-between align-items-center me-3 flex-wrap gap-2">
                 <div>
-                  <span class="badge bg-primary me-2">CONTRATO #{{ c.id }}</span> 
-                  <strong>{{ c.cliente }}</strong> 
+                  <span class="badge bg-primary me-2">PROYECTO #{{ c.id }}</span> 
+                  <strong>{{ c.cliente.nombre_cliente }}</strong> 
                   <span class="text-muted mx-1">&mdash;</span> 
-                  <span class="text-muted">{{ c.proyecto }}</span>
+                  <span class="text-muted">{{ c.nombre_proyecto }}</span>
                 </div>
                 <div class="text-end d-flex gap-4" style="font-size: 0.85rem;">
                    <span>Valor Total: <strong class="text-dark">${{ "{:,.0f}".format(c.valor_total) | replace(",",".") }}</strong></span>
@@ -276,12 +276,12 @@
             <!-- SECCIÓN 1: VINCULACIÓN -->
             <div class="col-12"><div class="section-sep mt-0"><i class="bi bi-link-45deg me-1"></i>1. Vincular a Contrato</div></div>
             <div class="col-md-8">
-              <label>Contrato *</label>
+              <label>Contrato / Proyecto *</label>
               <div class="d-flex gap-2">
-                <select name="contrato_id" id="contrato_id" class="form-select" required>
-                  <option value="">-- Seleccionar Contrato --</option>
+                <select name="contrato_cliente_id" id="contrato_cliente_id" class="form-select" required>
+                  <option value="">-- Seleccionar Proyecto --</option>
                   {% for c in contratos %}
-                  <option value="{{ c.id }}">{{ c.cliente }} - {{ c.proyecto }} (Total: ${{ "{:,.0f}".format(c.valor_total) | replace(",",".") }})</option>
+                  <option value="{{ c.id }}">{{ c.cliente.nombre_cliente }} - {{ c.nombre_proyecto }} (Total: ${{ "{:,.0f}".format(c.valor_total) | replace(",",".") }})</option>
                   {% endfor %}
                 </select>
                 <button type="button" class="btn btn-outline-primary rounded-3 text-nowrap" data-bs-toggle="modal" data-bs-target="#modalCrearContrato">
@@ -398,10 +398,10 @@
       </div>
 
       <div class="modal-body">
-        <form method="POST" id="formCrearContrato" action="{{ url_for('clientes.crear_contrato_rapido') }}">
+        <form method="POST" id="formCrearContrato" action="{{ url_for('clientes.crear_contrato_cliente') }}" enctype="multipart/form-data">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="alert alert-info py-2" style="font-size:0.8rem;">
-            <i class="bi bi-info-circle me-1"></i> Esto creará un contrato directo sin necesidad de cotización previa.
+            <i class="bi bi-info-circle me-1"></i> Esto creará un proyecto/contrato de control local para el cliente.
           </div>
           <div class="row g-3">
             <div class="col-12">
@@ -415,13 +415,27 @@
             </div>
             <div class="col-12">
               <label>Proyecto / Objeto del Contrato *</label>
-              <input type="text" name="proyecto" class="form-control" required placeholder="Ej. Construcción Fase 1">
+              <input type="text" name="nombre_proyecto" class="form-control" required placeholder="Ej. Construcción Fase 1">
             </div>
             <div class="col-12">
               <label>Valor Total del Contrato *</label>
               <div class="input-group">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
                 <input type="number" name="valor_total" class="form-control" min="0" step="any" required placeholder="0">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label>% Rete Garantía (Opcional)</label>
+              <div class="input-group">
+                <input type="number" name="porcentaje_retegarantia" class="form-control" min="0" max="100" step="any" placeholder="0">
+                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label>Archivo de Contrato (PDF)</label>
+              <div class="upload-zone" onclick="this.querySelector('input').click()">
+                <input type="file" name="contrato_pdf" accept=".pdf" onchange="mostrarNombreArchivo(this,'lbl_contrato_cliente')">
+                <label id="lbl_contrato_cliente"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Contrato PDF</label>
               </div>
             </div>
           </div>
