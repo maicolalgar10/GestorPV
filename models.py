@@ -555,9 +555,7 @@ class Cotizacion(db.Model):
         default="PENDIENTE",
         nullable=False
     )
-
-    imagen_cotizacion = db.Column(db.String(250), nullable=True)
-
+    imagen_cotizacion = db.Column(db.Text, nullable=True)
     contrato = db.relationship(
         "Contrato",
         uselist=False,

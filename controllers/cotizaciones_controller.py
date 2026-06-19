@@ -21,30 +21,37 @@ def crear_cotizacion():
         cliente = request.form.get("cliente")
         proyecto = request.form.get("proyecto")
         numero_cotizacion = request.form.get("numero_cotizacion")
-        imagen = request.files.get("imagen_cotizacion")
+        archivos = request.files.getlist("archivos_cotizacion")
 
         if not cliente or not proyecto or not numero_cotizacion:
             flash("Cliente, proyecto y número de cotización son obligatorios", "warning")
             return redirect(url_for("dashboard.dashboard_oficina"))
 
-        ruta_imagen = None
-        if imagen and imagen.filename:
-            original_filename = secure_filename(imagen.filename)
-            ext = original_filename.rsplit('.', 1)[1].lower() if '.' in original_filename else 'jpg'
-            # Usar solo UUID y la extensión (estilo paranoico)
-            unique_filename = f"cotizacion_{uuid.uuid4().hex}.{ext}"
-            
-            if supabase:
-                # Leer el archivo como bytes
-                file_bytes = imagen.read()
-                # Subir al bucket 'uploads' dentro de la carpeta 'cotizaciones'
-                res = supabase.storage.from_("uploads").upload(f"cotizaciones/{unique_filename}", file_bytes)
-                
-                # Obtener la URL pública
-                public_url = supabase.storage.from_("uploads").get_public_url(f"cotizaciones/{unique_filename}")
-                ruta_imagen = public_url
-            else:
-                flash("Supabase no está configurado. No se subió la imagen.", "warning")
+        urls_subidas = []
+        if supabase:
+            for imagen in archivos:
+                if imagen and imagen.filename:
+                    original_filename = secure_filename(imagen.filename)
+                    ext = original_filename.rsplit('.', 1)[1].lower() if '.' in original_filename else 'jpg'
+                    # Usar solo UUID y la extensión (estilo paranoico)
+                    unique_filename = f"cotizacion_{uuid.uuid4().hex}.{ext}"
+                    
+                    try:
+                        # Leer el archivo como bytes
+                        file_bytes = imagen.read()
+                        # Subir al bucket 'uploads' dentro de la carpeta 'cotizaciones'
+                        supabase.storage.from_("uploads").upload(f"cotizaciones/{unique_filename}", file_bytes, {"content-type": imagen.content_type})
+                        
+                        # Obtener la URL pública
+                        public_url = supabase.storage.from_("uploads").get_public_url(f"cotizaciones/{unique_filename}")
+                        urls_subidas.append(public_url)
+                    except Exception as e:
+                        print("Error al subir archivo a Supabase:", e)
+        else:
+            if any(img.filename for img in archivos):
+                flash("Supabase no está configurado. No se subieron las imágenes.", "warning")
+
+        ruta_imagen = ",".join(urls_subidas) if urls_subidas else None
 
         cotizacion = Cotizacion(
             cliente=cliente,
@@ -117,16 +124,17 @@ def eliminar_cotizacion(id):
         if contrato:
             db.session.delete(contrato)
 
-        # 🖼️ borrar imagen si existe
+        # 🖼️ borrar imagenes si existen
         if cotizacion.imagen_cotizacion and supabase:
-            # Extraer el path de la URL pública si es de Supabase
-            if "supabase.co" in cotizacion.imagen_cotizacion:
-                try:
-                    # El path usualmente está después de '/public/uploads/'
-                    path_part = cotizacion.imagen_cotizacion.split("/public/uploads/")[-1]
-                    supabase.storage.from_("uploads").remove([path_part])
-                except Exception as e:
-                    print("Error al borrar imagen en Supabase:", e)
+            urls = cotizacion.imagen_cotizacion.split(",")
+            for url in urls:
+                if "supabase.co" in url:
+                    try:
+                        # El path usualmente está después de '/public/uploads/'
+                        path_part = url.split("/public/uploads/")[-1]
+                        supabase.storage.from_("uploads").remove([path_part])
+                    except Exception as e:
+                        print("Error al borrar imagen en Supabase:", e)
 
         # 📄 borrar cotización
         db.session.delete(cotizacion)

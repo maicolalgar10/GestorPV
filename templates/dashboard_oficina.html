@@ -276,12 +276,19 @@
                         {% endif %}
 
                         {% if c.imagen_cotizacion %}
-                          <a href="{{ c.imagen_cotizacion if c.imagen_cotizacion.startswith('http') else url_for('static', filename='uploads/cotizaciones/' ~ c.imagen_cotizacion) }}"
+                          {% set urls = c.imagen_cotizacion.split(',') %}
+                          {% for url in urls %}
+                          <a href="{{ url if url.startswith('http') else url_for('static', filename='uploads/cotizaciones/' ~ url) }}"
                             target="_blank"
-                            class="btn btn-light btn-sm border me-1"
-                            title="Ver imagen de cotización">
-                            <i class="bi bi-image"></i>
+                            class="btn btn-light btn-sm border me-1 mb-1"
+                            title="Ver archivo adjunto">
+                            {% if '.pdf' in url|lower %}
+                              <i class="bi bi-file-earmark-pdf text-danger"></i>
+                            {% else %}
+                              <i class="bi bi-image text-primary"></i>
+                            {% endif %}
                           </a>
+                          {% endfor %}
                         {% endif %}
 
 
@@ -369,8 +376,9 @@
             </div>
 
             <div class="mb-3">
-              <label class="form-label fw-semibold">Imagen de Cotización (opcional)</label>
-              <input type="file" name="imagen_cotizacion" class="form-control" accept="image/*">
+              <label class="form-label fw-semibold">Soportes de Cotización (Opcional)</label>
+              <input type="file" name="archivos_cotizacion" id="archivos_cotizacion" class="form-control" accept="image/*,application/pdf" multiple>
+              <div id="lista_archivos" class="mt-2 small text-muted"></div>
             </div>
 
           </div>
@@ -660,6 +668,27 @@
       const anticipoCalculado = (valorTotal * porcentaje) / 100;
       document.getElementById('editAnticipoPesosText').innerText = '$' + anticipoCalculado.toLocaleString('es-CO');
     }
+
+    // Listar archivos antes de subir la cotización
+    document.addEventListener('DOMContentLoaded', function() {
+      const inputArchivos = document.getElementById('archivos_cotizacion');
+      if (inputArchivos) {
+        inputArchivos.addEventListener('change', function(e) {
+          const lista = document.getElementById('lista_archivos');
+          lista.innerHTML = '';
+          if (this.files.length > 0) {
+            let ul = document.createElement('ul');
+            ul.className = 'mb-0 ps-3';
+            for (let i = 0; i < this.files.length; i++) {
+              let li = document.createElement('li');
+              li.textContent = this.files[i].name;
+              ul.appendChild(li);
+            }
+            lista.appendChild(ul);
+          }
+        });
+      }
+    });
   </script>
 
 </body>
