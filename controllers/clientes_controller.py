@@ -41,14 +41,17 @@ def index():
         
     usuario = Usuarios.query.get(session['user_id'])
     
-    # Obtener clientes y sus reportes ordenados
-    clientes_lista = Clientes.query.order_by(Clientes.nombre_cliente).all()
-    reportes_lista = ReporteClientes.query.order_by(ReporteClientes.created_at.desc()).all()
+    # 1. Traer todos los reportes existentes
+    reportes_lista = ReporteClientes.query.all()
     
+    # 2. CRÍTICO: Traer todos los clientes de la base de datos para el modal
+    lista_clientes = Clientes.query.all()
+    
+    # 3. Pasarle AMBAS listas a la plantilla HTML
     return render_template(
         'clientes.html',
         usuario=usuario,
-        clientes=clientes_lista,
+        clientes=lista_clientes,
         reportes=reportes_lista,
         frase="El éxito en los negocios requiere entrenamiento y disciplina y mucho trabajo duro."
     )

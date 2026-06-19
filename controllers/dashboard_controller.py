@@ -546,22 +546,12 @@ def eliminar_factura_proveedor(id):
     return redirect(url_for("dashboard.proveedores"))
 
 
-# ─── CLIENTES (maqueta — desarrollo posterior) ─────────────
+# ─── CLIENTES ─────────────
 @dashboard_bp.route("/dashboard/clientes")
 @login_required
 @admin_oficina_required
 def clientes():
-    usuario = Usuarios.query.get(session.get("user_id"))
-    notificaciones = Notificaciones.query.filter_by(
-        id_usuario_destino=session["user_id"], leido=False
-    ).order_by(Notificaciones.creado_en.desc()).all()
-    frase = frase_del_dia()
-    return render_template(
-        "clientes.html",
-        usuario=usuario,
-        notificaciones=notificaciones,
-        frase=frase
-    )
+    return redirect(url_for('clientes.index'))
 
 # -----------------------------
 # DASHBOARD DE BODEGA
