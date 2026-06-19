@@ -359,18 +359,32 @@ background: rgba(255, 255, 255, 0.85);
               </div>
 
               {% if item.actividades %}
-              {% for actividad in item.actividades %}
+              <div class="accordion accordion-flush" id="accordionActividades{{ item.proyecto.id_proyecto }}">
               {% set colores = ['#007bff', '#28a745', '#dc3545', '#ffc107', '#17a2b8', '#6610f2', '#e83e8c', '#fd7e14', '#20c997'] %}
-              {% set color_actividad = colores[actividad.sub_proyecto_id % (colores|length)] if actividad.sub_proyecto_id else '#dee2e6' %}
-              <div class="card actividad-card mb-4 shadow-sm p-3" style="border-left: 5px solid {{ color_actividad }};">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                  <div>
-                    <h6 class="fw-bold mb-1 text-dark">
-                      {{ actividad.nombre }}
-                      {% if actividad.sub_proyecto_id %}
-                      <span class="badge ms-2" style="background-color: {{ color_actividad }};">{{ actividad.nombre_sub_proyecto }}</span>
-                      {% endif %}
-                    </h6>
+              {% for sub_proyecto_id, actividades_grupo in item.actividades|groupby('sub_proyecto_id') %}
+                {% set sp_id = sub_proyecto_id if sub_proyecto_id else 'None' %}
+                {% set color_grupo = colores[sub_proyecto_id % (colores|length)] if sub_proyecto_id else '#6c757d' %}
+                {% set nombre_grupo = actividades_grupo[0].nombre_sub_proyecto if sub_proyecto_id else 'Actividades Generales' %}
+                
+                <div class="accordion-item mb-3 shadow-sm" style="border-radius: 12px; border-left: 5px solid {{ color_grupo }}; overflow: hidden;">
+                  <h2 class="accordion-header" id="headingAct{{ item.proyecto.id_proyecto }}-{{ sp_id }}">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                            data-bs-target="#collapseAct{{ item.proyecto.id_proyecto }}-{{ sp_id }}" 
+                            aria-expanded="false" aria-controls="collapseAct{{ item.proyecto.id_proyecto }}-{{ sp_id }}">
+                      <strong>{{ nombre_grupo }}</strong>
+                      <span class="badge ms-2" style="background-color: {{ color_grupo }};">{{ actividades_grupo|length }} actividades</span>
+                    </button>
+                  </h2>
+                  <div id="collapseAct{{ item.proyecto.id_proyecto }}-{{ sp_id }}" class="accordion-collapse collapse" 
+                       aria-labelledby="headingAct{{ item.proyecto.id_proyecto }}-{{ sp_id }}">
+                    <div class="accordion-body bg-light" style="padding-bottom: 0;">
+                      {% for actividad in actividades_grupo %}
+                      <div class="card actividad-card mb-4 shadow-sm p-3 border-0">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                          <div>
+                            <h6 class="fw-bold mb-1 text-dark">
+                              {{ actividad.nombre }}
+                            </h6>
                     {% if actividad.descripcion %}
                     <p class="text-muted small mb-0">{{ actividad.descripcion }}</p>
                     {% else %}
@@ -474,7 +488,12 @@ background: rgba(255, 255, 255, 0.85);
                   </div>
                 </div>
               </div>
+                      {% endfor %}
+                    </div>
+                  </div>
+                </div>
               {% endfor %}
+              </div>
               {% else %}
               <p class="text-muted">No hay actividades registradas.</p>
               {% endif %}
