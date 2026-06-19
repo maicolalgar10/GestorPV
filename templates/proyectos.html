@@ -449,6 +449,15 @@ background: rgba(255, 255, 255, 0.85);
                           <input type="number" class="form-control" name="unidades_totales" min="1"
                             value="{{ actividad.unidades_totales }}" required>
                         </div>
+                        <div class="mb-3">
+                          <label class="form-label">SubProyecto (Ciudad)</label>
+                          <select class="form-select" name="sub_proyecto_id">
+                            <option value="">-- Sin SubProyecto --</option>
+                            {% for sp in item.proyecto.sub_proyectos %}
+                            <option value="{{ sp.id }}" {% if sp.id == actividad.sub_proyecto_id %}selected{% endif %}>{{ sp.nombre_miniproyecto }}</option>
+                            {% endfor %}
+                          </select>
+                        </div>
                       </div>
                       <div class="modal-footer">
                         <button type="submit" class="btn btn-success"><i class="bi bi-check2"></i> Guardar</button>
