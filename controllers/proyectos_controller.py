@@ -238,7 +238,8 @@ def manage_proyectos():
                 "descripcion": act.descripcion,
                 "unidades_totales": total,
                 "avanzado": avanzado,
-                "porcentaje": porcentaje
+                "porcentaje": porcentaje,
+                "sub_proyecto_id": act.sub_proyecto_id
             })
         
         # Calcular progreso estimado por fecha
