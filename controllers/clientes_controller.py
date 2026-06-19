@@ -129,9 +129,8 @@ def crear_cliente():
         db.session.commit()
         
         flash('Cliente registrado exitosamente.', 'success')
+        return redirect(url_for('clientes.index'))
     except Exception as e:
         db.session.rollback()
-        print(f"Error al crear cliente: {e}")
-        flash('Error al registrar el cliente.', 'danger')
-
-    return redirect(url_for('clientes.index'))
+        print(f"Error al crear cliente: {str(e)}")
+        return f"Error interno: {str(e)}", 500
