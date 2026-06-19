@@ -3,7 +3,7 @@ from datetime import datetime
 import os
 import uuid
 
-from models import db, Clientes, ReporteClientes, Usuarios
+from models import db, Clientes, ReporteClientes, Usuarios, Contrato
 from supabase_client import supabase
 
 clientes_bp = Blueprint('clientes', __name__, url_prefix='/clientes')
