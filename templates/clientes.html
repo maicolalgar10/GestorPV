@@ -166,50 +166,92 @@
     </div>
   </div>
 
-  <!-- CONTENIDO PRINCIPAL (Tabla) -->
-  <div class="table-card mt-4">
-    <div class="table-responsive">
-      <table class="table" id="tablaClientes">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Cliente</th>
-            <th>Valor Contrato</th>
-            <th>Valor Factura</th>
-            <th>Rete Garantía</th>
-            <th>Pagos Realizados</th>
-            <th>Adeuda Contrato</th>
-            <th>Adeuda Factura</th>
-            <th class="text-center">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for r in reportes %}
-          <tr>
-            <td class="text-muted small">{{ r.id }}</td>
-            <td class="fw-semibold">{{ r.cliente.nombre_cliente }}</td>
-            <td>${{ "{:,.0f}".format(r.valor_contrato) | replace(",",".") }}</td>
-            <td>${{ "{:,.0f}".format(r.valor_factura) | replace(",",".") }}</td>
-            <td>${{ "{:,.0f}".format(r.rete_garantia_valor) | replace(",",".") }}</td>
-            <td class="text-success fw-semibold">${{ "{:,.0f}".format(r.total_pagos_realizados) | replace(",",".") }}</td>
-            <td class="text-danger fw-bold">${{ "{:,.0f}".format(r.valor_adeudado_contrato) | replace(",",".") }}</td>
-            <td class="text-danger fw-bold">${{ "{:,.0f}".format(r.valor_adeudado_factura) | replace(",",".") }}</td>
-            <td class="text-center">
-              <button class="btn btn-sm btn-outline-primary rounded-pill px-2" title="Editar">
-                <i class="bi bi-pencil-square"></i>
-              </button>
-            </td>
-          </tr>
-          {% else %}
-          <tr>
-            <td colspan="9" class="text-center py-5 text-muted">
-              <i class="bi bi-folder-x fs-1 d-block mb-3"></i>
-              No hay reportes registrados.
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+  <!-- CONTENIDO PRINCIPAL (Acordeones por Contrato) -->
+  <div class="mt-4">
+    <div class="accordion" id="accordionContratos">
+      {% if contratos %}
+        {% for c in contratos %}
+        {% set total_pagos_contrato = namespace(value=0) %}
+        {% set total_reteley_contrato = namespace(value=0) %}
+        {% for r in c.reportes %}
+          {% set total_pagos_contrato.value = total_pagos_contrato.value + r.total_pagos_realizados %}
+          {% set total_reteley_contrato.value = total_reteley_contrato.value + r.retencion_ley %}
+        {% endfor %}
+        {% set adeudado_contrato = c.valor_total - total_pagos_contrato.value - total_reteley_contrato.value %}
+        <div class="accordion-item mb-3" style="border-radius: var(--radius); border: none; overflow: hidden; box-shadow: var(--shadow-sm);">
+          <h2 class="accordion-header" id="heading{{ c.id }}">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ c.id }}" style="background: white; color: #1f2937; font-weight: 600;">
+              <div class="d-flex w-100 justify-content-between align-items-center me-3 flex-wrap gap-2">
+                <div>
+                  <span class="badge bg-primary me-2">CONTRATO #{{ c.id }}</span> 
+                  <strong>{{ c.cliente }}</strong> 
+                  <span class="text-muted mx-1">&mdash;</span> 
+                  <span class="text-muted">{{ c.proyecto }}</span>
+                </div>
+                <div class="text-end d-flex gap-4" style="font-size: 0.85rem;">
+                   <span>Valor Total: <strong class="text-dark">${{ "{:,.0f}".format(c.valor_total) | replace(",",".") }}</strong></span>
+                   <span>Saldo Adeudado: <strong class="{% if adeudado_contrato > 0 %}text-danger{% else %}text-success{% endif %}">${{ "{:,.0f}".format(adeudado_contrato) | replace(",",".") }}</strong></span>
+                </div>
+              </div>
+            </button>
+          </h2>
+          <div id="collapse{{ c.id }}" class="accordion-collapse collapse" data-bs-parent="#accordionContratos">
+            <div class="accordion-body p-0">
+              <div class="table-responsive">
+                <table class="table mb-0" style="font-size: .84rem;">
+                  <thead style="background: #f8fafc; font-size: .74rem; text-transform: uppercase; color: #6b7280; letter-spacing: .5px;">
+                    <tr>
+                      <th class="ps-4">ID Rep.</th>
+                      <th>Fecha</th>
+                      <th>Valor Factura</th>
+                      <th>Rete Garantía</th>
+                      <th>Retención Ley</th>
+                      <th>Pagos Realizados</th>
+                      <th>Adeuda Factura</th>
+                      <th class="text-center pe-4">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for r in c.reportes %}
+                    <tr>
+                      <td class="ps-4 text-muted small">#{{ r.id }}</td>
+                      <td>{{ r.created_at.strftime('%Y-%m-%d') }}</td>
+                      <td>${{ "{:,.0f}".format(r.valor_factura) | replace(",",".") }}</td>
+                      <td>${{ "{:,.0f}".format(r.rete_garantia_valor) | replace(",",".") }}</td>
+                      <td>${{ "{:,.0f}".format(r.retencion_ley) | replace(",",".") }}</td>
+                      <td class="text-success fw-semibold">${{ "{:,.0f}".format(r.total_pagos_realizados) | replace(",",".") }}</td>
+                      <td class="text-danger fw-bold">${{ "{:,.0f}".format(r.valor_adeudado_factura) | replace(",",".") }}</td>
+                      <td class="text-center pe-4">
+                        <button class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0" title="Editar">
+                          <i class="bi bi-pencil-square"></i>
+                        </button>
+                        {% if r.factura_pdf_url %}
+                        <a href="{{ r.factura_pdf_url }}" target="_blank" class="btn btn-sm btn-outline-danger rounded-pill px-2 py-0 ms-1" title="Ver Factura">
+                          <i class="bi bi-file-earmark-pdf"></i>
+                        </a>
+                        {% endif %}
+                      </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                      <td colspan="8" class="text-center py-4 text-muted">
+                        No hay reportes o facturas vinculadas a este contrato todavía.
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="text-center py-5 text-muted bg-white rounded shadow-sm">
+          <i class="bi bi-folder-x fs-1 d-block mb-3"></i>
+          No hay contratos registrados.
+        </div>
+      {% endif %}
     </div>
   </div>
 
@@ -231,32 +273,23 @@
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="row g-3">
             
-            <!-- SECCIÓN 1: DATOS DEL CONTRATO -->
-            <div class="col-12"><div class="section-sep"><i class="bi bi-file-earmark-text me-1"></i>1. Datos del Contrato</div></div>
-            <div class="col-md-6">
-              <label>Cliente *</label>
-              <select name="cliente_id" id="cliente_id" class="form-select" required>
-                <option value="">-- Seleccionar --</option>
-                {% for c in clientes %}
-                <option value="{{ c.id }}">{{ c.nombre_cliente }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label>Valor Contrato *</label>
-              <div class="input-group">
-                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
-                <input type="number" name="valor_contrato" id="valor_contrato" class="form-control" min="0" step="any" value="0" required oninput="calcularValores()">
+            <!-- SECCIÓN 1: VINCULACIÓN -->
+            <div class="col-12"><div class="section-sep mt-0"><i class="bi bi-link-45deg me-1"></i>1. Vincular a Contrato</div></div>
+            <div class="col-md-8">
+              <label>Contrato *</label>
+              <div class="d-flex gap-2">
+                <select name="contrato_id" id="contrato_id" class="form-select" required>
+                  <option value="">-- Seleccionar Contrato --</option>
+                  {% for c in contratos %}
+                  <option value="{{ c.id }}">{{ c.cliente }} - {{ c.proyecto }} (Total: ${{ "{:,.0f}".format(c.valor_total) | replace(",",".") }})</option>
+                  {% endfor %}
+                </select>
+                <button type="button" class="btn btn-outline-primary rounded-3 text-nowrap" data-bs-toggle="modal" data-bs-target="#modalCrearContrato">
+                  <i class="bi bi-plus"></i> Rápido
+                </button>
               </div>
             </div>
-            <div class="col-md-6">
-              <label>Contrato (PDF)</label>
-              <div class="upload-zone" onclick="this.querySelector('input').click()">
-                <input type="file" name="contrato_pdf" accept=".pdf" onchange="mostrarNombreArchivo(this,'lbl_contrato')">
-                <label id="lbl_contrato"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Contrato PDF</label>
-              </div>
-            </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
               <label>Actas de Obra (PDF)</label>
               <div class="upload-zone" onclick="this.querySelector('input').click()">
                 <input type="file" name="actas_pdf" accept=".pdf" onchange="mostrarNombreArchivo(this,'lbl_actas')">
@@ -297,22 +330,16 @@
             </div>
 
             <!-- CÁLCULOS DINÁMICOS -->
-            <div class="col-md-4">
+            <div class="col-md-6">
               <div class="calc-box">
                 <div class="calc-label">Rete Garantía ($)</div>
                 <div class="calc-val text-warning" id="calc_rete_garantia">$0</div>
               </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
               <div class="calc-box calc-total">
                 <div class="calc-label">Adeuda Factura</div>
                 <div class="calc-val text-danger" id="calc_adeuda_factura">$0</div>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="calc-box calc-total">
-                <div class="calc-label">Adeuda Contrato</div>
-                <div class="calc-val text-danger" id="calc_adeuda_contrato">$0</div>
               </div>
             </div>
 
@@ -351,6 +378,59 @@
       <div class="modal-footer d-flex justify-content-end gap-2 mt-4 border-top pt-3 bg-dark" style="border-color:#3f3f5c !important;">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
         <button type="submit" form="formCrearReporte" class="btn btn-confirm px-4"><i class="bi bi-save me-1"></i> Guardar Reporte</button>
+      </div>
+    </div>
+  </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CREAR CONTRATO RÁPIDO (DARK) -->
+<div class="modal fade modal-dark" id="modalCrearContrato" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border: 2px solid #6366f1;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #1e40af, #3b82f6);">
+        <div>
+          <h5 class="modal-title"><i class="bi bi-file-earmark-plus me-2"></i>Crear Contrato Rápido</h5>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <form method="POST" id="formCrearContrato" action="{{ url_for('clientes.crear_contrato_rapido') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="alert alert-info py-2" style="font-size:0.8rem;">
+            <i class="bi bi-info-circle me-1"></i> Esto creará un contrato directo sin necesidad de cotización previa.
+          </div>
+          <div class="row g-3">
+            <div class="col-12">
+              <label>Cliente / Razón Social *</label>
+              <select name="cliente_id" class="form-select" required>
+                <option value="">-- Seleccionar Cliente --</option>
+                {% for c in clientes %}
+                <option value="{{ c.id }}">{{ c.nombre_cliente }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12">
+              <label>Proyecto / Objeto del Contrato *</label>
+              <input type="text" name="proyecto" class="form-control" required placeholder="Ej. Construcción Fase 1">
+            </div>
+            <div class="col-12">
+              <label>Valor Total del Contrato *</label>
+              <div class="input-group">
+                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                <input type="number" name="valor_total" class="form-control" min="0" step="any" required placeholder="0">
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer d-flex justify-content-end gap-2 mt-2 border-top pt-3 bg-dark" style="border-color:#3f3f5c !important;">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" form="formCrearContrato" class="btn btn-primary px-4"><i class="bi bi-check-lg me-1"></i> Crear</button>
       </div>
     </div>
   </div>
@@ -410,7 +490,6 @@ function mostrarNombreArchivo(input, labelId) {
 }
 
 function calcularValores() {
-  const valorContrato = parseFloat(document.getElementById('valor_contrato').value) || 0;
   const valorFactura = parseFloat(document.getElementById('valor_factura').value) || 0;
   const porcRete = parseFloat(document.getElementById('porcentaje_rete_garantia').value) || 0;
   const retencionLey = parseFloat(document.getElementById('retencion_ley').value) || 0;
@@ -420,13 +499,11 @@ function calcularValores() {
   const reteGarantiaValor = valorFactura * (porcRete / 100);
   const totalPagosRealizados = pagoRealizado - retencionLey - reteGarantiaValor;
   const adeudadoFactura = valorFactura - totalPagosRealizados;
-  const adeudadoContrato = valorContrato - totalPagosRealizados - retencionLey;
 
   // Actualizar UI
   document.getElementById('calc_rete_garantia').innerText = fmtPeso(reteGarantiaValor);
   document.getElementById('calc_total_pagos').innerText = fmtPeso(Math.max(totalPagosRealizados, 0));
   document.getElementById('calc_adeuda_factura').innerText = fmtPeso(Math.max(adeudadoFactura, 0));
-  document.getElementById('calc_adeuda_contrato').innerText = fmtPeso(Math.max(adeudadoContrato, 0));
 }
 
 // Inicializar cálculos

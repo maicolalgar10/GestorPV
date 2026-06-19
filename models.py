@@ -573,7 +573,7 @@ class Contrato(db.Model):
     cotizacion_id = db.Column(
         db.Integer,
         db.ForeignKey("cotizaciones.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
         unique=True
     )
 
@@ -597,6 +597,12 @@ class Contrato(db.Model):
         "Cotizacion",
         back_populates="contrato"
     )
+
+    # Relación con la nueva tabla de Clientes
+    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id', ondelete='SET NULL'), nullable=True)
+    cliente_relacion = db.relationship('Clientes', backref=db.backref('contratos', lazy=True))
+
+    reportes = db.relationship('ReporteClientes', back_populates='contrato', cascade='all, delete-orphan')
 
 # ===========================================
 # 17.1 Bancos
@@ -851,7 +857,7 @@ class Clientes(db.Model):
     contacto = db.Column(db.String(100), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
-    reportes = db.relationship('ReporteClientes', back_populates='cliente', cascade='all, delete-orphan')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 
 # ===========================================
@@ -861,11 +867,9 @@ class ReporteClientes(db.Model):
     __tablename__ = 'reporte_clientes'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id', ondelete='CASCADE'), nullable=False)
+    contrato_id = db.Column(db.Integer, db.ForeignKey('contratos.id', ondelete='CASCADE'), nullable=False)
     
-    # Datos del Contrato
-    valor_contrato = db.Column(db.Numeric(15, 2), nullable=False, default=0.00)
-    contrato_pdf_url = db.Column(db.Text, nullable=True)
+    # Datos de Documentos Anexos
     actas_pdf_url = db.Column(db.Text, nullable=True)
     
     # Datos de Facturación
@@ -882,7 +886,7 @@ class ReporteClientes(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     # Relaciones
-    cliente = db.relationship('Clientes', back_populates='reportes')
+    contrato = db.relationship('Contrato', back_populates='reportes')
 
     # Campos Calculados
     @property
@@ -909,7 +913,11 @@ class ReporteClientes(db.Model):
     @property
     def valor_adeudado_contrato(self):
         try:
-            return float(self.valor_contrato) - self.total_pagos_realizados - float(self.retencion_ley)
+            # Obtener el valor del contrato macro a través de la relación
+            valor_macro = float(self.contrato.valor_total) if self.contrato and self.contrato.valor_total else 0.0
+            # IMPORTANTE: Esto es lo adeudado según el pago de ESTE reporte.
+            # En un sistema maduro, el saldo del contrato se calcularía restando todos los pagos_realizados de todos sus reportes.
+            return valor_macro - self.total_pagos_realizados - float(self.retencion_ley)
         except Exception:
             return 0.0
 

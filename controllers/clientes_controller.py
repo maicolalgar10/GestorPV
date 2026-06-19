@@ -41,17 +41,21 @@ def index():
         
     usuario = Usuarios.query.get(session['user_id'])
     
-    # 1. Traer todos los reportes existentes
+    # 1. Traer todos los contratos existentes
+    contratos_lista = Contrato.query.all()
+    
+    # 2. Traer todos los reportes (o podemos usar la relación de contratos en la vista)
     reportes_lista = ReporteClientes.query.all()
     
-    # 2. CRÍTICO: Traer todos los clientes de la base de datos para el modal
-    lista_clientes = Clientes.query.all()
+    # También necesitamos los clientes por si el usuario quiere crear un Contrato desde ahí
+    clientes_lista = Clientes.query.all()
     
-    # 3. Pasarle AMBAS listas a la plantilla HTML
+    # 3. Pasarle las listas a la plantilla HTML
     return render_template(
         'clientes.html',
         usuario=usuario,
-        clientes=lista_clientes,
+        contratos=contratos_lista,
+        clientes=clientes_lista,
         reportes=reportes_lista,
         frase="El éxito en los negocios requiere entrenamiento y disciplina y mucho trabajo duro."
     )
@@ -62,8 +66,7 @@ def crear_reporte():
         return redirect(url_for('usuarios.login'))
 
     try:
-        cliente_id = request.form.get('cliente_id')
-        valor_contrato = float(request.form.get('valor_contrato', 0))
+        contrato_id = request.form.get('contrato_id')
         valor_factura = float(request.form.get('valor_factura', 0))
         porcentaje_rete_garantia = float(request.form.get('porcentaje_rete_garantia', 0))
         retencion_ley = float(request.form.get('retencion_ley', 0))
@@ -73,20 +76,16 @@ def crear_reporte():
         fecha_pago = datetime.strptime(fecha_pago_str, '%Y-%m-%d').date() if fecha_pago_str else None
 
         # Archivos
-        contrato_pdf = request.files.get('contrato_pdf')
         actas_pdf = request.files.get('actas_pdf')
         factura_pdf = request.files.get('factura_pdf')
         comprobante_pago = request.files.get('comprobante_pago')
 
-        url_contrato = subir_archivo_supabase(contrato_pdf)
         url_actas = subir_archivo_supabase(actas_pdf)
         url_factura = subir_archivo_supabase(factura_pdf)
         url_comprobante = subir_archivo_supabase(comprobante_pago)
 
         nuevo_reporte = ReporteClientes(
-            cliente_id=cliente_id,
-            valor_contrato=valor_contrato,
-            contrato_pdf_url=url_contrato,
+            contrato_id=contrato_id,
             actas_pdf_url=url_actas,
             valor_factura=valor_factura,
             factura_pdf_url=url_factura,
@@ -137,3 +136,38 @@ def crear_cliente():
         db.session.rollback()
         print(f"Error al crear cliente: {str(e)}")
         return f"Error interno: {str(e)}", 500
+
+@clientes_bp.route('/crear_contrato_rapido', methods=['POST'])
+def crear_contrato_rapido():
+    if 'user_id' not in session:
+        return redirect(url_for('usuarios.login'))
+
+    try:
+        cliente_id = request.form.get('cliente_id')
+        proyecto_nombre = request.form.get('proyecto')
+        valor_total = float(request.form.get('valor_total', 0))
+        
+        # Encontrar el cliente para guardar también el nombre en la columna 'cliente' de Contrato
+        cliente = Clientes.query.get(cliente_id)
+        if not cliente:
+            flash("Cliente no encontrado", "danger")
+            return redirect(url_for('clientes.index'))
+
+        nuevo_contrato = Contrato(
+            cliente_id=cliente.id,
+            cliente=cliente.nombre_cliente,
+            proyecto=proyecto_nombre,
+            valor_total=valor_total,
+            estado="activo",
+            cotizacion_id=None # Contrato rápido sin cotización
+        )
+
+        db.session.add(nuevo_contrato)
+        db.session.commit()
+        flash('Contrato creado exitosamente.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al crear contrato rápido: {e}")
+        flash(f'Error al crear contrato: {e}', 'danger')
+
+    return redirect(url_for('clientes.index'))
