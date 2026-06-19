@@ -36,10 +36,10 @@ def subir_archivo_supabase(file_obj, carpeta="clientes"):
 
 @clientes_bp.route('/', methods=['GET'])
 def index():
-    if 'usuario_id' not in session:
+    if 'user_id' not in session:
         return redirect(url_for('usuarios.login'))
         
-    usuario = Usuarios.query.get(session['usuario_id'])
+    usuario = Usuarios.query.get(session['user_id'])
     
     # Obtener clientes y sus reportes ordenados
     clientes_lista = Clientes.query.order_by(Clientes.nombre_cliente).all()
@@ -55,7 +55,7 @@ def index():
 
 @clientes_bp.route('/crear_reporte', methods=['POST'])
 def crear_reporte():
-    if 'usuario_id' not in session:
+    if 'user_id' not in session:
         return redirect(url_for('usuarios.login'))
 
     try:
@@ -107,7 +107,7 @@ def crear_reporte():
 
 @clientes_bp.route('/crear', methods=['POST'])
 def crear_cliente():
-    if 'usuario_id' not in session:
+    if 'user_id' not in session:
         return redirect(url_for('usuarios.login'))
 
     try:
