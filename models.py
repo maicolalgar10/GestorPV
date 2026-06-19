@@ -840,4 +840,78 @@ class ProveedorFactura(db.Model):
             return "CANCELADO" if self.total_adeudado <= 0 else "SE DEBE"
         except Exception:
             return "SE DEBE"
+
+# ===========================================
+# 19. Módulo de Clientes
+# ===========================================
+class Clientes(db.Model):
+    __tablename__ = 'clientes'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    nombre_cliente = db.Column(db.String(150), nullable=False)
+    nit = db.Column(db.String(50), nullable=True)
+    contacto = db.Column(db.String(100), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    reportes = db.relationship('ReporteClientes', back_populates='cliente', cascade='all, delete-orphan')
+
+
+# ===========================================
+# 20. Reporte de Contratos de Clientes
+# ===========================================
+class ReporteClientes(db.Model):
+    __tablename__ = 'reporte_clientes'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id', ondelete='CASCADE'), nullable=False)
+    
+    # Datos del Contrato
+    valor_contrato = db.Column(db.Numeric(15, 2), nullable=False, default=0.00)
+    contrato_pdf_url = db.Column(db.Text, nullable=True)
+    actas_pdf_url = db.Column(db.Text, nullable=True)
+    
+    # Datos de Facturación
+    valor_factura = db.Column(db.Numeric(15, 2), nullable=False, default=0.00)
+    factura_pdf_url = db.Column(db.Text, nullable=True)
+    
+    # Retenciones y Pagos
+    porcentaje_rete_garantia = db.Column(db.Numeric(5, 2), default=0.00)
+    retencion_ley = db.Column(db.Numeric(15, 2), default=0.00)
+    pago_realizado = db.Column(db.Numeric(15, 2), default=0.00)
+    fecha_pago = db.Column(db.Date, nullable=True)
+    comprobante_pago_url = db.Column(db.Text, nullable=True)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relaciones
+    cliente = db.relationship('Clientes', back_populates='reportes')
+
+    # Campos Calculados
+    @property
+    def rete_garantia_valor(self):
+        try:
+            return float(self.valor_factura) * (float(self.porcentaje_rete_garantia) / 100.0)
+        except Exception:
+            return 0.0
+
+    @property
+    def total_pagos_realizados(self):
+        try:
+            return float(self.pago_realizado) - float(self.retencion_ley) - self.rete_garantia_valor
+        except Exception:
+            return 0.0
+
+    @property
+    def valor_adeudado_factura(self):
+        try:
+            return float(self.valor_factura) - self.total_pagos_realizados
+        except Exception:
+            return 0.0
+
+    @property
+    def valor_adeudado_contrato(self):
+        try:
+            return float(self.valor_contrato) - self.total_pagos_realizados - float(self.retencion_ley)
+        except Exception:
+            return 0.0
 

@@ -3,140 +3,394 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Clientes - Gestión de Oficina</title>
+  <title>Módulo de Clientes — Gestión de Oficina</title>
+  <meta name="description" content="Módulo de gestión de clientes y contratos.">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
+    /* ─── Tokens ─────────────────────────────────────────── */
     :root {
-      --success-grad: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --blue-grad : linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+      --shadow-sm : 0 4px 15px rgba(0,0,0,.06);
+      --shadow-md : 0 8px 32px rgba(79,70,229,.22);
+      --radius    : 18px;
     }
-    body { background-color: #f3f4f6; font-family: 'Inter', sans-serif; color: #1f2937; }
 
+    body { background:#f3f4f6; font-family:'Inter',sans-serif; color:#1f2937; font-size:.93rem; }
+
+    /* ─── Header ─────────────────────────────────────────── */
     .page-header {
-      background: var(--success-grad);
-      border-radius: 20px;
+      background: var(--blue-grad);
+      border-radius: var(--radius);
       color: white;
-      padding: 28px 32px;
-      margin-bottom: 28px;
-      box-shadow: 0 8px 32px rgba(16, 185, 129, 0.25);
+      padding: 26px 32px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-md);
     }
-
-    .module-card {
-      background: white;
-      border: none;
-      border-radius: 20px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.06);
-    }
-
     .btn-back {
-      background: rgba(255,255,255,0.2);
-      border: 1px solid rgba(255,255,255,0.4);
+      background: rgba(255,255,255,.18);
+      border: 1px solid rgba(255,255,255,.35);
       color: white;
       border-radius: 12px;
       padding: 8px 18px;
-      font-size: 0.85rem;
+      font-size: .83rem;
       backdrop-filter: blur(4px);
-      transition: background 0.2s;
+      transition: background .2s;
+      text-decoration: none;
     }
-    .btn-back:hover { background: rgba(255,255,255,0.35); color: white; }
+    .btn-back:hover { background: rgba(255,255,255,.32); color: white; }
 
-    .wip-banner {
-      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-      border: 1px solid #bbf7d0;
-      border-radius: 16px;
-      padding: 40px 24px;
-      text-align: center;
+    /* ─── Tabla ──────────────────────────────────────────── */
+    .table-card {
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
     }
-    .wip-icon {
-      font-size: 4rem;
-      display: block;
-      margin-bottom: 16px;
-      color: #10b981;
+    .table-card .table { margin: 0; font-size: .84rem; }
+    .table-card thead th {
+      background: #f8fafc;
+      font-weight: 700;
+      font-size: .74rem;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: #6b7280;
+      border-bottom: 2px solid #e5e7eb;
+      padding: 13px 12px;
+      white-space: nowrap;
     }
+    .table-card tbody td { padding: 11px 12px; vertical-align: middle; }
+
+    /* ─── Modal (dark) ───────────────────────────────────── */
+    .modal-dark .modal-content {
+      background: #1e1e2e;
+      color: #e2e8f0;
+      border: none;
+      border-radius: 20px;
+    }
+    .modal-dark .modal-header {
+      background: linear-gradient(135deg, #312e81, #1e40af);
+      border-radius: 20px 20px 0 0;
+      border: none;
+      padding: 22px 28px;
+    }
+    .modal-dark .modal-title { font-weight: 800; font-size: 1.05rem; }
+    .modal-dark .modal-body { 
+      padding: 20px 24px; 
+      max-height: 78vh; 
+      overflow-y: auto; 
+    }
+    .modal-dark .modal-footer { padding: 16px 24px 20px; border: none; }
+    .modal-dark label { font-size: .8rem; font-weight: 600; color: #94a3b8;
+                        text-transform: uppercase; letter-spacing: .4px; margin-bottom: 5px; }
+    .modal-dark .form-control, .modal-dark .form-select {
+      background: #2d2d3f;
+      border: 1.5px solid #3f3f5c;
+      color: #e2e8f0;
+      border-radius: 10px;
+      font-size: .88rem;
+    }
+    .modal-dark .form-control:focus, .modal-dark .form-select:focus {
+      background: #34344a;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99,102,241,.25);
+      color: #e2e8f0;
+    }
+    .modal-dark .form-control::placeholder { color: #64748b; }
+    .modal-dark .calc-box {
+      background: #252538;
+      border: 1px solid #3f3f5c;
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+    .modal-dark .calc-box .calc-label { font-size: .72rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; }
+    .modal-dark .calc-box .calc-val { font-size: 1.25rem; font-weight: 800; color: #a5b4fc; }
+    .modal-dark .calc-box.calc-total .calc-val { color: #34d399; }
+    .modal-dark .section-sep {
+      border-top: 1px solid #3f3f5c;
+      margin: 20px 0 16px;
+      padding-top: 16px;
+      font-size: .77rem;
+      font-weight: 700;
+      color: #6366f1;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+    }
+    .upload-zone {
+      background: #252538;
+      border: 2px dashed #3f3f5c;
+      border-radius: 10px;
+      padding: 12px 14px;
+      transition: border-color .2s;
+      cursor: pointer;
+    }
+    .upload-zone:hover { border-color: #6366f1; }
+    .upload-zone input[type=file] { display: none; }
+    .upload-zone label { cursor: pointer; margin: 0; color: #94a3b8; font-size: .82rem; }
+
+    /* Botón confirmar */
+    .btn-confirm {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 28px;
+      font-weight: 700;
+      transition: opacity .2s;
+    }
+    .btn-confirm:hover { opacity: .88; color: white; }
   </style>
 </head>
 <body>
-  {% include 'mensajes.html' %}
+{% include 'mensajes.html' %}
 
-  <div class="container mt-4 pb-5">
-
-    <!-- HEADER -->
-    <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
-      <div>
-        <h2 class="fw-bold m-0"><i class="bi bi-people-fill me-2"></i>Clientes</h2>
-        <p class="mb-0 opacity-75 small">Gestión de Oficina | {{ usuario.nombre }}</p>
-      </div>
-      <a href="{{ url_for('dashboard.dashboard_oficina') }}" class="btn-back text-decoration-none">
-        <i class="bi bi-arrow-left me-1"></i> Volver al Home
+<div class="container-fluid px-3 px-md-4 mt-4 pb-5" style="max-width:1600px;">
+  <!-- HEADER -->
+  <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h1 class="fw-bold m-0 fs-4"><i class="bi bi-buildings me-2"></i>Módulo de Clientes</h1>
+      <p class="mb-0 mt-1 opacity-75 small">Gestión de Oficina &mdash; {{ usuario.nombre }}</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+      <a href="{{ url_for('dashboard.dashboard_oficina') }}" class="btn-back">
+        <i class="bi bi-house me-1"></i> Inicio
       </a>
-    </div>
-
-    <!-- MÓDULO EN CONSTRUCCIÓN -->
-    <div class="module-card p-5">
-      <div class="wip-banner">
-        <i class="wip-icon bi bi-people-fill"></i>
-        <h4 class="fw-bold text-success mb-2">Módulo de Clientes</h4>
-        <p class="text-muted mb-4" style="max-width:460px; margin:0 auto;">
-          Este módulo está actualmente en desarrollo. Próximamente podrás registrar, consultar
-          y gestionar toda la información de tus clientes desde aquí.
-        </p>
-        <div class="d-flex gap-3 justify-content-center flex-wrap">
-          <span class="badge bg-success bg-opacity-10 text-success border border-success px-3 py-2">
-            <i class="bi bi-check2 me-1"></i> Vista maquetada
-          </span>
-          <span class="badge bg-warning bg-opacity-10 text-warning border border-warning px-3 py-2">
-            <i class="bi bi-hammer me-1"></i> En desarrollo
-          </span>
-        </div>
-      </div>
-
-      <!-- PREVIEW DE FUNCIONALIDADES FUTURAS -->
-      <div class="mt-5">
-        <h6 class="fw-bold text-muted text-uppercase small mb-4">
-          <i class="bi bi-lightning-charge me-1 text-warning"></i> Funcionalidades previstas
-        </h6>
-        <div class="row g-3">
-          <div class="col-md-4">
-            <div class="p-3 rounded-3 border bg-light d-flex align-items-center gap-3">
-              <i class="bi bi-person-plus-fill text-success fs-4"></i>
-              <div>
-                <div class="fw-semibold small">Registro de Clientes</div>
-                <div class="text-muted" style="font-size:0.78rem;">NIT, razón social, contacto</div>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="p-3 rounded-3 border bg-light d-flex align-items-center gap-3">
-              <i class="bi bi-file-earmark-text-fill text-primary fs-4"></i>
-              <div>
-                <div class="fw-semibold small">Historial de Contratos</div>
-                <div class="text-muted" style="font-size:0.78rem;">Cotizaciones y proyectos vinculados</div>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="p-3 rounded-3 border bg-light d-flex align-items-center gap-3">
-              <i class="bi bi-graph-up-arrow text-warning fs-4"></i>
-              <div>
-                <div class="fw-semibold small">Estadísticas</div>
-                <div class="text-muted" style="font-size:0.78rem;">Facturación por cliente</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- FRASE DEL DÍA -->
-    <div class="text-center mt-5">
-      <span class="badge bg-white text-secondary p-3 rounded-pill shadow-sm">
-        <i class="bi bi-stars text-warning me-2"></i> {{ frase }}
-      </span>
+      <button class="btn btn-light rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#modalCrearReporte">
+        <i class="bi bi-plus-circle me-1"></i> Registrar Reporte
+      </button>
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- CONTENIDO PRINCIPAL (Tabla) -->
+  <div class="table-card mt-4">
+    <div class="table-responsive">
+      <table class="table" id="tablaClientes">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Cliente</th>
+            <th>Valor Contrato</th>
+            <th>Valor Factura</th>
+            <th>Rete Garantía</th>
+            <th>Pagos Realizados</th>
+            <th>Adeuda Contrato</th>
+            <th>Adeuda Factura</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in reportes %}
+          <tr>
+            <td class="text-muted small">{{ r.id }}</td>
+            <td class="fw-semibold">{{ r.cliente.nombre_cliente }}</td>
+            <td>${{ "{:,.0f}".format(r.valor_contrato) | replace(",",".") }}</td>
+            <td>${{ "{:,.0f}".format(r.valor_factura) | replace(",",".") }}</td>
+            <td>${{ "{:,.0f}".format(r.rete_garantia_valor) | replace(",",".") }}</td>
+            <td class="text-success fw-semibold">${{ "{:,.0f}".format(r.total_pagos_realizados) | replace(",",".") }}</td>
+            <td class="text-danger fw-bold">${{ "{:,.0f}".format(r.valor_adeudado_contrato) | replace(",",".") }}</td>
+            <td class="text-danger fw-bold">${{ "{:,.0f}".format(r.valor_adeudado_factura) | replace(",",".") }}</td>
+            <td class="text-center">
+              <button class="btn btn-sm btn-outline-primary rounded-pill px-2" title="Editar">
+                <i class="bi bi-pencil-square"></i>
+              </button>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="9" class="text-center py-5 text-muted">
+              <i class="bi bi-folder-x fs-1 d-block mb-3"></i>
+              No hay reportes registrados.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL CREAR REPORTE (DARK) -->
+<div class="modal fade modal-dark" id="modalCrearReporte" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Registrar Nuevo Reporte</h5>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <form method="POST" id="formCrearReporte" action="{{ url_for('clientes.crear_reporte') }}" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="row g-3">
+            
+            <!-- SECCIÓN 1: DATOS DEL CONTRATO -->
+            <div class="col-12"><div class="section-sep"><i class="bi bi-file-earmark-text me-1"></i>1. Datos del Contrato</div></div>
+            <div class="col-md-6">
+              <label>Cliente *</label>
+              <select name="cliente_id" id="cliente_id" class="form-select" required>
+                <option value="">-- Seleccionar --</option>
+                {% for c in clientes %}
+                <option value="{{ c.id }}">{{ c.nombre_cliente }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label>Valor Contrato *</label>
+              <div class="input-group">
+                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                <input type="number" name="valor_contrato" id="valor_contrato" class="form-control" min="0" step="any" value="0" required oninput="calcularValores()">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label>Contrato (PDF)</label>
+              <div class="upload-zone" onclick="this.querySelector('input').click()">
+                <input type="file" name="contrato_pdf" accept=".pdf" onchange="mostrarNombreArchivo(this,'lbl_contrato')">
+                <label id="lbl_contrato"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Contrato PDF</label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label>Actas de Obra (PDF)</label>
+              <div class="upload-zone" onclick="this.querySelector('input').click()">
+                <input type="file" name="actas_pdf" accept=".pdf" onchange="mostrarNombreArchivo(this,'lbl_actas')">
+                <label id="lbl_actas"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Actas PDF</label>
+              </div>
+            </div>
+
+            <!-- SECCIÓN 2: VALORES MONETARIOS Y FACTURA -->
+            <div class="col-12"><div class="section-sep"><i class="bi bi-receipt me-1"></i>2. Valores Monetarios y Factura</div></div>
+            <div class="col-md-4">
+              <label>Valor Factura *</label>
+              <div class="input-group">
+                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                <input type="number" name="valor_factura" id="valor_factura" class="form-control" min="0" step="any" value="0" required oninput="calcularValores()">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label>% Rete Garantía</label>
+              <div class="input-group">
+                <input type="number" name="porcentaje_rete_garantia" id="porcentaje_rete_garantia" class="form-control" min="0" max="100" step="any" value="0" oninput="calcularValores()">
+                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label>Retención de Ley</label>
+              <div class="input-group">
+                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                <input type="number" name="retencion_ley" id="retencion_ley" class="form-control" min="0" step="any" value="0" oninput="calcularValores()">
+              </div>
+            </div>
+
+            <div class="col-md-12">
+              <label>Factura (PDF)</label>
+              <div class="upload-zone" onclick="this.querySelector('input').click()">
+                <input type="file" name="factura_pdf" accept=".pdf" onchange="mostrarNombreArchivo(this,'lbl_factura')">
+                <label id="lbl_factura"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Factura PDF</label>
+              </div>
+            </div>
+
+            <!-- CÁLCULOS DINÁMICOS -->
+            <div class="col-md-4">
+              <div class="calc-box">
+                <div class="calc-label">Rete Garantía ($)</div>
+                <div class="calc-val text-warning" id="calc_rete_garantia">$0</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="calc-box calc-total">
+                <div class="calc-label">Adeuda Factura</div>
+                <div class="calc-val text-danger" id="calc_adeuda_factura">$0</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="calc-box calc-total">
+                <div class="calc-label">Adeuda Contrato</div>
+                <div class="calc-val text-danger" id="calc_adeuda_contrato">$0</div>
+              </div>
+            </div>
+
+            <!-- SECCIÓN 3: INFORMACIÓN DE PAGO -->
+            <div class="col-12"><div class="section-sep"><i class="bi bi-cash-coin me-1"></i>3. Información de Pago</div></div>
+            <div class="col-md-4">
+              <label>Valor Abonado / Cancelado</label>
+              <div class="input-group">
+                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                <input type="number" name="pago_realizado" id="pago_realizado" class="form-control" min="0" step="any" value="0" oninput="calcularValores()">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label>Fecha de Pago</label>
+              <input type="date" name="fecha_pago" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label>Comprobante de Pago</label>
+              <div class="upload-zone" onclick="this.querySelector('input').click()">
+                <input type="file" name="comprobante_pago" accept=".pdf,.jpg,.jpeg,.png" onchange="mostrarNombreArchivo(this,'lbl_pago')">
+                <label id="lbl_pago"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Comprobante</label>
+              </div>
+            </div>
+            
+            <div class="col-12 mt-3">
+              <div class="calc-box bg-dark" style="border-color:#10b981;">
+                <div class="calc-label text-success">Total Pagos Realizados Reales</div>
+                <div class="calc-val text-success" id="calc_total_pagos">$0</div>
+                <small class="text-muted" style="font-size:0.65rem;">Calculado: Pago Realizado - Retenciones y Garantías</small>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer d-flex justify-content-end gap-2 mt-4 border-top pt-3 bg-dark" style="border-color:#3f3f5c !important;">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" form="formCrearReporte" class="btn btn-confirm px-4"><i class="bi bi-save me-1"></i> Guardar Reporte</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function fmtPeso(num) {
+  return '$' + parseFloat(num).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function mostrarNombreArchivo(input, labelId) {
+  const lbl = document.getElementById(labelId);
+  if (input.files && input.files[0]) {
+    lbl.innerHTML = '<i class="bi bi-file-earmark-check me-1 text-success"></i>' + input.files[0].name;
+    input.closest('.upload-zone').style.borderColor = '#10b981';
+  }
+}
+
+function calcularValores() {
+  const valorContrato = parseFloat(document.getElementById('valor_contrato').value) || 0;
+  const valorFactura = parseFloat(document.getElementById('valor_factura').value) || 0;
+  const porcRete = parseFloat(document.getElementById('porcentaje_rete_garantia').value) || 0;
+  const retencionLey = parseFloat(document.getElementById('retencion_ley').value) || 0;
+  const pagoRealizado = parseFloat(document.getElementById('pago_realizado').value) || 0;
+
+  // Cálculos definidos por el usuario
+  const reteGarantiaValor = valorFactura * (porcRete / 100);
+  const totalPagosRealizados = pagoRealizado - retencionLey - reteGarantiaValor;
+  const adeudadoFactura = valorFactura - totalPagosRealizados;
+  const adeudadoContrato = valorContrato - totalPagosRealizados - retencionLey;
+
+  // Actualizar UI
+  document.getElementById('calc_rete_garantia').innerText = fmtPeso(reteGarantiaValor);
+  document.getElementById('calc_total_pagos').innerText = fmtPeso(Math.max(totalPagosRealizados, 0));
+  document.getElementById('calc_adeuda_factura').innerText = fmtPeso(Math.max(adeudadoFactura, 0));
+  document.getElementById('calc_adeuda_contrato').innerText = fmtPeso(Math.max(adeudadoContrato, 0));
+}
+
+// Inicializar cálculos
+document.addEventListener('DOMContentLoaded', () => {
+  calcularValores();
+});
+</script>
 </body>
 </html>
