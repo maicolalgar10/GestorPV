@@ -171,13 +171,13 @@
     <div class="accordion" id="accordionContratos">
       {% if contratos %}
         {% for c in contratos %}
-        {% set total_pagos_contrato = namespace(value=0) %}
-        {% set total_reteley_contrato = namespace(value=0) %}
+        {% set total_pagos_contrato = namespace(value=0.0) %}
+        {% set total_reteley_contrato = namespace(value=0.0) %}
         {% for r in c.reportes %}
-          {% set total_pagos_contrato.value = total_pagos_contrato.value + (r.total_pagos_realizados or 0) %}
-          {% set total_reteley_contrato.value = total_reteley_contrato.value + (r.retencion_ley or 0) %}
+          {% set total_pagos_contrato.value = total_pagos_contrato.value + ((r.total_pagos_realizados or 0)|float) %}
+          {% set total_reteley_contrato.value = total_reteley_contrato.value + ((r.retencion_ley or 0)|float) %}
         {% endfor %}
-        {% set adeudado_contrato = (c.valor_total or 0) - total_pagos_contrato.value - total_reteley_contrato.value %}
+        {% set adeudado_contrato = ((c.valor_total or 0)|float) - total_pagos_contrato.value - total_reteley_contrato.value %}
         <div class="accordion-item mb-3" style="border-radius: var(--radius); border: none; overflow: hidden; box-shadow: var(--shadow-sm);">
           <h2 class="accordion-header" id="heading{{ c.id }}">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ c.id }}" style="background: white; color: #1f2937; font-weight: 600;">
