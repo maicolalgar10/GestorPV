@@ -915,14 +915,14 @@ class ReporteClientes(db.Model):
     @property
     def total_pagos_realizados(self):
         try:
-            return float(self.pago_realizado or 0.0) - float(self.retencion_ley or 0.0) - self.rete_garantia_valor
+            return float(self.pago_realizado or 0.0)
         except Exception:
             return 0.0
 
     @property
     def valor_adeudado_factura(self):
         try:
-            return float(self.valor_factura or 0.0) - self.total_pagos_realizados
+            return float(self.valor_factura or 0.0) - self.rete_garantia_valor - float(self.retencion_ley or 0.0) - self.total_pagos_realizados
         except Exception:
             return 0.0
 

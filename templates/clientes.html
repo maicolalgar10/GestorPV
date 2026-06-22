@@ -222,7 +222,7 @@
                       <td class="text-success fw-semibold">${{ "{:,.0f}".format(r.total_pagos_realizados or 0) | replace(",",".") }}</td>
                       <td class="text-danger fw-bold">${{ "{:,.0f}".format(r.valor_adeudado_factura or 0) | replace(",",".") }}</td>
                       <td class="text-center pe-4">
-                        <button class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0" title="Editar" onclick="abrirModalEditarReporte('{{ r.id }}', '{{ r.valor_factura or 0 }}', '{{ r.porcentaje_rete_garantia or 0 }}', '{{ r.retencion_ley or 0 }}', '{{ r.pago_realizado or 0 }}', '{{ r.fecha_pago if r.fecha_pago else '' }}')">
+                        <button class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0" title="Editar" onclick="abrirModalEditarReporte('{{ r.id }}', '{{ (r.valor_factura or 0)|int }}', '{{ r.porcentaje_rete_garantia or 0 }}', '{{ (r.retencion_ley or 0)|int }}', '{{ (r.pago_realizado or 0)|int }}', '{{ r.fecha_pago if r.fecha_pago else '' }}')">
                           <i class="bi bi-pencil-square"></i>
                         </button>
                         {% if r.factura_pdf_url %}
@@ -362,8 +362,8 @@
             <div class="col-12 mt-3">
               <div class="calc-box bg-dark" style="border-color:#10b981;">
                 <div class="calc-label text-success">Total Pagos Realizados Reales</div>
-                <div class="calc-val text-success" id="calc_total_pagos">$0</div>
-                <small class="text-muted" style="font-size:0.65rem;">Calculado: Pago Realizado - Retenciones y Garantías</small>
+                <div class="calc-val text-success" id="calc_total_pagos"> $0 </div>
+                <small class="text-muted" style="font-size:0.65rem;">Calculado: Abono Neto (Intacto)</small>
               </div>
             </div>
           </div>
@@ -476,7 +476,7 @@
               <div class="calc-box bg-dark" style="border-color:#10b981;">
                 <div class="calc-label text-success">Total Pagos Realizados Reales</div>
                 <div class="calc-val text-success" id="calc_total_pagos_edit">$0</div>
-                <small class="text-muted" style="font-size:0.65rem;">Calculado: Pago Realizado - Retenciones y Garantías</small>
+                <small class="text-muted" style="font-size:0.65rem;">Calculado: Abono Neto (Intacto)</small>
               </div>
             </div>
           </div>
@@ -697,12 +697,10 @@ function calcularValores() {
   const retencionLey = getRawVal('retencion_ley');
   const pagoRealizado = getRawVal('pago_realizado');
 
-  // Cálculos definidos por el usuario
   const reteGarantiaValor = valorFactura * (porcRete / 100);
-  const totalPagosRealizados = pagoRealizado - retencionLey - reteGarantiaValor;
-  const adeudadoFactura = valorFactura - totalPagosRealizados;
+  const totalPagosRealizados = pagoRealizado;
+  const adeudadoFactura = valorFactura - reteGarantiaValor - retencionLey - totalPagosRealizados;
 
-  // Actualizar UI
   document.getElementById('calc_rete_garantia').innerText = fmtPeso(reteGarantiaValor);
   document.getElementById('calc_total_pagos').innerText = fmtPeso(Math.max(totalPagosRealizados, 0));
   document.getElementById('calc_adeuda_factura').innerText = fmtPeso(Math.max(adeudadoFactura, 0));
@@ -720,8 +718,8 @@ function calcularValoresEdit() {
   const pagoRealizado = getRawVal('pago_realizado_edit');
 
   const reteGarantiaValor = valorFactura * (porcRete / 100);
-  const totalPagosRealizados = pagoRealizado - retencionLey - reteGarantiaValor;
-  const adeudadoFactura = valorFactura - totalPagosRealizados;
+  const totalPagosRealizados = pagoRealizado;
+  const adeudadoFactura = valorFactura - reteGarantiaValor - retencionLey - totalPagosRealizados;
 
   document.getElementById('calc_rete_garantia_edit').innerText = fmtPeso(reteGarantiaValor);
   document.getElementById('calc_total_pagos_edit').innerText = fmtPeso(Math.max(totalPagosRealizados, 0));
