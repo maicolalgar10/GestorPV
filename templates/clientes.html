@@ -481,7 +481,8 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 function fmtPeso(num) {
-  return '$' + parseFloat(num).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (isNaN(num)) num = 0;
+  return '$ ' + parseFloat(num).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
 
 function mostrarNombreArchivo(input, labelId) {
@@ -493,35 +494,56 @@ function mostrarNombreArchivo(input, labelId) {
 }
 
 function formatMoneyField(input) {
-  let rawValue = input.value.replace(/[^0-9.,]/g, '');
-  if (!rawValue) {
-    input.dataset.rawValue = '';
-    input.value = '';
-    return;
+  let val = input.value;
+  // Si el usuario escribe un punto al final (ej. numpad), lo convertimos a coma para usar como decimal
+  if (val.endsWith('.')) {
+      val = val.slice(0, -1) + ',';
   }
-  let cleanNumber = rawValue.replace(/,/g, '.');
-  let parts = cleanNumber.split('.');
-  if (parts.length > 1) {
-    cleanNumber = parts.slice(0, -1).join('') + '.' + parts[parts.length - 1];
+  
+  // Limpiamos los puntos de miles actuales y caracteres no válidos
+  val = val.replace(/\./g, '');
+  val = val.replace(/[^0-9,]/g, '');
+  
+  // Aseguramos que solo haya una coma como separador decimal
+  let parts = val.split(',');
+  if (parts.length > 2) {
+      val = parts[0] + ',' + parts.slice(1).join('');
   }
-  input.dataset.rawValue = cleanNumber;
-  let [intPart, decPart] = cleanNumber.split('.');
-  let formattedInt = parseInt(intPart || 0).toLocaleString('en-US');
+  
+  if (!val) {
+      input.dataset.rawValue = '0';
+      input.value = '';
+      return;
+  }
+  
+  // Guardamos el valor crudo en formato float estándar (con punto)
+  input.dataset.rawValue = val.replace(',', '.');
+  
+  // Formateamos visualmente agregando puntos para los miles (estilo es-CO)
+  let splitParts = val.split(',');
+  let intPart = splitParts[0];
+  let decPart = splitParts.length > 1 ? splitParts[1] : undefined;
+  
+  let intNumber = parseInt(intPart || '0', 10);
+  if (isNaN(intNumber)) intNumber = 0;
+  
+  let formattedInt = intNumber.toLocaleString('es-CO');
+  
   if (decPart !== undefined) {
-    input.value = formattedInt + '.' + decPart;
+      input.value = formattedInt + ',' + decPart;
   } else {
-    input.value = formattedInt;
+      input.value = formattedInt;
   }
 }
 
 function formatPercentField(input) {
-  let rawValue = input.value.replace(/[^0-9.,]/g, '');
-  let cleanNumber = rawValue.replace(/,/g, '.');
+  let val = input.value.replace(/[^0-9.,]/g, '');
+  let cleanNumber = val.replace(/,/g, '.');
   let parts = cleanNumber.split('.');
-  if (parts.length > 1) {
-    cleanNumber = parts.slice(0, -1).join('') + '.' + parts[parts.length - 1];
+  if (parts.length > 2) {
+      cleanNumber = parts[0] + '.' + parts.slice(1).join('');
   }
-  input.value = rawValue; 
+  input.value = val; 
   input.dataset.rawValue = cleanNumber;
 }
 
