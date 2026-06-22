@@ -160,8 +160,8 @@
       <button class="btn btn-outline-light rounded-pill fw-semibold border-opacity-50" data-bs-toggle="modal" data-bs-target="#modalCrearCliente">
         <i class="bi bi-person-plus me-1"></i> Nuevo Cliente
       </button>
-      <button class="btn btn-light rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#modalCrearReporte">
-        <i class="bi bi-plus-circle me-1"></i> Registrar Reporte
+      <button class="btn btn-light rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#modalCrearContrato">
+        <i class="bi bi-file-earmark-plus me-1"></i> Crear Contrato
       </button>
     </div>
   </div>
@@ -188,9 +188,12 @@
                   <span class="text-muted mx-1">&mdash;</span> 
                   <span class="text-muted">{{ c.nombre_proyecto }}</span>
                 </div>
-                <div class="text-end d-flex gap-4" style="font-size: 0.85rem;">
+                <div class="text-end d-flex gap-4 align-items-center" style="font-size: 0.85rem;">
                    <span>Valor Total: <strong class="text-dark">${{ "{:,.0f}".format(c.valor_total) | replace(",",".") }}</strong></span>
                    <span>Saldo Adeudado: <strong class="{% if adeudado_contrato > 0 %}text-danger{% else %}text-success{% endif %}">${{ "{:,.0f}".format(adeudado_contrato) | replace(",",".") }}</strong></span>
+                   <button type="button" class="btn btn-sm btn-primary rounded-pill fw-bold ms-2" data-bs-toggle="modal" data-bs-target="#modalCrearReporte" onclick="prepararModalReporte({{ c.id }}); event.stopPropagation();">
+                     <i class="bi bi-plus-circle me-1"></i> Registrar Reporte / Factura
+                   </button>
                 </div>
               </div>
             </button>
@@ -271,34 +274,11 @@
       <div class="modal-body">
         <form method="POST" id="formCrearReporte" action="{{ url_for('clientes.crear_reporte') }}" enctype="multipart/form-data">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="contrato_cliente_id" id="hidden_contrato_cliente_id" value="">
           <div class="row g-3">
             
-            <!-- SECCIÓN 1: VINCULACIÓN -->
-            <div class="col-12"><div class="section-sep mt-0"><i class="bi bi-link-45deg me-1"></i>1. Vincular a Contrato</div></div>
-            <div class="col-md-8">
-              <label>Contrato / Proyecto *</label>
-              <div class="d-flex gap-2">
-                <select name="contrato_cliente_id" id="contrato_cliente_id" class="form-select" required>
-                  <option value="">-- Seleccionar Proyecto --</option>
-                  {% for c in contratos %}
-                  <option value="{{ c.id }}">{{ c.cliente.nombre_cliente }} - {{ c.nombre_proyecto }} (Total: ${{ "{:,.0f}".format(c.valor_total) | replace(",",".") }})</option>
-                  {% endfor %}
-                </select>
-                <button type="button" class="btn btn-outline-primary rounded-3 text-nowrap" data-bs-toggle="modal" data-bs-target="#modalCrearContrato">
-                  <i class="bi bi-plus"></i> Rápido
-                </button>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <label>Actas de Obra (PDF)</label>
-              <div class="upload-zone" onclick="this.querySelector('input').click()">
-                <input type="file" name="actas_pdf" accept=".pdf" onchange="mostrarNombreArchivo(this,'lbl_actas')">
-                <label id="lbl_actas"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Actas PDF</label>
-              </div>
-            </div>
-
-            <!-- SECCIÓN 2: VALORES MONETARIOS Y FACTURA -->
-            <div class="col-12"><div class="section-sep"><i class="bi bi-receipt me-1"></i>2. Valores Monetarios y Factura</div></div>
+            <!-- SECCIÓN 1: VALORES MONETARIOS Y FACTURA -->
+            <div class="col-12"><div class="section-sep mt-0"><i class="bi bi-receipt me-1"></i>1. Valores Monetarios y Factura</div></div>
             <div class="col-md-4">
               <label>Valor Factura *</label>
               <div class="input-group">
@@ -321,7 +301,14 @@
               </div>
             </div>
 
-            <div class="col-md-12">
+            <div class="col-md-6">
+              <label>Actas de Obra (PDF)</label>
+              <div class="upload-zone" onclick="this.querySelector('input').click()">
+                <input type="file" name="actas_pdf" accept=".pdf" onchange="mostrarNombreArchivo(this,'lbl_actas')">
+                <label id="lbl_actas"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Actas PDF</label>
+              </div>
+            </div>
+            <div class="col-md-6">
               <label>Factura (PDF)</label>
               <div class="upload-zone" onclick="this.querySelector('input').click()">
                 <input type="file" name="factura_pdf" accept=".pdf" onchange="mostrarNombreArchivo(this,'lbl_factura')">
@@ -343,8 +330,8 @@
               </div>
             </div>
 
-            <!-- SECCIÓN 3: INFORMACIÓN DE PAGO -->
-            <div class="col-12"><div class="section-sep"><i class="bi bi-cash-coin me-1"></i>3. Información de Pago</div></div>
+            <!-- SECCIÓN 2: INFORMACIÓN DE PAGO -->
+            <div class="col-12"><div class="section-sep"><i class="bi bi-cash-coin me-1"></i>2. Información de Pago</div></div>
             <div class="col-md-4">
               <label>Valor Abonado / Cancelado</label>
               <div class="input-group">
@@ -501,6 +488,21 @@ function mostrarNombreArchivo(input, labelId) {
     lbl.innerHTML = '<i class="bi bi-file-earmark-check me-1 text-success"></i>' + input.files[0].name;
     input.closest('.upload-zone').style.borderColor = '#10b981';
   }
+}
+
+function prepararModalReporte(contratoId) {
+  document.getElementById('hidden_contrato_cliente_id').value = contratoId;
+  document.getElementById('formCrearReporte').reset();
+  
+  // Limpiar etiquetas de archivos
+  document.getElementById('lbl_actas').innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Subir Actas PDF';
+  document.getElementById('lbl_factura').innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Subir Factura PDF';
+  document.getElementById('lbl_pago').innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Subir Comprobante';
+  
+  const uploadZones = document.querySelectorAll('#modalCrearReporte .upload-zone');
+  uploadZones.forEach(zone => zone.style.borderColor = '#3f3f5c');
+
+  calcularValores();
 }
 
 function calcularValores() {
