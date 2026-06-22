@@ -5,6 +5,7 @@ import uuid
 
 from models import db, Clientes, ReporteClientes, Usuarios, Contrato, ContratosClientes
 from supabase_client import supabase
+from decorators import login_required, admin_oficina_required
 
 clientes_bp = Blueprint('clientes', __name__, url_prefix='/clientes')
 
@@ -49,10 +50,9 @@ def subir_archivo_supabase(file_obj, carpeta="clientes"):
     return None
 
 @clientes_bp.route('/', methods=['GET'])
+@login_required
+@admin_oficina_required
 def index():
-    if 'user_id' not in session:
-        return redirect(url_for('usuarios.login'))
-        
     usuario = Usuarios.query.get(session['user_id'])
     
     # 1. Traer todos los contratos de clientes existentes
@@ -75,10 +75,9 @@ def index():
     )
 
 @clientes_bp.route('/crear_reporte', methods=['POST'])
+@login_required
+@admin_oficina_required
 def crear_reporte():
-    if 'user_id' not in session:
-        return redirect(url_for('usuarios.login'))
-
     try:
         contrato_cliente_id = request.form.get('contrato_cliente_id')
         valor_factura = parse_float_safe(request.form.get('valor_factura'))
@@ -122,10 +121,9 @@ def crear_reporte():
     return redirect(url_for('clientes.index'))
 
 @clientes_bp.route('/crear', methods=['POST'])
+@login_required
+@admin_oficina_required
 def crear_cliente():
-    if 'user_id' not in session:
-        return redirect(url_for('usuarios.login'))
-
     try:
         nombre_cliente = request.form.get('nombre_cliente')
         nit = request.form.get('nit')
@@ -152,10 +150,9 @@ def crear_cliente():
         return f"Error interno: {str(e)}", 500
 
 @clientes_bp.route('/crear_contrato_cliente', methods=['POST'])
+@login_required
+@admin_oficina_required
 def crear_contrato_cliente():
-    if 'user_id' not in session:
-        return redirect(url_for('usuarios.login'))
-
     try:
         cliente_id = request.form.get('cliente_id')
         proyecto_nombre = request.form.get('nombre_proyecto')
