@@ -191,16 +191,6 @@
                 <div class="text-end d-flex gap-4 align-items-center" style="font-size: 0.85rem;">
                    <span>Valor Total: <strong class="text-dark">${{ "{:,.0f}".format(c.valor_total or 0) | replace(",",".") }}</strong></span>
                    <span>Saldo Adeudado: <strong class="{% if adeudado_contrato > 0 %}text-danger{% else %}text-success{% endif %}">${{ "{:,.0f}".format(adeudado_contrato) | replace(",",".") }}</strong></span>
-                   
-                   {% if c.archivo_pdf %}
-                   <a href="{{ c.archivo_pdf }}" target="_blank" class="btn btn-sm btn-outline-danger rounded-pill fw-bold ms-1" onclick="event.stopPropagation();" title="Ver PDF del Contrato">
-                     <i class="bi bi-file-earmark-pdf-fill me-1"></i> Ver Contrato
-                   </a>
-                   {% endif %}
-
-                   <button type="button" class="btn btn-sm btn-primary rounded-pill fw-bold ms-2" data-bs-toggle="modal" data-bs-target="#modalCrearReporte" onclick="prepararModalReporte({{ c.id }}); event.stopPropagation();">
-                     <i class="bi bi-plus-circle me-1"></i> Registrar Reporte / Factura
-                   </button>
                 </div>
               </div>
             </button>
@@ -251,6 +241,16 @@
                     {% endfor %}
                   </tbody>
                 </table>
+              </div>
+              <div class="p-3 bg-light text-end border-top" style="border-radius: 0 0 var(--radius) var(--radius);">
+                <button type="button" class="btn btn-sm btn-primary rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#modalCrearReporte" onclick="prepararModalReporte({{ c.id }});">
+                  <i class="bi bi-plus-circle me-1"></i> Registrar Reporte / Factura
+                </button>
+                {% if c.archivo_pdf %}
+                <a href="{{ c.archivo_pdf }}" target="_blank" class="btn btn-sm btn-outline-danger rounded-pill fw-bold ms-2" title="Ver PDF del Contrato">
+                  <i class="bi bi-file-earmark-pdf-fill me-1"></i> Ver Contrato
+                </a>
+                {% endif %}
               </div>
             </div>
           </div>
