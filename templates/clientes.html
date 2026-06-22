@@ -609,9 +609,25 @@ function calcularEspejoContrato() {
 // Limpiar valores antes de enviar el formulario para que el backend reciba floats limpios
 document.querySelectorAll('form').forEach(form => {
   form.addEventListener('submit', function() {
-    this.querySelectorAll('.money-input, .pct-input').forEach(input => {
+    this.querySelectorAll('.money-input').forEach(input => {
       if (input.dataset.rawValue) {
         input.value = input.dataset.rawValue;
+      } else {
+        // Fallback de limpieza estricta si no hay rawValue
+        let cleanVal = input.value.replace(/\$/g, '').replace(/\s/g, '');
+        if (cleanVal.includes(',')) {
+          cleanVal = cleanVal.replace(/\./g, '').replace(',', '.');
+        } else if (cleanVal.split('.').length > 2) {
+          cleanVal = cleanVal.replace(/\./g, '');
+        }
+        input.value = cleanVal || 0;
+      }
+    });
+    this.querySelectorAll('.pct-input').forEach(input => {
+      if (input.dataset.rawValue) {
+        input.value = input.dataset.rawValue;
+      } else {
+        input.value = input.value.replace(/[^0-9.,]/g, '').replace(',', '.') || 0;
       }
     });
   });

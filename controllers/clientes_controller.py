@@ -11,6 +11,20 @@ clientes_bp = Blueprint('clientes', __name__, url_prefix='/clientes')
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'pdf', 'png', 'jpg', 'jpeg', 'webp'}
 
+def parse_float_safe(value):
+    if not value:
+        return 0.0
+    try:
+        val_str = str(value).replace('$', '').replace(' ', '').strip()
+        if ',' in val_str:
+            val_str = val_str.replace('.', '')
+            val_str = val_str.replace(',', '.')
+        elif val_str.count('.') > 1:
+            val_str = val_str.replace('.', '')
+        return float(val_str)
+    except ValueError:
+        return 0.0
+
 def subir_archivo_supabase(file_obj, carpeta="clientes"):
     """Sube un archivo a Supabase Storage y retorna la URL pública."""
     if not file_obj or file_obj.filename == '':
@@ -67,10 +81,10 @@ def crear_reporte():
 
     try:
         contrato_cliente_id = request.form.get('contrato_cliente_id')
-        valor_factura = float(request.form.get('valor_factura', 0))
-        porcentaje_rete_garantia = float(request.form.get('porcentaje_rete_garantia', 0))
-        retencion_ley = float(request.form.get('retencion_ley', 0))
-        pago_realizado = float(request.form.get('pago_realizado', 0))
+        valor_factura = parse_float_safe(request.form.get('valor_factura'))
+        porcentaje_rete_garantia = parse_float_safe(request.form.get('porcentaje_rete_garantia'))
+        retencion_ley = parse_float_safe(request.form.get('retencion_ley'))
+        pago_realizado = parse_float_safe(request.form.get('pago_realizado'))
         fecha_pago_str = request.form.get('fecha_pago')
         
         fecha_pago = datetime.strptime(fecha_pago_str, '%Y-%m-%d').date() if fecha_pago_str else None
@@ -145,8 +159,8 @@ def crear_contrato_cliente():
     try:
         cliente_id = request.form.get('cliente_id')
         proyecto_nombre = request.form.get('nombre_proyecto')
-        valor_total = float(request.form.get('valor_total', 0))
-        porcentaje_retegarantia = float(request.form.get('porcentaje_retegarantia', 0))
+        valor_total = parse_float_safe(request.form.get('valor_total'))
+        porcentaje_retegarantia = parse_float_safe(request.form.get('porcentaje_retegarantia'))
         
         # Archivo PDF del contrato (si lo hay)
         contrato_pdf = request.files.get('contrato_pdf')
