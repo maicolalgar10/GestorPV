@@ -908,21 +908,21 @@ class ReporteClientes(db.Model):
     @property
     def rete_garantia_valor(self):
         try:
-            return float(self.valor_factura) * (float(self.porcentaje_rete_garantia) / 100.0)
+            return float(self.valor_factura or 0.0) * (float(self.porcentaje_rete_garantia or 0.0) / 100.0)
         except Exception:
             return 0.0
 
     @property
     def total_pagos_realizados(self):
         try:
-            return float(self.pago_realizado) - float(self.retencion_ley) - self.rete_garantia_valor
+            return float(self.pago_realizado or 0.0) - float(self.retencion_ley or 0.0) - self.rete_garantia_valor
         except Exception:
             return 0.0
 
     @property
     def valor_adeudado_factura(self):
         try:
-            return float(self.valor_factura) - self.total_pagos_realizados
+            return float(self.valor_factura or 0.0) - self.total_pagos_realizados
         except Exception:
             return 0.0
 
@@ -933,7 +933,7 @@ class ReporteClientes(db.Model):
             valor_macro = float(self.contrato_cliente.valor_total) if self.contrato_cliente and self.contrato_cliente.valor_total else 0.0
             # IMPORTANTE: Esto es lo adeudado según el pago de ESTE reporte.
             # En un sistema maduro, el saldo del contrato se calcularía restando todos los pagos_realizados de todos sus reportes.
-            return valor_macro - self.total_pagos_realizados - float(self.retencion_ley)
+            return valor_macro - self.total_pagos_realizados - float(self.retencion_ley or 0.0)
         except Exception:
             return 0.0
 
