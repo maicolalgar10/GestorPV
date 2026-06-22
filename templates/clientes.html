@@ -283,21 +283,22 @@
               <label>Valor Factura *</label>
               <div class="input-group">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
-                <input type="number" name="valor_factura" id="valor_factura" class="form-control" min="0" step="any" value="0" required oninput="calcularValores()">
+                <input type="text" name="valor_factura" id="valor_factura" class="form-control money-input" value="0" data-raw-value="0" required oninput="formatMoneyField(this); calcularValores()">
               </div>
             </div>
             <div class="col-md-4">
               <label>% Rete Garantía</label>
               <div class="input-group">
-                <input type="number" name="porcentaje_rete_garantia" id="porcentaje_rete_garantia" class="form-control" min="0" max="100" step="any" value="0" oninput="calcularValores()">
+                <input type="text" name="porcentaje_rete_garantia" id="porcentaje_rete_garantia" class="form-control pct-input" value="0" data-raw-value="0" oninput="formatPercentField(this); calcularValores()">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
               </div>
+              <small class="text-muted d-block mt-1" id="espejo_rete_garantia_reporte">Equivale a: $0</small>
             </div>
             <div class="col-md-4">
               <label>Retención de Ley</label>
               <div class="input-group">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
-                <input type="number" name="retencion_ley" id="retencion_ley" class="form-control" min="0" step="any" value="0" oninput="calcularValores()">
+                <input type="text" name="retencion_ley" id="retencion_ley" class="form-control money-input" value="0" data-raw-value="0" oninput="formatMoneyField(this); calcularValores()">
               </div>
             </div>
 
@@ -336,7 +337,7 @@
               <label>Valor Abonado / Cancelado</label>
               <div class="input-group">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
-                <input type="number" name="pago_realizado" id="pago_realizado" class="form-control" min="0" step="any" value="0" oninput="calcularValores()">
+                <input type="text" name="pago_realizado" id="pago_realizado" class="form-control money-input" value="0" data-raw-value="0" oninput="formatMoneyField(this); calcularValores()">
               </div>
             </div>
             <div class="col-md-4">
@@ -408,15 +409,16 @@
               <label>Valor Total del Contrato *</label>
               <div class="input-group">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
-                <input type="number" name="valor_total" class="form-control" min="0" step="any" required placeholder="0">
+                <input type="text" name="valor_total" id="contrato_valor_total" class="form-control money-input" required placeholder="0" oninput="formatMoneyField(this); calcularEspejoContrato();">
               </div>
             </div>
             <div class="col-md-6">
               <label>% Rete Garantía (Opcional)</label>
               <div class="input-group">
-                <input type="number" name="porcentaje_retegarantia" class="form-control" min="0" max="100" step="any" placeholder="0">
+                <input type="text" name="porcentaje_retegarantia" id="contrato_rete_garantia_pct" class="form-control pct-input" placeholder="0" oninput="formatPercentField(this); calcularEspejoContrato();">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
               </div>
+              <small class="text-muted d-block mt-1" id="espejo_rete_garantia_contrato">Equivale a: $0</small>
             </div>
             <div class="col-md-6">
               <label>Archivo de Contrato (PDF)</label>
@@ -490,10 +492,55 @@ function mostrarNombreArchivo(input, labelId) {
   }
 }
 
+function formatMoneyField(input) {
+  let rawValue = input.value.replace(/[^0-9.,]/g, '');
+  if (!rawValue) {
+    input.dataset.rawValue = '';
+    input.value = '';
+    return;
+  }
+  let cleanNumber = rawValue.replace(/,/g, '.');
+  let parts = cleanNumber.split('.');
+  if (parts.length > 1) {
+    cleanNumber = parts.slice(0, -1).join('') + '.' + parts[parts.length - 1];
+  }
+  input.dataset.rawValue = cleanNumber;
+  let [intPart, decPart] = cleanNumber.split('.');
+  let formattedInt = parseInt(intPart || 0).toLocaleString('en-US');
+  if (decPart !== undefined) {
+    input.value = formattedInt + '.' + decPart;
+  } else {
+    input.value = formattedInt;
+  }
+}
+
+function formatPercentField(input) {
+  let rawValue = input.value.replace(/[^0-9.,]/g, '');
+  let cleanNumber = rawValue.replace(/,/g, '.');
+  let parts = cleanNumber.split('.');
+  if (parts.length > 1) {
+    cleanNumber = parts.slice(0, -1).join('') + '.' + parts[parts.length - 1];
+  }
+  input.value = rawValue; 
+  input.dataset.rawValue = cleanNumber;
+}
+
+function getRawVal(id) {
+  let el = document.getElementById(id);
+  if (!el || !el.dataset.rawValue) return 0;
+  return parseFloat(el.dataset.rawValue) || 0;
+}
+
 function prepararModalReporte(contratoId) {
   document.getElementById('hidden_contrato_cliente_id').value = contratoId;
   document.getElementById('formCrearReporte').reset();
   
+  // Reset raw values for dynamic inputs
+  document.querySelectorAll('#formCrearReporte .money-input, #formCrearReporte .pct-input').forEach(input => {
+    input.dataset.rawValue = "0";
+    input.value = "0";
+  });
+
   // Limpiar etiquetas de archivos
   document.getElementById('lbl_actas').innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Subir Actas PDF';
   document.getElementById('lbl_factura').innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Subir Factura PDF';
@@ -506,10 +553,10 @@ function prepararModalReporte(contratoId) {
 }
 
 function calcularValores() {
-  const valorFactura = parseFloat(document.getElementById('valor_factura').value) || 0;
-  const porcRete = parseFloat(document.getElementById('porcentaje_rete_garantia').value) || 0;
-  const retencionLey = parseFloat(document.getElementById('retencion_ley').value) || 0;
-  const pagoRealizado = parseFloat(document.getElementById('pago_realizado').value) || 0;
+  const valorFactura = getRawVal('valor_factura');
+  const porcRete = getRawVal('porcentaje_rete_garantia');
+  const retencionLey = getRawVal('retencion_ley');
+  const pagoRealizado = getRawVal('pago_realizado');
 
   // Cálculos definidos por el usuario
   const reteGarantiaValor = valorFactura * (porcRete / 100);
@@ -520,7 +567,33 @@ function calcularValores() {
   document.getElementById('calc_rete_garantia').innerText = fmtPeso(reteGarantiaValor);
   document.getElementById('calc_total_pagos').innerText = fmtPeso(Math.max(totalPagosRealizados, 0));
   document.getElementById('calc_adeuda_factura').innerText = fmtPeso(Math.max(adeudadoFactura, 0));
+  
+  let espejoReporte = document.getElementById('espejo_rete_garantia_reporte');
+  if (espejoReporte) {
+      espejoReporte.innerText = 'Equivale a: ' + fmtPeso(reteGarantiaValor);
+  }
 }
+
+function calcularEspejoContrato() {
+  const valTotal = getRawVal('contrato_valor_total');
+  const pct = getRawVal('contrato_rete_garantia_pct');
+  const equiv = valTotal * (pct / 100);
+  const espejoContrato = document.getElementById('espejo_rete_garantia_contrato');
+  if (espejoContrato) {
+      espejoContrato.innerText = 'Equivale a: ' + fmtPeso(equiv);
+  }
+}
+
+// Limpiar valores antes de enviar el formulario para que el backend reciba floats limpios
+document.querySelectorAll('form').forEach(form => {
+  form.addEventListener('submit', function() {
+    this.querySelectorAll('.money-input, .pct-input').forEach(input => {
+      if (input.dataset.rawValue) {
+        input.value = input.dataset.rawValue;
+      }
+    });
+  });
+});
 
 // Inicializar cálculos
 document.addEventListener('DOMContentLoaded', () => {
