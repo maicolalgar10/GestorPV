@@ -120,6 +120,53 @@ def crear_reporte():
 
     return redirect(url_for('clientes.index'))
 
+@clientes_bp.route('/editar_reporte/<int:reporte_id>', methods=['POST'])
+@login_required
+@admin_oficina_required
+def editar_reporte(reporte_id):
+    try:
+        reporte = ReporteClientes.query.get(reporte_id)
+        if not reporte:
+            flash('Reporte no encontrado.', 'danger')
+            return redirect(url_for('clientes.index'))
+
+        reporte.valor_factura = parse_float_safe(request.form.get('valor_factura'))
+        reporte.porcentaje_rete_garantia = parse_float_safe(request.form.get('porcentaje_rete_garantia'))
+        reporte.retencion_ley = parse_float_safe(request.form.get('retencion_ley'))
+        reporte.pago_realizado = parse_float_safe(request.form.get('pago_realizado'))
+        
+        fecha_pago_str = request.form.get('fecha_pago')
+        if fecha_pago_str:
+            reporte.fecha_pago = datetime.strptime(fecha_pago_str, '%Y-%m-%d').date()
+
+        # Archivos (solo se actualizan si se subió uno nuevo)
+        actas_pdf = request.files.get('actas_pdf')
+        if actas_pdf and actas_pdf.filename:
+            url_actas = subir_archivo_supabase(actas_pdf)
+            if url_actas:
+                reporte.actas_pdf_url = url_actas
+
+        factura_pdf = request.files.get('factura_pdf')
+        if factura_pdf and factura_pdf.filename:
+            url_factura = subir_archivo_supabase(factura_pdf)
+            if url_factura:
+                reporte.factura_pdf_url = url_factura
+
+        comprobante_pago = request.files.get('comprobante_pago')
+        if comprobante_pago and comprobante_pago.filename:
+            url_comprobante = subir_archivo_supabase(comprobante_pago)
+            if url_comprobante:
+                reporte.comprobante_pago_url = url_comprobante
+
+        db.session.commit()
+        flash('Reporte actualizado exitosamente.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al actualizar reporte: {e}")
+        flash('Error al actualizar el reporte.', 'danger')
+
+    return redirect(url_for('clientes.index'))
+
 @clientes_bp.route('/crear', methods=['POST'])
 @login_required
 @admin_oficina_required

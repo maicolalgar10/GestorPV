@@ -225,7 +225,7 @@
                       <td class="text-success fw-semibold">${{ "{:,.0f}".format(r.total_pagos_realizados or 0) | replace(",",".") }}</td>
                       <td class="text-danger fw-bold">${{ "{:,.0f}".format(r.valor_adeudado_factura or 0) | replace(",",".") }}</td>
                       <td class="text-center pe-4">
-                        <button class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0" title="Editar">
+                        <button class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0" title="Editar" onclick="abrirModalEditarReporte('{{ r.id }}', '{{ r.valor_factura or 0 }}', '{{ r.porcentaje_rete_garantia or 0 }}', '{{ r.retencion_ley or 0 }}', '{{ r.pago_realizado or 0 }}', '{{ r.fecha_pago if r.fecha_pago else '' }}')">
                           <i class="bi bi-pencil-square"></i>
                         </button>
                         {% if r.factura_pdf_url %}
@@ -369,6 +369,116 @@
       </div>
     </div>
   </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR REPORTE (DINÁMICO) -->
+<div class="modal fade modal-dark" id="modalEditarReporte" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Editar Reporte / Factura</h5>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <form method="POST" id="formEditarReporte" action="" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="row g-3">
+            
+            <!-- SECCIÓN 1: VALORES MONETARIOS Y FACTURA -->
+            <div class="col-12"><div class="section-sep mt-0"><i class="bi bi-receipt me-1"></i>1. Valores Monetarios y Factura</div></div>
+            <div class="col-md-4">
+              <label>Valor Factura *</label>
+              <div class="input-group">
+                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                <input type="text" name="valor_factura" id="valor_factura_edit" class="form-control money-input" value="0" data-raw-value="0" required oninput="formatMoneyField(this); calcularValoresEdit()">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label>% Rete Garantía</label>
+              <div class="input-group">
+                <input type="text" name="porcentaje_rete_garantia" id="porcentaje_rete_garantia_edit" class="form-control pct-input" value="0" data-raw-value="0" oninput="formatPercentField(this); calcularValoresEdit()">
+                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
+              </div>
+              <small class="text-muted d-block mt-1" id="espejo_rete_garantia_reporte_edit">Equivale a: $0</small>
+            </div>
+            <div class="col-md-4">
+              <label>Retención de Ley</label>
+              <div class="input-group">
+                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                <input type="text" name="retencion_ley" id="retencion_ley_edit" class="form-control money-input" value="0" data-raw-value="0" oninput="formatMoneyField(this); calcularValoresEdit()">
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label>Actualizar Actas de Obra (PDF)</label>
+              <div class="upload-zone" onclick="this.querySelector('input').click()">
+                <input type="file" name="actas_pdf" accept=".pdf" onchange="mostrarNombreArchivo(this,'lbl_actas_edit')">
+                <label id="lbl_actas_edit"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Actas PDF (Opcional)</label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label>Actualizar Factura (PDF)</label>
+              <div class="upload-zone" onclick="this.querySelector('input').click()">
+                <input type="file" name="factura_pdf" accept=".pdf" onchange="mostrarNombreArchivo(this,'lbl_factura_edit')">
+                <label id="lbl_factura_edit"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Factura PDF (Opcional)</label>
+              </div>
+            </div>
+
+            <!-- CÁLCULOS DINÁMICOS -->
+            <div class="col-md-6">
+              <div class="calc-box">
+                <div class="calc-label">Rete Garantía ($)</div>
+                <div class="calc-val text-warning" id="calc_rete_garantia_edit">$0</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="calc-box calc-total">
+                <div class="calc-label">Adeuda Factura</div>
+                <div class="calc-val text-danger" id="calc_adeuda_factura_edit">$0</div>
+              </div>
+            </div>
+
+            <!-- SECCIÓN 2: INFORMACIÓN DE PAGO -->
+            <div class="col-12"><div class="section-sep"><i class="bi bi-cash-coin me-1"></i>2. Información de Pago</div></div>
+            <div class="col-md-4">
+              <label>Valor Abonado / Cancelado</label>
+              <div class="input-group">
+                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                <input type="text" name="pago_realizado" id="pago_realizado_edit" class="form-control money-input" value="0" data-raw-value="0" oninput="formatMoneyField(this); calcularValoresEdit()">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label>Fecha de Pago</label>
+              <input type="date" name="fecha_pago" id="fecha_pago_edit" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label>Actualizar Comprobante</label>
+              <div class="upload-zone" onclick="this.querySelector('input').click()">
+                <input type="file" name="comprobante_pago" accept=".pdf,.jpg,.jpeg,.png" onchange="mostrarNombreArchivo(this,'lbl_pago_edit')">
+                <label id="lbl_pago_edit"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Comprobante (Opcional)</label>
+              </div>
+            </div>
+            
+            <div class="col-12 mt-3">
+              <div class="calc-box bg-dark" style="border-color:#10b981;">
+                <div class="calc-label text-success">Total Pagos Realizados Reales</div>
+                <div class="calc-val text-success" id="calc_total_pagos_edit">$0</div>
+                <small class="text-muted" style="font-size:0.65rem;">Calculado: Pago Realizado - Retenciones y Garantías</small>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer d-flex justify-content-end gap-2 mt-4 border-top pt-3 bg-dark" style="border-color:#3f3f5c !important;">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" form="formEditarReporte" class="btn btn-primary px-4"><i class="bi bi-save me-1"></i> Actualizar Reporte</button>
       </div>
     </div>
   </div>
@@ -594,6 +704,62 @@ function calcularValores() {
   if (espejoReporte) {
       espejoReporte.innerText = 'Equivale a: ' + fmtPeso(reteGarantiaValor);
   }
+}
+
+function calcularValoresEdit() {
+  const valorFactura = getRawVal('valor_factura_edit');
+  const porcRete = getRawVal('porcentaje_rete_garantia_edit');
+  const retencionLey = getRawVal('retencion_ley_edit');
+  const pagoRealizado = getRawVal('pago_realizado_edit');
+
+  const reteGarantiaValor = valorFactura * (porcRete / 100);
+  const totalPagosRealizados = pagoRealizado - retencionLey - reteGarantiaValor;
+  const adeudadoFactura = valorFactura - totalPagosRealizados;
+
+  document.getElementById('calc_rete_garantia_edit').innerText = fmtPeso(reteGarantiaValor);
+  document.getElementById('calc_total_pagos_edit').innerText = fmtPeso(Math.max(totalPagosRealizados, 0));
+  document.getElementById('calc_adeuda_factura_edit').innerText = fmtPeso(Math.max(adeudadoFactura, 0));
+  
+  let espejoReporte = document.getElementById('espejo_rete_garantia_reporte_edit');
+  if (espejoReporte) {
+      espejoReporte.innerText = 'Equivale a: ' + fmtPeso(reteGarantiaValor);
+  }
+}
+
+function abrirModalEditarReporte(reporteId, valorFactura, porcRete, retencionLey, pagoRealizado, fechaPago) {
+  const form = document.getElementById('formEditarReporte');
+  form.action = "{{ url_for('clientes.editar_reporte', reporte_id=0) }}".replace('0', reporteId);
+
+  const inpFactura = document.getElementById('valor_factura_edit');
+  inpFactura.dataset.rawValue = valorFactura;
+  inpFactura.value = valorFactura;
+  formatMoneyField(inpFactura);
+
+  const inpRete = document.getElementById('porcentaje_rete_garantia_edit');
+  inpRete.dataset.rawValue = porcRete;
+  inpRete.value = porcRete;
+  formatPercentField(inpRete);
+
+  const inpRetLey = document.getElementById('retencion_ley_edit');
+  inpRetLey.dataset.rawValue = retencionLey;
+  inpRetLey.value = retencionLey;
+  formatMoneyField(inpRetLey);
+
+  const inpPago = document.getElementById('pago_realizado_edit');
+  inpPago.dataset.rawValue = pagoRealizado;
+  inpPago.value = pagoRealizado;
+  formatMoneyField(inpPago);
+
+  document.getElementById('fecha_pago_edit').value = fechaPago;
+
+  document.getElementById('lbl_actas_edit').innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Subir Actas PDF (Opcional)';
+  document.getElementById('lbl_factura_edit').innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Subir Factura PDF (Opcional)';
+  document.getElementById('lbl_pago_edit').innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Subir Comprobante (Opcional)';
+
+  calcularValoresEdit();
+
+  var modal = new bootstrap.Modal(document.getElementById('modalEditarReporte'));
+  modal.show();
 }
 
 function calcularEspejoContrato() {
