@@ -95,6 +95,11 @@ def crear_reporte():
         factura_pdf = request.files.get('factura_pdf')
         comprobante_pago = request.files.get('comprobante_pago')
 
+        print(f"--- DEBUG CREAR REPORTE ---")
+        print(f"Archivo acta recibido: {actas_pdf}")
+        print(f"Archivo factura recibido: {factura_pdf}")
+        print(f"Archivo comprobante recibido: {comprobante_pago}")
+
         url_actas = subir_archivo_supabase(actas_pdf)
         url_factura = subir_archivo_supabase(factura_pdf)
         url_comprobante = subir_archivo_supabase(comprobante_pago)
@@ -148,6 +153,9 @@ def editar_reporte(reporte_id):
 
         # Archivos (solo se actualizan si se subió uno nuevo)
         nuevo_archivo_acta = request.files.get('actas_pdf')
+        print(f"--- DEBUG EDITAR REPORTE ---")
+        print(f"Archivo acta recibido: {nuevo_archivo_acta}")
+        
         if nuevo_archivo_acta and nuevo_archivo_acta.filename != '':
             url_acta = subir_archivo_supabase(nuevo_archivo_acta)
             if url_acta:
