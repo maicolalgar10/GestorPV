@@ -232,7 +232,7 @@
                           <i class="bi bi-file-earmark-check"></i>
                         </a>
                         {% endif %}
-                        {% if r.comprobante_pago_url %}
+                        {% if r.comprobante_pago_url and r.comprobante_pago_url != '' and r.comprobante_pago_url != 'None' %}
                         <a href="{{ r.comprobante_pago_url }}" target="_blank" class="btn btn-sm btn-outline-warning rounded-pill px-2 py-0 ms-1" title="Ver Comprobante de Pago">
                           <i class="bi bi-cash-coin"></i>
                         </a>
