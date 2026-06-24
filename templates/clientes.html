@@ -189,6 +189,8 @@
                   <span class="text-muted">{{ c.nombre_proyecto }}</span>
                 </div>
                 <div class="text-end d-flex gap-4 align-items-center" style="font-size: 0.85rem;">
+                   <span>Total Facturado ($): <strong class="text-primary">${{ "{:,.0f}".format(c.total_facturado) | replace(",",".") }}</strong></span>
+                   <span>Total Pagos Realizados ($): <strong class="text-success">${{ "{:,.0f}".format(c.total_pagos) | replace(",",".") }}</strong></span>
                    <span>Valor Total: <strong class="text-dark">${{ "{:,.0f}".format(c.valor_total or 0) | replace(",",".") }}</strong></span>
                    <span>Saldo Adeudado: <strong class="{% if adeudado_contrato > 0 %}text-danger{% else %}text-success{% endif %}">${{ "{:,.0f}".format(adeudado_contrato) | replace(",",".") }}</strong></span>
                 </div>
@@ -202,11 +204,12 @@
                   <thead style="background: #f8fafc; font-size: .74rem; text-transform: uppercase; color: #6b7280; letter-spacing: .5px;">
                     <tr>
                       <th class="ps-4">ID Rep.</th>
-                      <th>Fecha</th>
+                      <th>Fecha Fact.</th>
                       <th>Valor Factura</th>
                       <th>Rete Garantía</th>
                       <th>Retención Ley</th>
                       <th>Pagos Realizados</th>
+                      <th>Fecha Pago</th>
                       <th>Adeuda Factura</th>
                       <th class="text-center pe-4">Acciones</th>
                     </tr>
@@ -215,14 +218,15 @@
                     {% for r in c.reportes %}
                     <tr>
                       <td class="ps-4 text-muted small">#{{ r.id }}</td>
-                      <td>{{ r.created_at.strftime('%Y-%m-%d') }}</td>
+                      <td>{{ r.fecha_factura.strftime('%Y-%m-%d') if r.fecha_factura else '---' }}</td>
                       <td>${{ "{:,.0f}".format(r.valor_factura or 0) | replace(",",".") }}</td>
                       <td>${{ "{:,.0f}".format(r.rete_garantia_valor or 0) | replace(",",".") }}</td>
                       <td>${{ "{:,.0f}".format(r.retencion_ley or 0) | replace(",",".") }}</td>
                       <td class="text-success fw-semibold">${{ "{:,.0f}".format(r.total_pagos_realizados or 0) | replace(",",".") }}</td>
+                      <td>{{ r.fecha_pago.strftime('%Y-%m-%d') if r.fecha_pago else '---' }}</td>
                       <td class="text-danger fw-bold">${{ "{:,.0f}".format(r.valor_adeudado_factura or 0) | replace(",",".") }}</td>
                       <td class="text-center pe-4">
-                        <button class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0" title="Editar" onclick="abrirModalEditarReporte('{{ r.id }}', '{{ (r.valor_factura or 0)|int }}', '{{ r.porcentaje_rete_garantia or 0 }}', '{{ (r.retencion_ley or 0)|int }}', '{{ (r.pago_realizado or 0)|int }}', '{{ r.fecha_pago if r.fecha_pago else '' }}')">
+                        <button class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0" title="Editar" onclick="abrirModalEditarReporte('{{ r.id }}', '{{ (r.valor_factura or 0)|int }}', '{{ r.porcentaje_rete_garantia or 0 }}', '{{ (r.retencion_ley or 0)|int }}', '{{ (r.pago_realizado or 0)|int }}', '{{ r.fecha_pago if r.fecha_pago else '' }}', '{{ r.fecha_factura if r.fecha_factura else '' }}')">
                           <i class="bi bi-pencil-square"></i>
                         </button>
                         {% if r.factura_pdf_url %}
@@ -286,14 +290,18 @@
             
             <!-- SECCIÓN 1: VALORES MONETARIOS Y FACTURA -->
             <div class="col-12"><div class="section-sep mt-0"><i class="bi bi-receipt me-1"></i>1. Valores Monetarios y Factura</div></div>
-            <div class="col-md-4">
+            <div class="col-md-3">
+              <label>Fecha de Factura *</label>
+              <input type="date" name="fecha_factura" class="form-control" required>
+            </div>
+            <div class="col-md-3">
               <label>Valor Factura *</label>
               <div class="input-group">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
                 <input type="text" name="valor_factura" id="valor_factura" class="form-control money-input" value="0" data-raw-value="0" required oninput="formatMoneyField(this); calcularValores()">
               </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
               <label>% Rete Garantía</label>
               <div class="input-group">
                 <input type="text" name="porcentaje_rete_garantia" id="porcentaje_rete_garantia" class="form-control pct-input" value="0" data-raw-value="0" oninput="formatPercentField(this); calcularValores()">
@@ -301,7 +309,7 @@
               </div>
               <small class="text-muted d-block mt-1" id="espejo_rete_garantia_reporte">Equivale a: $0</small>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
               <label>Retención de Ley</label>
               <div class="input-group">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
@@ -399,14 +407,18 @@
             
             <!-- SECCIÓN 1: VALORES MONETARIOS Y FACTURA -->
             <div class="col-12"><div class="section-sep mt-0"><i class="bi bi-receipt me-1"></i>1. Valores Monetarios y Factura</div></div>
-            <div class="col-md-4">
+            <div class="col-md-3">
+              <label>Fecha de Factura *</label>
+              <input type="date" name="fecha_factura" id="fecha_factura_edit" class="form-control" required>
+            </div>
+            <div class="col-md-3">
               <label>Valor Factura *</label>
               <div class="input-group">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
                 <input type="text" name="valor_factura" id="valor_factura_edit" class="form-control money-input" value="0" data-raw-value="0" required oninput="formatMoneyField(this); calcularValoresEdit()">
               </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
               <label>% Rete Garantía</label>
               <div class="input-group">
                 <input type="text" name="porcentaje_rete_garantia" id="porcentaje_rete_garantia_edit" class="form-control pct-input" value="0" data-raw-value="0" oninput="formatPercentField(this); calcularValoresEdit()">
@@ -414,7 +426,7 @@
               </div>
               <small class="text-muted d-block mt-1" id="espejo_rete_garantia_reporte_edit">Equivale a: $0</small>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
               <label>Retención de Ley</label>
               <div class="input-group">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
@@ -731,7 +743,7 @@ function calcularValoresEdit() {
   }
 }
 
-function abrirModalEditarReporte(reporteId, valorFactura, porcRete, retencionLey, pagoRealizado, fechaPago) {
+function abrirModalEditarReporte(reporteId, valorFactura, porcRete, retencionLey, pagoRealizado, fechaPago, fechaFactura) {
   const form = document.getElementById('formEditarReporte');
   form.action = "{{ url_for('clientes.editar_reporte', reporte_id=0) }}".replace('0', reporteId);
 
@@ -756,6 +768,7 @@ function abrirModalEditarReporte(reporteId, valorFactura, porcRete, retencionLey
   formatMoneyField(inpPago);
 
   document.getElementById('fecha_pago_edit').value = fechaPago;
+  document.getElementById('fecha_factura_edit').value = fechaFactura;
 
   document.getElementById('lbl_actas_edit').innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Subir Actas PDF (Opcional)';
   document.getElementById('lbl_factura_edit').innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Subir Factura PDF (Opcional)';

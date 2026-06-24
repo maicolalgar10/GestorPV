@@ -879,6 +879,20 @@ class ContratosClientes(db.Model):
     cliente = db.relationship('Clientes', backref=db.backref('proyectos_clientes', lazy=True))
     reportes = db.relationship('ReporteClientes', back_populates='contrato_cliente', cascade='all, delete-orphan')
 
+    @property
+    def total_facturado(self):
+        try:
+            return sum(float(r.valor_factura or 0.0) for r in self.reportes)
+        except Exception:
+            return 0.0
+
+    @property
+    def total_pagos(self):
+        try:
+            return sum(float(r.pago_realizado or 0.0) for r in self.reportes)
+        except Exception:
+            return 0.0
+
 # ===========================================
 # 21. Reporte de Contratos de Clientes
 # ===========================================
@@ -893,6 +907,7 @@ class ReporteClientes(db.Model):
     
     # Datos de Facturación
     valor_factura = db.Column(db.Numeric(15, 2), nullable=False, default=0.00)
+    fecha_factura = db.Column(db.Date, nullable=True)
     factura_pdf_url = db.Column(db.Text, nullable=True)
     
     # Retenciones y Pagos

@@ -85,8 +85,10 @@ def crear_reporte():
         retencion_ley = parse_float_safe(request.form.get('retencion_ley'))
         pago_realizado = parse_float_safe(request.form.get('pago_realizado'))
         fecha_pago_str = request.form.get('fecha_pago')
+        fecha_factura_str = request.form.get('fecha_factura')
         
         fecha_pago = datetime.strptime(fecha_pago_str, '%Y-%m-%d').date() if fecha_pago_str else None
+        fecha_factura = datetime.strptime(fecha_factura_str, '%Y-%m-%d').date() if fecha_factura_str else None
 
         # Archivos
         actas_pdf = request.files.get('actas_pdf')
@@ -106,6 +108,7 @@ def crear_reporte():
             retencion_ley=retencion_ley,
             pago_realizado=pago_realizado,
             fecha_pago=fecha_pago,
+            fecha_factura=fecha_factura,
             comprobante_pago_url=url_comprobante
         )
 
@@ -138,6 +141,10 @@ def editar_reporte(reporte_id):
         fecha_pago_str = request.form.get('fecha_pago')
         if fecha_pago_str:
             reporte.fecha_pago = datetime.strptime(fecha_pago_str, '%Y-%m-%d').date()
+
+        fecha_factura_str = request.form.get('fecha_factura')
+        if fecha_factura_str:
+            reporte.fecha_factura = datetime.strptime(fecha_factura_str, '%Y-%m-%d').date()
 
         # Archivos (solo se actualizan si se subió uno nuevo)
         actas_pdf = request.files.get('actas_pdf')
