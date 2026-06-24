@@ -2,6 +2,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from datetime import datetime
 import os
 import uuid
+import re
+from werkzeug.utils import secure_filename
 
 from models import db, Clientes, ReporteClientes, Usuarios, Contrato, ContratosClientes
 from supabase_client import supabase
@@ -32,8 +34,11 @@ def subir_archivo_supabase(file_obj, carpeta="clientes"):
         return None
         
     if allowed_file(file_obj.filename):
-        ext = file_obj.filename.rsplit('.', 1)[1].lower()
-        filename = f"{uuid.uuid4().hex}_{file_obj.filename}"
+        # 1. Sanitizar el nombre del archivo
+        nombre_seguro = secure_filename(file_obj.filename)
+        nombre_seguro = re.sub(r'[^a-zA-Z0-9._-]', '_', nombre_seguro)
+        
+        filename = f"{uuid.uuid4().hex}_{nombre_seguro}"
         path = f"{carpeta}/{filename}"
         
         file_bytes = file_obj.read()
@@ -45,7 +50,7 @@ def subir_archivo_supabase(file_obj, carpeta="clientes"):
             )
             return supabase.storage.from_("tesoreria").get_public_url(path)
         except Exception as e:
-            print(f"Error al subir archivo a Supabase: {e}")
+            print(f"!!! ERROR CRÍTICO EN SUPABASE STORAGE: {str(e)}")
             return None
     return None
 
