@@ -147,21 +147,21 @@ def editar_reporte(reporte_id):
             reporte.fecha_factura = datetime.strptime(fecha_factura_str, '%Y-%m-%d').date()
 
         # Archivos (solo se actualizan si se subió uno nuevo)
-        actas_pdf = request.files.get('actas_pdf')
-        if actas_pdf and actas_pdf.filename:
-            url_actas = subir_archivo_supabase(actas_pdf)
-            if url_actas:
-                reporte.actas_pdf_url = url_actas
+        nuevo_archivo_acta = request.files.get('actas_pdf')
+        if nuevo_archivo_acta and nuevo_archivo_acta.filename != '':
+            url_acta = subir_archivo_supabase(nuevo_archivo_acta)
+            if url_acta:
+                reporte.actas_pdf_url = url_acta
 
-        factura_pdf = request.files.get('factura_pdf')
-        if factura_pdf and factura_pdf.filename:
-            url_factura = subir_archivo_supabase(factura_pdf)
+        nuevo_archivo_factura = request.files.get('factura_pdf')
+        if nuevo_archivo_factura and nuevo_archivo_factura.filename != '':
+            url_factura = subir_archivo_supabase(nuevo_archivo_factura)
             if url_factura:
                 reporte.factura_pdf_url = url_factura
 
-        comprobante_pago = request.files.get('comprobante_pago')
-        if comprobante_pago and comprobante_pago.filename:
-            url_comprobante = subir_archivo_supabase(comprobante_pago)
+        nuevo_archivo_comprobante = request.files.get('comprobante_pago')
+        if nuevo_archivo_comprobante and nuevo_archivo_comprobante.filename != '':
+            url_comprobante = subir_archivo_supabase(nuevo_archivo_comprobante)
             if url_comprobante:
                 reporte.comprobante_pago_url = url_comprobante
 
