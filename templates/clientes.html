@@ -224,7 +224,17 @@
                         </button>
                         {% if r.factura_pdf_url %}
                         <a href="{{ r.factura_pdf_url }}" target="_blank" class="btn btn-sm btn-outline-danger rounded-pill px-2 py-0 ms-1" title="Ver Factura">
-                          <i class="bi bi-file-earmark-pdf"></i>
+                          <i class="bi bi-file-earmark-text"></i>
+                        </a>
+                        {% endif %}
+                        {% if r.actas_pdf_url %}
+                        <a href="{{ r.actas_pdf_url }}" target="_blank" class="btn btn-sm btn-outline-info rounded-pill px-2 py-0 ms-1" title="Ver Actas de Obra">
+                          <i class="bi bi-file-earmark-check"></i>
+                        </a>
+                        {% endif %}
+                        {% if r.comprobante_pago_url %}
+                        <a href="{{ r.comprobante_pago_url }}" target="_blank" class="btn btn-sm btn-outline-warning rounded-pill px-2 py-0 ms-1" title="Ver Comprobante de Pago">
+                          <i class="bi bi-cash-coin"></i>
                         </a>
                         {% endif %}
                       </td>
