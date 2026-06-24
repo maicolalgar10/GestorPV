@@ -893,6 +893,13 @@ class ContratosClientes(db.Model):
         except Exception:
             return 0.0
 
+    @property
+    def saldo_adeudado(self):
+        try:
+            return float(self.valor_total or 0.0) - self.total_pagos
+        except Exception:
+            return 0.0
+
 # ===========================================
 # 21. Reporte de Contratos de Clientes
 # ===========================================
