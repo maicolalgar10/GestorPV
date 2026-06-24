@@ -432,7 +432,7 @@
             <th>Mora</th>
             <th>Est. Factura</th>
             <th class="text-end">Valor Neto</th>
-            <th class="text-end">IVA 19%</th>
+            <th class="text-end">IVA</th>
             <th class="text-end">% Ret.</th>
             <th class="text-end">Valor Total</th>
             <th class="text-end">Cancelado</th>
@@ -475,7 +475,7 @@
               {% endif %}
             </td>
             <td class="text-end fw-semibold">${{ "{:,.0f}".format(f.valor_neto) | replace(",",".") }}</td>
-            <td class="text-end text-muted">${{ "{:,.0f}".format(f.iva) | replace(",",".") }}</td>
+            <td class="text-end text-muted">${{ "{:,.0f}".format(f.iva) | replace(",",".") }} <span class="badge bg-light text-secondary border border-secondary-subtle px-1 py-0 ms-1" style="font-size:0.65rem">{{ f.porcentaje_iva }}%</span></td>
             <td class="text-end text-muted">${{ "{:,.0f}".format(f.retencion_pesos) | replace(",",".") }} <span class="badge bg-light text-secondary border border-secondary-subtle px-1 py-0 ms-1" style="font-size:0.65rem">{{ f.retencion }}%</span></td>
             <td class="text-end fw-semibold">${{ "{:,.0f}".format(f.valor_total) | replace(",",".") }}</td>
             <td class="text-end text-success fw-semibold">
@@ -521,7 +521,7 @@
             <td class="text-center" style="min-width:110px;">
               <button class="btn btn-sm btn-outline-primary rounded-pill px-2 me-1 mb-1"
                       title="Editar"
-                      onclick="abrirModalEditar({{ f.id }}, '{{ f.nombre_proveedor | replace("'","\\'")|replace('"','\\"') }}', '{{ f.fecha_factura }}', {{ f.plazo_dias }}, '{{ f.fecha_vencimiento }}', {{ f.valor_neto }}, {{ f.valor_cancelado }}, {{ f.retencion }}, '{{ f.fecha_pago or '' }}', '{{ f.orden_compra_url or '' }}', '{{ f.comprobante_compra_url or '' }}', '{{ f.banco_pago_url or '' }}')">
+                      onclick="abrirModalEditar({{ f.id }}, '{{ f.nombre_proveedor | replace("'","\\'")|replace('"','\\"') }}', '{{ f.fecha_factura }}', {{ f.plazo_dias }}, '{{ f.fecha_vencimiento }}', {{ f.valor_neto }}, {{ f.porcentaje_iva }}, {{ f.valor_cancelado }}, {{ f.retencion }}, '{{ f.fecha_pago or '' }}', '{{ f.orden_compra_url or '' }}', '{{ f.comprobante_compra_url or '' }}', '{{ f.banco_pago_url or '' }}')">
                 <i class="bi bi-pencil-square"></i>
               </button>
               <form method="POST"
@@ -701,16 +701,21 @@
 
             <!-- Calc boxes IVA y Total -->
             <div class="col-md-3">
-              <label>&nbsp;</label>
-              <div class="calc-box d-flex justify-content-between align-items-center">
+              <label>IVA (%)</label>
+              <div class="input-group mb-2">
+                <input type="number" name="porcentaje_iva" id="n_porcentaje_iva" class="form-control pct-input"
+                       placeholder="19" min="0" max="100" step="any" value="19" oninput="calcularIVA('n')">
+                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
+              </div>
+              <div class="calc-box d-flex justify-content-between align-items-center py-1 px-2">
                 <div>
-                  <div class="calc-label">IVA 19%</div>
-                  <div class="calc-val" id="n_iva_display">$0</div>
+                  <div class="calc-label">Valor IVA ($)</div>
+                  <div class="calc-val fs-6" id="n_iva_display">$0</div>
                 </div>
-                <i class="bi bi-plus-circle text-muted fs-5"></i>
+                <i class="bi bi-plus-circle text-muted mx-1"></i>
                 <div>
                   <div class="calc-label">Valor Total</div>
-                  <div class="calc-val calc-total" id="n_total_display">$0</div>
+                  <div class="calc-val calc-total fs-6" id="n_total_display">$0</div>
                 </div>
               </div>
             </div>
@@ -859,16 +864,21 @@
               </div>
             </div>
             <div class="col-md-3">
-              <label>&nbsp;</label>
-              <div class="calc-box d-flex justify-content-between align-items-center">
+              <label>IVA (%)</label>
+              <div class="input-group mb-2">
+                <input type="number" name="porcentaje_iva" id="e_porcentaje_iva" class="form-control pct-input"
+                       placeholder="19" min="0" max="100" step="any" value="19" oninput="calcularIVA('e')">
+                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
+              </div>
+              <div class="calc-box d-flex justify-content-between align-items-center py-1 px-2">
                 <div>
-                  <div class="calc-label">IVA 19%</div>
-                  <div class="calc-val" id="e_iva_display">$0</div>
+                  <div class="calc-label">Valor IVA ($)</div>
+                  <div class="calc-val fs-6" id="e_iva_display">$0</div>
                 </div>
-                <i class="bi bi-plus-circle text-muted fs-5"></i>
+                <i class="bi bi-plus-circle text-muted mx-1"></i>
                 <div>
                   <div class="calc-label">Valor Total</div>
-                  <div class="calc-val calc-total" id="e_total_display">$0</div>
+                  <div class="calc-val calc-total fs-6" id="e_total_display">$0</div>
                 </div>
               </div>
             </div>
@@ -966,10 +976,11 @@ function fmtPeso(num) {
 
 function calcularIVA(prefix) {
   const neto     = parseFloat(document.getElementById(prefix + '_valor_neto')?.value)  || 0;
+  const pct_iva  = parseFloat(document.getElementById(prefix + '_porcentaje_iva')?.value) || 0;
   const ret_porc = parseFloat(document.getElementById(prefix + '_retencion')?.value)   || 0;
   const cancelado= parseFloat(document.getElementById(prefix + '_cancelado')?.value)   || 0;
 
-  const iva      = neto * 0.19;
+  const iva      = neto * (pct_iva / 100);
   const total    = neto + iva;
   const ret_pesos= neto * (ret_porc / 100);
   const adeudado = total - ret_pesos - cancelado;
@@ -1043,7 +1054,7 @@ calcularIVA = function(prefix) {
 /* ══════════════════════════════════════════════════════════
    MODAL EDITAR — pre-relleno de datos
 ══════════════════════════════════════════════════════════ */
-function abrirModalEditar(id, nombre, fecha_factura, plazo, fecha_venc, valor_neto, valor_cancelado, retencion, fecha_pago, oc_url, cc_url, bp_url) {
+function abrirModalEditar(id, nombre, fecha_factura, plazo, fecha_venc, valor_neto, porcentaje_iva, valor_cancelado, retencion, fecha_pago, oc_url, cc_url, bp_url) {
   document.getElementById('formEditarFactura').action = '/dashboard/proveedores/' + id + '/editar';
   document.getElementById('e_subtitulo').innerText    = 'ID #' + id + ' — ' + nombre;
   document.getElementById('e_nombre').value           = nombre;
@@ -1051,6 +1062,7 @@ function abrirModalEditar(id, nombre, fecha_factura, plazo, fecha_venc, valor_ne
   document.getElementById('e_plazo_dias').value       = plazo;
   document.getElementById('e_fecha_vencimiento').value= fecha_venc;
   document.getElementById('e_valor_neto').value       = valor_neto;
+  document.getElementById('e_porcentaje_iva').value   = porcentaje_iva;
   document.getElementById('e_retencion').value        = retencion;
   document.getElementById('e_cancelado').value        = valor_cancelado;
   document.getElementById('e_fecha_pago').value       = fecha_pago;

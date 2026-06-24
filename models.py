@@ -762,13 +762,16 @@ class ProveedorFactura(db.Model):
     # ─── Auditoría ───────────────────────────────────────────────────
     creado_en = db.Column(db.DateTime, default=datetime.utcnow)
 
+    porcentaje_iva = db.Column(db.Numeric(14, 2), nullable=False, default=19.0)
+
     # ─── Campos calculados (@property) ───────────────────────────────
 
     @property
     def iva(self):
-        """19% del valor_neto."""
+        """IVA calculado basado en el porcentaje_iva."""
         try:
-            return round(float(self.valor_neto or 0) * 0.19, 2)
+            pct = float(self.porcentaje_iva) if self.porcentaje_iva is not None else 19.0
+            return round(float(self.valor_neto or 0) * (pct / 100.0), 2)
         except (ValueError, TypeError):
             return 0.0
 
@@ -776,7 +779,7 @@ class ProveedorFactura(db.Model):
     def valor_total(self):
         """valor_neto + IVA."""
         try:
-            return round(float(self.valor_neto or 0) * 1.19, 2)
+            return round(float(self.valor_neto or 0) + self.iva, 2)
         except (ValueError, TypeError):
             return 0.0
 

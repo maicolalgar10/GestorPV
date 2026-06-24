@@ -449,14 +449,22 @@ def nueva_factura_proveedor():
         fecha_pago_raw    = request.form.get("fecha_pago", "").strip()
         fecha_pago        = dt.strptime(fecha_pago_raw, "%Y-%m-%d").date() if fecha_pago_raw else None
 
+        def parse_float_safe(value, default=0.0):
+            try:
+                if value is None or str(value).strip() == "": return default
+                return float(value)
+            except (ValueError, TypeError):
+                return default
+
         factura = ProveedorFactura(
             nombre_proveedor       = request.form["nombre_proveedor"].strip(),
             fecha_factura          = fecha_factura,
             plazo_dias             = int(request.form.get("plazo_dias") or 0),
             fecha_vencimiento      = fecha_vencimiento,
-            valor_neto             = float(request.form.get("valor_neto") or 0),
-            valor_cancelado        = float(request.form.get("valor_cancelado") or 0),
-            retencion              = float(request.form.get("retencion") or 0),
+            valor_neto             = parse_float_safe(request.form.get("valor_neto")),
+            porcentaje_iva         = parse_float_safe(request.form.get("porcentaje_iva"), 19.0),
+            valor_cancelado        = parse_float_safe(request.form.get("valor_cancelado")),
+            retencion              = parse_float_safe(request.form.get("retencion")),
             fecha_pago             = fecha_pago,
             orden_compra_url       = upload_file("orden_compra"),
             comprobante_compra_url = upload_file("comprobante_compra"),
@@ -508,14 +516,22 @@ def editar_factura_proveedor(id):
             return current_url
 
     try:
+        def parse_float_safe(value, default=0.0):
+            try:
+                if value is None or str(value).strip() == "": return default
+                return float(value)
+            except (ValueError, TypeError):
+                return default
+
         fecha_pago_raw = request.form.get("fecha_pago", "").strip()
         factura.nombre_proveedor       = request.form["nombre_proveedor"].strip()
         factura.fecha_factura          = dt.strptime(request.form["fecha_factura"], "%Y-%m-%d").date()
         factura.plazo_dias             = int(request.form.get("plazo_dias") or 0)
         factura.fecha_vencimiento      = dt.strptime(request.form["fecha_vencimiento"], "%Y-%m-%d").date()
-        factura.valor_neto             = float(request.form.get("valor_neto") or 0)
-        factura.valor_cancelado        = float(request.form.get("valor_cancelado") or 0)
-        factura.retencion              = float(request.form.get("retencion") or 0)
+        factura.valor_neto             = parse_float_safe(request.form.get("valor_neto"))
+        factura.porcentaje_iva         = parse_float_safe(request.form.get("porcentaje_iva"), 19.0)
+        factura.valor_cancelado        = parse_float_safe(request.form.get("valor_cancelado"))
+        factura.retencion              = parse_float_safe(request.form.get("retencion"))
         factura.fecha_pago             = dt.strptime(fecha_pago_raw, "%Y-%m-%d").date() if fecha_pago_raw else None
         factura.orden_compra_url       = upload_or_keep("orden_compra", factura.orden_compra_url)
         factura.comprobante_compra_url = upload_or_keep("comprobante_compra", factura.comprobante_compra_url)
