@@ -252,3 +252,56 @@ def crear_contrato_cliente():
         flash(f'Error al crear contrato: {e}', 'danger')
 
     return redirect(url_for('clientes.index'))
+
+@clientes_bp.route('/editar/<int:cliente_id>', methods=['POST'])
+@login_required
+@admin_oficina_required
+def editar_cliente(cliente_id):
+    try:
+        cliente = Clientes.query.get(cliente_id)
+        if not cliente:
+            flash('Cliente no encontrado.', 'danger')
+            return redirect(url_for('clientes.index'))
+
+        cliente.nombre_cliente = request.form.get('nombre_cliente')
+        cliente.nit = request.form.get('nit')
+        cliente.contacto = request.form.get('contacto')
+
+        db.session.commit()
+        flash('Cliente actualizado exitosamente.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al actualizar cliente: {e}")
+        flash('Error al actualizar cliente.', 'danger')
+
+    return redirect(url_for('clientes.index'))
+
+@clientes_bp.route('/editar_contrato_cliente/<int:contrato_id>', methods=['POST'])
+@login_required
+@admin_oficina_required
+def editar_contrato_cliente(contrato_id):
+    try:
+        contrato = ContratosClientes.query.get(contrato_id)
+        if not contrato:
+            flash("Contrato no encontrado", "danger")
+            return redirect(url_for('clientes.index'))
+
+        contrato.nombre_proyecto = request.form.get('nombre_proyecto')
+        contrato.valor_total = parse_float_safe(request.form.get('valor_total'))
+        contrato.porcentaje_retegarantia = parse_float_safe(request.form.get('porcentaje_retegarantia'))
+        
+        # Archivo PDF del contrato (si lo hay)
+        nuevo_contrato_pdf = request.files.get('contrato_pdf')
+        if nuevo_contrato_pdf and nuevo_contrato_pdf.filename != '':
+            url_contrato = subir_archivo_supabase(nuevo_contrato_pdf)
+            if url_contrato:
+                contrato.archivo_pdf = url_contrato
+
+        db.session.commit()
+        flash('Contrato actualizado exitosamente.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al actualizar contrato cliente: {e}")
+        flash(f'Error al actualizar contrato: {e}', 'danger')
+
+    return redirect(url_for('clientes.index'))
