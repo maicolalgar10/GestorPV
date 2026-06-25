@@ -179,9 +179,9 @@
                   <span class="badge bg-primary me-2">PROYECTO #{{ c.id }}</span> 
                   <strong>{{ c.cliente.nombre_cliente if c.cliente else 'Sin cliente asignado' }}</strong>
                   {% if c.cliente %}
-                  <button type="button" class="btn btn-sm btn-link p-0 ms-1 text-secondary" title="Editar Cliente" data-bs-toggle="modal" data-bs-target="#modalEditarCliente" data-id="{{ c.cliente.id }}" data-nombre="{{ c.cliente.nombre_cliente }}" data-nit="{{ c.cliente.nit or '' }}" data-contacto="{{ c.cliente.contacto or '' }}" onclick="prepararModalEditarCliente(this, event)">
+                  <span role="button" class="btn btn-sm btn-link p-0 ms-1 text-secondary" title="Editar Cliente" data-bs-toggle="modal" data-bs-target="#modalEditarCliente" data-id="{{ c.cliente.id }}" data-nombre="{{ c.cliente.nombre_cliente }}" data-nit="{{ c.cliente.nit or '' }}" data-contacto="{{ c.cliente.contacto or '' }}" onclick="prepararModalEditarCliente(this, event)">
                     <i class="bi bi-pencil-square"></i>
-                  </button>
+                  </span>
                   {% endif %} 
                   <span class="text-muted mx-1">&mdash;</span> 
                   <span class="text-muted">{{ c.nombre_proyecto }}</span>
