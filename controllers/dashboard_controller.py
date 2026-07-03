@@ -533,9 +533,23 @@ def editar_factura_proveedor(id):
         factura.valor_cancelado        = parse_float_safe(request.form.get("valor_cancelado"))
         factura.retencion              = parse_float_safe(request.form.get("retencion"))
         factura.fecha_pago             = dt.strptime(fecha_pago_raw, "%Y-%m-%d").date() if fecha_pago_raw else None
-        factura.orden_compra_url       = upload_or_keep("orden_compra", factura.orden_compra_url)
-        factura.comprobante_compra_url = upload_or_keep("comprobante_compra", factura.comprobante_compra_url)
-        factura.banco_pago_url         = upload_or_keep("banco_pago", factura.banco_pago_url)
+        
+        # Procesar archivos e interceptar flag de eliminación
+        if request.form.get("eliminar_orden") == "true":
+            factura.orden_compra_url = None
+        else:
+            factura.orden_compra_url = upload_or_keep("orden_compra", factura.orden_compra_url)
+            
+        if request.form.get("eliminar_comprobante") == "true":
+            factura.comprobante_compra_url = None
+        else:
+            factura.comprobante_compra_url = upload_or_keep("comprobante_compra", factura.comprobante_compra_url)
+            
+        if request.form.get("eliminar_soporte") == "true":
+            factura.banco_pago_url = None
+        else:
+            factura.banco_pago_url = upload_or_keep("banco_pago", factura.banco_pago_url)
+
         db.session.commit()
         flash("Factura actualizada correctamente.", "success")
     except Exception as e:
