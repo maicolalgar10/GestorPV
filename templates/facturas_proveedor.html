@@ -564,9 +564,11 @@
                        onchange="mostrarNombreArchivo(this,'e_lbl_oc')">
                 <label id="e_lbl_oc"><i class="bi bi-arrow-repeat me-1"></i>Mantener actual / Reemplazar</label>
               </div>
-              <div id="e_link_oc_container" class="mt-2 d-none">
-                 <a href="#" id="e_link_oc" target="_blank" class="btn btn-sm btn-outline-info w-100 fw-semibold"><i class="bi bi-eye me-1"></i> Ver Archivo Actual</a>
+              <div id="e_link_oc_container" class="mt-2 d-none gap-2">
+                 <a href="#" id="e_link_oc" target="_blank" class="btn btn-sm btn-outline-info flex-grow-1 fw-semibold"><i class="bi bi-eye me-1"></i> Ver Archivo Actual</a>
+                 <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar Archivo" onclick="marcarEliminarArchivo('oc')"><i class="bi bi-trash"></i></button>
               </div>
+              <input type="hidden" name="eliminar_orden" id="e_eliminar_oc" value="false">
             </div>
             <div class="col-md-4">
               <label>Comprobante / Factura</label>
@@ -575,9 +577,11 @@
                        onchange="mostrarNombreArchivo(this,'e_lbl_cc')">
                 <label id="e_lbl_cc"><i class="bi bi-arrow-repeat me-1"></i>Mantener actual / Reemplazar</label>
               </div>
-              <div id="e_link_cc_container" class="mt-2 d-none">
-                 <a href="#" id="e_link_cc" target="_blank" class="btn btn-sm btn-outline-info w-100 fw-semibold"><i class="bi bi-eye me-1"></i> Ver Archivo Actual</a>
+              <div id="e_link_cc_container" class="mt-2 d-none gap-2">
+                 <a href="#" id="e_link_cc" target="_blank" class="btn btn-sm btn-outline-info flex-grow-1 fw-semibold"><i class="bi bi-eye me-1"></i> Ver Archivo Actual</a>
+                 <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar Archivo" onclick="marcarEliminarArchivo('cc')"><i class="bi bi-trash"></i></button>
               </div>
+              <input type="hidden" name="eliminar_comprobante" id="e_eliminar_cc" value="false">
             </div>
             <div class="col-md-4">
               <label>Soporte Bancario</label>
@@ -586,9 +590,11 @@
                        onchange="mostrarNombreArchivo(this,'e_lbl_bp')">
                 <label id="e_lbl_bp"><i class="bi bi-arrow-repeat me-1"></i>Mantener actual / Reemplazar</label>
               </div>
-              <div id="e_link_bp_container" class="mt-2 d-none">
-                 <a href="#" id="e_link_bp" target="_blank" class="btn btn-sm btn-outline-info w-100 fw-semibold"><i class="bi bi-eye me-1"></i> Ver Archivo Actual</a>
+              <div id="e_link_bp_container" class="mt-2 d-none gap-2">
+                 <a href="#" id="e_link_bp" target="_blank" class="btn btn-sm btn-outline-info flex-grow-1 fw-semibold"><i class="bi bi-eye me-1"></i> Ver Archivo Actual</a>
+                 <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar Archivo" onclick="marcarEliminarArchivo('bp')"><i class="bi bi-trash"></i></button>
               </div>
+              <input type="hidden" name="eliminar_soporte" id="e_eliminar_bp" value="false">
             </div>
           </div>
         </form>
@@ -707,14 +713,19 @@ function abrirModalEditar(id, nombre, fecha_factura, plazo, fecha_venc, valor_ne
   config.forEach(item => {
     if (item.url && item.url.trim() !== '' && item.url !== 'None') {
       document.getElementById(item.containerId).classList.remove('d-none');
+      document.getElementById(item.containerId).classList.add('d-flex');
       document.getElementById(item.linkId).href = item.url;
     } else {
+      document.getElementById(item.containerId).classList.remove('d-flex');
       document.getElementById(item.containerId).classList.add('d-none');
     }
   });
 
   ['e_lbl_oc','e_lbl_cc','e_lbl_bp'].forEach(id => {
     document.getElementById(id).innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>Mantener actual / Reemplazar';
+  });
+  ['e_eliminar_oc', 'e_eliminar_cc', 'e_eliminar_bp'].forEach(id => {
+    if(document.getElementById(id)) document.getElementById(id).value = 'false';
   });
 
   calcularIVA('e');
@@ -724,8 +735,29 @@ function abrirModalEditar(id, nombre, fecha_factura, plazo, fecha_venc, valor_ne
 /* ══════════════════════════════════════════════════════════
    UPLOAD ZONE
 ══════════════════════════════════════════════════════════ */
+function marcarEliminarArchivo(tipo) {
+  let hiddenId, labelId, containerId;
+  if (tipo === 'oc') { hiddenId = 'e_eliminar_oc'; labelId = 'e_lbl_oc'; containerId = 'e_link_oc_container'; }
+  if (tipo === 'cc') { hiddenId = 'e_eliminar_cc'; labelId = 'e_lbl_cc'; containerId = 'e_link_cc_container'; }
+  if (tipo === 'bp') { hiddenId = 'e_eliminar_bp'; labelId = 'e_lbl_bp'; containerId = 'e_link_bp_container'; }
+  
+  document.getElementById(hiddenId).value = 'true';
+  document.getElementById(labelId).innerHTML = '<i class="bi bi-trash me-1 text-danger"></i><span class="text-danger">Archivo marcado para eliminar</span>';
+  
+  // Ocultar botones
+  let container = document.getElementById(containerId);
+  container.classList.remove('d-flex');
+  container.classList.add('d-none');
+}
+
 function mostrarNombreArchivo(input, labelId) {
   const lbl = document.getElementById(labelId);
+  
+  // Si selecciona archivo nuevo, desmarcamos eliminación si la hubiera
+  if (labelId === 'e_lbl_oc') document.getElementById('e_eliminar_oc').value = 'false';
+  if (labelId === 'e_lbl_cc') document.getElementById('e_eliminar_cc').value = 'false';
+  if (labelId === 'e_lbl_bp') document.getElementById('e_eliminar_bp').value = 'false';
+
   if (input.files && input.files[0]) {
     lbl.innerHTML = '<i class="bi bi-file-earmark-check me-1 text-success"></i>' + input.files[0].name;
     input.closest('.upload-zone').style.borderColor = '#10b981';
