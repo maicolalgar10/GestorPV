@@ -222,7 +222,7 @@
                       <td>${{ "{:,.0f}".format(r.rete_garantia_valor or 0) | replace(",",".") }}</td>
                       <td>${{ "{:,.0f}".format(r.retencion_ley or 0) | replace(",",".") }}</td>
                       <td class="text-success fw-semibold">${{ "{:,.0f}".format(r.total_pagos_realizados or 0) | replace(",",".") }}</td>
-                      <td class="text-secondary fw-semibold">${{ "{:,.0f}".format((r.valor_factura or 0) - (r.total_pagos_realizados or 0)) | replace(",",".") }}</td>
+                      <td class="text-secondary fw-semibold">${{ "{:,.0f}".format((r.valor_factura | float if r.valor_factura else 0.0) - (r.total_pagos_realizados | float if r.total_pagos_realizados else 0.0)) | replace(",",".") }}</td>
                       <td>{{ r.fecha_pago.strftime('%Y-%m-%d') if r.fecha_pago else '---' }}</td>
                       <td class="text-danger fw-bold">${{ "{:,.0f}".format(r.valor_adeudado_factura or 0) | replace(",",".") }}</td>
                       <td class="text-center pe-4">
