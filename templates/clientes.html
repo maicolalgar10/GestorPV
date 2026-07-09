@@ -187,10 +187,10 @@
                   <span class="text-muted">{{ c.nombre_proyecto }}</span>
                 </div>
                 <div class="text-end d-flex gap-4 align-items-center" style="font-size: 0.85rem;">
+                   <span>Valor Total Contrato ($): <strong class="text-dark">${{ "{:,.0f}".format(c.valor_total or 0) | replace(",",".") }}</strong></span>
                    <span>Total Facturado ($): <strong class="text-primary">${{ "{:,.0f}".format(c.total_facturado) | replace(",",".") }}</strong></span>
-                   <span>Total Pagos Realizados ($): <strong class="text-success">${{ "{:,.0f}".format(c.total_pagos) | replace(",",".") }}</strong></span>
-                   <span>Valor Total: <strong class="text-dark">${{ "{:,.0f}".format(c.valor_total or 0) | replace(",",".") }}</strong></span>
-                   <span>Saldo Adeudado: <strong class="{% if c.saldo_adeudado > 0 %}text-danger{% else %}text-success{% endif %}">${{ "{:,.0f}".format(c.saldo_adeudado) | replace(",",".") }}</strong></span>
+                   <span>Total Pagos Recibidos ($): <strong class="text-success">${{ "{:,.0f}".format(c.total_pagos) | replace(",",".") }}</strong></span>
+                   <span>Saldo por Ejecutar ($): <strong class="{% if c.saldo_adeudado > 0 %}text-danger{% else %}text-success{% endif %}">${{ "{:,.0f}".format(c.saldo_adeudado) | replace(",",".") }}</strong></span>
                 </div>
               </div>
             </button>
