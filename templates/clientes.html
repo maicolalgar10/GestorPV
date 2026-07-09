@@ -206,7 +206,8 @@
                       <th>Valor Factura</th>
                       <th>Rete Garantía</th>
                       <th>Retención Ley</th>
-                      <th>Pagos Realizados</th>
+                      <th>Pagos Recibidos</th>
+                      <th>Diferencia</th>
                       <th>Fecha Pago</th>
                       <th>Adeuda Factura</th>
                       <th class="text-center pe-4">Acciones</th>
@@ -221,6 +222,7 @@
                       <td>${{ "{:,.0f}".format(r.rete_garantia_valor or 0) | replace(",",".") }}</td>
                       <td>${{ "{:,.0f}".format(r.retencion_ley or 0) | replace(",",".") }}</td>
                       <td class="text-success fw-semibold">${{ "{:,.0f}".format(r.total_pagos_realizados or 0) | replace(",",".") }}</td>
+                      <td class="text-secondary fw-semibold">${{ "{:,.0f}".format((r.valor_factura or 0) - (r.total_pagos_realizados or 0)) | replace(",",".") }}</td>
                       <td>{{ r.fecha_pago.strftime('%Y-%m-%d') if r.fecha_pago else '---' }}</td>
                       <td class="text-danger fw-bold">${{ "{:,.0f}".format(r.valor_adeudado_factura or 0) | replace(",",".") }}</td>
                       <td class="text-center pe-4">
@@ -246,7 +248,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                      <td colspan="8" class="text-center py-4 text-muted">
+                      <td colspan="9" class="text-center py-4 text-muted">
                         No hay reportes o facturas vinculadas a este contrato todavía.
                       </td>
                     </tr>
