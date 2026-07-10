@@ -894,6 +894,20 @@ class ContratosClientes(db.Model):
             return 0.0
 
     @property
+    def total_rete_garantia(self):
+        try:
+            return sum(float(r.rete_garantia_valor or 0.0) for r in self.reportes)
+        except Exception:
+            return 0.0
+
+    @property
+    def total_retenciones_ley(self):
+        try:
+            return sum(float(r.retencion_ley or 0.0) for r in self.reportes)
+        except Exception:
+            return 0.0
+
+    @property
     def saldo_adeudado(self):
         try:
             return float(self.valor_total or 0.0) - self.total_pagos
