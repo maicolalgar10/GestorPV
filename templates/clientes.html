@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,13 +13,18 @@
   <style>
     /* ─── Tokens ─────────────────────────────────────────── */
     :root {
-      --blue-grad : linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
-      --shadow-sm : 0 4px 15px rgba(0,0,0,.06);
-      --shadow-md : 0 8px 32px rgba(79,70,229,.22);
-      --radius    : 18px;
+      --blue-grad: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+      --shadow-sm: 0 4px 15px rgba(0, 0, 0, .06);
+      --shadow-md: 0 8px 32px rgba(79, 70, 229, .22);
+      --radius: 18px;
     }
 
-    body { background:#f3f4f6; font-family:'Inter',sans-serif; color:#1f2937; font-size:.93rem; }
+    body {
+      background: #f3f4f6;
+      font-family: 'Inter', sans-serif;
+      color: #1f2937;
+      font-size: .93rem;
+    }
 
     /* ─── Header ─────────────────────────────────────────── */
     .page-header {
@@ -29,9 +35,10 @@
       margin-bottom: 24px;
       box-shadow: var(--shadow-md);
     }
+
     .btn-back {
-      background: rgba(255,255,255,.18);
-      border: 1px solid rgba(255,255,255,.35);
+      background: rgba(255, 255, 255, .18);
+      border: 1px solid rgba(255, 255, 255, .35);
       color: white;
       border-radius: 12px;
       padding: 8px 18px;
@@ -40,7 +47,11 @@
       transition: background .2s;
       text-decoration: none;
     }
-    .btn-back:hover { background: rgba(255,255,255,.32); color: white; }
+
+    .btn-back:hover {
+      background: rgba(255, 255, 255, .32);
+      color: white;
+    }
 
     /* ─── Tabla ──────────────────────────────────────────── */
     .table-card {
@@ -49,7 +60,12 @@
       box-shadow: var(--shadow-sm);
       overflow: hidden;
     }
-    .table-card .table { margin: 0; font-size: .84rem; }
+
+    .table-card .table {
+      margin: 0;
+      font-size: .84rem;
+    }
+
     .table-card thead th {
       background: #f8fafc;
       font-weight: 700;
@@ -61,7 +77,11 @@
       padding: 13px 12px;
       white-space: nowrap;
     }
-    .table-card tbody td { padding: 11px 12px; vertical-align: middle; }
+
+    .table-card tbody td {
+      padding: 11px 12px;
+      vertical-align: middle;
+    }
 
     /* ─── Modal (dark) ───────────────────────────────────── */
     .modal-dark .modal-content {
@@ -70,44 +90,84 @@
       border: none;
       border-radius: 20px;
     }
+
     .modal-dark .modal-header {
       background: linear-gradient(135deg, #312e81, #1e40af);
       border-radius: 20px 20px 0 0;
       border: none;
       padding: 22px 28px;
     }
-    .modal-dark .modal-title { font-weight: 800; font-size: 1.05rem; }
-    .modal-dark .modal-body { 
-      padding: 20px 24px; 
-      max-height: 78vh; 
-      overflow-y: auto; 
+
+    .modal-dark .modal-title {
+      font-weight: 800;
+      font-size: 1.05rem;
     }
-    .modal-dark .modal-footer { padding: 16px 24px 20px; border: none; }
-    .modal-dark label { font-size: .8rem; font-weight: 600; color: #94a3b8;
-                        text-transform: uppercase; letter-spacing: .4px; margin-bottom: 5px; }
-    .modal-dark .form-control, .modal-dark .form-select {
+
+    .modal-dark .modal-body {
+      padding: 20px 24px;
+      max-height: 78vh;
+      overflow-y: auto;
+    }
+
+    .modal-dark .modal-footer {
+      padding: 16px 24px 20px;
+      border: none;
+    }
+
+    .modal-dark label {
+      font-size: .8rem;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      margin-bottom: 5px;
+    }
+
+    .modal-dark .form-control,
+    .modal-dark .form-select {
       background: #2d2d3f;
       border: 1.5px solid #3f3f5c;
       color: #e2e8f0;
       border-radius: 10px;
       font-size: .88rem;
     }
-    .modal-dark .form-control:focus, .modal-dark .form-select:focus {
+
+    .modal-dark .form-control:focus,
+    .modal-dark .form-select:focus {
       background: #34344a;
       border-color: #6366f1;
-      box-shadow: 0 0 0 3px rgba(99,102,241,.25);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, .25);
       color: #e2e8f0;
     }
-    .modal-dark .form-control::placeholder { color: #64748b; }
+
+    .modal-dark .form-control::placeholder {
+      color: #64748b;
+    }
+
     .modal-dark .calc-box {
       background: #252538;
       border: 1px solid #3f3f5c;
       border-radius: 10px;
       padding: 14px 16px;
     }
-    .modal-dark .calc-box .calc-label { font-size: .72rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; }
-    .modal-dark .calc-box .calc-val { font-size: 1.25rem; font-weight: 800; color: #a5b4fc; }
-    .modal-dark .calc-box.calc-total .calc-val { color: #34d399; }
+
+    .modal-dark .calc-box .calc-label {
+      font-size: .72rem;
+      color: #94a3b8;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .modal-dark .calc-box .calc-val {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #a5b4fc;
+    }
+
+    .modal-dark .calc-box.calc-total .calc-val {
+      color: #34d399;
+    }
+
     .modal-dark .section-sep {
       border-top: 1px solid #3f3f5c;
       margin: 20px 0 16px;
@@ -118,6 +178,7 @@
       text-transform: uppercase;
       letter-spacing: .6px;
     }
+
     .upload-zone {
       background: #252538;
       border: 2px dashed #3f3f5c;
@@ -126,9 +187,21 @@
       transition: border-color .2s;
       cursor: pointer;
     }
-    .upload-zone:hover { border-color: #6366f1; }
-    .upload-zone input[type=file] { display: none; }
-    .upload-zone label { cursor: pointer; margin: 0; color: #94a3b8; font-size: .82rem; }
+
+    .upload-zone:hover {
+      border-color: #6366f1;
+    }
+
+    .upload-zone input[type=file] {
+      display: none;
+    }
+
+    .upload-zone label {
+      cursor: pointer;
+      margin: 0;
+      color: #94a3b8;
+      font-size: .82rem;
+    }
 
     /* Botón confirmar */
     .btn-confirm {
@@ -140,57 +213,88 @@
       font-weight: 700;
       transition: opacity .2s;
     }
-    .btn-confirm:hover { opacity: .88; color: white; }
+
+    .btn-confirm:hover {
+      opacity: .88;
+      color: white;
+    }
   </style>
 </head>
+
 <body>
-{% include 'mensajes.html' %}
+  {% include 'mensajes.html' %}
 
-<div class="container-fluid px-3 px-md-4 mt-4 pb-5" style="max-width:1600px;">
-  <!-- HEADER -->
-  <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
-    <div>
-      <h1 class="fw-bold m-0 fs-4"><i class="bi bi-buildings me-2"></i>Módulo de Clientes</h1>
-      <p class="mb-0 mt-1 opacity-75 small">Gestión de Oficina &mdash; {{ usuario.nombre }}</p>
+  <div class="container-fluid px-3 px-md-4 mt-4 pb-5" style="max-width:1600px;">
+    <!-- HEADER -->
+    <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div>
+        <h1 class="fw-bold m-0 fs-4"><i class="bi bi-buildings me-2"></i>Módulo de Clientes</h1>
+        <p class="mb-0 mt-1 opacity-75 small">Gestión de Oficina &mdash; {{ usuario.nombre }}</p>
+      </div>
+      <div class="d-flex gap-2 flex-wrap align-items-center">
+        <a href="{{ url_for('dashboard.dashboard_oficina') }}" class="btn-back">
+          <i class="bi bi-house me-1"></i> Inicio
+        </a>
+        <button class="btn btn-outline-light rounded-pill fw-semibold border-opacity-50" data-bs-toggle="modal"
+          data-bs-target="#modalCrearCliente">
+          <i class="bi bi-person-plus me-1"></i> Nuevo Cliente
+        </button>
+        <button class="btn btn-light rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#modalCrearContrato">
+          <i class="bi bi-file-earmark-plus me-1"></i> Crear Contrato
+        </button>
+      </div>
     </div>
-    <div class="d-flex gap-2 flex-wrap align-items-center">
-      <a href="{{ url_for('dashboard.dashboard_oficina') }}" class="btn-back">
-        <i class="bi bi-house me-1"></i> Inicio
-      </a>
-      <button class="btn btn-outline-light rounded-pill fw-semibold border-opacity-50" data-bs-toggle="modal" data-bs-target="#modalCrearCliente">
-        <i class="bi bi-person-plus me-1"></i> Nuevo Cliente
-      </button>
-      <button class="btn btn-light rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#modalCrearContrato">
-        <i class="bi bi-file-earmark-plus me-1"></i> Crear Contrato
-      </button>
-    </div>
-  </div>
 
-  <!-- CONTENIDO PRINCIPAL (Acordeones por Contrato) -->
-  <div class="mt-4">
-    <div class="accordion" id="accordionContratos">
-      {% if contratos %}
+    <!-- CONTENIDO PRINCIPAL (Acordeones por Contrato) -->
+    <div class="mt-4">
+      <div class="accordion" id="accordionContratos">
+        {% if contratos %}
         {% for c in contratos %}
-        <div class="accordion-item mb-3" style="border-radius: var(--radius); border: none; overflow: hidden; box-shadow: var(--shadow-sm);">
+        <div class="accordion-item mb-3"
+          style="border-radius: var(--radius); border: none; overflow: hidden; box-shadow: var(--shadow-sm);">
           <h2 class="accordion-header" id="heading{{ c.id }}">
-            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ c.id }}" style="background: white; color: #1f2937; font-weight: 600;">
-              <div class="d-flex w-100 justify-content-between align-items-center me-3 flex-wrap gap-2">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#collapse{{ c.id }}" style="background: white; color: #1f2937; font-weight: 600;">
+              <div class="d-flex flex-column w-100 me-3 gap-2 text-start">
                 <div>
-                  <span class="badge bg-primary me-2">PROYECTO #{{ c.id }}</span> 
+                  <span class="badge bg-primary me-2">PROYECTO #{{ c.id }}</span>
                   <strong>{{ c.cliente.nombre_cliente if c.cliente else 'Sin cliente asignado' }}</strong>
                   {% if c.cliente %}
-                  <span role="button" class="btn btn-sm btn-link p-0 ms-1 text-secondary" title="Editar Cliente" data-bs-toggle="modal" data-bs-target="#modalEditarCliente" data-id="{{ c.cliente.id }}" data-nombre="{{ c.cliente.nombre_cliente }}" data-nit="{{ c.cliente.nit or '' }}" data-contacto="{{ c.cliente.contacto or '' }}" onclick="prepararModalEditarCliente(this, event)">
+                  <span role="button" class="btn btn-sm btn-link p-0 ms-1 text-secondary" title="Editar Cliente"
+                    data-bs-toggle="modal" data-bs-target="#modalEditarCliente" data-id="{{ c.cliente.id }}"
+                    data-nombre="{{ c.cliente.nombre_cliente }}" data-nit="{{ c.cliente.nit or '' }}"
+                    data-contacto="{{ c.cliente.contacto or '' }}" onclick="prepararModalEditarCliente(this, event)">
                     <i class="bi bi-pencil-square"></i>
                   </span>
-                  {% endif %} 
-                  <span class="text-muted mx-1">&mdash;</span> 
+                  {% endif %}
+                  <span class="text-muted mx-1">&mdash;</span>
                   <span class="text-muted">{{ c.nombre_proyecto }}</span>
                 </div>
-                <div class="text-end d-flex gap-4 align-items-center" style="font-size: 0.85rem;">
-                   <span>Valor Total Contrato ($): <strong class="text-dark">${{ "{:,.0f}".format(c.valor_total or 0) | replace(",",".") }}</strong></span>
-                   <span>Total Facturado ($): <strong class="text-primary">${{ "{:,.0f}".format(c.total_facturado) | replace(",",".") }}</strong></span>
-                   <span>Total Pagos Recibidos ($): <strong class="text-success">${{ "{:,.0f}".format(c.total_pagos) | replace(",",".") }}</strong></span>
-                   <span>Saldo por Ejecutar ($): <strong class="{% if c.saldo_adeudado > 0 %}text-danger{% else %}text-success{% endif %}">${{ "{:,.0f}".format(c.saldo_adeudado) | replace(",",".") }}</strong></span>
+                <div class="row row-cols-1 row-cols-md-4 g-3 mb-2 w-100 mx-0 mt-1">
+                  <div class="col">
+                    <div class="card shadow-sm h-100 border-0 border-start border-4 border-primary text-center p-3">
+                      <div class="fs-4 fw-bold text-primary">${{ "{:,.0f}".format(c.valor_total or 0) | replace(",",".") }}</div>
+                      <div class="small text-muted mt-1" style="text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px;">VALOR TOTAL CONTRATO</div>
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="card shadow-sm h-100 border-0 border-start border-4 border-warning text-center p-3">
+                      <div class="fs-4 fw-bold text-warning">${{ "{:,.0f}".format(c.total_facturado) | replace(",",".") }}</div>
+                      <div class="small text-muted mt-1" style="text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px;">TOTAL FACTURADO</div>
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="card shadow-sm h-100 border-0 border-start border-4 border-success text-center p-3">
+                      <div class="fs-4 fw-bold text-success">${{ "{:,.0f}".format(c.total_pagos) | replace(",",".") }}</div>
+                      <div class="small text-muted mt-1" style="text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px;">TOTAL PAGOS RECIBIDOS</div>
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="card shadow-sm h-100 border-0 border-start border-4 border-danger text-center p-3">
+                      <div class="fs-4 fw-bold text-danger">${{ "{:,.0f}".format(c.saldo_adeudado) | replace(",",".") }}</div>
+                      <div class="small text-muted mt-1" style="text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px;">SALDO POR EJECUTAR</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </button>
@@ -199,7 +303,8 @@
             <div class="accordion-body p-0">
               <div class="table-responsive">
                 <table class="table mb-0" style="font-size: .84rem;">
-                  <thead style="background: #f8fafc; font-size: .74rem; text-transform: uppercase; color: #6b7280; letter-spacing: .5px;">
+                  <thead
+                    style="background: #f8fafc; font-size: .74rem; text-transform: uppercase; color: #6b7280; letter-spacing: .5px;">
                     <tr>
                       <th class="ps-4">ID Rep.</th>
                       <th>Fecha Fact.</th>
@@ -221,26 +326,36 @@
                       <td>${{ "{:,.0f}".format(r.valor_factura or 0) | replace(",",".") }}</td>
                       <td>${{ "{:,.0f}".format(r.rete_garantia_valor or 0) | replace(",",".") }}</td>
                       <td>${{ "{:,.0f}".format(r.retencion_ley or 0) | replace(",",".") }}</td>
-                      <td class="text-success fw-semibold">${{ "{:,.0f}".format(r.total_pagos_realizados or 0) | replace(",",".") }}</td>
-                      <td class="text-secondary fw-semibold">${{ "{:,.0f}".format((r.valor_factura | float if r.valor_factura else 0.0) - (r.total_pagos_realizados | float if r.total_pagos_realizados else 0.0)) | replace(",",".") }}</td>
+                      <td class="text-success fw-semibold">${{ "{:,.0f}".format(r.total_pagos_realizados or 0) |
+                        replace(",",".") }}</td>
+                      <td class="text-secondary fw-semibold">${{ "{:,.0f}".format((r.valor_factura | float if
+                        r.valor_factura else 0.0) - (r.total_pagos_realizados | float if r.total_pagos_realizados else
+                        0.0)) | replace(",",".") }}</td>
                       <td>{{ r.fecha_pago.strftime('%Y-%m-%d') if r.fecha_pago else '---' }}</td>
-                      <td class="text-danger fw-bold">${{ "{:,.0f}".format(r.valor_adeudado_factura or 0) | replace(",",".") }}</td>
+                      <td class="text-danger fw-bold">${{ "{:,.0f}".format(r.valor_adeudado_factura or 0) |
+                        replace(",",".") }}</td>
                       <td class="text-center pe-4">
-                        <button class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0" title="Editar" onclick="abrirModalEditarReporte('{{ r.id }}', '{{ (r.valor_factura or 0)|int }}', '{{ r.porcentaje_rete_garantia or 0 }}', '{{ (r.retencion_ley or 0)|int }}', '{{ (r.pago_realizado or 0)|int }}', '{{ r.fecha_pago if r.fecha_pago else '' }}', '{{ r.fecha_factura if r.fecha_factura else '' }}')">
+                        <button class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0" title="Editar"
+                          onclick="abrirModalEditarReporte('{{ r.id }}', '{{ (r.valor_factura or 0)|int }}', '{{ r.porcentaje_rete_garantia or 0 }}', '{{ (r.retencion_ley or 0)|int }}', '{{ (r.pago_realizado or 0)|int }}', '{{ r.fecha_pago if r.fecha_pago else '' }}', '{{ r.fecha_factura if r.fecha_factura else '' }}')">
                           <i class="bi bi-pencil-square"></i>
                         </button>
                         {% if r.factura_pdf_url %}
-                        <a href="{{ r.factura_pdf_url }}" target="_blank" class="btn btn-sm btn-outline-danger rounded-pill px-2 py-0 ms-1" title="Ver Factura">
+                        <a href="{{ r.factura_pdf_url }}" target="_blank"
+                          class="btn btn-sm btn-outline-danger rounded-pill px-2 py-0 ms-1" title="Ver Factura">
                           <i class="bi bi-file-earmark-text"></i>
                         </a>
                         {% endif %}
                         {% if r.actas_pdf_url %}
-                        <a href="{{ r.actas_pdf_url }}" target="_blank" class="btn btn-sm btn-outline-info rounded-pill px-2 py-0 ms-1" title="Ver Actas de Obra">
+                        <a href="{{ r.actas_pdf_url }}" target="_blank"
+                          class="btn btn-sm btn-outline-info rounded-pill px-2 py-0 ms-1" title="Ver Actas de Obra">
                           <i class="bi bi-file-earmark-check"></i>
                         </a>
                         {% endif %}
-                        {% if r.comprobante_pago_url and r.comprobante_pago_url != '' and r.comprobante_pago_url != 'None' %}
-                        <a href="{{ r.comprobante_pago_url }}" target="_blank" class="btn btn-sm btn-outline-warning rounded-pill px-2 py-0 ms-1" title="Ver Comprobante de Pago">
+                        {% if r.comprobante_pago_url and r.comprobante_pago_url != '' and r.comprobante_pago_url !=
+                        'None' %}
+                        <a href="{{ r.comprobante_pago_url }}" target="_blank"
+                          class="btn btn-sm btn-outline-warning rounded-pill px-2 py-0 ms-1"
+                          title="Ver Comprobante de Pago">
                           <i class="bi bi-cash-coin"></i>
                         </a>
                         {% endif %}
@@ -257,15 +372,21 @@
                 </table>
               </div>
               <div class="p-3 bg-light text-end border-top" style="border-radius: 0 0 var(--radius) var(--radius);">
-                <button type="button" class="btn btn-sm btn-primary rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#modalCrearReporte" onclick="prepararModalReporte({{ c.id }});">
+                <button type="button" class="btn btn-sm btn-primary rounded-pill fw-bold" data-bs-toggle="modal"
+                  data-bs-target="#modalCrearReporte" onclick="prepararModalReporte({{ c.id }});">
                   <i class="bi bi-plus-circle me-1"></i> Registrar Reporte / Factura
                 </button>
                 {% if c.archivo_pdf %}
-                <a href="{{ c.archivo_pdf }}" target="_blank" class="btn btn-sm btn-outline-danger rounded-pill fw-bold ms-2" title="Ver PDF del Contrato">
+                <a href="{{ c.archivo_pdf }}" target="_blank"
+                  class="btn btn-sm btn-outline-danger rounded-pill fw-bold ms-2" title="Ver PDF del Contrato">
                   <i class="bi bi-file-earmark-pdf-fill me-1"></i> Ver Contrato
                 </a>
                 {% endif %}
-                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill fw-bold ms-2" data-bs-toggle="modal" data-bs-target="#modalEditarContrato" data-id="{{ c.id }}" data-cliente-nombre="{{ c.cliente.nombre_cliente if c.cliente else '' }}" data-proyecto="{{ c.nombre_proyecto }}" data-valor="{{ (c.valor_total or 0)|int }}" data-rete="{{ c.porcentaje_retegarantia or 0 }}" onclick="prepararModalEditarContrato(this)">
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill fw-bold ms-2"
+                  data-bs-toggle="modal" data-bs-target="#modalEditarContrato" data-id="{{ c.id }}"
+                  data-cliente-nombre="{{ c.cliente.nombre_cliente if c.cliente else '' }}"
+                  data-proyecto="{{ c.nombre_proyecto }}" data-valor="{{ (c.valor_total or 0)|int }}"
+                  data-rete="{{ c.porcentaje_retegarantia or 0 }}" onclick="prepararModalEditarContrato(this)">
                   <i class="bi bi-pencil-square me-1"></i> Editar Contrato
                 </button>
               </div>
@@ -273,716 +394,767 @@
           </div>
         </div>
         {% endfor %}
-      {% else %}
+        {% else %}
         <div class="text-center py-5 text-muted bg-white rounded shadow-sm">
           <i class="bi bi-folder-x fs-1 d-block mb-3"></i>
           No hay contratos registrados.
         </div>
-      {% endif %}
+        {% endif %}
+      </div>
     </div>
+
   </div>
 
-</div>
-
-<!-- MODAL CREAR REPORTE (DARK) -->
-<div class="modal fade modal-dark" id="modalCrearReporte" tabindex="-1">
-  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header">
-        <div>
-          <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Registrar Nuevo Reporte</h5>
+  <!-- MODAL CREAR REPORTE (DARK) -->
+  <div class="modal fade modal-dark" id="modalCrearReporte" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Registrar Nuevo Reporte</h5>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
 
-      <div class="modal-body">
-        <form method="POST" id="formCrearReporte" action="{{ url_for('clientes.crear_reporte') }}" enctype="multipart/form-data">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <input type="hidden" name="contrato_cliente_id" id="hidden_contrato_cliente_id" value="">
-          <div class="row g-3">
-            
-            <!-- SECCIÓN 1: VALORES MONETARIOS Y FACTURA -->
-            <div class="col-12"><div class="section-sep mt-0"><i class="bi bi-receipt me-1"></i>1. Valores Monetarios y Factura</div></div>
-            <div class="col-md-3">
-              <label>Fecha de Factura *</label>
-              <input type="date" name="fecha_factura" class="form-control" required>
-            </div>
-            <div class="col-md-3">
-              <label>Valor Factura *</label>
-              <div class="input-group">
-                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
-                <input type="text" name="valor_factura" id="valor_factura" class="form-control money-input" value="0" data-raw-value="0" required oninput="formatMoneyField(this); calcularValores()">
-              </div>
-            </div>
-            <div class="col-md-3">
-              <label>% Rete Garantía</label>
-              <div class="input-group">
-                <input type="text" name="porcentaje_rete_garantia" id="porcentaje_rete_garantia" class="form-control pct-input" value="0" data-raw-value="0" oninput="formatPercentField(this); calcularValores()">
-                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
-              </div>
-              <small class="text-muted d-block mt-1" id="espejo_rete_garantia_reporte">Equivale a: $0</small>
-            </div>
-            <div class="col-md-3">
-              <label>Retención de Ley</label>
-              <div class="input-group">
-                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
-                <input type="text" name="retencion_ley" id="retencion_ley" class="form-control money-input" value="0" data-raw-value="0" oninput="formatMoneyField(this); calcularValores()">
-              </div>
-            </div>
+        <div class="modal-body">
+          <form method="POST" id="formCrearReporte" action="{{ url_for('clientes.crear_reporte') }}"
+            enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="contrato_cliente_id" id="hidden_contrato_cliente_id" value="">
+            <div class="row g-3">
 
-            <div class="col-md-6">
-              <label>Actas de Obra (PDF)</label>
-              <div class="upload-zone" onclick="this.querySelector('input').click()">
-                <input type="file" name="actas_pdf" accept=".pdf" onchange="mostrarNombreArchivo(this,'lbl_actas')">
-                <label id="lbl_actas"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Actas PDF</label>
+              <!-- SECCIÓN 1: VALORES MONETARIOS Y FACTURA -->
+              <div class="col-12">
+                <div class="section-sep mt-0"><i class="bi bi-receipt me-1"></i>1. Valores Monetarios y Factura</div>
               </div>
-            </div>
-            <div class="col-md-6">
-              <label>Factura (PDF)</label>
-              <div class="upload-zone" onclick="this.querySelector('input').click()">
-                <input type="file" name="factura_pdf" accept=".pdf" onchange="mostrarNombreArchivo(this,'lbl_factura')">
-                <label id="lbl_factura"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Factura PDF</label>
+              <div class="col-md-3">
+                <label>Fecha de Factura *</label>
+                <input type="date" name="fecha_factura" class="form-control" required>
               </div>
-            </div>
+              <div class="col-md-3">
+                <label>Valor Factura *</label>
+                <div class="input-group">
+                  <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                  <input type="text" name="valor_factura" id="valor_factura" class="form-control money-input" value="0"
+                    data-raw-value="0" required oninput="formatMoneyField(this); calcularValores()">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <label>% Rete Garantía</label>
+                <div class="input-group">
+                  <input type="text" name="porcentaje_rete_garantia" id="porcentaje_rete_garantia"
+                    class="form-control pct-input" value="0" data-raw-value="0"
+                    oninput="formatPercentField(this); calcularValores()">
+                  <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
+                </div>
+                <small class="text-muted d-block mt-1" id="espejo_rete_garantia_reporte">Equivale a: $0</small>
+              </div>
+              <div class="col-md-3">
+                <label>Retención de Ley</label>
+                <div class="input-group">
+                  <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                  <input type="text" name="retencion_ley" id="retencion_ley" class="form-control money-input" value="0"
+                    data-raw-value="0" oninput="formatMoneyField(this); calcularValores()">
+                </div>
+              </div>
 
-            <!-- CÁLCULOS DINÁMICOS -->
-            <div class="col-md-6">
-              <div class="calc-box">
-                <div class="calc-label">Rete Garantía ($)</div>
-                <div class="calc-val text-warning" id="calc_rete_garantia">$0</div>
+              <div class="col-md-6">
+                <label>Actas de Obra (PDF)</label>
+                <div class="upload-zone" onclick="this.querySelector('input').click()">
+                  <input type="file" name="actas_pdf" accept=".pdf" onchange="mostrarNombreArchivo(this,'lbl_actas')">
+                  <label id="lbl_actas"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Actas PDF</label>
+                </div>
               </div>
-            </div>
-            <div class="col-md-6">
-              <div class="calc-box calc-total">
-                <div class="calc-label">Adeuda Factura</div>
-                <div class="calc-val text-danger" id="calc_adeuda_factura">$0</div>
+              <div class="col-md-6">
+                <label>Factura (PDF)</label>
+                <div class="upload-zone" onclick="this.querySelector('input').click()">
+                  <input type="file" name="factura_pdf" accept=".pdf"
+                    onchange="mostrarNombreArchivo(this,'lbl_factura')">
+                  <label id="lbl_factura"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Factura PDF</label>
+                </div>
               </div>
-            </div>
 
-            <!-- SECCIÓN 2: INFORMACIÓN DE PAGO -->
-            <div class="col-12"><div class="section-sep"><i class="bi bi-cash-coin me-1"></i>2. Información de Pago</div></div>
-            <div class="col-md-4">
-              <label>Valor Abonado / Cancelado</label>
-              <div class="input-group">
-                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
-                <input type="text" name="pago_realizado" id="pago_realizado" class="form-control money-input" value="0" data-raw-value="0" oninput="formatMoneyField(this); calcularValores()">
+              <!-- CÁLCULOS DINÁMICOS -->
+              <div class="col-md-6">
+                <div class="calc-box">
+                  <div class="calc-label">Rete Garantía ($)</div>
+                  <div class="calc-val text-warning" id="calc_rete_garantia">$0</div>
+                </div>
               </div>
-            </div>
-            <div class="col-md-4">
-              <label>Fecha de Pago</label>
-              <input type="date" name="fecha_pago" class="form-control">
-            </div>
-            <div class="col-md-4">
-              <label>Comprobante de Pago</label>
-              <div class="upload-zone" onclick="this.querySelector('input').click()">
-                <input type="file" name="comprobante_pago" accept=".pdf,.jpg,.jpeg,.png" onchange="mostrarNombreArchivo(this,'lbl_pago')">
-                <label id="lbl_pago"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Comprobante</label>
+              <div class="col-md-6">
+                <div class="calc-box calc-total">
+                  <div class="calc-label">Adeuda Factura</div>
+                  <div class="calc-val text-danger" id="calc_adeuda_factura">$0</div>
+                </div>
               </div>
-            </div>
-            
-            <div class="col-12 mt-3">
-              <div class="calc-box bg-dark" style="border-color:#10b981;">
-                <div class="calc-label text-success">Total Pagos Realizados Reales</div>
-                <div class="calc-val text-success" id="calc_total_pagos"> $0 </div>
-                <small class="text-muted" style="font-size:0.65rem;">Calculado: Abono Neto (Intacto)</small>
-              </div>
-            </div>
-          </div>
-        </form>
-      </div>
 
-      <div class="modal-footer d-flex justify-content-end gap-2 mt-4 border-top pt-3 bg-dark" style="border-color:#3f3f5c !important;">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="submit" form="formCrearReporte" class="btn btn-confirm px-4"><i class="bi bi-save me-1"></i> Guardar Reporte</button>
-      </div>
-    </div>
-  </div>
-      </div>
-    </div>
-  </div>
-</div>
+              <!-- SECCIÓN 2: INFORMACIÓN DE PAGO -->
+              <div class="col-12">
+                <div class="section-sep"><i class="bi bi-cash-coin me-1"></i>2. Información de Pago</div>
+              </div>
+              <div class="col-md-4">
+                <label>Valor Abonado / Cancelado</label>
+                <div class="input-group">
+                  <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                  <input type="text" name="pago_realizado" id="pago_realizado" class="form-control money-input"
+                    value="0" data-raw-value="0" oninput="formatMoneyField(this); calcularValores()">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label>Fecha de Pago</label>
+                <input type="date" name="fecha_pago" class="form-control">
+              </div>
+              <div class="col-md-4">
+                <label>Comprobante de Pago</label>
+                <div class="upload-zone" onclick="this.querySelector('input').click()">
+                  <input type="file" name="comprobante_pago" accept=".pdf,.jpg,.jpeg,.png"
+                    onchange="mostrarNombreArchivo(this,'lbl_pago')">
+                  <label id="lbl_pago"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Comprobante</label>
+                </div>
+              </div>
 
-<!-- MODAL EDITAR REPORTE (DINÁMICO) -->
-<div class="modal fade modal-dark" id="modalEditarReporte" tabindex="-1">
-  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header">
-        <div>
-          <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Editar Reporte / Factura</h5>
+              <div class="col-12 mt-3">
+                <div class="calc-box bg-dark" style="border-color:#10b981;">
+                  <div class="calc-label text-success">Total Pagos Realizados Reales</div>
+                  <div class="calc-val text-success" id="calc_total_pagos"> $0 </div>
+                  <small class="text-muted" style="font-size:0.65rem;">Calculado: Abono Neto (Intacto)</small>
+                </div>
+              </div>
+            </div>
+          </form>
         </div>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
 
-      <div class="modal-body">
-        <form method="POST" id="formEditarReporte" action="" enctype="multipart/form-data">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <div class="row g-3">
-            
-            <!-- SECCIÓN 1: VALORES MONETARIOS Y FACTURA -->
-            <div class="col-12"><div class="section-sep mt-0"><i class="bi bi-receipt me-1"></i>1. Valores Monetarios y Factura</div></div>
-            <div class="col-md-3">
-              <label>Fecha de Factura *</label>
-              <input type="date" name="fecha_factura" id="fecha_factura_edit" class="form-control" required>
-            </div>
-            <div class="col-md-3">
-              <label>Valor Factura *</label>
-              <div class="input-group">
-                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
-                <input type="text" name="valor_factura" id="valor_factura_edit" class="form-control money-input" value="0" data-raw-value="0" required oninput="formatMoneyField(this); calcularValoresEdit()">
-              </div>
-            </div>
-            <div class="col-md-3">
-              <label>% Rete Garantía</label>
-              <div class="input-group">
-                <input type="text" name="porcentaje_rete_garantia" id="porcentaje_rete_garantia_edit" class="form-control pct-input" value="0" data-raw-value="0" oninput="formatPercentField(this); calcularValoresEdit()">
-                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
-              </div>
-              <small class="text-muted d-block mt-1" id="espejo_rete_garantia_reporte_edit">Equivale a: $0</small>
-            </div>
-            <div class="col-md-3">
-              <label>Retención de Ley</label>
-              <div class="input-group">
-                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
-                <input type="text" name="retencion_ley" id="retencion_ley_edit" class="form-control money-input" value="0" data-raw-value="0" oninput="formatMoneyField(this); calcularValoresEdit()">
-              </div>
-            </div>
-
-            <div class="col-md-6">
-              <label>Actualizar Actas de Obra (PDF)</label>
-              <div class="upload-zone" onclick="this.querySelector('input').click()">
-                <input type="file" name="actas_pdf" accept=".pdf" onchange="mostrarNombreArchivo(this,'lbl_actas_edit')">
-                <label id="lbl_actas_edit"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Actas PDF (Opcional)</label>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <label>Actualizar Factura (PDF)</label>
-              <div class="upload-zone" onclick="this.querySelector('input').click()">
-                <input type="file" name="factura_pdf" accept=".pdf" onchange="mostrarNombreArchivo(this,'lbl_factura_edit')">
-                <label id="lbl_factura_edit"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Factura PDF (Opcional)</label>
-              </div>
-            </div>
-
-            <!-- CÁLCULOS DINÁMICOS -->
-            <div class="col-md-6">
-              <div class="calc-box">
-                <div class="calc-label">Rete Garantía ($)</div>
-                <div class="calc-val text-warning" id="calc_rete_garantia_edit">$0</div>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="calc-box calc-total">
-                <div class="calc-label">Adeuda Factura</div>
-                <div class="calc-val text-danger" id="calc_adeuda_factura_edit">$0</div>
-              </div>
-            </div>
-
-            <!-- SECCIÓN 2: INFORMACIÓN DE PAGO -->
-            <div class="col-12"><div class="section-sep"><i class="bi bi-cash-coin me-1"></i>2. Información de Pago</div></div>
-            <div class="col-md-4">
-              <label>Valor Abonado / Cancelado</label>
-              <div class="input-group">
-                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
-                <input type="text" name="pago_realizado" id="pago_realizado_edit" class="form-control money-input" value="0" data-raw-value="0" oninput="formatMoneyField(this); calcularValoresEdit()">
-              </div>
-            </div>
-            <div class="col-md-4">
-              <label>Fecha de Pago</label>
-              <input type="date" name="fecha_pago" id="fecha_pago_edit" class="form-control">
-            </div>
-            <div class="col-md-4">
-              <label>Actualizar Comprobante</label>
-              <div class="upload-zone" onclick="this.querySelector('input').click()">
-                <input type="file" name="comprobante_pago" accept=".pdf,.jpg,.jpeg,.png" onchange="mostrarNombreArchivo(this,'lbl_pago_edit')">
-                <label id="lbl_pago_edit"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Comprobante (Opcional)</label>
-              </div>
-            </div>
-            
-            <div class="col-12 mt-3">
-              <div class="calc-box bg-dark" style="border-color:#10b981;">
-                <div class="calc-label text-success">Total Pagos Realizados Reales</div>
-                <div class="calc-val text-success" id="calc_total_pagos_edit">$0</div>
-                <small class="text-muted" style="font-size:0.65rem;">Calculado: Abono Neto (Intacto)</small>
-              </div>
-            </div>
-          </div>
-        </form>
-      </div>
-
-      <div class="modal-footer d-flex justify-content-end gap-2 mt-4 border-top pt-3 bg-dark" style="border-color:#3f3f5c !important;">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="submit" form="formEditarReporte" class="btn btn-primary px-4"><i class="bi bi-save me-1"></i> Actualizar Reporte</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL CREAR CONTRATO RÁPIDO (DARK) -->
-<div class="modal fade modal-dark" id="modalCrearContrato" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="border: 2px solid #6366f1;">
-      <div class="modal-header" style="background: linear-gradient(135deg, #1e40af, #3b82f6);">
-        <div>
-          <h5 class="modal-title"><i class="bi bi-file-earmark-plus me-2"></i>Crear Contrato Rápido</h5>
+        <div class="modal-footer d-flex justify-content-end gap-2 mt-4 border-top pt-3 bg-dark"
+          style="border-color:#3f3f5c !important;">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" form="formCrearReporte" class="btn btn-confirm px-4"><i class="bi bi-save me-1"></i>
+            Guardar Reporte</button>
         </div>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-
-      <div class="modal-body">
-        <form method="POST" id="formCrearContrato" action="{{ url_for('clientes.crear_contrato_cliente') }}" enctype="multipart/form-data">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <div class="alert alert-info py-2" style="font-size:0.8rem;">
-            <i class="bi bi-info-circle me-1"></i> Esto creará un proyecto/contrato de control local para el cliente.
-          </div>
-          <div class="row g-3">
-            <div class="col-12">
-              <label>Cliente / Razón Social *</label>
-              <select name="cliente_id" class="form-select" required>
-                <option value="">-- Seleccionar Cliente --</option>
-                {% for c in clientes %}
-                <option value="{{ c.id }}">{{ c.nombre_cliente }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="col-12">
-              <label>Proyecto / Objeto del Contrato *</label>
-              <input type="text" name="nombre_proyecto" class="form-control" required placeholder="Ej. Construcción Fase 1">
-            </div>
-            <div class="col-12">
-              <label>Valor Total del Contrato *</label>
-              <div class="input-group">
-                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
-                <input type="text" name="valor_total" id="contrato_valor_total" class="form-control money-input" required placeholder="0" oninput="formatMoneyField(this); calcularEspejoContrato();">
-              </div>
-            </div>
-            <div class="col-md-6">
-              <label>% Rete Garantía (Opcional)</label>
-              <div class="input-group">
-                <input type="text" name="porcentaje_retegarantia" id="contrato_rete_garantia_pct" class="form-control pct-input" placeholder="0" oninput="formatPercentField(this); calcularEspejoContrato();">
-                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
-              </div>
-              <small class="text-muted d-block mt-1" id="espejo_rete_garantia_contrato">Equivale a: $0</small>
-            </div>
-            <div class="col-md-6">
-              <label>Archivo de Contrato (PDF)</label>
-              <div class="upload-zone" onclick="this.querySelector('input').click()">
-                <input type="file" name="contrato_pdf" accept=".pdf" onchange="mostrarNombreArchivo(this,'lbl_contrato_cliente')">
-                <label id="lbl_contrato_cliente"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Contrato PDF</label>
-              </div>
-            </div>
-          </div>
-        </form>
-      </div>
-
-      <div class="modal-footer d-flex justify-content-end gap-2 mt-2 border-top pt-3 bg-dark" style="border-color:#3f3f5c !important;">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="submit" form="formCrearContrato" class="btn btn-primary px-4"><i class="bi bi-check-lg me-1"></i> Crear</button>
       </div>
     </div>
   </div>
-</div>
+  </div>
+  </div>
+  </div>
 
-<!-- MODAL CREAR CLIENTE (DARK) -->
-<div class="modal fade modal-dark" id="modalCrearCliente" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <div>
-          <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>Registrar Nuevo Cliente</h5>
+  <!-- MODAL EDITAR REPORTE (DINÁMICO) -->
+  <div class="modal fade modal-dark" id="modalEditarReporte" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Editar Reporte / Factura</h5>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
 
-      <div class="modal-body">
-        <form method="POST" id="formCrearCliente" action="{{ url_for('clientes.crear_cliente') }}">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <div class="row g-3">
-            <div class="col-12">
-              <label>Nombre del Cliente o Razón Social *</label>
-              <input type="text" name="nombre_cliente" class="form-control" required placeholder="Ej. Constructora ABC S.A.S">
-            </div>
-            <div class="col-12">
-              <label>NIT / Documento</label>
-              <input type="text" name="nit" class="form-control" placeholder="Ej. 900.123.456-7">
-            </div>
-            <div class="col-12">
-              <label>Datos de Contacto</label>
-              <input type="text" name="contacto" class="form-control" placeholder="Teléfono, Correo, Persona a cargo">
-            </div>
-          </div>
-        </form>
-      </div>
+        <div class="modal-body">
+          <form method="POST" id="formEditarReporte" action="" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="row g-3">
 
-      <div class="modal-footer d-flex justify-content-end gap-2 mt-2 border-top pt-3 bg-dark" style="border-color:#3f3f5c !important;">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="submit" form="formCrearCliente" class="btn btn-confirm px-4"><i class="bi bi-save me-1"></i> Guardar Cliente</button>
-      </div>
-    </div>
-  </div>
-</div>
+              <!-- SECCIÓN 1: VALORES MONETARIOS Y FACTURA -->
+              <div class="col-12">
+                <div class="section-sep mt-0"><i class="bi bi-receipt me-1"></i>1. Valores Monetarios y Factura</div>
+              </div>
+              <div class="col-md-3">
+                <label>Fecha de Factura *</label>
+                <input type="date" name="fecha_factura" id="fecha_factura_edit" class="form-control" required>
+              </div>
+              <div class="col-md-3">
+                <label>Valor Factura *</label>
+                <div class="input-group">
+                  <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                  <input type="text" name="valor_factura" id="valor_factura_edit" class="form-control money-input"
+                    value="0" data-raw-value="0" required oninput="formatMoneyField(this); calcularValoresEdit()">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <label>% Rete Garantía</label>
+                <div class="input-group">
+                  <input type="text" name="porcentaje_rete_garantia" id="porcentaje_rete_garantia_edit"
+                    class="form-control pct-input" value="0" data-raw-value="0"
+                    oninput="formatPercentField(this); calcularValoresEdit()">
+                  <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
+                </div>
+                <small class="text-muted d-block mt-1" id="espejo_rete_garantia_reporte_edit">Equivale a: $0</small>
+              </div>
+              <div class="col-md-3">
+                <label>Retención de Ley</label>
+                <div class="input-group">
+                  <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                  <input type="text" name="retencion_ley" id="retencion_ley_edit" class="form-control money-input"
+                    value="0" data-raw-value="0" oninput="formatMoneyField(this); calcularValoresEdit()">
+                </div>
+              </div>
 
-<!-- MODAL EDITAR CONTRATO (DARK) -->
-<div class="modal fade modal-dark" id="modalEditarContrato" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="border: 2px solid #6366f1;">
-      <div class="modal-header" style="background: linear-gradient(135deg, #1e40af, #3b82f6);">
-        <div>
-          <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Editar Contrato</h5>
+              <div class="col-md-6">
+                <label>Actualizar Actas de Obra (PDF)</label>
+                <div class="upload-zone" onclick="this.querySelector('input').click()">
+                  <input type="file" name="actas_pdf" accept=".pdf"
+                    onchange="mostrarNombreArchivo(this,'lbl_actas_edit')">
+                  <label id="lbl_actas_edit"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Actas PDF (Opcional)</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label>Actualizar Factura (PDF)</label>
+                <div class="upload-zone" onclick="this.querySelector('input').click()">
+                  <input type="file" name="factura_pdf" accept=".pdf"
+                    onchange="mostrarNombreArchivo(this,'lbl_factura_edit')">
+                  <label id="lbl_factura_edit"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Factura PDF
+                    (Opcional)</label>
+                </div>
+              </div>
+
+              <!-- CÁLCULOS DINÁMICOS -->
+              <div class="col-md-6">
+                <div class="calc-box">
+                  <div class="calc-label">Rete Garantía ($)</div>
+                  <div class="calc-val text-warning" id="calc_rete_garantia_edit">$0</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="calc-box calc-total">
+                  <div class="calc-label">Adeuda Factura</div>
+                  <div class="calc-val text-danger" id="calc_adeuda_factura_edit">$0</div>
+                </div>
+              </div>
+
+              <!-- SECCIÓN 2: INFORMACIÓN DE PAGO -->
+              <div class="col-12">
+                <div class="section-sep"><i class="bi bi-cash-coin me-1"></i>2. Información de Pago</div>
+              </div>
+              <div class="col-md-4">
+                <label>Valor Abonado / Cancelado</label>
+                <div class="input-group">
+                  <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                  <input type="text" name="pago_realizado" id="pago_realizado_edit" class="form-control money-input"
+                    value="0" data-raw-value="0" oninput="formatMoneyField(this); calcularValoresEdit()">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label>Fecha de Pago</label>
+                <input type="date" name="fecha_pago" id="fecha_pago_edit" class="form-control">
+              </div>
+              <div class="col-md-4">
+                <label>Actualizar Comprobante</label>
+                <div class="upload-zone" onclick="this.querySelector('input').click()">
+                  <input type="file" name="comprobante_pago" accept=".pdf,.jpg,.jpeg,.png"
+                    onchange="mostrarNombreArchivo(this,'lbl_pago_edit')">
+                  <label id="lbl_pago_edit"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Comprobante
+                    (Opcional)</label>
+                </div>
+              </div>
+
+              <div class="col-12 mt-3">
+                <div class="calc-box bg-dark" style="border-color:#10b981;">
+                  <div class="calc-label text-success">Total Pagos Realizados Reales</div>
+                  <div class="calc-val text-success" id="calc_total_pagos_edit">$0</div>
+                  <small class="text-muted" style="font-size:0.65rem;">Calculado: Abono Neto (Intacto)</small>
+                </div>
+              </div>
+            </div>
+          </form>
         </div>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
 
-      <div class="modal-body">
-        <form method="POST" id="formEditarContrato" action="" enctype="multipart/form-data">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <div class="row g-3">
-            <div class="col-12">
-              <label>Cliente / Razón Social</label>
-              <input type="text" id="edit_contrato_cliente_nombre" class="form-control" readonly>
-            </div>
-            <div class="col-12">
-              <label>Proyecto / Objeto del Contrato *</label>
-              <input type="text" name="nombre_proyecto" id="edit_contrato_proyecto" class="form-control" required>
-            </div>
-            <div class="col-12">
-              <label>Valor Total del Contrato *</label>
-              <div class="input-group">
-                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
-                <input type="text" name="valor_total" id="edit_contrato_valor_total" class="form-control money-input" required placeholder="0" oninput="formatMoneyField(this); calcularEspejoEditContrato();">
-              </div>
-            </div>
-            <div class="col-md-6">
-              <label>% Rete Garantía (Opcional)</label>
-              <div class="input-group">
-                <input type="text" name="porcentaje_retegarantia" id="edit_contrato_rete_garantia_pct" class="form-control pct-input" placeholder="0" oninput="formatPercentField(this); calcularEspejoEditContrato();">
-                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
-              </div>
-              <small class="text-muted d-block mt-1" id="espejo_rete_garantia_edit_contrato">Equivale a: $0</small>
-            </div>
-            <div class="col-md-6">
-              <label>Actualizar Contrato (PDF)</label>
-              <div class="upload-zone" onclick="this.querySelector('input').click()">
-                <input type="file" name="contrato_pdf" accept=".pdf" onchange="mostrarNombreArchivo(this,'lbl_edit_contrato_cliente')">
-                <label id="lbl_edit_contrato_cliente"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Nuevo PDF (Opcional)</label>
-              </div>
-            </div>
-          </div>
-        </form>
-      </div>
-
-      <div class="modal-footer d-flex justify-content-end gap-2 mt-2 border-top pt-3 bg-dark" style="border-color:#3f3f5c !important;">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="submit" form="formEditarContrato" class="btn btn-primary px-4"><i class="bi bi-check-lg me-1"></i> Guardar Cambios</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL EDITAR CLIENTE (DARK) -->
-<div class="modal fade modal-dark" id="modalEditarCliente" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <div>
-          <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Editar Cliente</h5>
+        <div class="modal-footer d-flex justify-content-end gap-2 mt-4 border-top pt-3 bg-dark"
+          style="border-color:#3f3f5c !important;">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" form="formEditarReporte" class="btn btn-primary px-4"><i class="bi bi-save me-1"></i>
+            Actualizar Reporte</button>
         </div>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-
-      <div class="modal-body">
-        <form method="POST" id="formEditarCliente" action="">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <div class="row g-3">
-            <div class="col-12">
-              <label>Nombre del Cliente o Razón Social *</label>
-              <input type="text" name="nombre_cliente" id="edit_cliente_nombre" class="form-control" required>
-            </div>
-            <div class="col-12">
-              <label>NIT / Documento</label>
-              <input type="text" name="nit" id="edit_cliente_nit" class="form-control">
-            </div>
-            <div class="col-12">
-              <label>Datos de Contacto</label>
-              <input type="text" name="contacto" id="edit_cliente_contacto" class="form-control">
-            </div>
-          </div>
-        </form>
-      </div>
-
-      <div class="modal-footer d-flex justify-content-end gap-2 mt-2 border-top pt-3 bg-dark" style="border-color:#3f3f5c !important;">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="submit" form="formEditarCliente" class="btn btn-primary px-4"><i class="bi bi-save me-1"></i> Guardar Cambios</button>
       </div>
     </div>
   </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-function fmtPeso(num) {
-  if (isNaN(num)) num = 0;
-  return '$ ' + parseFloat(num).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-}
+  <!-- MODAL CREAR CONTRATO RÁPIDO (DARK) -->
+  <div class="modal fade modal-dark" id="modalCrearContrato" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border: 2px solid #6366f1;">
+        <div class="modal-header" style="background: linear-gradient(135deg, #1e40af, #3b82f6);">
+          <div>
+            <h5 class="modal-title"><i class="bi bi-file-earmark-plus me-2"></i>Crear Contrato Rápido</h5>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
 
-function mostrarNombreArchivo(input, labelId) {
-  const lbl = document.getElementById(labelId);
-  if (input.files && input.files[0]) {
-    lbl.innerHTML = '<i class="bi bi-file-earmark-check me-1 text-success"></i>' + input.files[0].name;
-    input.closest('.upload-zone').style.borderColor = '#10b981';
-  }
-}
+        <div class="modal-body">
+          <form method="POST" id="formCrearContrato" action="{{ url_for('clientes.crear_contrato_cliente') }}"
+            enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="alert alert-info py-2" style="font-size:0.8rem;">
+              <i class="bi bi-info-circle me-1"></i> Esto creará un proyecto/contrato de control local para el cliente.
+            </div>
+            <div class="row g-3">
+              <div class="col-12">
+                <label>Cliente / Razón Social *</label>
+                <select name="cliente_id" class="form-select" required>
+                  <option value="">-- Seleccionar Cliente --</option>
+                  {% for c in clientes %}
+                  <option value="{{ c.id }}">{{ c.nombre_cliente }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-12">
+                <label>Proyecto / Objeto del Contrato *</label>
+                <input type="text" name="nombre_proyecto" class="form-control" required
+                  placeholder="Ej. Construcción Fase 1">
+              </div>
+              <div class="col-12">
+                <label>Valor Total del Contrato *</label>
+                <div class="input-group">
+                  <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                  <input type="text" name="valor_total" id="contrato_valor_total" class="form-control money-input"
+                    required placeholder="0" oninput="formatMoneyField(this); calcularEspejoContrato();">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label>% Rete Garantía (Opcional)</label>
+                <div class="input-group">
+                  <input type="text" name="porcentaje_retegarantia" id="contrato_rete_garantia_pct"
+                    class="form-control pct-input" placeholder="0"
+                    oninput="formatPercentField(this); calcularEspejoContrato();">
+                  <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
+                </div>
+                <small class="text-muted d-block mt-1" id="espejo_rete_garantia_contrato">Equivale a: $0</small>
+              </div>
+              <div class="col-md-6">
+                <label>Archivo de Contrato (PDF)</label>
+                <div class="upload-zone" onclick="this.querySelector('input').click()">
+                  <input type="file" name="contrato_pdf" accept=".pdf"
+                    onchange="mostrarNombreArchivo(this,'lbl_contrato_cliente')">
+                  <label id="lbl_contrato_cliente"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Contrato PDF</label>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
 
-function formatMoneyField(input) {
-  let val = input.value;
-  // Si el usuario escribe un punto al final (ej. numpad), lo convertimos a coma para usar como decimal
-  if (val.endsWith('.')) {
-      val = val.slice(0, -1) + ',';
-  }
-  
-  // Limpiamos los puntos de miles actuales y caracteres no válidos
-  val = val.replace(/\./g, '');
-  val = val.replace(/[^0-9,]/g, '');
-  
-  // Aseguramos que solo haya una coma como separador decimal
-  let parts = val.split(',');
-  if (parts.length > 2) {
-      val = parts[0] + ',' + parts.slice(1).join('');
-  }
-  
-  if (!val) {
-      input.dataset.rawValue = '0';
-      input.value = '';
-      return;
-  }
-  
-  // Guardamos el valor crudo en formato float estándar (con punto)
-  input.dataset.rawValue = val.replace(',', '.');
-  
-  // Formateamos visualmente agregando puntos para los miles (estilo es-CO)
-  let splitParts = val.split(',');
-  let intPart = splitParts[0];
-  let decPart = splitParts.length > 1 ? splitParts[1] : undefined;
-  
-  let intNumber = parseInt(intPart || '0', 10);
-  if (isNaN(intNumber)) intNumber = 0;
-  
-  let formattedInt = intNumber.toLocaleString('es-CO');
-  
-  if (decPart !== undefined) {
-      input.value = formattedInt + ',' + decPart;
-  } else {
-      input.value = formattedInt;
-  }
-}
+        <div class="modal-footer d-flex justify-content-end gap-2 mt-2 border-top pt-3 bg-dark"
+          style="border-color:#3f3f5c !important;">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" form="formCrearContrato" class="btn btn-primary px-4"><i
+              class="bi bi-check-lg me-1"></i> Crear</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-function formatPercentField(input) {
-  let val = input.value.replace(/[^0-9.,]/g, '');
-  let cleanNumber = val.replace(/,/g, '.');
-  let parts = cleanNumber.split('.');
-  if (parts.length > 2) {
-      cleanNumber = parts[0] + '.' + parts.slice(1).join('');
-  }
-  input.value = val; 
-  input.dataset.rawValue = cleanNumber;
-}
+  <!-- MODAL CREAR CLIENTE (DARK) -->
+  <div class="modal fade modal-dark" id="modalCrearCliente" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>Registrar Nuevo Cliente</h5>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
 
-function getRawVal(id) {
-  let el = document.getElementById(id);
-  if (!el || !el.dataset.rawValue) return 0;
-  return parseFloat(el.dataset.rawValue) || 0;
-}
+        <div class="modal-body">
+          <form method="POST" id="formCrearCliente" action="{{ url_for('clientes.crear_cliente') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="row g-3">
+              <div class="col-12">
+                <label>Nombre del Cliente o Razón Social *</label>
+                <input type="text" name="nombre_cliente" class="form-control" required
+                  placeholder="Ej. Constructora ABC S.A.S">
+              </div>
+              <div class="col-12">
+                <label>NIT / Documento</label>
+                <input type="text" name="nit" class="form-control" placeholder="Ej. 900.123.456-7">
+              </div>
+              <div class="col-12">
+                <label>Datos de Contacto</label>
+                <input type="text" name="contacto" class="form-control" placeholder="Teléfono, Correo, Persona a cargo">
+              </div>
+            </div>
+          </form>
+        </div>
 
-function prepararModalReporte(contratoId) {
-  document.getElementById('hidden_contrato_cliente_id').value = contratoId;
-  document.getElementById('formCrearReporte').reset();
-  
-  // Reset raw values for dynamic inputs
-  document.querySelectorAll('#formCrearReporte .money-input, #formCrearReporte .pct-input').forEach(input => {
-    input.dataset.rawValue = "0";
-    input.value = "0";
-  });
+        <div class="modal-footer d-flex justify-content-end gap-2 mt-2 border-top pt-3 bg-dark"
+          style="border-color:#3f3f5c !important;">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" form="formCrearCliente" class="btn btn-confirm px-4"><i class="bi bi-save me-1"></i>
+            Guardar Cliente</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  // Limpiar etiquetas de archivos
-  document.getElementById('lbl_actas').innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Subir Actas PDF';
-  document.getElementById('lbl_factura').innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Subir Factura PDF';
-  document.getElementById('lbl_pago').innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Subir Comprobante';
-  
-  const uploadZones = document.querySelectorAll('#modalCrearReporte .upload-zone');
-  uploadZones.forEach(zone => zone.style.borderColor = '#3f3f5c');
+  <!-- MODAL EDITAR CONTRATO (DARK) -->
+  <div class="modal fade modal-dark" id="modalEditarContrato" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border: 2px solid #6366f1;">
+        <div class="modal-header" style="background: linear-gradient(135deg, #1e40af, #3b82f6);">
+          <div>
+            <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Editar Contrato</h5>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
 
-  calcularValores();
-}
+        <div class="modal-body">
+          <form method="POST" id="formEditarContrato" action="" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="row g-3">
+              <div class="col-12">
+                <label>Cliente / Razón Social</label>
+                <input type="text" id="edit_contrato_cliente_nombre" class="form-control" readonly>
+              </div>
+              <div class="col-12">
+                <label>Proyecto / Objeto del Contrato *</label>
+                <input type="text" name="nombre_proyecto" id="edit_contrato_proyecto" class="form-control" required>
+              </div>
+              <div class="col-12">
+                <label>Valor Total del Contrato *</label>
+                <div class="input-group">
+                  <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                  <input type="text" name="valor_total" id="edit_contrato_valor_total" class="form-control money-input"
+                    required placeholder="0" oninput="formatMoneyField(this); calcularEspejoEditContrato();">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label>% Rete Garantía (Opcional)</label>
+                <div class="input-group">
+                  <input type="text" name="porcentaje_retegarantia" id="edit_contrato_rete_garantia_pct"
+                    class="form-control pct-input" placeholder="0"
+                    oninput="formatPercentField(this); calcularEspejoEditContrato();">
+                  <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
+                </div>
+                <small class="text-muted d-block mt-1" id="espejo_rete_garantia_edit_contrato">Equivale a: $0</small>
+              </div>
+              <div class="col-md-6">
+                <label>Actualizar Contrato (PDF)</label>
+                <div class="upload-zone" onclick="this.querySelector('input').click()">
+                  <input type="file" name="contrato_pdf" accept=".pdf"
+                    onchange="mostrarNombreArchivo(this,'lbl_edit_contrato_cliente')">
+                  <label id="lbl_edit_contrato_cliente"><i class="bi bi-cloud-arrow-up me-1"></i>Subir Nuevo PDF
+                    (Opcional)</label>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
 
-function calcularValores() {
-  const valorFactura = getRawVal('valor_factura');
-  const porcRete = getRawVal('porcentaje_rete_garantia');
-  const retencionLey = getRawVal('retencion_ley');
-  const pagoRealizado = getRawVal('pago_realizado');
+        <div class="modal-footer d-flex justify-content-end gap-2 mt-2 border-top pt-3 bg-dark"
+          style="border-color:#3f3f5c !important;">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" form="formEditarContrato" class="btn btn-primary px-4"><i
+              class="bi bi-check-lg me-1"></i> Guardar Cambios</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  const reteGarantiaValor = valorFactura * (porcRete / 100);
-  const totalPagosRealizados = pagoRealizado;
-  const adeudadoFactura = valorFactura - reteGarantiaValor - retencionLey - totalPagosRealizados;
+  <!-- MODAL EDITAR CLIENTE (DARK) -->
+  <div class="modal fade modal-dark" id="modalEditarCliente" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Editar Cliente</h5>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
 
-  document.getElementById('calc_rete_garantia').innerText = fmtPeso(reteGarantiaValor);
-  document.getElementById('calc_total_pagos').innerText = fmtPeso(Math.max(totalPagosRealizados, 0));
-  document.getElementById('calc_adeuda_factura').innerText = fmtPeso(Math.max(adeudadoFactura, 0));
-  
-  let espejoReporte = document.getElementById('espejo_rete_garantia_reporte');
-  if (espejoReporte) {
-      espejoReporte.innerText = 'Equivale a: ' + fmtPeso(reteGarantiaValor);
-  }
-}
+        <div class="modal-body">
+          <form method="POST" id="formEditarCliente" action="">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="row g-3">
+              <div class="col-12">
+                <label>Nombre del Cliente o Razón Social *</label>
+                <input type="text" name="nombre_cliente" id="edit_cliente_nombre" class="form-control" required>
+              </div>
+              <div class="col-12">
+                <label>NIT / Documento</label>
+                <input type="text" name="nit" id="edit_cliente_nit" class="form-control">
+              </div>
+              <div class="col-12">
+                <label>Datos de Contacto</label>
+                <input type="text" name="contacto" id="edit_cliente_contacto" class="form-control">
+              </div>
+            </div>
+          </form>
+        </div>
 
-function calcularValoresEdit() {
-  const valorFactura = getRawVal('valor_factura_edit');
-  const porcRete = getRawVal('porcentaje_rete_garantia_edit');
-  const retencionLey = getRawVal('retencion_ley_edit');
-  const pagoRealizado = getRawVal('pago_realizado_edit');
+        <div class="modal-footer d-flex justify-content-end gap-2 mt-2 border-top pt-3 bg-dark"
+          style="border-color:#3f3f5c !important;">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" form="formEditarCliente" class="btn btn-primary px-4"><i class="bi bi-save me-1"></i>
+            Guardar Cambios</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  const reteGarantiaValor = valorFactura * (porcRete / 100);
-  const totalPagosRealizados = pagoRealizado;
-  const adeudadoFactura = valorFactura - reteGarantiaValor - retencionLey - totalPagosRealizados;
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function fmtPeso(num) {
+      if (isNaN(num)) num = 0;
+      return '$ ' + parseFloat(num).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    }
 
-  document.getElementById('calc_rete_garantia_edit').innerText = fmtPeso(reteGarantiaValor);
-  document.getElementById('calc_total_pagos_edit').innerText = fmtPeso(Math.max(totalPagosRealizados, 0));
-  document.getElementById('calc_adeuda_factura_edit').innerText = fmtPeso(Math.max(adeudadoFactura, 0));
-  
-  let espejoReporte = document.getElementById('espejo_rete_garantia_reporte_edit');
-  if (espejoReporte) {
-      espejoReporte.innerText = 'Equivale a: ' + fmtPeso(reteGarantiaValor);
-  }
-}
-
-function abrirModalEditarReporte(reporteId, valorFactura, porcRete, retencionLey, pagoRealizado, fechaPago, fechaFactura) {
-  const form = document.getElementById('formEditarReporte');
-  form.action = "{{ url_for('clientes.editar_reporte', reporte_id=0) }}".replace('0', reporteId);
-
-  const inpFactura = document.getElementById('valor_factura_edit');
-  inpFactura.dataset.rawValue = valorFactura;
-  inpFactura.value = valorFactura;
-  formatMoneyField(inpFactura);
-
-  const inpRete = document.getElementById('porcentaje_rete_garantia_edit');
-  inpRete.dataset.rawValue = porcRete;
-  inpRete.value = porcRete;
-  formatPercentField(inpRete);
-
-  const inpRetLey = document.getElementById('retencion_ley_edit');
-  inpRetLey.dataset.rawValue = retencionLey;
-  inpRetLey.value = retencionLey;
-  formatMoneyField(inpRetLey);
-
-  const inpPago = document.getElementById('pago_realizado_edit');
-  inpPago.dataset.rawValue = pagoRealizado;
-  inpPago.value = pagoRealizado;
-  formatMoneyField(inpPago);
-
-  document.getElementById('fecha_pago_edit').value = fechaPago;
-  document.getElementById('fecha_factura_edit').value = fechaFactura;
-
-  document.getElementById('lbl_actas_edit').innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Subir Actas PDF (Opcional)';
-  document.getElementById('lbl_factura_edit').innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Subir Factura PDF (Opcional)';
-  document.getElementById('lbl_pago_edit').innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Subir Comprobante (Opcional)';
-
-  calcularValoresEdit();
-
-  var modal = new bootstrap.Modal(document.getElementById('modalEditarReporte'));
-  modal.show();
-}
-
-function calcularEspejoContrato() {
-  const valTotal = getRawVal('contrato_valor_total');
-  const pct = getRawVal('contrato_rete_garantia_pct');
-  const equiv = valTotal * (pct / 100);
-  const espejoContrato = document.getElementById('espejo_rete_garantia_contrato');
-  if (espejoContrato) {
-      espejoContrato.innerText = 'Equivale a: ' + fmtPeso(equiv);
-  }
-}
-
-function calcularEspejoEditContrato() {
-  const valTotal = getRawVal('edit_contrato_valor_total');
-  const pct = getRawVal('edit_contrato_rete_garantia_pct');
-  const equiv = valTotal * (pct / 100);
-  const espejoContrato = document.getElementById('espejo_rete_garantia_edit_contrato');
-  if (espejoContrato) {
-      espejoContrato.innerText = 'Equivale a: ' + fmtPeso(equiv);
-  }
-}
-
-function prepararModalEditarCliente(btn, event) {
-  event.stopPropagation();
-  const id = btn.getAttribute('data-id');
-  const nombre = btn.getAttribute('data-nombre');
-  const nit = btn.getAttribute('data-nit');
-  const contacto = btn.getAttribute('data-contacto');
-
-  const form = document.getElementById('formEditarCliente');
-  form.action = "{{ url_for('clientes.editar_cliente', cliente_id=0) }}".replace('0', id);
-
-  document.getElementById('edit_cliente_nombre').value = nombre;
-  document.getElementById('edit_cliente_nit').value = nit;
-  document.getElementById('edit_cliente_contacto').value = contacto;
-}
-
-function prepararModalEditarContrato(btn) {
-  const id = btn.getAttribute('data-id');
-  const clienteNombre = btn.getAttribute('data-cliente-nombre');
-  const proyecto = btn.getAttribute('data-proyecto');
-  const valor = btn.getAttribute('data-valor');
-  const rete = btn.getAttribute('data-rete');
-
-  const form = document.getElementById('formEditarContrato');
-  form.action = "{{ url_for('clientes.editar_contrato_cliente', contrato_id=0) }}".replace('0', id);
-
-  document.getElementById('edit_contrato_cliente_nombre').value = clienteNombre;
-  document.getElementById('edit_contrato_proyecto').value = proyecto;
-  
-  const inpValor = document.getElementById('edit_contrato_valor_total');
-  inpValor.dataset.rawValue = valor;
-  inpValor.value = valor;
-  formatMoneyField(inpValor);
-
-  const inpRete = document.getElementById('edit_contrato_rete_garantia_pct');
-  inpRete.dataset.rawValue = rete;
-  inpRete.value = rete;
-  formatPercentField(inpRete);
-
-  document.getElementById('lbl_edit_contrato_cliente').innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Subir Nuevo PDF (Opcional)';
-  
-  calcularEspejoEditContrato();
-}
-
-// Limpiar valores antes de enviar el formulario para que el backend reciba floats limpios
-document.querySelectorAll('form').forEach(form => {
-  form.addEventListener('submit', function() {
-    this.querySelectorAll('.money-input').forEach(input => {
-      if (input.dataset.rawValue) {
-        input.value = input.dataset.rawValue;
-      } else {
-        // Fallback de limpieza estricta si no hay rawValue
-        let cleanVal = input.value.replace(/\$/g, '').replace(/\s/g, '');
-        if (cleanVal.includes(',')) {
-          cleanVal = cleanVal.replace(/\./g, '').replace(',', '.');
-        } else if (cleanVal.split('.').length > 2) {
-          cleanVal = cleanVal.replace(/\./g, '');
-        }
-        input.value = cleanVal || 0;
+    function mostrarNombreArchivo(input, labelId) {
+      const lbl = document.getElementById(labelId);
+      if (input.files && input.files[0]) {
+        lbl.innerHTML = '<i class="bi bi-file-earmark-check me-1 text-success"></i>' + input.files[0].name;
+        input.closest('.upload-zone').style.borderColor = '#10b981';
       }
-    });
-    this.querySelectorAll('.pct-input').forEach(input => {
-      if (input.dataset.rawValue) {
-        input.value = input.dataset.rawValue;
-      } else {
-        input.value = input.value.replace(/[^0-9.,]/g, '').replace(',', '.') || 0;
-      }
-    });
-  });
-});
+    }
 
-// Inicializar cálculos
-document.addEventListener('DOMContentLoaded', () => {
-  calcularValores();
-});
-</script>
+    function formatMoneyField(input) {
+      let val = input.value;
+      // Si el usuario escribe un punto al final (ej. numpad), lo convertimos a coma para usar como decimal
+      if (val.endsWith('.')) {
+        val = val.slice(0, -1) + ',';
+      }
+
+      // Limpiamos los puntos de miles actuales y caracteres no válidos
+      val = val.replace(/\./g, '');
+      val = val.replace(/[^0-9,]/g, '');
+
+      // Aseguramos que solo haya una coma como separador decimal
+      let parts = val.split(',');
+      if (parts.length > 2) {
+        val = parts[0] + ',' + parts.slice(1).join('');
+      }
+
+      if (!val) {
+        input.dataset.rawValue = '0';
+        input.value = '';
+        return;
+      }
+
+      // Guardamos el valor crudo en formato float estándar (con punto)
+      input.dataset.rawValue = val.replace(',', '.');
+
+      // Formateamos visualmente agregando puntos para los miles (estilo es-CO)
+      let splitParts = val.split(',');
+      let intPart = splitParts[0];
+      let decPart = splitParts.length > 1 ? splitParts[1] : undefined;
+
+      let intNumber = parseInt(intPart || '0', 10);
+      if (isNaN(intNumber)) intNumber = 0;
+
+      let formattedInt = intNumber.toLocaleString('es-CO');
+
+      if (decPart !== undefined) {
+        input.value = formattedInt + ',' + decPart;
+      } else {
+        input.value = formattedInt;
+      }
+    }
+
+    function formatPercentField(input) {
+      let val = input.value.replace(/[^0-9.,]/g, '');
+      let cleanNumber = val.replace(/,/g, '.');
+      let parts = cleanNumber.split('.');
+      if (parts.length > 2) {
+        cleanNumber = parts[0] + '.' + parts.slice(1).join('');
+      }
+      input.value = val;
+      input.dataset.rawValue = cleanNumber;
+    }
+
+    function getRawVal(id) {
+      let el = document.getElementById(id);
+      if (!el || !el.dataset.rawValue) return 0;
+      return parseFloat(el.dataset.rawValue) || 0;
+    }
+
+    function prepararModalReporte(contratoId) {
+      document.getElementById('hidden_contrato_cliente_id').value = contratoId;
+      document.getElementById('formCrearReporte').reset();
+
+      // Reset raw values for dynamic inputs
+      document.querySelectorAll('#formCrearReporte .money-input, #formCrearReporte .pct-input').forEach(input => {
+        input.dataset.rawValue = "0";
+        input.value = "0";
+      });
+
+      // Limpiar etiquetas de archivos
+      document.getElementById('lbl_actas').innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Subir Actas PDF';
+      document.getElementById('lbl_factura').innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Subir Factura PDF';
+      document.getElementById('lbl_pago').innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Subir Comprobante';
+
+      const uploadZones = document.querySelectorAll('#modalCrearReporte .upload-zone');
+      uploadZones.forEach(zone => zone.style.borderColor = '#3f3f5c');
+
+      calcularValores();
+    }
+
+    function calcularValores() {
+      const valorFactura = getRawVal('valor_factura');
+      const porcRete = getRawVal('porcentaje_rete_garantia');
+      const retencionLey = getRawVal('retencion_ley');
+      const pagoRealizado = getRawVal('pago_realizado');
+
+      const reteGarantiaValor = valorFactura * (porcRete / 100);
+      const totalPagosRealizados = pagoRealizado;
+      const adeudadoFactura = valorFactura - reteGarantiaValor - retencionLey - totalPagosRealizados;
+
+      document.getElementById('calc_rete_garantia').innerText = fmtPeso(reteGarantiaValor);
+      document.getElementById('calc_total_pagos').innerText = fmtPeso(Math.max(totalPagosRealizados, 0));
+      document.getElementById('calc_adeuda_factura').innerText = fmtPeso(Math.max(adeudadoFactura, 0));
+
+      let espejoReporte = document.getElementById('espejo_rete_garantia_reporte');
+      if (espejoReporte) {
+        espejoReporte.innerText = 'Equivale a: ' + fmtPeso(reteGarantiaValor);
+      }
+    }
+
+    function calcularValoresEdit() {
+      const valorFactura = getRawVal('valor_factura_edit');
+      const porcRete = getRawVal('porcentaje_rete_garantia_edit');
+      const retencionLey = getRawVal('retencion_ley_edit');
+      const pagoRealizado = getRawVal('pago_realizado_edit');
+
+      const reteGarantiaValor = valorFactura * (porcRete / 100);
+      const totalPagosRealizados = pagoRealizado;
+      const adeudadoFactura = valorFactura - reteGarantiaValor - retencionLey - totalPagosRealizados;
+
+      document.getElementById('calc_rete_garantia_edit').innerText = fmtPeso(reteGarantiaValor);
+      document.getElementById('calc_total_pagos_edit').innerText = fmtPeso(Math.max(totalPagosRealizados, 0));
+      document.getElementById('calc_adeuda_factura_edit').innerText = fmtPeso(Math.max(adeudadoFactura, 0));
+
+      let espejoReporte = document.getElementById('espejo_rete_garantia_reporte_edit');
+      if (espejoReporte) {
+        espejoReporte.innerText = 'Equivale a: ' + fmtPeso(reteGarantiaValor);
+      }
+    }
+
+    function abrirModalEditarReporte(reporteId, valorFactura, porcRete, retencionLey, pagoRealizado, fechaPago, fechaFactura) {
+      const form = document.getElementById('formEditarReporte');
+      form.action = "{{ url_for('clientes.editar_reporte', reporte_id=0) }}".replace('0', reporteId);
+
+      const inpFactura = document.getElementById('valor_factura_edit');
+      inpFactura.dataset.rawValue = valorFactura;
+      inpFactura.value = valorFactura;
+      formatMoneyField(inpFactura);
+
+      const inpRete = document.getElementById('porcentaje_rete_garantia_edit');
+      inpRete.dataset.rawValue = porcRete;
+      inpRete.value = porcRete;
+      formatPercentField(inpRete);
+
+      const inpRetLey = document.getElementById('retencion_ley_edit');
+      inpRetLey.dataset.rawValue = retencionLey;
+      inpRetLey.value = retencionLey;
+      formatMoneyField(inpRetLey);
+
+      const inpPago = document.getElementById('pago_realizado_edit');
+      inpPago.dataset.rawValue = pagoRealizado;
+      inpPago.value = pagoRealizado;
+      formatMoneyField(inpPago);
+
+      document.getElementById('fecha_pago_edit').value = fechaPago;
+      document.getElementById('fecha_factura_edit').value = fechaFactura;
+
+      document.getElementById('lbl_actas_edit').innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Subir Actas PDF (Opcional)';
+      document.getElementById('lbl_factura_edit').innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Subir Factura PDF (Opcional)';
+      document.getElementById('lbl_pago_edit').innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Subir Comprobante (Opcional)';
+
+      calcularValoresEdit();
+
+      var modal = new bootstrap.Modal(document.getElementById('modalEditarReporte'));
+      modal.show();
+    }
+
+    function calcularEspejoContrato() {
+      const valTotal = getRawVal('contrato_valor_total');
+      const pct = getRawVal('contrato_rete_garantia_pct');
+      const equiv = valTotal * (pct / 100);
+      const espejoContrato = document.getElementById('espejo_rete_garantia_contrato');
+      if (espejoContrato) {
+        espejoContrato.innerText = 'Equivale a: ' + fmtPeso(equiv);
+      }
+    }
+
+    function calcularEspejoEditContrato() {
+      const valTotal = getRawVal('edit_contrato_valor_total');
+      const pct = getRawVal('edit_contrato_rete_garantia_pct');
+      const equiv = valTotal * (pct / 100);
+      const espejoContrato = document.getElementById('espejo_rete_garantia_edit_contrato');
+      if (espejoContrato) {
+        espejoContrato.innerText = 'Equivale a: ' + fmtPeso(equiv);
+      }
+    }
+
+    function prepararModalEditarCliente(btn, event) {
+      event.stopPropagation();
+      const id = btn.getAttribute('data-id');
+      const nombre = btn.getAttribute('data-nombre');
+      const nit = btn.getAttribute('data-nit');
+      const contacto = btn.getAttribute('data-contacto');
+
+      const form = document.getElementById('formEditarCliente');
+      form.action = "{{ url_for('clientes.editar_cliente', cliente_id=0) }}".replace('0', id);
+
+      document.getElementById('edit_cliente_nombre').value = nombre;
+      document.getElementById('edit_cliente_nit').value = nit;
+      document.getElementById('edit_cliente_contacto').value = contacto;
+    }
+
+    function prepararModalEditarContrato(btn) {
+      const id = btn.getAttribute('data-id');
+      const clienteNombre = btn.getAttribute('data-cliente-nombre');
+      const proyecto = btn.getAttribute('data-proyecto');
+      const valor = btn.getAttribute('data-valor');
+      const rete = btn.getAttribute('data-rete');
+
+      const form = document.getElementById('formEditarContrato');
+      form.action = "{{ url_for('clientes.editar_contrato_cliente', contrato_id=0) }}".replace('0', id);
+
+      document.getElementById('edit_contrato_cliente_nombre').value = clienteNombre;
+      document.getElementById('edit_contrato_proyecto').value = proyecto;
+
+      const inpValor = document.getElementById('edit_contrato_valor_total');
+      inpValor.dataset.rawValue = valor;
+      inpValor.value = valor;
+      formatMoneyField(inpValor);
+
+      const inpRete = document.getElementById('edit_contrato_rete_garantia_pct');
+      inpRete.dataset.rawValue = rete;
+      inpRete.value = rete;
+      formatPercentField(inpRete);
+
+      document.getElementById('lbl_edit_contrato_cliente').innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Subir Nuevo PDF (Opcional)';
+
+      calcularEspejoEditContrato();
+    }
+
+    // Limpiar valores antes de enviar el formulario para que el backend reciba floats limpios
+    document.querySelectorAll('form').forEach(form => {
+      form.addEventListener('submit', function () {
+        this.querySelectorAll('.money-input').forEach(input => {
+          if (input.dataset.rawValue) {
+            input.value = input.dataset.rawValue;
+          } else {
+            // Fallback de limpieza estricta si no hay rawValue
+            let cleanVal = input.value.replace(/\$/g, '').replace(/\s/g, '');
+            if (cleanVal.includes(',')) {
+              cleanVal = cleanVal.replace(/\./g, '').replace(',', '.');
+            } else if (cleanVal.split('.').length > 2) {
+              cleanVal = cleanVal.replace(/\./g, '');
+            }
+            input.value = cleanVal || 0;
+          }
+        });
+        this.querySelectorAll('.pct-input').forEach(input => {
+          if (input.dataset.rawValue) {
+            input.value = input.dataset.rawValue;
+          } else {
+            input.value = input.value.replace(/[^0-9.,]/g, '').replace(',', '.') || 0;
+          }
+        });
+      });
+    });
+
+    // Inicializar cálculos
+    document.addEventListener('DOMContentLoaded', () => {
+      calcularValores();
+    });
+  </script>
 </body>
+
 </html>
