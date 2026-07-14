@@ -46,13 +46,13 @@ def create_app():
             '\'self\'',
             '\'unsafe-inline\'',
             '\'unsafe-eval\'',
-            'https://*.pluggy.ai',
+            'https://cdn.pluggy.ai',
             'https://cdn.jsdelivr.net',
             'https://unpkg.com'
         ],
         'connect-src': [
             '\'self\'',
-            'https://*.pluggy.ai',
+            'https://api.pluggy.ai',
             'https://cdn-global.configcat.com',
             'https://api-js.mixpanel.com',
             'https://browser-intake-datadoghq.com',
@@ -62,7 +62,7 @@ def create_app():
         ],
         'frame-src': [
             '\'self\'',
-            'https://*.pluggy.ai'
+            'https://connect.pluggy.ai'
         ],
         'style-src': [
             '\'self\'',
