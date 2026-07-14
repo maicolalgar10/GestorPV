@@ -1,14 +1,16 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
 from decorators import login_required, admin_oficina_required
 from models import db, Contrato, Cotizacion, Movimientos, Bancos
 from werkzeug.utils import secure_filename
 from decimal import Decimal
 import os
+import threading
 from datetime import datetime
 import requests
 from requests.auth import HTTPBasicAuth
 import uuid
 from supabase_client import supabase
+from services.pluggy_service import PluggyService
 
 tesoreria_bp = Blueprint("tesoreria", __name__, url_prefix="/tesoreria")
 
@@ -198,7 +200,7 @@ def ver_tesoreria():
             "balance": float(b.saldo_actual or 0),
             "account": b.numero_cuenta,
             "color": b.color or '#004481',
-            "belvo_link_id": b.belvo_link_id
+            "pluggy_item_id": b.pluggy_item_id
         })
 
     return render_template("tesoreria.html", 
@@ -218,7 +220,7 @@ def ver_bancos():
             "balance": float(b.saldo_actual or 0),
             "account": b.numero_cuenta,
             "color": b.color or '#004481',
-            "belvo_link_id": b.belvo_link_id
+            "pluggy_item_id": b.pluggy_item_id
         })
     return render_template("bancos.html", bancos_json=bancos_list, contratos_json=[], movimientos_json=[])
 
@@ -397,42 +399,20 @@ def api_tesoreria_resumen():
 def sincronizar_banco_en_vivo(id_banco):
     banco = Bancos.query.get_or_404(id_banco)
     
-    # Verificamos si el banco tiene un belvo_link_id
-    if not banco.belvo_link_id:
+    # Verificamos si el banco tiene un pluggy_item_id
+    if not banco.pluggy_item_id:
         return jsonify({
             "status": "error",
             "code": "MISSING_LINK",
-            "message": "Este banco aún no está vinculado con Belvo. Por favor, inicie el proceso de vinculación."
+            "message": "Este banco aún no está vinculado con Pluggy. Por favor, inicie el proceso de vinculación."
         }), 400
 
     try:
-        # Configuración de credenciales de Belvo
-        belvo_secret_id = os.environ.get("BELVO_SECRET_ID")
-        belvo_secret_password = os.environ.get("BELVO_SECRET_PASSWORD")
-        belvo_env = os.environ.get("BELVO_ENVIRONMENT", "sandbox")
-        
-        if not belvo_secret_id or not belvo_secret_password:
-            raise Exception("Las credenciales de Belvo no están configuradas en el servidor.")
-            
-        base_url = f"https://{belvo_env}.belvo.com"
-        
-        auth = HTTPBasicAuth(belvo_secret_id, belvo_secret_password)
-        link_id = banco.belvo_link_id
+        pluggy = PluggyService()
+        item_id = banco.pluggy_item_id
 
-        # 1. Obtener Cuentas (para el saldo actual)
-        accounts_url = f"{base_url}/api/accounts/?link={link_id}"
-        response_accounts = requests.get(accounts_url, auth=auth)
-        
-        if response_accounts.status_code in [401, 404]:
-            return jsonify({
-                "status": "sin_datos",
-                "saldo_real": float(banco.saldo_actual or 0),
-                "transacciones_bancarias": []
-            }), 200
-        elif response_accounts.status_code != 200:
-            raise Exception(f"Error al obtener cuentas de Belvo: {response_accounts.text}")
-            
-        accounts_data = response_accounts.json().get("results", [])
+        # 1. Obtener Cuentas
+        accounts_data = pluggy.get_accounts(item_id)
         
         if not accounts_data:
             return jsonify({
@@ -441,39 +421,32 @@ def sincronizar_banco_en_vivo(id_banco):
                 "transacciones_bancarias": []
             }), 200
             
-        # Tomamos la primera cuenta por defecto
-        cuenta_belvo = accounts_data[0]
-        saldo_real_banco = cuenta_belvo.get("balance", {}).get("current", float(banco.saldo_actual or 0))
+        cuenta = accounts_data[0]
+        # Saldo en Pluggy
+        saldo_real_banco = cuenta.get("balance", float(banco.saldo_actual or 0))
 
-        # Actualizar numero_cuenta si está vacío (creado desde Belvo)
+        # Actualizar numero_cuenta si está vacío
         if not banco.numero_cuenta or banco.numero_cuenta == "":
-            numero_belvo = cuenta_belvo.get("number") or cuenta_belvo.get("internal_identification") or ""
-            if numero_belvo:
-                banco.numero_cuenta = numero_belvo
+            numero = cuenta.get("number") or ""
+            if numero:
+                banco.numero_cuenta = numero
                 db.session.commit()
 
         # 2. Obtener Transacciones
-        # Por defecto, traemos los últimos 30 días
         from datetime import timedelta
         date_from = (datetime.utcnow() - timedelta(days=30)).strftime("%Y-%m-%d")
         
-        transactions_url = f"{base_url}/api/transactions/?link={link_id}&date_from={date_from}"
-        response_transactions = requests.get(transactions_url, auth=auth)
-        
-        if response_transactions.status_code != 200:
-            raise Exception(f"Error al obtener transacciones de Belvo: {response_transactions.text}")
-            
-        transactions_data = response_transactions.json().get("results", [])
+        transactions_data = pluggy.get_transactions(cuenta.get("id"), date_from=date_from)
         
         transacciones_reales = []
         for tx in transactions_data:
             transacciones_reales.append({
                 "id": tx.get("id"),
                 "amount": tx.get("amount"),
-                "type": tx.get("type"), # 'INFLOW' or 'OUTFLOW'
-                "status": tx.get("status"), # 'PROCESSED', 'PENDING'
+                "type": tx.get("type"), # 'CREDIT' o 'DEBIT' en Pluggy
+                "status": tx.get("status"), # 'POSTED' o 'PENDING'
                 "description": tx.get("description", "Sin descripción"),
-                "value_date": tx.get("value_date"),
+                "value_date": tx.get("date"),
                 "category": tx.get("category", "OTHER")
             })
 
@@ -487,38 +460,38 @@ def sincronizar_banco_en_vivo(id_banco):
         }), 200
 
     except Exception as e:
-        print(f"⚠️ Error en sincronización Belvo: {e}")
+        print(f"⚠️ Error en sincronización Pluggy: {e}")
         return jsonify({
             "status": "error",
-            "message": f"Error al sincronizar con Belvo: {str(e)}"
+            "message": f"Error al sincronizar con Pluggy: {str(e)}"
         }), 500
 
 @tesoreria_bp.route("/api/bancos/<int:id_banco>/vincular", methods=["POST"])
 @admin_oficina_required
-def vincular_banco_belvo(id_banco):
+def vincular_banco_pluggy(id_banco):
     banco = Bancos.query.get_or_404(id_banco)
     
     data = request.get_json()
     if not data:
         return jsonify({"status": "error", "message": "No se enviaron datos JSON"}), 400
         
-    link_id = data.get("link_id")
-    institucion = data.get("institution")
+    item_id = data.get("item_id")
+    connector_id = data.get("connector_id")
     
-    if not link_id:
-        return jsonify({"status": "error", "message": "El link_id es requerido"}), 400
+    if not item_id:
+        return jsonify({"status": "error", "message": "El item_id es requerido"}), 400
         
     try:
-        banco.belvo_link_id = link_id
-        if institucion:
-            banco.belvo_institution = institucion
+        banco.pluggy_item_id = item_id
+        if connector_id:
+            banco.pluggy_connector_id = connector_id
             
         db.session.commit()
         
         return jsonify({
             "status": "success",
-            "message": "Banco vinculado correctamente a Belvo",
-            "link_id": link_id
+            "message": "Banco vinculado correctamente a Pluggy",
+            "item_id": item_id
         }), 200
         
     except Exception as e:
@@ -531,38 +504,38 @@ def vincular_banco_belvo(id_banco):
 
 @tesoreria_bp.route("/api/bancos/vincular_nuevo", methods=["POST"])
 @admin_oficina_required
-def vincular_banco_nuevo():
+def vincular_banco_nuevo_pluggy():
     data = request.get_json()
     if not data:
         return jsonify({"status": "error", "message": "No se enviaron datos JSON"}), 400
         
-    link_id = data.get("link_id")
-    institucion = data.get("institution")
+    item_id = data.get("item_id")
+    connector_id = data.get("connector_id")
     
-    if not link_id or not institucion:
-        return jsonify({"status": "error", "message": "El link_id y institution son requeridos"}), 400
+    if not item_id or not connector_id:
+        return jsonify({"status": "error", "message": "El item_id y connector_id son requeridos"}), 400
         
     try:
         nuevo_banco = Bancos(
-            nombre_banco=institucion,
+            nombre_banco=connector_id,
             numero_cuenta="",
             saldo_actual=0,
             color="#00D4AA",
-            belvo_link_id=link_id,
-            belvo_institution=institucion
+            pluggy_item_id=item_id,
+            pluggy_connector_id=connector_id
         )
         db.session.add(nuevo_banco)
         db.session.commit()
         
         return jsonify({
             "status": "success",
-            "message": "Banco vinculado y creado correctamente desde Belvo",
+            "message": "Banco vinculado y creado correctamente desde Pluggy",
             "banco_id": nuevo_banco.id
         }), 200
         
     except Exception as e:
         db.session.rollback()
-        print(f"⚠️ Error al crear banco vía Belvo: {e}")
+        print(f"⚠️ Error al crear banco vía Pluggy: {e}")
         return jsonify({
             "status": "error",
             "message": "Error interno al guardar la vinculación"
@@ -574,21 +547,13 @@ def eliminar_banco(id_banco):
     banco = Bancos.query.get_or_404(id_banco)
     
     try:
-        # 1. Eliminar link en Belvo si existe
-        if banco.belvo_link_id:
-            belvo_secret_id = os.environ.get("BELVO_SECRET_ID")
-            belvo_secret_password = os.environ.get("BELVO_SECRET_PASSWORD")
-            belvo_env = os.environ.get("BELVO_ENVIRONMENT", "sandbox")
-            base_url = f"https://{belvo_env}.belvo.com"
-            
-            import requests
-            from requests.auth import HTTPBasicAuth
-            
-            url = f"{base_url}/api/links/{banco.belvo_link_id}/"
-            resp = requests.delete(url, auth=HTTPBasicAuth(belvo_secret_id, belvo_secret_password))
-            
-            if resp.status_code not in (204, 200, 404):
-                print(f"⚠️ Aviso: no se pudo eliminar el link en Belvo: {resp.status_code} - {resp.text}")
+        # 1. Eliminar item en Pluggy si existe
+        if banco.pluggy_item_id:
+            try:
+                pluggy = PluggyService()
+                pluggy.delete_item(banco.pluggy_item_id)
+            except Exception as e:
+                print(f"⚠️ Aviso: no se pudo eliminar el item en Pluggy: {e}")
         
         # 2. Eliminar de BD (Cascade elimina movimientos automáticamente)
         db.session.delete(banco)
@@ -607,41 +572,74 @@ def eliminar_banco(id_banco):
             "message": "Error interno al eliminar el banco"
         }), 500
 
-@tesoreria_bp.route("/api/belvo/token", methods=["POST"])
+@tesoreria_bp.route("/api/pluggy/token", methods=["POST"])
 @admin_oficina_required
-def obtener_token_belvo():
+def obtener_token_pluggy():
     try:
-        belvo_secret_id = os.environ.get("BELVO_SECRET_ID")
-        belvo_secret_password = os.environ.get("BELVO_SECRET_PASSWORD")
-        belvo_env = os.environ.get("BELVO_ENVIRONMENT", "sandbox")
+        pluggy = PluggyService()
+        token = pluggy.create_connect_token()
         
-        if not belvo_secret_id or not belvo_secret_password:
-            return jsonify({"status": "error", "message": "Credenciales de Belvo faltantes"}), 500
-            
-        base_url = f"https://{belvo_env}.belvo.com"
-        token_url = f"{base_url}/api/token/"
-        
-        # Payload requerido por Belvo para generar el token del Widget
-        payload = {
-            "id": belvo_secret_id,
-            "password": belvo_secret_password,
-            "scopes": "read_institutions,write_links,read_links"
-        }
-        
-        response = requests.post(token_url, json=payload)
-        
-        if response.status_code != 200 and response.status_code != 201:
-            raise Exception(f"Fallo al obtener token: {response.text}")
-            
-        data = response.json()
         return jsonify({
             "status": "success",
-            "access_token": data.get("access", "")
+            "access_token": token
         }), 200
         
     except Exception as e:
-        print(f"⚠️ Error al obtener widget token de Belvo: {e}")
+        print(f"⚠️ Error al obtener connect token de Pluggy: {e}")
         return jsonify({
             "status": "error",
             "message": str(e)
         }), 500
+
+def _process_pluggy_webhook(app_context, data):
+    """
+    Procesa el webhook en segundo plano usando el contexto de la aplicación.
+    Solo actualiza el saldo del banco (Visor financiero independiente).
+    """
+    with app_context:
+        try:
+            event = data.get("event")
+            item_id = data.get("itemId")
+            
+            if event == "item/updated" and item_id:
+                # Buscar el banco asociado a este item_id
+                banco = Bancos.query.filter_by(pluggy_item_id=item_id).first()
+                if banco:
+                    pluggy = PluggyService()
+                    accounts_data = pluggy.get_accounts(item_id)
+                    if accounts_data:
+                        cuenta = accounts_data[0]
+                        nuevo_saldo = cuenta.get("balance", float(banco.saldo_actual or 0))
+                        
+                        banco.saldo_actual = nuevo_saldo
+                        db.session.commit()
+                        print(f"✅ [WEBHOOK] Saldo actualizado para banco {banco.nombre_banco}: {nuevo_saldo}")
+                    else:
+                        print(f"⚠️ [WEBHOOK] No se encontraron cuentas para el item_id {item_id}")
+                else:
+                    print(f"ℹ️ [WEBHOOK] No existe banco registrado con item_id {item_id}")
+            else:
+                print(f"ℹ️ [WEBHOOK] Evento ignorado o sin item_id: {event}")
+        except Exception as e:
+            print(f"❌ [WEBHOOK] Error procesando evento en segundo plano: {e}")
+
+@tesoreria_bp.route("/api/webhooks/pluggy", methods=["POST"])
+def webhook_pluggy():
+    """
+    Recibe notificaciones de Pluggy, retorna 200 OK inmediatamente
+    y delega el procesamiento a un hilo en background.
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({"status": "error", "message": "Payload inválido"}), 400
+
+    print(f"📥 [WEBHOOK RECIBIDO] Event: {data.get('event')}, ItemId: {data.get('itemId')}")
+
+    # Extraer el contexto actual de la aplicación de Flask para pasarlo al hilo
+    app_context = current_app._get_current_object().app_context()
+    
+    # Lanzar el procesamiento en segundo plano
+    thread = threading.Thread(target=_process_pluggy_webhook, args=(app_context, data))
+    thread.start()
+
+    return jsonify({"status": "received"}), 200

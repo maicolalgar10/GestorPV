@@ -46,16 +46,13 @@ def create_app():
             '\'self\'',
             '\'unsafe-inline\'',
             '\'unsafe-eval\'',
-            'https://cdn.belvo.io',
+            'https://*.pluggy.ai',
             'https://cdn.jsdelivr.net',
             'https://unpkg.com'
         ],
         'connect-src': [
             '\'self\'',
-            'https://api.belvo.co',
-            'https://sandbox.belvo.co',
-            'https://sandbox.belvo.com',
-            'https://statics.belvo.io',
+            'https://*.pluggy.ai',
             'https://cdn-global.configcat.com',
             'https://api-js.mixpanel.com',
             'https://browser-intake-datadoghq.com',
@@ -65,8 +62,7 @@ def create_app():
         ],
         'frame-src': [
             '\'self\'',
-            'https://cdn.belvo.io',
-            'https://sandbox.belvo.com'
+            'https://*.pluggy.ai'
         ],
         'style-src': [
             '\'self\'',
@@ -83,7 +79,7 @@ def create_app():
             '\'self\'',
             'data:',
             'blob:',
-            'https://statics.belvo.io',
+            'https://*.pluggy.ai',
             '*'
         ]
     }

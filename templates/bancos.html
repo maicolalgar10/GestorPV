@@ -15,8 +15,8 @@
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   
-  <!-- Belvo Connect Widget -->
-  <script src="https://cdn.belvo.io/belvo-widget-1-stable.js"></script>
+  <!-- Pluggy Connect Widget -->
+  <script src="https://cdn.pluggy.ai/pluggy-connect/v1/pluggy-connect.js"></script>
 </head>
 <body>
 
@@ -50,7 +50,7 @@ function BancosApp() {
   const [bankErrors, setBankErrors] = useState({});
   useEffect(() => {
     BANKS.forEach(b => {
-      if (b.belvo_link_id) {
+      if (b.pluggy_item_id) {
         axios.get(`/tesoreria/api/bancos/${b.id}/sincronizar_en_vivo`, {
           headers: {
             'X-CSRFToken': window.csrf_token
@@ -81,57 +81,42 @@ function BancosApp() {
       }
     });
   }, []);
-  const startBelvoWidget = async (bankId = null) => {
+  const startPluggyWidget = async (bankId = null) => {
     try {
       setSyncingBankId(bankId || 'new');
       let attempts = 0;
-      while (typeof window.belvoSDK === 'undefined' && attempts < 50) {
+      while (typeof PluggyConnect === 'undefined' && attempts < 50) {
         await new Promise(resolve => setTimeout(resolve, 100));
         attempts++;
       }
-      if (typeof window.belvoSDK === 'undefined') {
-        throw new Error("El SDK de Belvo no pudo cargar después de 5 segundos.");
+      if (typeof PluggyConnect === 'undefined') {
+        throw new Error("El SDK de Pluggy no pudo cargar.");
       }
-      const tokenRes = await axios.post('/tesoreria/api/belvo/token', {}, {
+      const tokenRes = await axios.post('/tesoreria/api/pluggy/token', {}, {
         headers: {
           'X-CSRFToken': window.csrf_token
         }
       });
       if (tokenRes.data.status !== "success" || !tokenRes.data.access_token) {
-        throw new Error(tokenRes.data.message || "No se pudo obtener el token de Belvo");
+        throw new Error(tokenRes.data.message || "No se pudo obtener el token de Pluggy");
       }
       const accessToken = tokenRes.data.access_token;
-      window.belvoSDK.createWidget(accessToken, {
-        locale: "es",
-        access_mode: "recurrent",
-        institution_types: ['bank', 'fiscal'],
-        country_codes: ['CO', 'MX', 'BR'],
-        environment: "sandbox",
-        callback: async (...args) => {
-          let link_id, institution_name;
-          if (typeof args[0] === 'string') {
-            link_id = args[0];
-            institution_name = args[1];
-          } else if (args[0] && args[0].link) {
-            link_id = args[0].link;
-            institution_name = args[0].institution;
-          } else if (args[0] && args[0].id) {
-            link_id = args[0].id;
-            institution_name = args[0].institution;
-          }
-          console.log("CALLBACK link:", link_id);
-          console.log("CALLBACK institution:", institution_name);
-          console.log("CALLBACK bankId:", bankId);
+      
+      const pluggyConnect = new PluggyConnect({
+        connectToken: accessToken,
+        onSuccess: async (itemData) => {
+          const item_id = itemData.item.id;
+          const connector_id = itemData.item.connector ? itemData.item.connector.name : "Banco";
           
-          if (!link_id) {
-            alert("Error: no se pudo obtener el link_id de Belvo. Ver consola.");
+          if (!item_id) {
+            alert("Error: no se pudo obtener el item_id de Pluggy. Ver consola.");
             return;
           }
           try {
             if (!bankId || bankId === 'new') {
               const vincularRes = await axios.post(`/tesoreria/api/bancos/vincular_nuevo`, {
-                link_id: link_id,
-                institution: institution_name
+                item_id: item_id,
+                connector_id: connector_id
               }, {
                 headers: {
                   'X-CSRFToken': window.csrf_token,
@@ -140,15 +125,15 @@ function BancosApp() {
                 timeout: 8000
               });
               if (vincularRes.data.status === "success") {
-                alert("✅ Banco creado y vinculado exitosamente desde Belvo.");
+                alert("✅ Banco creado y vinculado exitosamente desde Pluggy.");
                 window.location.reload();
               } else {
                 alert("Error al vincular: " + (vincularRes.data.error || vincularRes.data.message || JSON.stringify(vincularRes.data)));
               }
             } else {
               const vincularRes = await axios.post(`/tesoreria/api/bancos/${bankId}/vincular`, {
-                link_id: link_id,
-                institution: institution_name
+                item_id: item_id,
+                connector_id: connector_id
               }, {
                 headers: {
                   'X-CSRFToken': window.csrf_token,
@@ -169,18 +154,22 @@ function BancosApp() {
             setSyncingBankId(null);
           }
         },
-        onExit: data => {
+        onError: (error) => {
+          console.error("Pluggy error:", error);
           setSyncingBankId(null);
         },
-        onEvent: data => {}
-      }).build('#belvo');
+        onClose: () => {
+          setSyncingBankId(null);
+        }
+      });
+      pluggyConnect.init();
     } catch (error) {
-      alert(error.message || "Ocurrió un error al cargar el widget de Belvo.");
+      alert(error.message || "Ocurrió un error al cargar el widget de Pluggy.");
       setSyncingBankId(null);
     }
   };
   const handleDeleteBank = async bankId => {
-    if (window.confirm("¿Estás seguro de que deseas eliminar este banco permanentemente? Esto borrará también todos los movimientos asociados y desconectará la cuenta de Belvo.")) {
+    if (window.confirm("¿Estás seguro de que deseas eliminar este banco permanentemente? Esto borrará también todos los movimientos asociados y desconectará la cuenta de Pluggy.")) {
       try {
         const res = await axios.delete(`/tesoreria/api/bancos/${bankId}`, {
           headers: {
@@ -221,13 +210,13 @@ function BancosApp() {
           ...prev,
           [bankId]: true
         }));
-        startBelvoWidget(bankId);
+        startPluggyWidget(bankId);
       } else {
         alert(res.data.message || "Error desconocido");
       }
     } catch (error) {
       if (error.response && error.response.data && error.response.data.code === "MISSING_LINK") {
-        startBelvoWidget(bankId);
+        startPluggyWidget(bankId);
       } else {
         alert("Ocurrió un error al sincronizar.");
       }
@@ -449,7 +438,7 @@ function BancosApp() {
     }
   }, "Cuentas Bancarias"), /*#__PURE__*/React.createElement("button", {
     className: "btn-primary",
-    onClick: () => startBelvoWidget(),
+    onClick: () => startPluggyWidget(),
     disabled: syncingBankId === 'new'
   }, syncingBankId === 'new' ? "Cargando..." : "+ Nuevo Banco")), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -505,7 +494,7 @@ function BancosApp() {
       color: "#6B7A9A",
       fontFamily: "monospace"
     }
-  }, maskAccount(b.account)))), b.belvo_link_id ? /*#__PURE__*/React.createElement("div", {
+  }, maskAccount(b.account)))), b.pluggy_item_id ? /*#__PURE__*/React.createElement("div", {
     style: {
       background: bankErrors[b.id] ? "rgba(255, 107, 107, 0.1)" : "rgba(0, 212, 170, 0.1)",
       color: bankErrors[b.id] ? "#FF6B6B" : "#00D4AA",
@@ -612,7 +601,7 @@ function BancosApp() {
   }, /*#__PURE__*/React.createElement("i", {
     className: "bi bi-trash"
   }))))))))), /*#__PURE__*/React.createElement("div", {
-    id: "belvo"
+    id: "pluggy-connect"
   }));
 }
 const root = ReactDOM.createRoot(document.getElementById('root'));

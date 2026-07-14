@@ -614,9 +614,9 @@ class Bancos(db.Model):
     saldo_actual = db.Column(db.Numeric(12, 2), default=0, nullable=False)
     color = db.Column(db.String(7), nullable=True, default="#004481")
     
-    # Nuevos campos específicos para Belvo
-    belvo_link_id = db.Column(db.String(100), nullable=True)
-    belvo_institution = db.Column(db.String(100), nullable=True)
+    # Campos para integración con Pluggy
+    pluggy_item_id = db.Column(db.String(100), nullable=True)
+    pluggy_connector_id = db.Column(db.String(100), nullable=True)
 
 
 # ===========================================
