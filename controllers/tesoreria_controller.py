@@ -660,6 +660,27 @@ def comprobantes_egresos():
             debitese_a = request.form.get("debitese_a")
             elaborado = request.form.get("elaborado_por")
             aprobado = request.form.get("aprobado_por")
+
+            archivo = request.files.get('archivo_soporte')
+            url_soporte = None
+            if archivo and archivo.filename:
+                from supabase_client import supabase
+                from werkzeug.utils import secure_filename
+                import uuid
+                if supabase:
+                    try:
+                        filename = secure_filename(archivo.filename)
+                        unique_filename = f"{uuid.uuid4().hex}_{filename}"
+                        file_bytes = archivo.read()
+                        
+                        supabase.storage.from_("tesoreria").upload(
+                            f"comprobantes/{unique_filename}", 
+                            file_bytes, 
+                            {"content-type": archivo.content_type}
+                        )
+                        url_soporte = supabase.storage.from_("tesoreria").get_public_url(f"comprobantes/{unique_filename}")
+                    except Exception as upload_error:
+                        print(f"Error al subir soporte: {upload_error}")
             
             nuevo = ComprobanteEgreso(
                 numero_comprobante=numero,
@@ -670,7 +691,8 @@ def comprobantes_egresos():
                 banco=banco,
                 debitese_a=debitese_a,
                 elaborado_por=elaborado,
-                aprobado_por=aprobado
+                aprobado_por=aprobado,
+                archivo_url=url_soporte
             )
             db.session.add(nuevo)
             db.session.commit()

@@ -71,6 +71,7 @@
             <th>Banco</th>
             <th>Debítese a</th>
             <th>Elaborado / Aprobado</th>
+            <th class="text-center">Soporte</th>
             <th class="text-end">Valor</th>
           </tr>
         </thead>
@@ -93,13 +94,22 @@
               <small class="d-block text-muted">Por: {{ comp.elaborado_por }}</small>
               <small class="d-block text-muted">Apr: {{ comp.aprobado_por }}</small>
             </td>
+            <td class="text-center">
+              {% if comp.archivo_url %}
+                <a href="{{ comp.archivo_url }}" target="_blank" class="btn btn-sm btn-outline-danger" title="Ver Soporte">
+                  <i class="bi bi-file-earmark-arrow-down"></i>
+                </a>
+              {% else %}
+                <span class="text-muted small">-</span>
+              {% endif %}
+            </td>
             <td class="text-end text-danger fw-bold">
               ${{ "{:,.2f}".format(comp.valor) }}
             </td>
           </tr>
           {% else %}
           <tr>
-            <td colspan="8" class="text-center text-muted py-4">No hay comprobantes registrados.</td>
+            <td colspan="9" class="text-center text-muted py-4">No hay comprobantes registrados.</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -116,7 +126,7 @@
         <h5 class="modal-title fw-bold"><i class="bi bi-receipt me-2"></i> Registrar Comprobante de Egreso</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <form action="{{ url_for('tesoreria.comprobantes_egresos') }}" method="POST">
+      <form action="{{ url_for('tesoreria.comprobantes_egresos') }}" method="POST" enctype="multipart/form-data">
         <div class="modal-body">
           <div class="row g-3">
             
@@ -172,6 +182,11 @@
             <div class="col-md-6">
               <label class="form-label fw-bold small text-muted">Aprobado por</label>
               <input type="text" name="aprobado_por" class="form-control" required placeholder="Nombre de quien aprueba">
+            </div>
+
+            <div class="col-12 mt-3">
+              <label for="archivo_soporte" class="form-label fw-bold small text-muted">Adjuntar Soporte (PDF o Imagen)</label>
+              <input class="form-control" type="file" id="archivo_soporte" name="archivo_soporte" accept="image/*,.pdf">
             </div>
 
           </div>

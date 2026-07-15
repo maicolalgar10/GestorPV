@@ -989,6 +989,7 @@ class ComprobanteEgreso(db.Model):
     valor = db.Column(db.Numeric(12, 2), nullable=False)
     metodo_pago = db.Column(db.String(20), nullable=False) # Cheque o Efectivo
     numero_cheque = db.Column(db.String(50), nullable=True)
+    archivo_url = db.Column(db.String(500), nullable=True)
     banco = db.Column(db.String(100), nullable=True)
     debitese_a = db.Column(db.String(150), nullable=False)
     elaborado_por = db.Column(db.String(100), nullable=False)
