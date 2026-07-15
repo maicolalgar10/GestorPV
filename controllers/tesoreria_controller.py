@@ -720,7 +720,7 @@ def comprobantes_egresos():
     return render_template("comprobantes_egresos.html", comprobantes=comprobantes)
 
 
-@tesoreria_bp.route("/comprobantes-egresos/editar/<int:id>", methods=["POST"])
+@tesoreria_bp.route("/comprobantes-egresos/editar/<string:id>", methods=["POST"])
 @admin_oficina_required
 def editar_comprobante_egreso(id):
     from models import db, ComprobanteEgreso
