@@ -719,3 +719,59 @@ def comprobantes_egresos():
         
     return render_template("comprobantes_egresos.html", comprobantes=comprobantes)
 
+
+@tesoreria_bp.route("/comprobantes-egresos/editar/<int:id>", methods=["POST"])
+@admin_oficina_required
+def editar_comprobante_egreso(id):
+    from models import db, ComprobanteEgreso
+    comprobante = ComprobanteEgreso.query.get_or_404(id)
+    
+    try:
+        comprobante.numero_comprobante = request.form.get("numero_comprobante")
+        fecha_str = request.form.get("fecha")
+        if fecha_str:
+            from datetime import datetime
+            comprobante.fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+        comprobante.concepto = request.form.get("concepto")
+        comprobante.valor = request.form.get("valor")
+        
+        metodo = request.form.get("metodo_pago")
+        comprobante.metodo_pago = metodo
+        comprobante.numero_cheque = request.form.get("numero_cheque") if metodo == "Cheque" else None
+        
+        comprobante.banco = request.form.get("banco")
+        comprobante.debitese_a = request.form.get("debitese_a")
+        comprobante.tipo_documento = request.form.get("tipo_documento")
+        comprobante.documento_numero = request.form.get("documento_numero")
+        comprobante.elaborado_por = request.form.get("elaborado_por")
+        comprobante.aprobado_por = request.form.get("aprobado_por")
+        
+        archivo = request.files.get('archivo_soporte')
+        if archivo and archivo.filename:
+            from supabase_client import supabase
+            from werkzeug.utils import secure_filename
+            import uuid
+            if supabase:
+                try:
+                    filename = secure_filename(archivo.filename)
+                    unique_filename = f"{uuid.uuid4().hex}_{filename}"
+                    file_bytes = archivo.read()
+                    
+                    supabase.storage.from_("tesoreria").upload(
+                        f"comprobantes/{unique_filename}", 
+                        file_bytes, 
+                        {"content-type": archivo.content_type}
+                    )
+                    
+                    comprobante.archivo_url = supabase.storage.from_("tesoreria").get_public_url(f"comprobantes/{unique_filename}")
+                except Exception as upload_error:
+                    print(f"Error al subir soporte actualizado: {upload_error}")
+        
+        db.session.commit()
+        flash("Comprobante actualizado exitosamente", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al actualizar: {str(e)}", "danger")
+        
+    return redirect(url_for("tesoreria.comprobantes_egresos"))
+

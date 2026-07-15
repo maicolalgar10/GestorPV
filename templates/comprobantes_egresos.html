@@ -73,6 +73,7 @@
             <th>Elaborado / Aprobado</th>
             <th class="text-center">Soporte</th>
             <th class="text-end">Valor</th>
+            <th class="text-center">Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -109,10 +110,29 @@
               {% endif %}
             </td>
             <td class="text-end fw-bold text-success">${{ "{:,.2f}".format(comp.valor) }}</td>
+            <td class="text-center">
+              <button class="btn btn-sm btn-outline-secondary btn-editar-comprobante" 
+                data-id="{{ comp.id }}"
+                data-numero="{{ comp.numero_comprobante }}"
+                data-fecha="{{ comp.fecha.strftime('%Y-%m-%d') if comp.fecha else '' }}"
+                data-concepto="{{ comp.concepto }}"
+                data-valor="{{ comp.valor }}"
+                data-metodo="{{ comp.metodo_pago }}"
+                data-banco="{{ comp.banco or '' }}"
+                data-cheque="{{ comp.numero_cheque or '' }}"
+                data-debitese="{{ comp.debitese_a }}"
+                data-tipodoc="{{ comp.tipo_documento }}"
+                data-numdoc="{{ comp.documento_numero or '' }}"
+                data-elaborado="{{ comp.elaborado_por }}"
+                data-aprobado="{{ comp.aprobado_por }}"
+                data-bs-toggle="modal" data-bs-target="#modalEditarComprobante">
+                <i class="bi bi-pencil-square"></i>
+              </button>
+            </td>
           </tr>
           {% else %}
           <tr>
-            <td colspan="9" class="text-center text-muted py-4">No hay comprobantes registrados.</td>
+            <td colspan="10" class="text-center text-muted py-4">No hay comprobantes registrados.</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -225,6 +245,110 @@
   </div>
 </div>
 
+<!-- Modal Editar Comprobante -->
+<div class="modal fade" id="modalEditarComprobante" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i> Editar Comprobante de Egreso</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="formEditarComprobante" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body">
+          <div class="row g-3">
+            
+            <div class="col-md-4">
+              <label class="form-label fw-bold small text-muted">Nº de Comprobante</label>
+              <input type="number" name="numero_comprobante" id="edit_numero_comprobante" class="form-control" required>
+            </div>
+            
+            <div class="col-md-4">
+              <label class="form-label fw-bold small text-muted">Fecha</label>
+              <input type="date" name="fecha" id="edit_fecha" class="form-control" required>
+            </div>
+            
+            <div class="col-md-4">
+              <label class="form-label fw-bold small text-muted">Valor</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" step="0.01" name="valor" id="edit_valor" class="form-control" required>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-bold small text-muted">Concepto</label>
+              <textarea name="concepto" id="edit_concepto" class="form-control" rows="3" required></textarea>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-muted d-block">Método de Pago</label>
+              <div class="btn-group w-100" role="group">
+                <input type="radio" class="btn-check" name="metodo_pago" id="edit_pago_cheque" value="Cheque" required>
+                <label class="btn btn-outline-primary" for="edit_pago_cheque">Cheque</label>
+
+                <input type="radio" class="btn-check" name="metodo_pago" id="edit_pago_efectivo" value="Efectivo" required>
+                <label class="btn btn-outline-success" for="edit_pago_efectivo">Efectivo</label>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-muted">Banco (Opcional si es efectivo)</label>
+              <input type="text" name="banco" id="edit_banco" class="form-control">
+            </div>
+
+            <div class="col-md-6" id="edit_container_numero_cheque">
+              <label class="form-label fw-bold small text-muted">Número de Cheque</label>
+              <input type="text" name="numero_cheque" id="edit_input_numero_cheque" class="form-control">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-bold small text-muted">Debítese a</label>
+              <input type="text" name="debitese_a" id="edit_debitese_a" class="form-control" required>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-bold small text-muted d-block">Tipo Documento</label>
+              <div class="btn-group w-100" role="group">
+                <input type="radio" class="btn-check" name="tipo_documento" id="edit_tipo_doc_nit" value="NIT" required>
+                <label class="btn btn-outline-secondary" for="edit_tipo_doc_nit">NIT</label>
+
+                <input type="radio" class="btn-check" name="tipo_documento" id="edit_tipo_doc_cc" value="CC" required>
+                <label class="btn btn-outline-secondary" for="edit_tipo_doc_cc">CC</label>
+              </div>
+            </div>
+
+            <div class="col-md-8">
+              <label class="form-label fw-bold small text-muted">Número</label>
+              <input type="text" name="documento_numero" id="edit_documento_numero" class="form-control">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-muted">Elaborado por</label>
+              <input type="text" name="elaborado_por" id="edit_elaborado_por" class="form-control" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-muted">Aprobado por</label>
+              <input type="text" name="aprobado_por" id="edit_aprobado_por" class="form-control" required>
+            </div>
+
+            <div class="col-12 mt-3">
+              <label for="edit_archivo_soporte" class="form-label fw-bold small text-muted">Actualizar Soporte (Opcional, PDF o Imagen)</label>
+              <input class="form-control" type="file" id="edit_archivo_soporte" name="archivo_soporte" accept="image/*,.pdf">
+            </div>
+
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger px-4">Actualizar Comprobante</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function() {
@@ -264,6 +388,58 @@
 
     docRadios.forEach(radio => radio.addEventListener('change', toggleDocPlaceholder));
     toggleDocPlaceholder();
+
+    // Logica de Modal Edicion
+    const editButtons = document.querySelectorAll('.btn-editar-comprobante');
+    editButtons.forEach(btn => {
+      btn.addEventListener('click', function() {
+        const id = this.getAttribute('data-id');
+        const form = document.getElementById('formEditarComprobante');
+        form.action = "/tesoreria/comprobantes-egresos/editar/" + id;
+
+        document.getElementById('edit_numero_comprobante').value = this.getAttribute('data-numero');
+        document.getElementById('edit_fecha').value = this.getAttribute('data-fecha');
+        document.getElementById('edit_valor').value = this.getAttribute('data-valor');
+        document.getElementById('edit_concepto').value = this.getAttribute('data-concepto');
+        
+        const metodo = this.getAttribute('data-metodo');
+        if (metodo === 'Cheque') {
+          document.getElementById('edit_pago_cheque').checked = true;
+          document.getElementById('edit_container_numero_cheque').style.display = 'block';
+        } else {
+          document.getElementById('edit_pago_efectivo').checked = true;
+          document.getElementById('edit_container_numero_cheque').style.display = 'none';
+        }
+        
+        document.getElementById('edit_banco').value = this.getAttribute('data-banco');
+        document.getElementById('edit_input_numero_cheque').value = this.getAttribute('data-cheque');
+        
+        document.getElementById('edit_debitese_a').value = this.getAttribute('data-debitese');
+        
+        const tipodoc = this.getAttribute('data-tipodoc');
+        if (tipodoc === 'CC') {
+          document.getElementById('edit_tipo_doc_cc').checked = true;
+        } else {
+          document.getElementById('edit_tipo_doc_nit').checked = true;
+        }
+        
+        document.getElementById('edit_documento_numero').value = this.getAttribute('data-numdoc');
+        document.getElementById('edit_elaborado_por').value = this.getAttribute('data-elaborado');
+        document.getElementById('edit_aprobado_por').value = this.getAttribute('data-aprobado');
+      });
+    });
+
+    const editRadiosMetodo = document.querySelectorAll('input[name="metodo_pago"]');
+    editRadiosMetodo.forEach(radio => radio.addEventListener('change', function(e) {
+      if (e.target.closest('#formEditarComprobante')) {
+        if (document.getElementById('edit_pago_cheque').checked) {
+          document.getElementById('edit_container_numero_cheque').style.display = 'block';
+        } else {
+          document.getElementById('edit_container_numero_cheque').style.display = 'none';
+          document.getElementById('edit_input_numero_cheque').value = '';
+        }
+      }
+    }));
   });
 </script>
 </body>
