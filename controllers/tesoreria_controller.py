@@ -655,6 +655,7 @@ def comprobantes_egresos():
             concepto = request.form.get("concepto")
             valor = request.form.get("valor")
             metodo = request.form.get("metodo_pago")
+            num_cheque = request.form.get("numero_cheque") if metodo == "Cheque" else None
             banco = request.form.get("banco")
             debitese_a = request.form.get("debitese_a")
             elaborado = request.form.get("elaborado_por")
@@ -665,6 +666,7 @@ def comprobantes_egresos():
                 concepto=concepto,
                 valor=valor,
                 metodo_pago=metodo,
+                numero_cheque=num_cheque,
                 banco=banco,
                 debitese_a=debitese_a,
                 elaborado_por=elaborado,

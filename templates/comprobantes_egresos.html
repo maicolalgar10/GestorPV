@@ -154,6 +154,11 @@
               <input type="text" name="banco" class="form-control" placeholder="Nombre del banco o cuenta">
             </div>
 
+            <div class="col-md-6" id="container-numero-cheque">
+              <label class="form-label fw-bold small text-muted">Número de Cheque</label>
+              <input type="text" name="numero_cheque" id="input_numero_cheque" class="form-control" placeholder="Ej: 987654321">
+            </div>
+
             <div class="col-12">
               <label class="form-label fw-bold small text-muted">Debítese a</label>
               <input type="text" name="debitese_a" class="form-control" required placeholder="Persona o entidad a la que se debita">
@@ -181,5 +186,25 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const radios = document.querySelectorAll('input[name="metodo_pago"]');
+    const containerCheque = document.getElementById('container-numero-cheque');
+    const inputCheque = document.getElementById('input_numero_cheque');
+
+    function toggleCheque() {
+      const selected = document.querySelector('input[name="metodo_pago"]:checked').value;
+      if (selected === 'Cheque') {
+        containerCheque.style.display = 'block';
+      } else {
+        containerCheque.style.display = 'none';
+        inputCheque.value = '';
+      }
+    }
+
+    radios.forEach(radio => radio.addEventListener('change', toggleCheque));
+    toggleCheque();
+  });
+</script>
 </body>
 </html>
