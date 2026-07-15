@@ -643,3 +643,46 @@ def webhook_pluggy():
     thread.start()
 
     return jsonify({"status": "received"}), 200
+
+@tesoreria_bp.route("/comprobantes-egresos", methods=["GET", "POST"])
+@admin_oficina_required
+def comprobantes_egresos():
+    from models import db, ComprobanteEgreso
+    
+    if request.method == "POST":
+        try:
+            numero = request.form.get("numero_comprobante")
+            concepto = request.form.get("concepto")
+            valor = request.form.get("valor")
+            metodo = request.form.get("metodo_pago")
+            banco = request.form.get("banco")
+            debitese_a = request.form.get("debitese_a")
+            elaborado = request.form.get("elaborado_por")
+            aprobado = request.form.get("aprobado_por")
+            
+            nuevo = ComprobanteEgreso(
+                numero_comprobante=numero,
+                concepto=concepto,
+                valor=valor,
+                metodo_pago=metodo,
+                banco=banco,
+                debitese_a=debitese_a,
+                elaborado_por=elaborado,
+                aprobado_por=aprobado
+            )
+            db.session.add(nuevo)
+            db.session.commit()
+            flash("Comprobante registrado exitosamente", "success")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error al registrar: {str(e)}", "danger")
+        return redirect(url_for("tesoreria.comprobantes_egresos"))
+
+    comprobantes = []
+    try:
+        comprobantes = ComprobanteEgreso.query.order_by(ComprobanteEgreso.fecha_creacion.desc()).all()
+    except Exception:
+        pass
+        
+    return render_template("comprobantes_egresos.html", comprobantes=comprobantes)
+

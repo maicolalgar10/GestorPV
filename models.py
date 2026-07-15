@@ -976,3 +976,23 @@ class ReporteClientes(db.Model):
         except Exception:
             return 0.0
 
+
+# ===========================================
+# Comprobantes de Egreso
+# ===========================================
+class ComprobanteEgreso(db.Model):
+    __tablename__ = 'comprobantes_egreso'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    numero_comprobante = db.Column(db.Integer, nullable=False, unique=True)
+    concepto = db.Column(db.Text, nullable=False)
+    valor = db.Column(db.Numeric(12, 2), nullable=False)
+    metodo_pago = db.Column(db.String(20), nullable=False) # Cheque o Efectivo
+    banco = db.Column(db.String(100), nullable=True)
+    debitese_a = db.Column(db.String(150), nullable=False)
+    elaborado_por = db.Column(db.String(100), nullable=False)
+    aprobado_por = db.Column(db.String(100), nullable=False)
+    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<ComprobanteEgreso {self.numero_comprobante}>'
