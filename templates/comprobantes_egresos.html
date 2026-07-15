@@ -395,7 +395,7 @@
       btn.addEventListener('click', function() {
         const id = this.getAttribute('data-id');
         const form = document.getElementById('formEditarComprobante');
-        form.action = "/tesoreria/comprobantes-egresos/editar/" + id;
+        form.action = "{{ url_for('tesoreria.editar_comprobante_egreso', id=0) }}".replace('0', id);
 
         document.getElementById('edit_numero_comprobante').value = this.getAttribute('data-numero');
         document.getElementById('edit_fecha').value = this.getAttribute('data-fecha');
