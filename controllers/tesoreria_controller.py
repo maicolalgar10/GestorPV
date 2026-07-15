@@ -709,7 +709,7 @@ def comprobantes_egresos():
 
     comprobantes = []
     try:
-        comprobantes = ComprobanteEgreso.query.order_by(ComprobanteEgreso.fecha_creacion.desc()).all()
+        comprobantes = ComprobanteEgreso.query.order_by(ComprobanteEgreso.fecha.desc(), ComprobanteEgreso.id.desc()).all()
     except Exception:
         pass
         
