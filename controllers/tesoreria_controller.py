@@ -652,6 +652,7 @@ def comprobantes_egresos():
     if request.method == "POST":
         try:
             numero = request.form.get("numero_comprobante")
+            fecha_str = request.form.get("fecha")
             concepto = request.form.get("concepto")
             valor = request.form.get("valor")
             metodo = request.form.get("metodo_pago")
@@ -660,6 +661,9 @@ def comprobantes_egresos():
             debitese_a = request.form.get("debitese_a")
             elaborado = request.form.get("elaborado_por")
             aprobado = request.form.get("aprobado_por")
+
+            from datetime import datetime
+            fecha_val = datetime.strptime(fecha_str, '%Y-%m-%d').date() if fecha_str else datetime.utcnow().date()
 
             archivo = request.files.get('archivo_soporte')
             url_soporte = None
@@ -684,6 +688,7 @@ def comprobantes_egresos():
             
             nuevo = ComprobanteEgreso(
                 numero_comprobante=numero,
+                fecha=fecha_val,
                 concepto=concepto,
                 valor=valor,
                 metodo_pago=metodo,

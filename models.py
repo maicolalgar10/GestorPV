@@ -985,6 +985,7 @@ class ComprobanteEgreso(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     numero_comprobante = db.Column(db.Integer, nullable=False, unique=True)
+    fecha = db.Column(db.Date, nullable=False, default=datetime.utcnow)
     concepto = db.Column(db.Text, nullable=False)
     valor = db.Column(db.Numeric(12, 2), nullable=False)
     metodo_pago = db.Column(db.String(20), nullable=False) # Cheque o Efectivo

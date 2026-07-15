@@ -79,7 +79,7 @@
           {% for comp in comprobantes %}
           <tr>
             <td><strong>#{{ comp.numero_comprobante }}</strong></td>
-            <td>{{ comp.fecha_creacion.strftime('%Y-%m-%d %H:%M') if comp.fecha_creacion else '-' }}</td>
+            <td>{{ comp.fecha.strftime('%d/%m/%Y') if comp.fecha else '-' }}</td>
             <td style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ comp.concepto }}">{{ comp.concepto }}</td>
             <td>
               {% if comp.metodo_pago == 'Efectivo' %}
@@ -130,12 +130,17 @@
         <div class="modal-body">
           <div class="row g-3">
             
-            <div class="col-md-6">
+            <div class="col-md-4">
               <label class="form-label fw-bold small text-muted">Nº de Comprobante</label>
               <input type="number" name="numero_comprobante" class="form-control" required placeholder="Ej: 1001">
             </div>
             
-            <div class="col-md-6">
+            <div class="col-md-4">
+              <label class="form-label fw-bold small text-muted">Fecha</label>
+              <input type="date" name="fecha" id="input_fecha_actual" class="form-control" required>
+            </div>
+            
+            <div class="col-md-4">
               <label class="form-label fw-bold small text-muted">Valor</label>
               <div class="input-group">
                 <span class="input-group-text">$</span>
@@ -219,6 +224,11 @@
 
     radios.forEach(radio => radio.addEventListener('change', toggleCheque));
     toggleCheque();
+
+    const dateInput = document.getElementById('input_fecha_actual');
+    if (dateInput && !dateInput.value) {
+      dateInput.value = new Date().toISOString().split('T')[0];
+    }
   });
 </script>
 </body>
