@@ -61,8 +61,8 @@
   <div class="module-card">
     <h5 class="section-title"><i class="bi bi-card-list text-secondary"></i> Historial de Egresos</h5>
     <div class="table-responsive">
-      <table class="table table-hover align-middle">
-        <thead class="table-light">
+      <table class="table table-hover table-bordered align-middle mb-0" style="font-size: 0.875rem;">
+        <thead class="table-light text-secondary fw-semibold text-center">
           <tr>
             <th>Nº Comprobante</th>
             <th>Fecha</th>
@@ -80,7 +80,7 @@
           <tr>
             <td><strong>#{{ comp.numero_comprobante }}</strong></td>
             <td>{{ comp.fecha.strftime('%d/%m/%Y') if comp.fecha else '-' }}</td>
-            <td style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ comp.concepto }}">{{ comp.concepto }}</td>
+            <td style="max-width: 250px; white-space: normal;" class="text-muted text-start" title="{{ comp.concepto }}">{{ comp.concepto }}</td>
             <td>
               {% if comp.metodo_pago == 'Efectivo' %}
                 <span class="badge bg-success"><i class="bi bi-cash"></i> Efectivo</span>
@@ -89,10 +89,10 @@
               {% endif %}
             </td>
             <td>{{ comp.banco or '-' }}</td>
-            <td>
-              {{ comp.debitese_a }}
+            <td style="max-width: 200px; white-space: normal;" class="text-start">
+              <strong>{{ comp.debitese_a }}</strong>
               {% if comp.documento_numero %}
-              <br><small class="text-muted">({{ comp.tipo_documento }}: {{ comp.documento_numero }})</small>
+              <br><small class="text-secondary">({{ comp.tipo_documento }}: {{ comp.documento_numero }})</small>
               {% endif %}
             </td>
             <td>
@@ -108,9 +108,7 @@
                 <span class="text-muted small">-</span>
               {% endif %}
             </td>
-            <td class="text-end text-danger fw-bold">
-              ${{ "{:,.2f}".format(comp.valor) }}
-            </td>
+            <td class="text-end fw-bold text-success">${{ "{:,.2f}".format(comp.valor) }}</td>
           </tr>
           {% else %}
           <tr>
