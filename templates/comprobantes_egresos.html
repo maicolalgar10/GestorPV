@@ -89,7 +89,12 @@
               {% endif %}
             </td>
             <td>{{ comp.banco or '-' }}</td>
-            <td>{{ comp.debitese_a }}</td>
+            <td>
+              {{ comp.debitese_a }}
+              {% if comp.documento_numero %}
+              <br><small class="text-muted">({{ comp.tipo_documento }}: {{ comp.documento_numero }})</small>
+              {% endif %}
+            </td>
             <td>
               <small class="d-block text-muted">Por: {{ comp.elaborado_por }}</small>
               <small class="d-block text-muted">Apr: {{ comp.aprobado_por }}</small>
@@ -179,6 +184,22 @@
               <input type="text" name="debitese_a" class="form-control" required placeholder="Persona o entidad a la que se debita">
             </div>
 
+            <div class="col-md-4">
+              <label class="form-label fw-bold small text-muted d-block">Tipo Documento</label>
+              <div class="btn-group w-100" role="group">
+                <input type="radio" class="btn-check" name="tipo_documento" id="tipo_doc_nit" value="NIT" checked required>
+                <label class="btn btn-outline-secondary" for="tipo_doc_nit">NIT</label>
+
+                <input type="radio" class="btn-check" name="tipo_documento" id="tipo_doc_cc" value="CC" required>
+                <label class="btn btn-outline-secondary" for="tipo_doc_cc">CC</label>
+              </div>
+            </div>
+
+            <div class="col-md-8">
+              <label class="form-label fw-bold small text-muted">Número</label>
+              <input type="text" name="documento_numero" id="documento_numero" class="form-control" placeholder="Ej: 900.123.456-1">
+            </div>
+
             <div class="col-md-6">
               <label class="form-label fw-bold small text-muted">Elaborado por</label>
               <input type="text" name="elaborado_por" class="form-control" required placeholder="Nombre de quien elabora">
@@ -229,6 +250,21 @@
     if (dateInput && !dateInput.value) {
       dateInput.value = new Date().toISOString().split('T')[0];
     }
+
+    const docRadios = document.querySelectorAll('input[name="tipo_documento"]');
+    const docInput = document.getElementById('documento_numero');
+
+    function toggleDocPlaceholder() {
+      const selectedDoc = document.querySelector('input[name="tipo_documento"]:checked');
+      if (selectedDoc && selectedDoc.value === 'NIT') {
+        docInput.placeholder = 'Ej: 900.123.456-1';
+      } else if (selectedDoc && selectedDoc.value === 'CC') {
+        docInput.placeholder = 'Ej: 1.052.345.678';
+      }
+    }
+
+    docRadios.forEach(radio => radio.addEventListener('change', toggleDocPlaceholder));
+    toggleDocPlaceholder();
   });
 </script>
 </body>

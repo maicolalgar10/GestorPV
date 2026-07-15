@@ -993,6 +993,8 @@ class ComprobanteEgreso(db.Model):
     archivo_url = db.Column(db.String(500), nullable=True)
     banco = db.Column(db.String(100), nullable=True)
     debitese_a = db.Column(db.String(150), nullable=False)
+    tipo_documento = db.Column(db.String(10), nullable=True, default='NIT')
+    documento_numero = db.Column(db.String(50), nullable=True)
     elaborado_por = db.Column(db.String(100), nullable=False)
     aprobado_por = db.Column(db.String(100), nullable=False)
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)

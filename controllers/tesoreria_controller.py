@@ -659,6 +659,8 @@ def comprobantes_egresos():
             num_cheque = request.form.get("numero_cheque") if metodo == "Cheque" else None
             banco = request.form.get("banco")
             debitese_a = request.form.get("debitese_a")
+            tipo_doc = request.form.get("tipo_documento")
+            doc_num = request.form.get("documento_numero")
             elaborado = request.form.get("elaborado_por")
             aprobado = request.form.get("aprobado_por")
 
@@ -695,6 +697,8 @@ def comprobantes_egresos():
                 numero_cheque=num_cheque,
                 banco=banco,
                 debitese_a=debitese_a,
+                tipo_documento=tipo_doc,
+                documento_numero=doc_num,
                 elaborado_por=elaborado,
                 aprobado_por=aprobado,
                 archivo_url=url_soporte
