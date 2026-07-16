@@ -60,6 +60,15 @@
 
   <div class="module-card">
     <h5 class="section-title"><i class="bi bi-card-list text-secondary"></i> Historial de Egresos</h5>
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div class="btn-group" role="group" aria-label="Filtro por Banco">
+            <button type="button" class="btn btn-primary btn-sm btn-filtro" data-banco="todos">Todos</button>
+            <button type="button" class="btn btn-outline-primary btn-sm btn-filtro" data-banco="bancolombia">Bancolombia</button>
+            <button type="button" class="btn btn-outline-primary btn-sm btn-filtro" data-banco="davivienda">Davivienda</button>
+        </div>
+    </div>
+
     <div class="table-responsive">
       <table class="table table-hover table-bordered align-middle mb-0" style="font-size: 0.875rem;">
         <thead class="table-light text-secondary fw-semibold text-center">
@@ -89,7 +98,9 @@
                 <span class="badge bg-primary"><i class="bi bi-bank"></i> Cheque</span>
               {% endif %}
             </td>
-            <td>{{ comp.banco or '-' }}</td>
+            <td class="celda-banco text-center text-capitalize" data-banco-nombre="{{ comp.banco | default('', true) | lower | trim }}">
+              {{ comp.banco or '-' }}
+            </td>
             <td style="max-width: 200px; white-space: normal;" class="text-start">
               <strong>{{ comp.debitese_a }}</strong>
               {% if comp.documento_numero %}
@@ -440,6 +451,41 @@
         }
       }
     }));
+
+    // Lógica para filtro rápido por banco
+    document.querySelectorAll('.btn-filtro').forEach(button => {
+        button.addEventListener('click', function() {
+            const filtro = this.getAttribute('data-banco').toLowerCase().trim();
+
+            // Cambiar estilos de los botones para marcar el activo
+            document.querySelectorAll('.btn-filtro').forEach(btn => {
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-outline-primary');
+            });
+            this.classList.remove('btn-outline-primary');
+            this.classList.add('btn-primary');
+
+            // Filtrar las filas de la tabla
+            const filas = document.querySelectorAll('tbody tr');
+            filas.forEach(fila => {
+                // Si es la fila de "No hay comprobantes", la ignoramos
+                if (fila.querySelector('td[colspan]')) return;
+
+                const celdaBanco = fila.querySelector('.celda-banco');
+                if (!celdaBanco) return;
+
+                const bancoFila = celdaBanco.getAttribute('data-banco-nombre') || "";
+
+                if (filtro === 'todos') {
+                    fila.style.display = '';
+                } else if (bancoFila.includes(filtro)) {
+                    fila.style.display = '';
+                } else {
+                    fila.style.display = 'none';
+                }
+            });
+        });
+    });
   });
 </script>
 </body>
