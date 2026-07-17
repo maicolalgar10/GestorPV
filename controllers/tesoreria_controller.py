@@ -771,7 +771,133 @@ def editar_comprobante_egreso(id):
         flash("Comprobante actualizado exitosamente", "success")
     except Exception as e:
         db.session.rollback()
-        flash(f"Error al actualizar: {str(e)}", "danger")
+@tesoreria_bp.route('/comprobantes-egresos/pdf/<string:id>')
+@admin_oficina_required
+def generar_pdf_comprobante(id):
+    from models import db, ComprobanteEgreso
+    comprobante = ComprobanteEgreso.query.get_or_404(id)
+    
+    from flask import send_file
+    import io
+    from reportlab.lib.pagesizes import letter, landscape
+    from reportlab.lib import colors
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Spacer, Paragraph
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    
+    buffer = io.BytesIO()
+    
+    # El formato físico es apaisado (landscape) o media carta
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(letter), rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+    story = []
+    
+    styles = getSampleStyleSheet()
+    
+    # Para imitar el color de borde de la imagen, un verde oscuro
+    border_color = colors.HexColor("#4a7e6b") # un verde suave similar
+    bg_color_rows1 = colors.HexColor("#e6edf2")
+    bg_color_rows2 = colors.HexColor("#f8f3df")
+    
+    # 1. Bloque superior: Trama de seguridad (simulado con un rectángulo vacío con borde)
+    top_table_data = [
+        ["Trama de seguridad para duplicar el cheque", "", ""]
+    ]
+    # Hacemos una fila alta
+    top_table = Table(top_table_data, colWidths=[300, 200, 230], rowHeights=[180])
+    top_table.setStyle(TableStyle([
+        ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('TEXTCOLOR', (0,0), (0,0), border_color),
+        ('FONTNAME', (0,0), (0,0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,0), (0,0), 9),
+        ('BOX', (0,0), (-1,-1), 1, border_color),
+    ]))
+    story.append(top_table)
+    
+    # 2. Bloque intermedio: COMPROBANTE DE EGRESO No.
+    header_table_data = [
+        ["", "COMPROBANTE DE EGRESO\n\nNo. " + str(comprobante.numero_comprobante)]
+    ]
+    header_table = Table(header_table_data, colWidths=[530, 200], rowHeights=[60])
+    header_table.setStyle(TableStyle([
+        ('BOX', (0,0), (-1,-1), 1, border_color),
+        ('LINEBEFORE', (1,0), (1,-1), 1, border_color),
+        ('VALIGN', (1,0), (1,-1), 'TOP'),
+        ('ALIGN', (1,0), (1,-1), 'LEFT'),
+        ('FONTNAME', (1,0), (1,0), 'Helvetica-Bold'),
+        ('FONTSIZE', (1,0), (1,0), 12),
+        ('TEXTCOLOR', (1,0), (1,0), border_color),
+        ('BOTTOMPADDING', (1,0), (1,0), 10),
+    ]))
+    story.append(header_table)
+    
+    # 3. Tabla de Código | Concepto | Valor
+    body_table_data = [
+        ["CÓDIGO", "CONCEPTO", "VALOR"],
+        ["", str(comprobante.concepto) if comprobante.concepto else "", f"${comprobante.valor:,.2f}" if comprobante.valor else ""],
+        ["", "", ""],
+        ["", "", ""],
+        ["", "", ""]
+    ]
+    body_table = Table(body_table_data, colWidths=[100, 430, 200], rowHeights=[20, 20, 20, 20, 20])
+    body_table.setStyle(TableStyle([
+        ('BOX', (0,0), (-1,-1), 1, border_color),
+        ('INNERGRID', (0,0), (-1,-1), 1, border_color),
+        ('ALIGN', (0,0), (-1,0), 'CENTER'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('TEXTCOLOR', (0,0), (-1,0), border_color),
+        ('BACKGROUND', (0,1), (-1,1), bg_color_rows1),
+        ('BACKGROUND', (0,2), (-1,2), bg_color_rows2),
+        ('BACKGROUND', (0,3), (-1,3), bg_color_rows1),
+        ('BACKGROUND', (0,4), (-1,4), bg_color_rows2),
+        ('ALIGN', (2,1), (2,-1), 'RIGHT'),
+    ]))
+    story.append(body_table)
+    
+    # 4. Sección inferior
+    cheque = str(comprobante.numero_cheque) if comprobante.numero_cheque else "N/A"
+    banco_str = str(comprobante.banco) if comprobante.banco else "N/A"
+    efectivo = "X" if comprobante.metodo_pago == "Efectivo" else ""
+    
+    footer_table_data = [
+        [f"Cheque No. {cheque}", "", f"Efectivo {efectivo}", "Firma y sello del beneficiario"],
+        [f"Banco {banco_str}", "", "", ""],
+        [f"Debítese a: {comprobante.debitese_a}", "", "", ""],
+        ["Elaborado", "Revisado", "Aprobado", ""],
+        [comprobante.elaborado_por or "", "", comprobante.aprobado_por or "", "C.C. / NIT. " + (comprobante.documento_numero or "")]
+    ]
+    
+    footer_table = Table(footer_table_data, colWidths=[132.5, 132.5, 132.5, 332.5], rowHeights=[20, 20, 20, 25, 25])
+    footer_table.setStyle(TableStyle([
+        ('BOX', (0,0), (-1,-1), 1, border_color),
+        ('INNERGRID', (0,0), (-1,-1), 1, border_color),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,0), (-1,-1), 9),
+        ('TEXTCOLOR', (0,0), (-1,-1), border_color),
         
-    return redirect(url_for("tesoreria.comprobantes_egresos"))
+        # Merge de celdas para Firma y sello del beneficiario (lado derecho)
+        ('SPAN', (3,0), (3,3)),
+        # Merge horizontal lado izquierdo para banco y debitese a
+        ('SPAN', (0,1), (2,1)),
+        ('SPAN', (0,2), (2,2)),
+        
+        ('FONTNAME', (0,4), (2,4), 'Helvetica'),
+        ('TEXTCOLOR', (0,4), (2,4), colors.black),
+        ('VALIGN', (0,4), (3,4), 'BOTTOM'),
+        ('ALIGN', (3,0), (3,0), 'LEFT'),
+        ('ALIGN', (3,4), (3,4), 'LEFT'),
+    ]))
+    
+    story.append(footer_table)
+    
+    doc.build(story)
+    buffer.seek(0)
+    
+    return send_file(
+        buffer, 
+        as_attachment=False, 
+        download_name=f"comprobante_egreso_{comprobante.numero_comprobante}.pdf", 
+        mimetype='application/pdf'
+    )
 

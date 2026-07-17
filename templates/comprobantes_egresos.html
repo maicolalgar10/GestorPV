@@ -122,6 +122,9 @@
             </td>
             <td class="text-end fw-bold text-success">${{ "{:,.2f}".format(comp.valor) }}</td>
             <td class="text-center">
+              <a href="{{ url_for('tesoreria.generar_pdf_comprobante', id=comp.id) }}" target="_blank" class="btn btn-outline-danger btn-sm" title="Generar PDF">
+                  <i class="bi bi-file-earmark-pdf"></i>
+              </a>
               <button class="btn btn-sm btn-outline-secondary btn-editar-comprobante" 
                 data-id="{{ comp.id }}"
                 data-numero="{{ comp.numero_comprobante }}"
