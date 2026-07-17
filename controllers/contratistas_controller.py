@@ -41,6 +41,7 @@ def contratistas():
         usuario=usuario,
         notificaciones=notificaciones,
         frase=frase,
+        frase_del_dia=frase,
         facturas=facturas,
         total_valor_neto=total_valor_neto,
         total_iva=total_iva,
@@ -73,6 +74,7 @@ def facturas_contratista(nombre_contratista):
         usuario=usuario,
         notificaciones=notificaciones,
         frase=frase,
+        frase_del_dia=frase,
         facturas=facturas,
         nombre_contratista=nombre_contratista,
         deuda_total=deuda_total
