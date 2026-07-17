@@ -1,0 +1,1267 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contratistaes â€” GestiÃ³n de Oficina</title>
+  <meta name="description" content="MÃ³dulo de gestiÃ³n de facturas de contratistaes. Controla vencimientos, retenciones y estado de cuentas.">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* â”€â”€â”€ Tokens â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    :root {
+      --blue-grad : linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+      --red-soft  : #fff1f2;
+      --red-border: #fecdd3;
+      --row-venc  : #fff1f2;
+      --shadow-sm : 0 4px 15px rgba(0,0,0,.06);
+      --shadow-md : 0 8px 32px rgba(79,70,229,.22);
+      --radius    : 18px;
+    }
+
+    body { background:#f3f4f6; font-family:'Inter',sans-serif; color:#1f2937; font-size:.93rem; }
+
+    /* â”€â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .page-header {
+      background: var(--blue-grad);
+      border-radius: var(--radius);
+      color: white;
+      padding: 26px 32px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-md);
+    }
+    .btn-back {
+      background: rgba(255,255,255,.18);
+      border: 1px solid rgba(255,255,255,.35);
+      color: white;
+      border-radius: 12px;
+      padding: 8px 18px;
+      font-size: .83rem;
+      backdrop-filter: blur(4px);
+      transition: background .2s;
+      text-decoration: none;
+    }
+    .btn-back:hover { background: rgba(255,255,255,.32); color: white; }
+
+    /* â”€â”€â”€ Tarjetas KPI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .kpi-card {
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 20px 22px;
+      border-top: 4px solid transparent;
+      transition: transform .25s;
+    }
+    .kpi-card:hover { transform: translateY(-3px); }
+    .kpi-card.kpi-blue   { border-top-color: #4f46e5; }
+    .kpi-card.kpi-green  { border-top-color: #10b981; }
+    .kpi-card.kpi-orange { border-top-color: #f59e0b; }
+    .kpi-card.kpi-red    { border-top-color: #ef4444; }
+    .kpi-value { font-size: 1.45rem; font-weight: 800; letter-spacing: -.5px; }
+    .kpi-label { font-size: .74rem; font-weight: 600; text-transform: uppercase;
+                 color: #9ca3af; letter-spacing: .5px; margin-top: 2px; }
+
+    /* â”€â”€â”€ Filtros â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .filter-card {
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 18px 22px;
+      margin-bottom: 18px;
+    }
+    .filter-card input, .filter-card select {
+      border-radius: 10px;
+      border: 1.5px solid #e5e7eb;
+      font-size: .85rem;
+      transition: border-color .2s;
+    }
+    .filter-card input:focus, .filter-card select:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99,102,241,.12);
+    }
+
+    /* â”€â”€â”€ Tabla â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .table-card {
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+    .table-card .table { margin: 0; font-size: .84rem; }
+    .table-card thead th {
+      background: #f8fafc;
+      font-weight: 700;
+      font-size: .74rem;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: #6b7280;
+      border-bottom: 2px solid #e5e7eb;
+      padding: 13px 12px;
+      white-space: nowrap;
+    }
+    .table-card tbody td { padding: 11px 12px; vertical-align: middle; }
+    .table-card tbody tr { border-bottom: 1px solid #f1f5f9; transition: background .15s; }
+    .table-card tbody tr:hover { background: #f8fafc; }
+
+    /* Fila vencida */
+    tr.row-vencida { background: var(--row-venc) !important; }
+    tr.row-vencida:hover { background: #ffe4e6 !important; }
+
+    /* Fila totales */
+    tr.row-totales td {
+      background: #f0f4ff;
+      font-weight: 700;
+      font-size: .85rem;
+      border-top: 2px solid #c7d2fe;
+      color: #3730a3;
+    }
+
+    /* Badges de estado */
+    .badge-vigente { background: #d1fae5; color: #065f46; font-weight: 600; border-radius: 8px; padding: 4px 10px; }
+    .badge-vencida { background: #fee2e2; color: #991b1b; font-weight: 600; border-radius: 8px; padding: 4px 10px; }
+    .badge-cancelado { background: #d1fae5; color: #065f46; font-weight: 600; border-radius: 8px; padding: 4px 10px; }
+    .badge-sedebe { background: #fef3c7; color: #92400e; font-weight: 600; border-radius: 8px; padding: 4px 10px; }
+
+    /* Icono doc link */
+    .doc-link { font-size: 1.1rem; text-decoration: none; opacity: .75; transition: opacity .2s; }
+    .doc-link:hover { opacity: 1; }
+
+    /* â”€â”€â”€ Modal (dark) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .modal-dark .modal-content {
+      background: #1e1e2e;
+      color: #e2e8f0;
+      border: none;
+      border-radius: 20px;
+    }
+    .modal-dark .modal-header {
+      background: linear-gradient(135deg, #312e81, #1e40af);
+      border-radius: 20px 20px 0 0;
+      border: none;
+      padding: 22px 28px;
+    }
+    .modal-dark .modal-title { font-weight: 800; font-size: 1.05rem; }
+    .modal-dark .modal-body { 
+      padding: 20px 24px; 
+      max-height: 78vh; 
+      overflow-y: auto; 
+    }
+    .modal-dark .modal-footer { padding: 16px 24px 20px; border: none; }
+    .modal-dark label { font-size: .8rem; font-weight: 600; color: #94a3b8;
+                        text-transform: uppercase; letter-spacing: .4px; margin-bottom: 5px; }
+    .modal-dark .form-control, .modal-dark .form-select {
+      background: #2d2d3f;
+      border: 1.5px solid #3f3f5c;
+      color: #e2e8f0;
+      border-radius: 10px;
+      font-size: .88rem;
+    }
+    .modal-dark .form-control:focus, .modal-dark .form-select:focus {
+      background: #34344a;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99,102,241,.25);
+      color: #e2e8f0;
+    }
+    .modal-dark .form-control::placeholder { color: #64748b; }
+    .modal-dark .calc-box {
+      background: #252538;
+      border: 1px solid #3f3f5c;
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+    .modal-dark .calc-box .calc-label { font-size: .72rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; }
+    .modal-dark .calc-box .calc-val { font-size: 1.25rem; font-weight: 800; color: #a5b4fc; }
+    .modal-dark .calc-box.calc-total .calc-val { color: #34d399; }
+    .modal-dark .section-sep {
+      border-top: 1px solid #3f3f5c;
+      margin: 20px 0 16px;
+      padding-top: 16px;
+      font-size: .77rem;
+      font-weight: 700;
+      color: #6366f1;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+    }
+    .upload-zone {
+      background: #252538;
+      border: 2px dashed #3f3f5c;
+      border-radius: 10px;
+      padding: 12px 14px;
+      transition: border-color .2s;
+      cursor: pointer;
+    }
+    .upload-zone:hover { border-color: #6366f1; }
+    .upload-zone input[type=file] { display: none; }
+    .upload-zone label { cursor: pointer; margin: 0; color: #94a3b8; font-size: .82rem; }
+
+    /* BotÃ³n confirmar (verde) */
+    .btn-confirm {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 28px;
+      font-weight: 700;
+      transition: opacity .2s;
+    }
+    .btn-confirm:hover { opacity: .88; color: white; }
+
+    /* â”€â”€â”€ Totales globales sticky â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .global-totals {
+      background: linear-gradient(135deg, #312e81 0%, #1e3a8a 100%);
+      border-radius: var(--radius);
+      color: white;
+      padding: 18px 28px;
+      margin-top: 20px;
+      box-shadow: 0 8px 30px rgba(49,46,129,.3);
+    }
+    .gt-label { font-size: .72rem; font-weight: 600; text-transform: uppercase;
+                color: rgba(255,255,255,.6); letter-spacing: .4px; }
+    .gt-value { font-size: 1.15rem; font-weight: 800; }
+
+    /* â”€â”€â”€ Empty state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .empty-state { padding: 60px 20px; text-align: center; color: #9ca3af; }
+    .empty-state i { font-size: 3.5rem; display: block; margin-bottom: 14px; color: #c7d2fe; }
+
+    /* â”€â”€â”€ Responsive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    @media (max-width: 768px) {
+      .page-header { padding: 18px 20px; }
+      .kpi-value { font-size: 1.15rem; }
+      .table-responsive { font-size: .78rem; }
+    }
+  </style>
+</head>
+<body>
+{% include 'mensajes.html' %}
+
+<div class="container-fluid px-3 px-md-4 mt-4 pb-5" style="max-width:1600px;">
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       HEADER
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h1 class="fw-bold m-0 fs-4"><i class="bi bi-truck me-2"></i>Facturas de Contratistaes</h1>
+      <p class="mb-0 mt-1 opacity-75 small">GestiÃ³n de Oficina &mdash; {{ usuario.nombre }}</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+      <button class="btn btn-outline-info btn-sm rounded-pill px-4 fw-semibold shadow-sm"
+              id="btnNuevoContratista"
+              data-bs-toggle="modal" data-bs-target="#modalNuevoContratista">
+        <i class="bi bi-person-plus me-1"></i> Nuevo Contratista
+      </button>
+      <button class="btn btn-light btn-sm rounded-pill px-4 fw-semibold shadow-sm"
+              id="btnNuevaFactura"
+              data-bs-toggle="modal" data-bs-target="#modalNuevaFactura">
+        <i class="bi bi-plus-circle me-1 text-primary"></i> Nueva Factura
+      </button>
+      <a href="{{ url_for('dashboard.dashboard_oficina') }}" class="btn-back">
+        <i class="bi bi-arrow-left me-1"></i> Volver al Home
+      </a>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       KPIs
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="kpi-card kpi-blue">
+        <div class="kpi-value text-primary">{{ facturas|length }}</div>
+        <div class="kpi-label">Facturas</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="kpi-card kpi-orange">
+        <div class="kpi-value text-warning">
+          {{ facturas | selectattr('estado_factura','eq','VENCIDA') | list | length }}
+        </div>
+        <div class="kpi-label">Vencidas</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="kpi-card kpi-green">
+        <div class="kpi-value text-success">
+          {{ facturas | selectattr('estado_cuenta','eq','CANCELADO') | list | length }}
+        </div>
+        <div class="kpi-label">Canceladas</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="kpi-card kpi-red">
+        <div class="kpi-value text-danger">
+          {{ facturas | selectattr('estado_cuenta','eq','SE DEBE') | list | length }}
+        </div>
+        <div class="kpi-label">Se Debe</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="kpi-card kpi-blue">
+        <div class="kpi-value text-primary" style="font-size:1.1rem;">
+          ${{ "{:,.0f}".format(total_valor_total) | replace(",",".") }}
+        </div>
+        <div class="kpi-label">Total Bruto</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="kpi-card kpi-red">
+        <div class="kpi-value text-danger" style="font-size:1.1rem;">
+          ${{ "{:,.0f}".format(total_adeudado_global) | replace(",",".") }}
+        </div>
+        <div class="kpi-label">Total Adeudado</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       FILTROS
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="filter-card">
+    <div class="row g-2 align-items-end">
+      <div class="col-12 col-md-3">
+        <label class="form-label fw-semibold small mb-1">
+          <i class="bi bi-search text-primary me-1"></i>Contratista
+        </label>
+        <input type="text" id="filtroContratista" class="form-control form-control-sm"
+               placeholder="Buscar por nombreâ€¦">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label fw-semibold small mb-1">
+          <i class="bi bi-calendar-x text-danger me-1"></i>Estado Factura
+        </label>
+        <select id="filtroEstadoFactura" class="form-select form-select-sm">
+          <option value="">Todas</option>
+          <option value="VIGENTE">Vigente</option>
+          <option value="VENCIDA">Vencida</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label fw-semibold small mb-1">
+          <i class="bi bi-wallet2 text-success me-1"></i>Estado Cuenta
+        </label>
+        <select id="filtroEstadoCuenta" class="form-select form-select-sm">
+          <option value="">Todas</option>
+          <option value="SE DEBE">Se Debe</option>
+          <option value="CANCELADO">Cancelado</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label fw-semibold small mb-1">
+          <i class="bi bi-calendar me-1"></i>Fecha Desde
+        </label>
+        <input type="date" id="filtroDesde" class="form-control form-control-sm">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label fw-semibold small mb-1">
+          <i class="bi bi-calendar-check me-1"></i>Fecha Hasta
+        </label>
+        <input type="date" id="filtroHasta" class="form-control form-control-sm">
+      </div>
+      <div class="col-12 col-md-1 text-end">
+        <button class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="limpiarFiltros()" title="Limpiar filtros">
+          <i class="bi bi-x-circle"></i>
+        </button>
+      </div>
+    </div>
+    <div class="mt-2">
+      <small class="text-muted">Mostrando <strong id="contadorVisible">{{ facturas|length }}</strong> de {{ facturas|length }} facturas</small>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       DIRECTORIO DE CONTRATISTAES
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="table-card mb-4">
+    <div class="card-header bg-white border-bottom py-3">
+      <h5 class="mb-0 fw-bold"><i class="bi bi-journal-bookmark-fill me-2 text-primary"></i>Directorio de Contratistaes</h5>
+    </div>
+    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+      <table class="table table-hover mb-0" id="tablaDirectorio">
+        <thead style="position: sticky; top: 0; z-index: 1;">
+          <tr>
+            <th>ID</th>
+            <th>Contratista</th>
+            <th>NIT</th>
+            <th>TelÃ©fono</th>
+            <th class="text-end">Deuda Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in contratistaes %}
+          <tr>
+            <td class="text-muted small">{{ p.id }}</td>
+            <td class="fw-semibold">
+              <a href="{{ url_for('dashboard.facturas_contratista', nombre_contratista=p.nombre) }}" class="text-decoration-none">
+                {{ p.nombre }}
+              </a>
+            </td>
+            <td>{{ p.nit or 'â€”' }}</td>
+            <td>{{ p.telefono or 'â€”' }}</td>
+            <td class="text-end">
+              {% set deuda = deuda_por_contratista.get(p.nombre, 0) %}
+              {% if deuda <= 0 %}
+                <span class="badge bg-success">Paz y Salvo</span>
+              {% else %}
+                <span class="text-danger fw-bold">${{ "{:,.0f}".format(deuda) | replace(",",".") }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" class="text-center text-muted py-4">No hay contratistaes registrados</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       TABLA PRINCIPAL DE FACTURAS
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div class="table-card">
+    <div class="table-responsive">
+      <table class="table" id="tablaFacturas">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Contratista</th>
+            <th>F. Factura</th>
+            <th>Vencimiento</th>
+            <th>Mora</th>
+            <th>Est. Factura</th>
+            <th class="text-end">Valor Neto</th>
+            <th class="text-end">IVA</th>
+            <th class="text-end">% Ret.</th>
+            <th class="text-end">Valor Total</th>
+            <th class="text-end">Cancelado</th>
+            <th class="text-end">Total Adeudado</th>
+            <th class="text-center">Est. Cuenta</th>
+            <th class="text-center">Docs</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="cuerpoTabla">
+          {% for f in facturas %}
+          <tr class="fila-factura {% if f.estado_factura == 'VENCIDA' %}row-vencida{% endif %}"
+              data-contratista="{{ f.nombre_contratista | lower }}"
+              data-estado-factura="{{ f.estado_factura }}"
+              data-estado-cuenta="{{ f.estado_cuenta }}"
+              data-fecha="{{ f.fecha_factura.strftime('%Y-%m-%d') if f.fecha_factura else '' }}">
+            <td class="text-muted small">{{ f.id }}</td>
+            <td>
+              <span class="fw-semibold">{{ f.nombre_contratista }}</span>
+              {% if f.plazo_dias %}
+                <div class="small text-muted">Plazo: {{ f.plazo_dias }} dÃ­as</div>
+              {% endif %}
+            </td>
+            <td class="small">{{ f.fecha_factura.strftime('%d/%m/%Y') if f.fecha_factura else 'â€”' }}</td>
+            <td class="small {% if f.estado_factura == 'VENCIDA' %}text-danger fw-semibold{% endif %}">
+              {{ f.fecha_vencimiento.strftime('%d/%m/%Y') if f.fecha_vencimiento else 'â€”' }}
+            </td>
+            <td class="text-center">
+              {% if f.dias_mora > 0 %}
+                <span class="badge bg-danger text-white">{{ f.dias_mora }}d</span>
+              {% else %}
+                <span class="text-muted small">â€”</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if f.estado_factura == 'VENCIDA' %}
+                <span class="badge-vencida"><i class="bi bi-exclamation-triangle-fill me-1"></i>Vencida</span>
+              {% else %}
+                <span class="badge-vigente"><i class="bi bi-check-circle-fill me-1"></i>Vigente</span>
+              {% endif %}
+            </td>
+            <td class="text-end fw-semibold">${{ "{:,.0f}".format(f.valor_neto) | replace(",",".") }}</td>
+            <td class="text-end text-muted">${{ "{:,.0f}".format(f.iva) | replace(",",".") }} <span class="badge bg-light text-secondary border border-secondary-subtle px-1 py-0 ms-1" style="font-size:0.65rem">{{ f.porcentaje_iva }}%</span></td>
+            <td class="text-end text-muted">${{ "{:,.0f}".format(f.retencion_pesos) | replace(",",".") }} <span class="badge bg-light text-secondary border border-secondary-subtle px-1 py-0 ms-1" style="font-size:0.65rem">{{ f.retencion }}%</span></td>
+            <td class="text-end fw-semibold">${{ "{:,.0f}".format(f.valor_total) | replace(",",".") }}</td>
+            <td class="text-end text-success fw-semibold">
+              {% if f.valor_cancelado > 0 %}
+                ${{ "{:,.0f}".format(f.valor_cancelado) | replace(",",".") }}
+                {% if f.fecha_pago %}
+                  <div class="small text-muted fw-normal">{{ f.fecha_pago.strftime('%d/%m/%y') }}</div>
+                {% endif %}
+              {% else %}â€”{% endif %}
+            </td>
+            <td class="text-end {% if f.total_adeudado > 0 %}text-danger fw-bold{% else %}text-success fw-bold{% endif %}">
+              ${{ "{:,.0f}".format(f.total_adeudado) | replace(",",".") }}
+            </td>
+            <td class="text-center">
+              {% if f.estado_cuenta == 'CANCELADO' %}
+                <span class="badge-cancelado"><i class="bi bi-check2-all me-1"></i>Cancelado</span>
+              {% else %}
+                <span class="badge-sedebe"><i class="bi bi-hourglass-split me-1"></i>Se Debe</span>
+              {% endif %}
+            </td>
+            <!-- Documentos -->
+            <td class="text-center" style="min-width:90px;">
+              {% if f.orden_compra_url %}
+                <a href="{{ f.orden_compra_url }}" target="_blank" class="doc-link text-primary me-1" title="Orden de Compra">
+                  <i class="bi bi-file-earmark-arrow-down"></i>
+                </a>
+              {% endif %}
+              {% if f.comprobante_compra_url %}
+                <a href="{{ f.comprobante_compra_url }}" target="_blank" class="doc-link text-warning me-1" title="Comprobante/Factura">
+                  <i class="bi bi-receipt"></i>
+                </a>
+              {% endif %}
+              {% if f.banco_pago_url %}
+                <a href="{{ f.banco_pago_url }}" target="_blank" class="doc-link text-success" title="Soporte Banco">
+                  <i class="bi bi-bank"></i>
+                </a>
+              {% endif %}
+              {% if not f.orden_compra_url and not f.comprobante_compra_url and not f.banco_pago_url %}
+                <span class="text-muted small">â€”</span>
+              {% endif %}
+            </td>
+            <!-- Acciones -->
+            <td class="text-center" style="min-width:110px;">
+              <button class="btn btn-sm btn-outline-primary rounded-pill px-2 me-1 mb-1"
+                      title="Editar"
+                      onclick="abrirModalEditar({{ f.id }}, '{{ f.nombre_contratista | replace("'","\\'")|replace('"','\\"') }}', '{{ f.fecha_factura }}', {{ f.plazo_dias }}, '{{ f.fecha_vencimiento }}', {{ f.valor_neto }}, {{ f.porcentaje_iva }}, {{ f.valor_cancelado }}, {{ f.retencion }}, '{{ f.fecha_pago or '' }}', '{{ f.orden_compra_url or '' }}', '{{ f.comprobante_compra_url or '' }}', '{{ f.banco_pago_url or '' }}')">
+                <i class="bi bi-pencil-square"></i>
+              </button>
+              <form method="POST"
+                    action="{{ url_for('dashboard.eliminar_factura_contratista', id=f.id) }}"
+                    class="d-inline"
+                    onsubmit="return confirm('Â¿Eliminar esta factura? Esta acciÃ³n no se puede deshacer.')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-sm btn-outline-danger rounded-pill px-2 mb-1" title="Eliminar">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr id="filaVacia">
+            <td colspan="15">
+              <div class="empty-state">
+                <i class="bi bi-truck"></i>
+                <p class="fw-semibold mb-1">No hay facturas registradas</p>
+                <p class="small">Haz clic en <strong>Nueva Factura</strong> para comenzar.</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+
+        <!-- â”€â”€â”€ Fila de totales globales â”€â”€â”€ -->
+        {% if facturas %}
+        <tfoot>
+          <tr class="row-totales" id="filaTotalesGlobales">
+            <td colspan="6" class="text-end"><i class="bi bi-sigma me-1"></i>TOTALES GLOBALES</td>
+            <td class="text-end">${{ "{:,.0f}".format(total_valor_neto) | replace(",",".") }}</td>
+            <td class="text-end">${{ "{:,.0f}".format(total_iva) | replace(",",".") }}</td>
+            <td class="text-end">${{ "{:,.0f}".format(total_retencion) | replace(",",".") }}</td>
+            <td class="text-end">${{ "{:,.0f}".format(total_valor_total) | replace(",",".") }}</td>
+            <td class="text-end">${{ "{:,.0f}".format(total_cancelado) | replace(",",".") }}</td>
+            <td class="text-end text-danger">${{ "{:,.0f}".format(total_adeudado_global) | replace(",",".") }}</td>
+            <td colspan="3"></td>
+          </tr>
+        </tfoot>
+        {% endif %}
+      </table>
+    </div>
+  </div>
+
+  <!-- Frase del dÃ­a -->
+  <div class="text-center mt-5">
+    <span class="badge bg-white text-secondary p-3 rounded-pill shadow-sm">
+      <i class="bi bi-stars text-warning me-2"></i>{{ frase }}
+    </span>
+  </div>
+</div><!-- /container -->
+
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     MODAL â€” NUEVO CONTRATISTA
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<div class="modal fade modal-dark" id="modalNuevoContratista" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <!-- Header -->
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>Registrar Nuevo Contratista</h5>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <form method="POST"
+              action="{{ url_for('dashboard.crear_contratista') }}"
+              id="formNuevoContratista">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="row g-3">
+            <div class="col-12">
+              <label>Nombre del Contratista *</label>
+              <input type="text" name="nombre" class="form-control" required placeholder="Ej: FerreterÃ­a Central S.A.S">
+            </div>
+            <div class="col-12">
+              <label>NIT / CÃ©dula</label>
+              <input type="text" name="nit" class="form-control" placeholder="Ej: 123456789-0">
+            </div>
+            <div class="col-12">
+              <label>TelÃ©fono</label>
+              <input type="text" name="telefono" class="form-control" placeholder="Ej: 300 123 4567">
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer d-flex justify-content-end gap-2 mt-4 border-top pt-3 bg-dark" style="border-color:#3f3f5c !important;">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" form="formNuevoContratista" class="btn btn-info px-4 text-white"><i class="bi bi-save me-1"></i> Guardar Contratista</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     MODAL â€” NUEVA FACTURA
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<div class="modal fade modal-dark" id="modalNuevaFactura" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+        <!-- Header -->
+        <div class="modal-header">
+          <div>
+            <h5 class="modal-title"><i class="bi bi-truck me-2"></i>Registrar Factura de Contratista</h5>
+            <p class="mb-0 mt-1 opacity-60 small">Los campos IVA y Valor Total se calculan automÃ¡ticamente</p>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+
+        <!-- Body -->
+        <div class="modal-body">
+          <form method="POST"
+                action="{{ url_for('dashboard.nueva_factura_contratista') }}"
+                enctype="multipart/form-data"
+                id="formNuevaFactura">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="row g-3">
+
+            <!-- â”€ Datos bÃ¡sicos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+            <div class="col-12">
+              <div class="section-sep"><i class="bi bi-info-circle me-1"></i>Datos del Contratista y Factura</div>
+            </div>
+
+            <div class="col-md-4">
+              <label>Nombre del Contratista *</label>
+              <select name="nombre_contratista" class="form-select" required>
+                <option value="" selected disabled>Seleccione un contratista de la lista...</option>
+                {% for p in contratistaes %}
+                <option value="{{ p.nombre }}">{{ p.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label>Fecha de Factura *</label>
+              <input type="date" name="fecha_factura" id="n_fecha_factura" class="form-control" required
+                     oninput="calcularVencimiento()">
+            </div>
+            <div class="col-md-2">
+              <label>Plazo (dÃ­as crÃ©dito)</label>
+              <input type="number" name="plazo_dias" id="n_plazo_dias" class="form-control"
+                     placeholder="0" min="0" value="0" oninput="calcularVencimiento()">
+            </div>
+            <div class="col-md-3">
+              <label>Fecha de Vencimiento *</label>
+              <input type="date" name="fecha_vencimiento" id="n_fecha_vencimiento" class="form-control" required readonly>
+            </div>
+            <div class="col-md-3">
+              <label>&nbsp;</label>
+              <div class="calc-box position-relative py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="calc-label">Estado Factura</div>
+                  <div id="n_estado_factura_badge"><span class="badge bg-light text-secondary">N/A</span></div>
+                </div>
+                <div class="calc-val fs-6 text-warning mt-1" id="n_mora_display">0 dÃ­as mora</div>
+              </div>
+            </div>
+
+            <!-- â”€ Valores â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+            <div class="col-12">
+              <div class="section-sep"><i class="bi bi-currency-dollar me-1"></i>Valores Monetarios</div>
+            </div>
+
+            <div class="col-md-3">
+              <label>Valor Neto (sin IVA) *</label>
+              <div class="input-group">
+                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                <input type="number" name="valor_neto" id="n_valor_neto" class="form-control"
+                       placeholder="0" min="0" step="any" required oninput="calcularIVA('n')">
+              </div>
+            </div>
+
+            <!-- Calc boxes IVA y Total -->
+            <div class="col-md-3">
+              <label>IVA (%)</label>
+              <div class="input-group mb-2">
+                <input type="number" name="porcentaje_iva" id="n_porcentaje_iva" class="form-control pct-input"
+                       placeholder="19" min="0" max="100" step="any" value="19" oninput="calcularIVA('n')">
+                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
+              </div>
+              <div class="calc-box d-flex justify-content-between align-items-center py-1 px-2">
+                <div>
+                  <div class="calc-label">Valor IVA ($)</div>
+                  <div class="calc-val fs-6" id="n_iva_display">$0</div>
+                </div>
+                <i class="bi bi-plus-circle text-muted mx-1"></i>
+                <div>
+                  <div class="calc-label">Valor Total</div>
+                  <div class="calc-val calc-total fs-6" id="n_total_display">$0</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <label>RetenciÃ³n (%)</label>
+              <div class="input-group">
+                <input type="number" name="retencion" id="n_retencion" class="form-control"
+                       placeholder="0" min="0" max="100" step="any" value="0" oninput="calcularIVA('n')">
+                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <label>&nbsp;</label>
+              <div class="calc-box calc-total position-relative">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="calc-label">Total Adeudado Estimado</div>
+                  <div id="n_estado_badge"></div>
+                </div>
+                <div class="calc-val" id="n_adeudado_display">$0</div>
+              </div>
+            </div>
+
+            <!-- â”€ Pago â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+            <div class="col-12">
+              <div class="section-sep"><i class="bi bi-cash-stack me-1"></i>InformaciÃ³n de Pago</div>
+            </div>
+
+            <div class="col-md-4">
+              <label>Valor Cancelado / Abonado</label>
+              <div class="input-group">
+                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                <input type="number" name="valor_cancelado" id="n_cancelado" class="form-control"
+                       placeholder="0" min="0" step="any" value="0" oninput="calcularIVA('n')">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label>Fecha de Pago</label>
+              <input type="date" name="fecha_pago" class="form-control">
+            </div>
+
+            <!-- â”€ Documentos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+            <div class="col-12">
+              <div class="section-sep"><i class="bi bi-paperclip me-1"></i>Documentos de Soporte</div>
+            </div>
+
+            <div class="col-md-4">
+              <label>Orden de Compra (PDF / Imagen)</label>
+              <div class="upload-zone" onclick="this.querySelector('input').click()">
+                <input type="file" name="orden_compra" accept=".pdf,.jpg,.jpeg,.png,.webp"
+                       onchange="mostrarNombreArchivo(this,'lbl_oc')">
+                <label id="lbl_oc"><i class="bi bi-cloud-upload me-1"></i>Seleccionar archivoâ€¦</label>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label>Comprobante / Factura (PDF / Imagen)</label>
+              <div class="upload-zone" onclick="this.querySelector('input').click()">
+                <input type="file" name="comprobante_compra" accept=".pdf,.jpg,.jpeg,.png,.webp"
+                       onchange="mostrarNombreArchivo(this,'lbl_cc')">
+                <label id="lbl_cc"><i class="bi bi-cloud-upload me-1"></i>Seleccionar archivoâ€¦</label>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label>Soporte Bancario (PDF / Imagen)</label>
+              <div class="upload-zone" onclick="this.querySelector('input').click()">
+                <input type="file" name="banco_pago" accept=".pdf,.jpg,.jpeg,.png,.webp"
+                       onchange="mostrarNombreArchivo(this,'lbl_bp')">
+                <label id="lbl_bp"><i class="bi bi-cloud-upload me-1"></i>Seleccionar archivoâ€¦</label>
+              </div>
+            </div>
+
+          </div><!-- /row -->
+        </form>
+      </div><!-- /modal-body -->
+
+      <div class="modal-footer d-flex justify-content-end gap-2 mt-4 border-top pt-3 bg-dark" style="border-color:#3f3f5c !important;">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" form="formNuevaFactura" class="btn btn-success px-4"><i class="bi bi-save me-1"></i> Guardar Factura</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     MODAL â€” EDITAR FACTURA
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<div class="modal fade modal-dark" id="modalEditarFactura" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header" style="background:linear-gradient(135deg,#92400e,#b45309);">
+        <div>
+          <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Editar / Registrar Abono</h5>
+          <p class="mb-0 mt-1 opacity-60 small" id="e_subtitulo">â€”</p>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <form method="POST" id="formEditarFactura" action="" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label>Nombre del Contratista *</label>
+              <select name="nombre_contratista" id="e_nombre" class="form-select" required>
+                <option value="" selected disabled>Seleccione un contratista de la lista...</option>
+                {% for p in contratistaes %}
+                <option value="{{ p.nombre }}">{{ p.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label>Fecha de Factura *</label>
+              <input type="date" name="fecha_factura" id="e_fecha_factura" class="form-control" required
+                     oninput="calcularVencimientoE()">
+            </div>
+            <div class="col-md-2">
+              <label>Plazo (dÃ­as)</label>
+              <input type="number" name="plazo_dias" id="e_plazo_dias" class="form-control" min="0"
+                     oninput="calcularVencimientoE()">
+            </div>
+            <div class="col-md-3">
+              <label>Fecha de Vencimiento *</label>
+              <input type="date" name="fecha_vencimiento" id="e_fecha_vencimiento" class="form-control" required readonly>
+            </div>
+            <div class="col-md-3">
+              <label>&nbsp;</label>
+              <div class="calc-box position-relative py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="calc-label">Estado Factura</div>
+                  <div id="e_estado_factura_badge"><span class="badge bg-light text-secondary">N/A</span></div>
+                </div>
+                <div class="calc-val fs-6 text-warning mt-1" id="e_mora_display">0 dÃ­as mora</div>
+              </div>
+            </div>
+
+            <div class="col-12"><div class="section-sep"><i class="bi bi-currency-dollar me-1"></i>Valores</div></div>
+
+            <div class="col-md-3">
+              <label>Valor Neto *</label>
+              <div class="input-group">
+                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                <input type="number" name="valor_neto" id="e_valor_neto" class="form-control"
+                       min="0" step="any" required oninput="calcularIVA('e')">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <label>IVA (%)</label>
+              <div class="input-group mb-2">
+                <input type="number" name="porcentaje_iva" id="e_porcentaje_iva" class="form-control pct-input"
+                       placeholder="19" min="0" max="100" step="any" value="19" oninput="calcularIVA('e')">
+                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
+              </div>
+              <div class="calc-box d-flex justify-content-between align-items-center py-1 px-2">
+                <div>
+                  <div class="calc-label">Valor IVA ($)</div>
+                  <div class="calc-val fs-6" id="e_iva_display">$0</div>
+                </div>
+                <i class="bi bi-plus-circle text-muted mx-1"></i>
+                <div>
+                  <div class="calc-label">Valor Total</div>
+                  <div class="calc-val calc-total fs-6" id="e_total_display">$0</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <label>RetenciÃ³n (%)</label>
+              <div class="input-group">
+                <input type="number" name="retencion" id="e_retencion" class="form-control"
+                       min="0" max="100" step="any" value="0" oninput="calcularIVA('e')">
+                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <label>&nbsp;</label>
+              <div class="calc-box calc-total position-relative">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="calc-label">Total Adeudado Estimado</div>
+                  <div id="e_estado_badge"></div>
+                </div>
+                <div class="calc-val" id="e_adeudado_display">$0</div>
+              </div>
+            </div>
+
+            <div class="col-12"><div class="section-sep"><i class="bi bi-cash-stack me-1"></i>Pago</div></div>
+
+            <div class="col-md-4">
+              <label>Valor Cancelado / Abonado</label>
+              <div class="input-group">
+                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                <input type="number" name="valor_cancelado" id="e_cancelado" class="form-control"
+                       min="0" step="any" value="0" oninput="calcularIVA('e')">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label>Fecha de Pago</label>
+              <input type="date" name="fecha_pago" id="e_fecha_pago" class="form-control">
+            </div>
+
+            <div class="col-12"><div class="section-sep"><i class="bi bi-paperclip me-1"></i>Documentos (reemplazar si es necesario)</div></div>
+
+            <div class="col-md-4">
+              <label>Orden de Compra</label>
+              <div class="upload-zone" onclick="this.querySelector('input').click()">
+                <input type="file" name="orden_compra" accept=".pdf,.jpg,.jpeg,.png,.webp"
+                       onchange="mostrarNombreArchivo(this,'e_lbl_oc')">
+                <label id="e_lbl_oc"><i class="bi bi-arrow-repeat me-1"></i>Mantener actual / Reemplazar</label>
+              </div>
+              <div id="e_link_oc_container" class="mt-2 d-none gap-2">
+                 <a href="#" id="e_link_oc" target="_blank" class="btn btn-sm btn-outline-info flex-grow-1 fw-semibold"><i class="bi bi-eye me-1"></i> Ver Archivo Actual</a>
+                 <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar Archivo" onclick="marcarEliminarArchivo('oc')"><i class="bi bi-trash"></i></button>
+              </div>
+              <input type="hidden" name="eliminar_orden" id="e_eliminar_oc" value="false">
+            </div>
+            <div class="col-md-4">
+              <label>Comprobante / Factura</label>
+              <div class="upload-zone" onclick="this.querySelector('input').click()">
+                <input type="file" name="comprobante_compra" accept=".pdf,.jpg,.jpeg,.png,.webp"
+                       onchange="mostrarNombreArchivo(this,'e_lbl_cc')">
+                <label id="e_lbl_cc"><i class="bi bi-arrow-repeat me-1"></i>Mantener actual / Reemplazar</label>
+              </div>
+              <div id="e_link_cc_container" class="mt-2 d-none gap-2">
+                 <a href="#" id="e_link_cc" target="_blank" class="btn btn-sm btn-outline-info flex-grow-1 fw-semibold"><i class="bi bi-eye me-1"></i> Ver Archivo Actual</a>
+                 <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar Archivo" onclick="marcarEliminarArchivo('cc')"><i class="bi bi-trash"></i></button>
+              </div>
+              <input type="hidden" name="eliminar_comprobante" id="e_eliminar_cc" value="false">
+            </div>
+            <div class="col-md-4">
+              <label>Soporte Bancario</label>
+              <div class="upload-zone" onclick="this.querySelector('input').click()">
+                <input type="file" name="banco_pago" accept=".pdf,.jpg,.jpeg,.png,.webp"
+                       onchange="mostrarNombreArchivo(this,'e_lbl_bp')">
+                <label id="e_lbl_bp"><i class="bi bi-arrow-repeat me-1"></i>Mantener actual / Reemplazar</label>
+              </div>
+              <div id="e_link_bp_container" class="mt-2 d-none gap-2">
+                 <a href="#" id="e_link_bp" target="_blank" class="btn btn-sm btn-outline-info flex-grow-1 fw-semibold"><i class="bi bi-eye me-1"></i> Ver Archivo Actual</a>
+                 <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar Archivo" onclick="marcarEliminarArchivo('bp')"><i class="bi bi-trash"></i></button>
+              </div>
+              <input type="hidden" name="eliminar_soporte" id="e_eliminar_bp" value="false">
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer d-flex justify-content-end gap-2 mt-4 border-top pt-3 bg-dark" style="border-color:#3f3f5c !important;">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" form="formEditarFactura" class="btn btn-primary px-4"><i class="bi bi-cloud-arrow-up me-1"></i> Actualizar Factura</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   CÃLCULOS EN TIEMPO REAL
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+function fmtPeso(num) {
+  // Evita truncar los centavos, muestra 2 decimales para rigurosidad contable
+  return '$' + parseFloat(num).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function calcularIVA(prefix) {
+  const neto     = parseFloat(document.getElementById(prefix + '_valor_neto')?.value)  || 0;
+  const pct_iva  = parseFloat(document.getElementById(prefix + '_porcentaje_iva')?.value) || 0;
+  const ret_porc = parseFloat(document.getElementById(prefix + '_retencion')?.value)   || 0;
+  const cancelado= parseFloat(document.getElementById(prefix + '_cancelado')?.value)   || 0;
+
+  const iva      = neto * (pct_iva / 100);
+  const total    = neto + iva;
+  const ret_pesos= neto * (ret_porc / 100);
+  const adeudado = total - ret_pesos - cancelado;
+  
+  const final_adeudado = Math.max(adeudado, 0);
+
+  document.getElementById(prefix + '_iva_display').innerText    = fmtPeso(iva);
+  document.getElementById(prefix + '_total_display').innerText  = fmtPeso(total);
+  document.getElementById(prefix + '_adeudado_display').innerText = fmtPeso(final_adeudado);
+
+  const badgeEstado = document.getElementById(prefix + '_estado_badge');
+  if (badgeEstado) {
+    // Tolerancia contable de 1 centavo por errores de punto flotante en JS
+    if (final_adeudado <= 0.01 && cancelado > 0) {
+      badgeEstado.innerHTML = '<span class="badge bg-success" style="font-size:0.6rem;"><i class="bi bi-check-circle me-1"></i>CANCELADO</span>';
+    } else {
+      badgeEstado.innerHTML = '<span class="badge bg-danger" style="font-size:0.6rem;"><i class="bi bi-hourglass-split me-1"></i>SE DEBE</span>';
+    }
+  }
+}
+
+/* CÃ¡lculo automÃ¡tico de fecha de vencimiento y Mora/Estado Factura */
+function calcularVencimiento() { _calcVencimiento('n'); }
+function calcularVencimientoE() { _calcVencimiento('e'); }
+
+function _calcVencimiento(prefix) {
+  const fi  = document.getElementById(prefix + '_fecha_factura').value;
+  const plz = parseInt(document.getElementById(prefix + '_plazo_dias').value) || 0;
+  if (fi) {
+    const d = new Date(fi + 'T00:00:00');
+    d.setDate(d.getDate() + plz);
+    const v = d.toISOString().split('T')[0];
+    document.getElementById(prefix + '_fecha_vencimiento').value = v;
+    
+    // Calcular mora en vivo
+    const hoy = new Date();
+    hoy.setHours(0,0,0,0);
+    const diffTime = hoy - d;
+    let mora = 0;
+    if (diffTime > 0) {
+      mora = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }
+    
+    // Ver si estÃ¡ cancelado para congelar
+    const adeudadoTxt = document.getElementById(prefix + '_adeudado_display').innerText;
+    const isCancelado = adeudadoTxt === '$0';
+    
+    const badge = document.getElementById(prefix + '_estado_factura_badge');
+    const moraDisplay = document.getElementById(prefix + '_mora_display');
+    
+    if (isCancelado) {
+        badge.innerHTML = '<span class="badge bg-success" style="font-size:0.6rem;">VIGENTE</span>';
+        moraDisplay.innerText = '0 dÃ­as mora';
+    } else if (mora > 0) {
+        badge.innerHTML = '<span class="badge bg-danger" style="font-size:0.6rem;">VENCIDA</span>';
+        moraDisplay.innerText = mora + ' dÃ­as mora';
+    } else {
+        badge.innerHTML = '<span class="badge bg-success" style="font-size:0.6rem;">VIGENTE</span>';
+        moraDisplay.innerText = '0 dÃ­as mora';
+    }
+  }
+}
+
+// Interceptar calcularIVA para actualizar mora tambiÃ©n
+const oldCalcularIVA = calcularIVA;
+calcularIVA = function(prefix) {
+    oldCalcularIVA(prefix);
+    _calcVencimiento(prefix);
+};
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   MODAL EDITAR â€” pre-relleno de datos
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+function abrirModalEditar(id, nombre, fecha_factura, plazo, fecha_venc, valor_neto, porcentaje_iva, valor_cancelado, retencion, fecha_pago, oc_url, cc_url, bp_url) {
+  document.getElementById('formEditarFactura').action = '/dashboard/contratistaes/' + id + '/editar';
+  document.getElementById('e_subtitulo').innerText    = 'ID #' + id + ' â€” ' + nombre;
+  document.getElementById('e_nombre').value           = nombre;
+  document.getElementById('e_fecha_factura').value    = fecha_factura;
+  document.getElementById('e_plazo_dias').value       = plazo;
+  document.getElementById('e_fecha_vencimiento').value= fecha_venc;
+  document.getElementById('e_valor_neto').value       = valor_neto;
+  document.getElementById('e_porcentaje_iva').value   = porcentaje_iva;
+  document.getElementById('e_retencion').value        = retencion;
+  document.getElementById('e_cancelado').value        = valor_cancelado;
+  document.getElementById('e_fecha_pago').value       = fecha_pago;
+
+  // Renderizar Botones de 'Ver Archivo Actual' si existen en Supabase
+  const config = [
+    { url: oc_url, linkId: 'e_link_oc', containerId: 'e_link_oc_container' },
+    { url: cc_url, linkId: 'e_link_cc', containerId: 'e_link_cc_container' },
+    { url: bp_url, linkId: 'e_link_bp', containerId: 'e_link_bp_container' }
+  ];
+  config.forEach(item => {
+    if (item.url && item.url.trim() !== '' && item.url !== 'None') {
+      document.getElementById(item.containerId).classList.remove('d-none');
+      document.getElementById(item.containerId).classList.add('d-flex');
+      document.getElementById(item.linkId).href = item.url;
+    } else {
+      document.getElementById(item.containerId).classList.remove('d-flex');
+      document.getElementById(item.containerId).classList.add('d-none');
+    }
+  });
+
+  // Restablecer labels y flags de archivos
+  ['e_lbl_oc','e_lbl_cc','e_lbl_bp'].forEach(id => {
+    document.getElementById(id).innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>Mantener actual / Reemplazar';
+  });
+  ['e_eliminar_oc', 'e_eliminar_cc', 'e_eliminar_bp'].forEach(id => {
+    if(document.getElementById(id)) document.getElementById(id).value = 'false';
+  });
+
+  calcularIVA('e');
+  new bootstrap.Modal(document.getElementById('modalEditarFactura')).show();
+}
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   UPLOAD ZONE â€” Drag and Drop
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+function marcarEliminarArchivo(tipo) {
+  let hiddenId, labelId, containerId;
+  if (tipo === 'oc') { hiddenId = 'e_eliminar_oc'; labelId = 'e_lbl_oc'; containerId = 'e_link_oc_container'; }
+  if (tipo === 'cc') { hiddenId = 'e_eliminar_cc'; labelId = 'e_lbl_cc'; containerId = 'e_link_cc_container'; }
+  if (tipo === 'bp') { hiddenId = 'e_eliminar_bp'; labelId = 'e_lbl_bp'; containerId = 'e_link_bp_container'; }
+  
+  document.getElementById(hiddenId).value = 'true';
+  document.getElementById(labelId).innerHTML = '<i class="bi bi-trash me-1 text-danger"></i><span class="text-danger">Archivo marcado para eliminar</span>';
+  
+  // Ocultar botones
+  let container = document.getElementById(containerId);
+  container.classList.remove('d-flex');
+  container.classList.add('d-none');
+}
+
+function mostrarNombreArchivo(input, labelId) {
+  const lbl = document.getElementById(labelId);
+  
+  // Si selecciona archivo nuevo, desmarcamos eliminaciÃ³n si la hubiera
+  if (labelId === 'e_lbl_oc') document.getElementById('e_eliminar_oc').value = 'false';
+  if (labelId === 'e_lbl_cc') document.getElementById('e_eliminar_cc').value = 'false';
+  if (labelId === 'e_lbl_bp') document.getElementById('e_eliminar_bp').value = 'false';
+
+  if (input.files && input.files[0]) {
+    lbl.innerHTML = '<i class="bi bi-file-earmark-check me-1 text-success"></i>' + input.files[0].name;
+    input.closest('.upload-zone').style.borderColor = '#10b981';
+  }
+}
+
+document.querySelectorAll('.upload-zone').forEach(zone => {
+  zone.addEventListener('dragover', e => {
+    e.preventDefault();
+    zone.style.borderColor = '#a5b4fc';
+    zone.style.backgroundColor = '#2d2d44';
+  });
+  zone.addEventListener('dragleave', e => {
+    e.preventDefault();
+    zone.style.borderColor = '';
+    zone.style.backgroundColor = '';
+  });
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.style.borderColor = '';
+    zone.style.backgroundColor = '';
+    const input = zone.querySelector('input[type="file"]');
+    if (e.dataTransfer.files.length > 0) {
+      input.files = e.dataTransfer.files;
+      const event = new Event('change');
+      input.dispatchEvent(event);
+    }
+  });
+});
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   FILTROS EN TIEMPO REAL
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+const filas        = () => document.querySelectorAll('.fila-factura');
+const filaTotales  = document.getElementById('filaTotalesGlobales');
+
+function aplicarFiltros() {
+  const textoProv  = document.getElementById('filtroContratista').value.toLowerCase().trim();
+  const estadoFact = document.getElementById('filtroEstadoFactura').value;
+  const estadoCuenta = document.getElementById('filtroEstadoCuenta').value;
+  const desde      = document.getElementById('filtroDesde').value;
+  const hasta      = document.getElementById('filtroHasta').value;
+
+  let visible = 0;
+
+  filas().forEach(tr => {
+    const prov   = tr.dataset.contratista  || '';
+    const ef     = tr.dataset.estadoFactura || '';
+    const ec     = tr.dataset.estadoCuenta  || '';
+    const fecha  = tr.dataset.fecha          || '';
+
+    let ok = true;
+    if (textoProv  && !prov.includes(textoProv)) ok = false;
+    if (estadoFact && ef !== estadoFact)          ok = false;
+    if (estadoCuenta && ec !== estadoCuenta)       ok = false;
+    if (desde && fecha && fecha < desde)           ok = false;
+    if (hasta && fecha && fecha > hasta)           ok = false;
+
+    tr.style.display = ok ? '' : 'none';
+    if (ok) visible++;
+  });
+
+  document.getElementById('contadorVisible').innerText = visible;
+  // Ocultar fila totales si hay filtro activo (los totales son globales)
+  if (filaTotales) {
+    filaTotales.style.display = (textoProv || estadoFact || estadoCuenta || desde || hasta) ? 'none' : '';
+  }
+}
+
+function limpiarFiltros() {
+  ['filtroContratista','filtroEstadoFactura','filtroEstadoCuenta','filtroDesde','filtroHasta']
+    .forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  aplicarFiltros();
+}
+
+// Escuchar cambios en todos los filtros
+['filtroContratista','filtroEstadoFactura','filtroEstadoCuenta','filtroDesde','filtroHasta']
+  .forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', aplicarFiltros);
+  });
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   ENVÃO MANUAL DE ARCHIVOS (Evita bugs de form="" remotos)
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+async function procesarFormulario(e, btnSelector) {
+  e.preventDefault();
+  const form = e.target;
+  const btn = document.querySelector(btnSelector);
+  
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
+  
+  const textoOriginal = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
+  
+  try {
+    const formData = new FormData(form);
+    
+    // ðŸš¨ INYECCIÃ“N FORZADA: Agrega manualmente los archivos binarios reales
+    // Esto asegura que incluso si el navegador tiene un bug con FormData, los archivos viajen.
+    const fileInputs = form.querySelectorAll('input[type="file"]');
+    fileInputs.forEach(input => {
+      if (input.files && input.files.length > 0) {
+        formData.set(input.name, input.files[0]);
+      }
+    });
+
+    const res = await fetch(form.action, {
+      method: 'POST',
+      body: formData
+    });
+    
+    if (res.redirected) {
+      window.location.href = res.url;
+    } else {
+      window.location.reload();
+    }
+  } catch (err) {
+    alert("Error de conexiÃ³n al guardar: " + err);
+    btn.disabled = false;
+    btn.innerHTML = textoOriginal;
+  }
+}
+
+document.getElementById('formNuevaFactura').addEventListener('submit', (e) => procesarFormulario(e, 'button[form="formNuevaFactura"]'));
+document.getElementById('formEditarFactura').addEventListener('submit', (e) => procesarFormulario(e, 'button[form="formEditarFactura"]'));
+document.getElementById('formNuevoContratista').addEventListener('submit', (e) => procesarFormulario(e, 'button[form="formNuevoContratista"]'));
+
+</script>
+
+</body>
+</html>
+

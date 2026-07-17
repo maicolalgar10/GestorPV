@@ -11,6 +11,7 @@ from .horarios_controller import horarios_bp
 from .cotizaciones_controller import cotizaciones_bp
 from .tesoreria_controller import tesoreria_bp
 from .clientes_controller import clientes_bp
+from .contratistas_controller import contratistas_bp
 
 def register_controllers(app):
     app.register_blueprint(dashboard_bp)
@@ -26,3 +27,4 @@ def register_controllers(app):
     app.register_blueprint(cotizaciones_bp)
     app.register_blueprint(tesoreria_bp)
     app.register_blueprint(clientes_bp)
+    app.register_blueprint(contratistas_bp)
