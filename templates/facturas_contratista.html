@@ -230,7 +230,7 @@
       <p class="mb-0 mt-1 opacity-75 small">GestiÃ³n de Oficina &mdash; {{ usuario.nombre }}</p>
     </div>
     <div class="d-flex gap-2 flex-wrap align-items-center">
-      <a href="{{ url_for('dashboard.contratistaes') }}" class="btn-back">
+      <a href="{{ url_for('contratistas.contratistas') }}" class="btn-back">
         <i class="bi bi-arrow-left me-1"></i> Volver al Directorio
       </a>
     </div>
@@ -409,7 +409,7 @@
                 <i class="bi bi-pencil-square"></i>
               </button>
               <form method="POST"
-                    action="{{ url_for('dashboard.eliminar_factura_contratista', id=f.id) }}"
+                    action="{{ url_for('contratistas.eliminar_factura_contratista', id=f.id) }}"
                     class="d-inline"
                     onsubmit="return confirm('Â¿Eliminar esta factura? Esta acciÃ³n no se puede deshacer.')">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -425,7 +425,7 @@
               <div class="empty-state">
                 <i class="bi bi-journal-bookmark-fill"></i>
                 <p class="fw-semibold mb-1">No hay facturas registradas para {{ nombre_contratista }}</p>
-                <p class="small">Vuelve al directorio para explorar otros contratistaes.</p>
+                <p class="small">Vuelve al directorio para explorar otros contratistas.</p>
               </div>
             </td>
           </tr>
@@ -693,7 +693,7 @@ calcularIVA = function(prefix) {
    MODAL EDITAR
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function abrirModalEditar(id, nombre, fecha_factura, plazo, fecha_venc, valor_neto, porcentaje_iva, valor_cancelado, retencion, fecha_pago, oc_url, cc_url, bp_url) {
-  document.getElementById('formEditarFactura').action = '/dashboard/contratistaes/' + id + '/editar';
+  document.getElementById('formEditarFactura').action = '/contratistas/' + id + '/editar';
   document.getElementById('e_subtitulo').innerText    = 'ID #' + id + ' â€” ' + nombre;
   document.getElementById('e_nombre').value           = nombre;
   document.getElementById('e_fecha_factura').value    = fecha_factura;
@@ -863,7 +863,7 @@ async function procesarFormulario(e, btnSelector) {
       body: formData
     });
     
-    // Si la redirecciÃ³n va a `/dashboard/contratistaes`, podemos quedarnos o seguirla.
+    // Si la redirecciÃ³n va a `/dashboard/contratistas`, podemos quedarnos o seguirla.
     // Lo mÃ¡s sano es seguir el redirect para ver los datos actualizados,
     // o recargar si la redirecciÃ³n es a la misma pÃ¡gina
     if (res.redirected) {
@@ -885,4 +885,6 @@ document.getElementById('formEditarFactura').addEventListener('submit', (e) => p
 
 </body>
 </html>
+
+
 
