@@ -30,50 +30,20 @@ def login():
         return redirect(url_for('dashboard.dashboard'))
 
     if request.method == 'POST':
-        # Obtener el valor de identificación del formulario.
-        # El formulario ahora enviará el valor en el campo 'contacto'
+        # Obtener el valor de identificación del formulario (email o nombre).
+        # El input en login.html puede seguir llamándose 'contacto' para no quebrar el frontend
         user_identifier = request.form.get('contacto', '').strip() 
         password = request.form['password']
         
-        # Inicializamos las variables de búsqueda
-        user = None
-        personal_data = None
-        
-        # =======================================================
-        # LÓGICA DE BÚSQUEDA FLEXIBLE (Teléfono o Correo)
-        # =======================================================
-        
-        # 1. INTENTAR BUSCAR POR TELÉFONO (Contacto de Personal)
-        if user_identifier:
-            personal_data = Personal.query.filter_by(contacto=user_identifier).first()
-            if personal_data:
-                # Si encontramos el Personal, buscamos el Usuario asociado
-                user = Usuarios.query.filter_by(personal_id=personal_data.id).first()
-        
-        # 2. SI NO SE ENCONTRÓ NINGÚN USUARIO, INTENTAR BUSCAR POR CORREO ELECTRÓNICO
+        # Buscar usuario por email o nombre
+        user = Usuarios.query.filter_by(email=user_identifier).first()
         if not user:
-             # Usamos el identificador directamente como email
-             user = Usuarios.query.filter_by(email=user_identifier).first()
-             
-             # Si se encontró por email, también necesitamos el personal asociado
-             if user:
-                 personal_data = Personal.query.filter_by(id=user.personal_id).first()
+            user = Usuarios.query.filter_by(nombre=user_identifier).first()
 
-        
-        # =======================================================
-        #  VALIDACIÓN DESPUÉS DE LA BÚSQUEDA
-        # =======================================================
-
-        # 3. VERIFICAR EXISTENCIA DEL USUARIO
+        # VERIFICAR EXISTENCIA DEL USUARIO
         if not user:
             flash("Usuario o contraseña incorrecta.", "danger")
             return render_template("login.html") 
-
-        # 4. BLOQUEO: Verificar si el personal está inactivo (Solo aplica si hay datos de personal)
-        # Nota: El administrador (ROL=ADMIN) puede no tener personal_data, por eso esta verificación debe ser condicional.
-        if personal_data and not personal_data.activo:
-            flash("Tu cuenta ha sido desactivada. Contacta con el administrador.", "danger")
-            return render_template("login.html")
 
         # 5. VERIFICAR CONTRASEÑA
         if bcrypt.check_password_hash(user.password, password):
@@ -107,7 +77,7 @@ def register():
     if request.method == 'POST':
         nombre = request.form['nombre'].strip()
         email = request.form['email'].strip()
-        password = request.form['password']  # ADMIN, BODEGA, EMPLEADO, OFICINA
+        password = request.form['password']
 
         existing = Usuarios.query.filter_by(email=email).first()
         if existing:
@@ -119,14 +89,15 @@ def register():
             nombre=nombre,
             email=email,
             password=hashed_pw,
-            rol="EMPLEADO"
+            rol="ADMIN",
+            debe_cambiar_contrasena=False
         )
         db.session.add(nuevo)
         db.session.commit()
-        flash("Usuario registrado correctamente", "success")
+        flash("Administrador registrado correctamente para ICC-SAS", "success")
         return redirect(url_for('usuarios.login'))
 
-    return render_template("olvide_contrasena.html")
+    return render_template("register.html")
 
 
 # -----------------------------
