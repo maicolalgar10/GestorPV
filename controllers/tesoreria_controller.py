@@ -150,79 +150,110 @@ def editar_contrato(id_contrato):
 @tesoreria_bp.route("/")
 @admin_oficina_required
 def ver_tesoreria():
-    contratos = Contrato.query.order_by(Contrato.id.desc()).all()
-    bancos = Bancos.query.all()
-    movimientos = Movimientos.query.order_by(Movimientos.fecha_movimiento.desc()).all()
+    try:
+        try:
+            contratos = Contrato.query.order_by(Contrato.id.desc()).all()
+        except Exception as e:
+            db.session.rollback()
+            contratos = []
+            
+        try:
+            bancos = Bancos.query.all()
+        except Exception as e:
+            db.session.rollback()
+            bancos = []
+            
+        try:
+            movimientos = Movimientos.query.order_by(Movimientos.fecha_movimiento.desc()).all()
+        except Exception as e:
+            db.session.rollback()
+            movimientos = []
 
-    colors = ['#00D4AA', '#4F8EF7', '#F7C94F', '#A3E635', '#B47AE5', '#FF6B6B']
-    contratos_list = []
-    for i, c in enumerate(contratos):
-        ingresos = [m for m in c.movimientos if m.tipo == 'INGRESO' and m.categoria in ['acta', 'anticipo']]
-        facturado_bruto = sum((m.valor_bruto or 0) for m in ingresos)
-        retencion_total = sum((m.retencion_garantia or 0) for m in ingresos)
-        amortizacion_total = sum((m.amortizacion_anticipo or 0) for m in ingresos)
-        
-        contratos_list.append({
-            "id": str(c.id),
-            "name": c.proyecto or 'General',
-            "client": c.cliente or 'N/A',
-            "value": float(c.valor_total or 0),
-            "received": float(facturado_bruto),
-            "pending": float((c.valor_total or 0) - facturado_bruto),
-            "status": c.estado,
-            "advance": round((float(facturado_bruto) / float(c.valor_total)) * 100) if c.valor_total and float(c.valor_total) > 0 else 0,
-            "color": colors[i % len(colors)],
-            "amortizacion_acumulada": float(amortizacion_total),
-            "retencion_acumulada": float(retencion_total),
-            "porcentaje_anticipo": float(c.anticipo_porcentaje or 0),
-            "porcentaje_retencion": float(c.retencion_garantia_porcentaje or 0)
-        })
+        colors = ['#00D4AA', '#4F8EF7', '#F7C94F', '#A3E635', '#B47AE5', '#FF6B6B']
+        contratos_list = []
+        for i, c in enumerate(contratos):
+            ingresos = [m for m in c.movimientos if m.tipo == 'INGRESO' and m.categoria in ['acta', 'anticipo']]
+            facturado_bruto = sum((m.valor_bruto or 0) for m in ingresos)
+            retencion_total = sum((m.retencion_garantia or 0) for m in ingresos)
+            amortizacion_total = sum((m.amortizacion_anticipo or 0) for m in ingresos)
+            
+            contratos_list.append({
+                "id": str(c.id),
+                "name": c.proyecto or 'General',
+                "client": c.cliente or 'N/A',
+                "value": float(c.valor_total or 0),
+                "received": float(facturado_bruto),
+                "pending": float((c.valor_total or 0) - facturado_bruto),
+                "status": c.estado,
+                "advance": round((float(facturado_bruto) / float(c.valor_total)) * 100) if c.valor_total and float(c.valor_total) > 0 else 0,
+                "color": colors[i % len(colors)],
+                "amortizacion_acumulada": float(amortizacion_total),
+                "retencion_acumulada": float(retencion_total),
+                "porcentaje_anticipo": float(c.anticipo_porcentaje or 0),
+                "porcentaje_retencion": float(c.retencion_garantia_porcentaje or 0)
+            })
 
-    movimientos_list = []
-    for m in movimientos:
-        movimientos_list.append({
-            "id": m.id,
-            "date": m.fecha_movimiento.strftime('%Y-%m-%d') if m.fecha_movimiento else '',
-            "concept": m.numero_documento or 'Movimiento',
-            "contract": str(m.contrato_id) if m.contrato_id else 'GENERAL',
-            "type": m.tipo.lower(),
-            "amount": float(m.valor_neto or 0) if m.tipo == 'INGRESO' else float(-(m.valor_neto or 0)),
-            "bank": m.banco or 'N/A',
-            "category": m.categoria,
-            "archivo_soporte": m.archivo_soporte
-        })
+        movimientos_list = []
+        for m in movimientos:
+            movimientos_list.append({
+                "id": m.id,
+                "date": m.fecha_movimiento.strftime('%Y-%m-%d') if m.fecha_movimiento else '',
+                "concept": m.numero_documento or 'Movimiento',
+                "contract": str(m.contrato_id) if m.contrato_id else 'GENERAL',
+                "type": m.tipo.lower(),
+                "amount": float(m.valor_neto or 0) if m.tipo == 'INGRESO' else float(-(m.valor_neto or 0)),
+                "bank": m.banco or 'N/A',
+                "category": m.categoria,
+                "archivo_soporte": m.archivo_soporte
+            })
 
-    bancos_list = []
-    for b in bancos:
-        bancos_list.append({
-            "id": b.id,
-            "name": b.nombre_banco,
-            "balance": float(b.saldo_actual or 0),
-            "account": b.numero_cuenta,
-            "color": b.color or '#004481',
-            "pluggy_item_id": b.pluggy_item_id
-        })
+        bancos_list = []
+        for b in bancos:
+            bancos_list.append({
+                "id": b.id,
+                "name": b.nombre_banco,
+                "balance": float(b.saldo_actual or 0),
+                "account": b.numero_cuenta,
+                "color": b.color or '#004481',
+                "pluggy_item_id": b.pluggy_item_id
+            })
 
-    return render_template("tesoreria.html", 
-                           contratos_json=contratos_list, 
-                           movimientos_json=movimientos_list, 
-                           bancos_json=bancos_list)
+        return render_template("tesoreria.html", 
+                               contratos_json=contratos_list, 
+                               movimientos_json=movimientos_list, 
+                               bancos_json=bancos_list)
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"Error en tesoreria:\n{error_trace}")
+        return f"<h1>Error 500 Interno en Tesoreria</h1><pre>{error_trace}</pre>", 500
 
 @tesoreria_bp.route("/bancos")
 @admin_oficina_required
 def ver_bancos():
-    bancos = Bancos.query.all()
-    bancos_list = []
-    for b in bancos:
-        bancos_list.append({
-            "id": b.id,
-            "name": b.nombre_banco,
-            "balance": float(b.saldo_actual or 0),
-            "account": b.numero_cuenta,
-            "color": b.color or '#004481',
-            "pluggy_item_id": b.pluggy_item_id
-        })
-    return render_template("bancos.html", bancos_json=bancos_list, contratos_json=[], movimientos_json=[])
+    try:
+        try:
+            bancos = Bancos.query.all()
+        except Exception as e:
+            db.session.rollback()
+            bancos = []
+            
+        bancos_list = []
+        for b in bancos:
+            bancos_list.append({
+                "id": b.id,
+                "name": b.nombre_banco,
+                "balance": float(b.saldo_actual or 0),
+                "account": b.numero_cuenta,
+                "color": b.color or '#004481',
+                "pluggy_item_id": b.pluggy_item_id
+            })
+        return render_template("bancos.html", bancos_json=bancos_list, contratos_json=[], movimientos_json=[])
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"Error en ver_bancos:\n{error_trace}")
+        return f"<h1>Error 500 Interno en Bancos</h1><pre>{error_trace}</pre>", 500
 
 @tesoreria_bp.route("/movimiento/registrar", methods=["POST"])
 @admin_oficina_required
@@ -647,77 +678,84 @@ def webhook_pluggy():
 @tesoreria_bp.route("/comprobantes-egresos", methods=["GET", "POST"])
 @admin_oficina_required
 def comprobantes_egresos():
-    from models import db, ComprobanteEgreso
-    
-    if request.method == "POST":
+    try:
+        from models import db, ComprobanteEgreso
+        
+        if request.method == "POST":
+            try:
+                numero = request.form.get("numero_comprobante")
+                fecha_str = request.form.get("fecha")
+                concepto = request.form.get("concepto")
+                valor = request.form.get("valor")
+                metodo = request.form.get("metodo_pago")
+                num_cheque = request.form.get("numero_cheque") if metodo == "Cheque" else None
+                banco = request.form.get("banco")
+                debitese_a = request.form.get("debitese_a")
+                tipo_doc = request.form.get("tipo_documento")
+                doc_num = request.form.get("documento_numero")
+                elaborado = request.form.get("elaborado_por")
+                aprobado = request.form.get("aprobado_por")
+
+                from datetime import datetime
+                fecha_val = datetime.strptime(fecha_str, '%Y-%m-%d').date() if fecha_str else datetime.utcnow().date()
+
+                archivo = request.files.get('archivo_soporte')
+                url_soporte = None
+                if archivo and archivo.filename:
+                    from supabase_client import supabase
+                    from werkzeug.utils import secure_filename
+                    import uuid
+                    if supabase:
+                        try:
+                            filename = secure_filename(archivo.filename)
+                            unique_filename = f"{uuid.uuid4().hex}_{filename}"
+                            file_bytes = archivo.read()
+                            
+                            supabase.storage.from_("tesoreria").upload(
+                                f"comprobantes/{unique_filename}", 
+                                file_bytes, 
+                                {"content-type": archivo.content_type}
+                            )
+                            url_soporte = supabase.storage.from_("tesoreria").get_public_url(f"comprobantes/{unique_filename}")
+                        except Exception as upload_error:
+                            print(f"Error al subir soporte: {upload_error}")
+                
+                nuevo = ComprobanteEgreso(
+                    numero_comprobante=numero,
+                    fecha=fecha_val,
+                    concepto=concepto,
+                    valor=valor,
+                    metodo_pago=metodo,
+                    numero_cheque=num_cheque,
+                    banco=banco,
+                    debitese_a=debitese_a,
+                    tipo_documento=tipo_doc,
+                    documento_numero=doc_num,
+                    elaborado_por=elaborado,
+                    aprobado_por=aprobado,
+                    archivo_url=url_soporte
+                )
+                db.session.add(nuevo)
+                db.session.commit()
+                flash("Comprobante registrado exitosamente", "success")
+            except Exception as e:
+                db.session.rollback()
+                flash(f"Error al registrar: {str(e)}", "danger")
+            return redirect(url_for("tesoreria.comprobantes_egresos"))
+
+        comprobantes = []
         try:
-            numero = request.form.get("numero_comprobante")
-            fecha_str = request.form.get("fecha")
-            concepto = request.form.get("concepto")
-            valor = request.form.get("valor")
-            metodo = request.form.get("metodo_pago")
-            num_cheque = request.form.get("numero_cheque") if metodo == "Cheque" else None
-            banco = request.form.get("banco")
-            debitese_a = request.form.get("debitese_a")
-            tipo_doc = request.form.get("tipo_documento")
-            doc_num = request.form.get("documento_numero")
-            elaborado = request.form.get("elaborado_por")
-            aprobado = request.form.get("aprobado_por")
-
-            from datetime import datetime
-            fecha_val = datetime.strptime(fecha_str, '%Y-%m-%d').date() if fecha_str else datetime.utcnow().date()
-
-            archivo = request.files.get('archivo_soporte')
-            url_soporte = None
-            if archivo and archivo.filename:
-                from supabase_client import supabase
-                from werkzeug.utils import secure_filename
-                import uuid
-                if supabase:
-                    try:
-                        filename = secure_filename(archivo.filename)
-                        unique_filename = f"{uuid.uuid4().hex}_{filename}"
-                        file_bytes = archivo.read()
-                        
-                        supabase.storage.from_("tesoreria").upload(
-                            f"comprobantes/{unique_filename}", 
-                            file_bytes, 
-                            {"content-type": archivo.content_type}
-                        )
-                        url_soporte = supabase.storage.from_("tesoreria").get_public_url(f"comprobantes/{unique_filename}")
-                    except Exception as upload_error:
-                        print(f"Error al subir soporte: {upload_error}")
-            
-            nuevo = ComprobanteEgreso(
-                numero_comprobante=numero,
-                fecha=fecha_val,
-                concepto=concepto,
-                valor=valor,
-                metodo_pago=metodo,
-                numero_cheque=num_cheque,
-                banco=banco,
-                debitese_a=debitese_a,
-                tipo_documento=tipo_doc,
-                documento_numero=doc_num,
-                elaborado_por=elaborado,
-                aprobado_por=aprobado,
-                archivo_url=url_soporte
-            )
-            db.session.add(nuevo)
-            db.session.commit()
-            flash("Comprobante registrado exitosamente", "success")
+            comprobantes = ComprobanteEgreso.query.order_by(ComprobanteEgreso.fecha.desc(), ComprobanteEgreso.id.desc()).all()
         except Exception as e:
             db.session.rollback()
-            flash(f"Error al registrar: {str(e)}", "danger")
-        return redirect(url_for("tesoreria.comprobantes_egresos"))
-
-    comprobantes = []
-    try:
-        comprobantes = ComprobanteEgreso.query.order_by(ComprobanteEgreso.fecha.desc(), ComprobanteEgreso.id.desc()).all()
-    except Exception:
-        pass
-        
-    return render_template("comprobantes_egresos.html", comprobantes=comprobantes)
+            print(f"Advertencia: No se pudo consultar ComprobanteEgreso ({e})")
+            
+        return render_template("comprobantes_egresos.html", comprobantes=comprobantes)
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"Error en comprobantes_egresos:\n{error_trace}")
+        return f"<h1>Error 500 Interno en Comprobantes de Egresos</h1><pre>{error_trace}</pre>", 500
 
 
 @tesoreria_bp.route("/comprobantes-egresos/editar/<string:id>", methods=["POST"])

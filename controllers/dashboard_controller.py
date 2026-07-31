@@ -311,22 +311,40 @@ def dashboard_oficina():
 @login_required
 @admin_oficina_required
 def gestion_materiales_oficina():
-    # Notificaciones (para la barra lateral/global)
-    notificaciones = Notificaciones.query.filter_by(
-        id_usuario_destino=session["user_id"], leido=False
-    ).order_by(Notificaciones.creado_en.desc()).all()
+    try:
+        try:
+            # Notificaciones (para la barra lateral/global)
+            notificaciones = Notificaciones.query.filter_by(
+                id_usuario_destino=session["user_id"], leido=False
+            ).order_by(Notificaciones.creado_en.desc()).all()
+        except Exception as e:
+            db.session.rollback()
+            notificaciones = []
 
-    # Requisiciones de bodega a oficina
-    requisiciones_oficina = RequisicionOficina.query.order_by(RequisicionOficina.fecha_solicitud.desc()).all()
-    
-    usuario = Usuarios.query.get(session.get("user_id"))
+        try:
+            # Requisiciones de bodega a oficina
+            requisiciones_oficina = RequisicionOficina.query.order_by(RequisicionOficina.fecha_solicitud.desc()).all()
+        except Exception as e:
+            db.session.rollback()
+            requisiciones_oficina = []
+        
+        try:
+            usuario = Usuarios.query.get(session.get("user_id"))
+        except Exception as e:
+            db.session.rollback()
+            usuario = None
 
-    return render_template(
-        "gestion_materiales_oficina.html",
-        usuario=usuario,
-        notificaciones=notificaciones,
-        requisiciones_oficina=requisiciones_oficina
-    )
+        return render_template(
+            "gestion_materiales_oficina.html",
+            usuario=usuario,
+            notificaciones=notificaciones,
+            requisiciones_oficina=requisiciones_oficina
+        )
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"Error en gestion_materiales_oficina:\n{error_trace}")
+        return f"<h1>Error 500 Interno en Materiales</h1><pre>{error_trace}</pre>", 500
 # ============================================================
 # MÓDULO PROVEEDORES — 4 rutas
 # ============================================================

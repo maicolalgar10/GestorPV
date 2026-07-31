@@ -58,26 +58,44 @@ def subir_archivo_supabase(file_obj, carpeta="clientes"):
 @login_required
 @admin_oficina_required
 def index():
-    usuario = Usuarios.query.get(session['user_id'])
-    
-    # 1. Traer todos los contratos de clientes existentes
-    contratos_lista = ContratosClientes.query.all()
-    
-    # 2. Traer todos los reportes (o podemos usar la relación de contratos en la vista)
-    reportes_lista = ReporteClientes.query.all()
-    
-    # También necesitamos los clientes por si el usuario quiere crear un Contrato desde ahí
-    clientes_lista = Clientes.query.all()
-    
-    # 3. Pasarle las listas a la plantilla HTML
-    return render_template(
-        'clientes.html',
-        usuario=usuario,
-        contratos=contratos_lista,
-        clientes=clientes_lista,
-        reportes=reportes_lista,
-        frase="El éxito en los negocios requiere entrenamiento y disciplina y mucho trabajo duro."
-    )
+    try:
+        try:
+            usuario = Usuarios.query.get(session['user_id'])
+        except Exception as e:
+            db.session.rollback()
+            usuario = None
+            
+        try:
+            contratos_lista = ContratosClientes.query.all()
+        except Exception as e:
+            db.session.rollback()
+            contratos_lista = []
+            
+        try:
+            reportes_lista = ReporteClientes.query.all()
+        except Exception as e:
+            db.session.rollback()
+            reportes_lista = []
+            
+        try:
+            clientes_lista = Clientes.query.all()
+        except Exception as e:
+            db.session.rollback()
+            clientes_lista = []
+            
+        return render_template(
+            'clientes.html',
+            usuario=usuario,
+            contratos=contratos_lista,
+            clientes=clientes_lista,
+            reportes=reportes_lista,
+            frase="El éxito en los negocios requiere entrenamiento y disciplina y mucho trabajo duro."
+        )
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"Error en clientes index:\n{error_trace}")
+        return f"<h1>Error 500 Interno en Clientes</h1><pre>{error_trace}</pre>", 500
 
 @clientes_bp.route('/crear_reporte', methods=['POST'])
 @login_required

@@ -13,45 +13,71 @@ contratistas_bp = Blueprint("contratistas", __name__)
 @login_required
 @admin_oficina_required
 def contratistas():
-    from models import ContratistaFactura, Contratista
-    usuario = Usuarios.query.get(session.get("user_id"))
-    notificaciones = Notificaciones.query.filter_by(
-        id_usuario_destino=session["user_id"], leido=False
-    ).order_by(Notificaciones.creado_en.desc()).all()
-    frase = frase_del_dia()
+    try:
+        from models import ContratistaFactura, Contratista
+        
+        try:
+            usuario = Usuarios.query.get(session.get("user_id"))
+        except Exception as e:
+            db.session.rollback()
+            usuario = None
+            
+        try:
+            notificaciones = Notificaciones.query.filter_by(
+                id_usuario_destino=session["user_id"], leido=False
+            ).order_by(Notificaciones.creado_en.desc()).all()
+        except Exception as e:
+            db.session.rollback()
+            notificaciones = []
+            
+        frase = frase_del_dia()
 
-    facturas = ContratistaFactura.query.order_by(ContratistaFactura.fecha_factura.desc()).all()
-    lista_contratistas = Contratista.query.order_by(Contratista.nombre.asc()).all()
+        try:
+            facturas = ContratistaFactura.query.order_by(ContratistaFactura.fecha_factura.desc()).all()
+        except Exception as e:
+            db.session.rollback()
+            facturas = []
+            
+        try:
+            lista_contratistas = Contratista.query.order_by(Contratista.nombre.asc()).all()
+        except Exception as e:
+            db.session.rollback()
+            lista_contratistas = []
 
-    deuda_por_contratista = {}
-    for factura in facturas:
-        nombre = factura.nombre_contratista
-        deuda_por_contratista[nombre] = deuda_por_contratista.get(nombre, 0) + float(factura.total_adeudado)
+        deuda_por_contratista = {}
+        for factura in facturas:
+            nombre = factura.nombre_contratista
+            deuda_por_contratista[nombre] = deuda_por_contratista.get(nombre, 0) + float(factura.total_adeudado)
 
-    # Totales globales (usan los @property del modelo)
-    total_valor_neto      = sum(float(f.valor_neto or 0) for f in facturas)
-    total_iva             = sum(f.iva for f in facturas)
-    total_valor_total     = sum(f.valor_total for f in facturas)
-    total_retencion       = sum(f.retencion_pesos for f in facturas)
-    total_cancelado       = sum(float(f.valor_cancelado or 0) for f in facturas)
-    total_adeudado_global = sum(deuda_por_contratista.values())
+        # Totales globales (usan los @property del modelo)
+        total_valor_neto      = sum(float(f.valor_neto or 0) for f in facturas)
+        total_iva             = sum(f.iva for f in facturas)
+        total_valor_total     = sum(f.valor_total for f in facturas)
+        total_retencion       = sum(f.retencion_pesos for f in facturas)
+        total_cancelado       = sum(float(f.valor_cancelado or 0) for f in facturas)
+        total_adeudado_global = sum(deuda_por_contratista.values())
 
-    return render_template(
-        "contratistas.html",
-        usuario=usuario,
-        notificaciones=notificaciones,
-        frase=frase,
-        frase_del_dia=frase,
-        facturas=facturas,
-        total_valor_neto=total_valor_neto,
-        total_iva=total_iva,
-        total_valor_total=total_valor_total,
-        total_retencion=total_retencion,
-        total_cancelado=total_cancelado,
-        total_adeudado_global=total_adeudado_global,
-        contratistas=lista_contratistas,
-        deuda_por_contratista=deuda_por_contratista,
-    )
+        return render_template(
+            "contratistas.html",
+            usuario=usuario,
+            notificaciones=notificaciones,
+            frase=frase,
+            frase_del_dia=frase,
+            facturas=facturas,
+            total_valor_neto=total_valor_neto,
+            total_iva=total_iva,
+            total_valor_total=total_valor_total,
+            total_retencion=total_retencion,
+            total_cancelado=total_cancelado,
+            total_adeudado_global=total_adeudado_global,
+            contratistas=lista_contratistas,
+            deuda_por_contratista=deuda_por_contratista,
+        )
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"Error en contratistas:\n{error_trace}")
+        return f"<h1>Error 500 Interno en Contratistas</h1><pre>{error_trace}</pre>", 500
 
 # ─── GET /contratistas/<nombre_contratista> ────────
 @contratistas_bp.route("/contratistas/<string:nombre_contratista>")
