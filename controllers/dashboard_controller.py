@@ -272,7 +272,7 @@ def dashboard_oficina():
     bancos = Bancos.query.all()
 
     return render_template(
-        "dashboard_oficina.html",
+        "icc_sas/dashboard_oficina.html",
         usuario=usuario,
         frase=frase,
         cotizaciones_historial=cotizaciones_historial,

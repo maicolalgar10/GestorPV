@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Oficina | ICC SAS</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --icc-blue: #4682B4; /* Steel Blue */
+      --icc-blue-dark: #315f86;
+      --icc-slate: #708090; /* Slate Gray */
+      --icc-slate-light: #94a3b8;
+      --icc-light: #f8fafc;
+      --icc-dark: #1e293b;
+    }
+
+    body { 
+      background-color: var(--icc-light); 
+      font-family: 'Inter', sans-serif; 
+      color: var(--icc-dark);
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    /* Layout con Sidebar */
+    .dashboard-wrapper {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      background-color: #ffffff;
+      border-right: 1px solid #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      z-index: 1000;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.02);
+    }
+    
+    .sidebar-header {
+      padding: 24px 20px;
+      border-bottom: 1px solid #f1f5f9;
+      text-align: center;
+    }
+    .sidebar-header h4 {
+      color: var(--icc-blue);
+      font-weight: 700;
+      margin: 0;
+      letter-spacing: -0.5px;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 20px 10px;
+      overflow-y: auto;
+    }
+
+    .nav-item-icc {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      color: var(--icc-slate);
+      text-decoration: none;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      transition: all 0.2s ease;
+      font-weight: 600;
+    }
+
+    .nav-item-icc i {
+      font-size: 1.1rem;
+      margin-right: 12px;
+      color: var(--icc-slate-light);
+      transition: color 0.2s ease;
+    }
+
+    .nav-item-icc:hover, .nav-item-icc.active {
+      background-color: #f1f5f9;
+      color: var(--icc-blue);
+    }
+    .nav-item-icc:hover i, .nav-item-icc.active i {
+      color: var(--icc-blue);
+    }
+
+    /* Contenido Principal */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0; /* Prevenir desbordamiento flex */
+    }
+
+    .topbar {
+      height: 70px;
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 30px;
+      position: sticky;
+      top: 0;
+      z-index: 999;
+    }
+
+    .content-area {
+      padding: 30px;
+      overflow-y: auto;
+    }
+
+    /* Tarjetas Modernas */
+    .module-card {
+      background: white;
+      border: 1px solid #f1f5f9;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08);
+      border-color: var(--icc-blue);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-right: 16px;
+    }
+
+    .stat-icon.blue { background-color: #e0f2fe; color: var(--icc-blue); }
+    .stat-icon.slate { background-color: #f1f5f9; color: var(--icc-slate); }
+    .stat-icon.green { background-color: #dcfce7; color: #16a34a; }
+    .stat-icon.orange { background-color: #ffedd5; color: #ea580c; }
+
+    .stat-details h3 { margin: 0; font-weight: 700; font-size: 1.25rem; color: var(--icc-dark); }
+    .stat-details p { margin: 0; font-size: 0.85rem; color: var(--icc-slate); font-weight: 600; text-transform: uppercase;}
+
+    .section-title {
+      font-weight: 700;
+      color: var(--icc-dark);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      font-size: 1.2rem;
+    }
+
+    /* Tablas */
+    .table-modern {
+      margin-bottom: 0;
+    }
+    .table-modern th {
+      background-color: #f8fafc;
+      color: var(--icc-slate);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid #e2e8f0;
+      padding: 12px 16px;
+    }
+    .table-modern td {
+      padding: 16px;
+      vertical-align: middle;
+      border-bottom: 1px solid #f1f5f9;
+      color: #334155;
+    }
+    
+    /* Botones y Badges */
+    .btn-icc-primary {
+      background-color: var(--icc-blue);
+      color: white;
+      border: none;
+    }
+    .btn-icc-primary:hover {
+      background-color: var(--icc-blue-dark);
+      color: white;
+    }
+    
+    .badge-status {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+    .badge-active { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .badge-paused { background-color: #fef08a; color: #854d0e; border: 1px solid #fde047; }
+    .badge-closed { background-color: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+    /* Modales Rediseñados */
+    .modal-content {
+      border-radius: 16px;
+      border: none;
+    }
+    .modal-header {
+      border-bottom: 1px solid #f1f5f9;
+      padding: 20px 24px;
+    }
+    .modal-footer {
+      border-top: 1px solid #f1f5f9;
+      padding: 16px 24px;
+    }
+  </style>
+</head>
+<body>
+  {% include 'mensajes.html' %}
+
+  <div class="dashboard-wrapper">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h4><i class="bi bi-buildings"></i> ICC SAS</h4>
+        <span class="small text-muted d-block mt-1">Gestión de Oficina</span>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <div class="small text-uppercase text-muted fw-bold px-3 mb-2" style="font-size: 0.7rem;">Módulos</div>
+        <a href="{{ url_for('dashboard.proveedores') }}" class="nav-item-icc">
+          <i class="bi bi-truck"></i> Proveedores
+        </a>
+        <a href="{{ url_for('contratistas.contratistas') }}" class="nav-item-icc">
+          <i class="bi bi-tools"></i> Contratistas
+        </a>
+        <a href="{{ url_for('dashboard.clientes') }}" class="nav-item-icc">
+          <i class="bi bi-people"></i> Clientes
+        </a>
+        <a href="{{ url_for('dashboard.gestion_materiales_oficina') }}" class="nav-item-icc">
+          <i class="bi bi-box-seam"></i> Stock Materiales
+        </a>
+        <a href="{{ url_for('tesoreria.comprobantes_egresos') }}" class="nav-item-icc">
+          <i class="bi bi-receipt"></i> Egresos
+        </a>
+        <a href="{{ url_for('tesoreria.ver_bancos') }}" class="nav-item-icc">
+          <i class="bi bi-bank"></i> Bancos y Cuentas
+        </a>
+      </nav>
+      
+      <div class="p-3 border-top border-light">
+        <div class="d-flex align-items-center mb-2 px-2">
+          <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-2" style="width:36px;height:36px;">
+            <i class="bi bi-person-fill text-secondary"></i>
+          </div>
+          <div>
+            <div class="fw-bold text-dark small" style="line-height:1.2;">{{ usuario.nombre }}</div>
+            <div class="text-muted" style="font-size:0.7rem;">Admin. Oficina</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <div>
+          <h5 class="m-0 fw-bold text-dark d-none d-md-block">Panel Principal</h5>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill d-none d-lg-inline-block">
+                <i class="bi bi-calendar-event me-1"></i> {{ frase }}
+            </span>
+            <div class="dropdown">
+            <button class="btn btn-light btn-sm dropdown-toggle border rounded-pill px-3 py-2" data-bs-toggle="dropdown">
+              <i class="bi bi-gear-fill text-muted me-1"></i> Ajustes
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+              <li><a class="dropdown-item" href="{{ url_for('usuarios.perfil') }}"><i class="bi bi-person me-2"></i> Mi Perfil</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-danger" href="{{ url_for('usuarios.logout') }}"><i class="bi bi-box-arrow-right me-2"></i> Cerrar Sesión</a></li>
+            </ul>
+          </div>
+        </div>
+      </header>
+
+      <!-- CONTENT AREA -->
+      <div class="content-area">
+        
+        <!-- STATS GRID -->
+        <div class="row g-4 mb-4">
+          <div class="col-md-6 col-lg-3">
+            <a href="{{ url_for('dashboard.proveedores') }}" class="stat-card">
+              <div class="stat-icon slate"><i class="bi bi-truck"></i></div>
+              <div class="stat-details">
+                <p>Proveedores</p>
+                <div class="small text-muted mt-1"><i class="bi bi-arrow-right"></i> Ver directorio</div>
+              </div>
+            </a>
+          </div>
+          <div class="col-md-6 col-lg-3">
+            <a href="{{ url_for('contratistas.contratistas') }}" class="stat-card">
+              <div class="stat-icon blue"><i class="bi bi-tools"></i></div>
+              <div class="stat-details">
+                <p>Contratistas</p>
+                <div class="small text-muted mt-1"><i class="bi bi-arrow-right"></i> Gestionar</div>
+              </div>
+            </a>
+          </div>
+          <div class="col-md-6 col-lg-3">
+            <a href="{{ url_for('dashboard.gestion_materiales_oficina') }}" class="stat-card">
+              <div class="stat-icon orange"><i class="bi bi-box-seam"></i></div>
+              <div class="stat-details">
+                <h3>{{ total_materiales }}</h3>
+                <p>Stock Materiales</p>
+              </div>
+            </a>
+          </div>
+          <div class="col-md-6 col-lg-3">
+            <a href="{{ url_for('dashboard.clientes') }}" class="stat-card">
+              <div class="stat-icon green"><i class="bi bi-people"></i></div>
+              <div class="stat-details">
+                <p>Clientes</p>
+                <div class="small text-muted mt-1"><i class="bi bi-arrow-right"></i> Ver directorio</div>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <!-- MAIN GRIDS (TABLES) -->
+        <div class="row g-4">
+          
+          <!-- LEFT COL: CONTRATOS -->
+          <div class="col-xl-8">
+            <div class="module-card">
+              <div class="d-flex justify-content-between align-items-center p-4 border-bottom border-light">
+                <h5 class="section-title m-0"><i class="bi bi-journal-text" style="color:var(--icc-blue)"></i> Facturación y Contratos Activos</h5>
+                <a href="{{ url_for('tesoreria.ver_tesoreria') }}" class="btn btn-sm btn-light border fw-semibold">
+                  Ver Tesorería <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-modern table-hover">
+                  <thead>
+                    <tr>
+                      <th>Proyecto</th>
+                      <th>Cliente</th>
+                      <th>Valor Total</th>
+                      <th class="text-center">Estado</th>
+                      <th class="text-end">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for f in contratos %}
+                      <tr>
+                        <td><strong>{{ f.cotizacion.proyecto }}</strong></td>
+                        <td>{{ f.cotizacion.cliente }}</td>
+                        <td class="fw-semibold text-dark">${{ "{:,.2f}".format(f.valor_total) }}</td>
+                        <td class="text-center">
+                          {% if f.estado == 'activo' %}
+                            <span class="badge-status badge-active">Activo</span>
+                          {% elif f.estado == 'pausado' %}
+                            <span class="badge-status badge-paused">Pausado</span>
+                          {% elif f.estado == 'cerrado' %}
+                            <span class="badge-status badge-closed">Cerrado</span>
+                          {% endif %}
+                        </td>
+                        <td class="text-end">
+                          <button type="button" class="btn btn-light btn-sm border text-muted px-2 me-1" title="Editar Contrato"
+                                  onclick="abrirModalEditarContrato({{ f.id }}, '{{ f.cotizacion.proyecto | replace('\'', '\\\'') }}', {{ f.valor_total }}, {{ f.anticipo_porcentaje }}, {{ f.retencion_garantia_porcentaje }})">
+                              <i class="bi bi-pencil-square"></i>
+                          </button>
+                          <a href="{{ url_for('tesoreria.ver_tesoreria') }}" class="btn btn-icc-primary btn-sm px-3 rounded-pill">
+                            Detalles
+                          </a>
+                        </td>
+                      </tr>
+                    {% else %}
+                      <tr><td colspan="5" class="text-center text-muted py-4">No hay contratos registrados.</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT COL: COTIZADOR & HISTORIAL -->
+          <div class="col-xl-4">
+            <!-- ACCIÓN RÁPIDA COTIZADOR -->
+            <div class="module-card p-4 text-center">
+              <div class="mb-3">
+                <div class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle" style="width:64px;height:64px;color:var(--icc-blue);">
+                  <i class="bi bi-calculator" style="font-size:2rem;"></i>
+                </div>
+              </div>
+              <h5 class="fw-bold text-dark">Cotizador ICC</h5>
+              <p class="text-muted small mb-4">Crea presupuestos, adjunta soportes y expórtalos al sistema.</p>
+              <button class="btn btn-icc-primary w-100 rounded-pill py-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalCotizacion">
+                <i class="bi bi-plus-circle me-1"></i> Nueva Cotización
+              </button>
+            </div>
+
+            <!-- HISTORIAL DE COTIZACIONES -->
+            <div class="module-card">
+              <div class="p-3 border-bottom border-light">
+                <h6 class="fw-bold m-0 text-dark"><i class="bi bi-clock-history text-muted me-2"></i> Historial Reciente</h6>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-sm table-modern align-middle m-0" style="font-size:0.85rem;">
+                  <thead>
+                    <tr>
+                      <th>Info</th>
+                      <th class="text-end">Total</th>
+                      <th class="text-center">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for c in cotizaciones_historial %}
+                    <tr>
+                      <td>
+                        <strong class="d-block text-dark">{{ c.cliente }}</strong>
+                        <span class="text-muted" style="font-size:0.75rem;">{{ c.proyecto }}</span>
+                        
+                        <div class="mt-2 d-flex flex-wrap gap-1">
+                            {% if c.estado == "PENDIENTE" %}
+                            <form method="POST" action="{{ url_for('cotizaciones.cambiar_estado_cotizacion', id=c.id, estado='ACEPTADA') }}" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button class="btn btn-outline-success btn-sm py-0 px-1" style="font-size:0.7rem;" title="Aceptar"><i class="bi bi-check2"></i></button>
+                            </form>
+                            <form method="POST" action="{{ url_for('cotizaciones.cambiar_estado_cotizacion', id=c.id, estado='RECHAZADA') }}" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button class="btn btn-outline-danger btn-sm py-0 px-1" style="font-size:0.7rem;" title="Rechazar"><i class="bi bi-x-lg"></i></button>
+                            </form>
+                            {% endif %}
+
+                            {% if c.imagen_cotizacion %}
+                              {% set urls = c.imagen_cotizacion.split(',') %}
+                              {% for url in urls %}
+                              <a href="{{ url if url.startswith('http') else url_for('static', filename='uploads/cotizaciones/' ~ url) }}"
+                                target="_blank"
+                                class="btn btn-light btn-sm border py-0 px-1"
+                                title="Soporte">
+                                {% if '.pdf' in url|lower %}
+                                  <i class="bi bi-file-pdf text-danger" style="font-size:0.7rem;"></i>
+                                {% else %}
+                                  <i class="bi bi-image text-primary" style="font-size:0.7rem;"></i>
+                                {% endif %}
+                              </a>
+                              {% endfor %}
+                            {% endif %}
+
+                            {% if c.estado == "ACEPTADA" and not c.contrato %}
+                            <button type="button" class="btn btn-light btn-sm border text-success py-0 px-1" title="Configurar Contrato" onclick="abrirModalContrato({{ c.id }}, '{{ c.proyecto | replace("'", "\\'") }}')">
+                                <i class="bi bi-file-earmark-text" style="font-size:0.7rem;"></i>
+                            </button>
+                            {% endif %}
+
+                            <!-- BOTÓN ELIMINAR -->
+                            <form method="POST"
+                                  action="{{ url_for('cotizaciones.eliminar_cotizacion', id=c.id) }}"
+                                  class="d-inline"
+                                  onsubmit="return confirm('¿Seguro que deseas eliminar esta cotización?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button class="btn btn-light btn-sm border py-0 px-1 text-danger" title="Eliminar">
+                                    <i class="bi bi-trash" style="font-size:0.7rem;"></i>
+                                </button>
+                            </form>
+                        </div>
+                      </td>
+
+                      <td class="text-end fw-semibold text-dark">${{ "{:,.0f}".format(c.contrato.valor_total if c.contrato else 0) }}</td>
+
+                      <td class="text-center">
+                        {% if c.estado == "PENDIENTE" %}
+                          <span class="badge bg-warning text-dark" style="font-size:0.65rem;">Pendiente</span>
+                        {% elif c.estado == "ACEPTADA" %}
+                          <span class="badge bg-success" style="font-size:0.65rem;">Aceptada</span>
+                        {% else %}
+                          <span class="badge bg-danger" style="font-size:0.65rem;">Rechazada</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="3" class="text-center text-muted py-3">No hay cotizaciones</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ================= MODAL COTIZACIÓN ================= -->
+  <div class="modal fade" id="modalCotizacion" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+
+        <form id="formCotizacion"
+              method="POST"
+              action="{{ url_for('cotizaciones.crear_cotizacion') }}"
+              enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <!-- HEADER -->
+          <div class="modal-header">
+            <h5 class="fw-bold m-0" style="color:var(--icc-blue);">
+              <i class="bi bi-calculator me-2"></i>Nueva Cotización
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <!-- BODY -->
+          <div class="modal-body px-4 py-4">
+
+            <div class="row g-3 mb-4">
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold text-muted">Cliente</label>
+                <input name="cliente" class="form-control" placeholder="Nombre del Cliente" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold text-muted">Proyecto</label>
+                <input name="proyecto" class="form-control" placeholder="Nombre del Proyecto" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold text-muted">N° Cotización</label>
+                <input name="numero_cotizacion" class="form-control" placeholder="Ej: COT-001" required>
+              </div>
+            </div>
+
+            <div class="p-3 bg-light rounded border border-light">
+              <label class="form-label fw-semibold text-dark"><i class="bi bi-paperclip me-1"></i>Soportes (Opcional)</label>
+              <input type="file" name="archivos_cotizacion" id="archivos_cotizacion" class="form-control" accept="image/*,application/pdf" multiple>
+              <div id="lista_archivos" class="mt-2 small text-muted"></div>
+            </div>
+
+          </div>
+
+          <!-- FOOTER -->
+          <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-outline-secondary px-4 rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-icc-primary px-4 rounded-pill fw-semibold">Guardar Cotización</button>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL GENERAR CONTRATO ================= -->
+  <div class="modal fade" id="modalGenerarContrato" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg">
+        <form method="POST" id="formGenerarContrato" action="">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <!-- HEADER -->
+          <div class="modal-header bg-dark text-white" style="border-radius: 16px 16px 0 0;">
+            <div>
+              <h5 class="modal-title fw-bold mb-0">Configurar Contrato</h5>
+              <div class="small text-white-50 mt-1" id="contratoProyectoTexto"></div>
+            </div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+
+          <!-- BODY -->
+          <div class="modal-body p-4">
+            <div class="mb-4">
+              <label class="form-label fw-semibold text-dark">Valor Total (Monto pactado)</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0">$</span>
+                <input type="hidden" name="valor_total" id="contratoValorTotal_hidden" required>
+                <input type="text" id="contratoValorTotal" class="form-control border-start-0 ps-0" required placeholder="Ej: 15.000.000" oninput="formatearMoneda(this, 'contratoValorTotal_hidden'); calcularAnticipoPesos()">
+              </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold text-dark">% de Anticipo</label>
+                <div class="input-group">
+                  <input type="number" step="0.01" min="0" max="100" name="anticipo_porcentaje" id="contratoAnticipoPorcentaje" class="form-control" value="0" required oninput="calcularAnticipoPesos()">
+                  <span class="input-group-text bg-light">%</span>
+                </div>
+                <div class="form-text text-success fw-bold mt-2" id="anticipoPesosText">$0</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold text-dark">% Retención Garantía</label>
+                <div class="input-group">
+                  <input type="number" step="0.01" min="0" max="100" name="retencion_garantia_porcentaje" class="form-control" value="0" required>
+                  <span class="input-group-text bg-light">%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- SELECCIÓN DE BANCO -->
+            <div class="p-3 bg-light rounded border border-light" id="divBancoAnticipo" style="display: none;">
+              <label class="form-label fw-semibold text-dark mb-2"><i class="bi bi-bank me-1 text-primary"></i> Banco destino para Anticipo</label>
+              <input type="text" name="banco_nombre" class="form-control" id="selectBancoAnticipo" list="bancosList" placeholder="Seleccione o ingrese...">
+              <datalist id="bancosList">
+                {% for b in bancos %}
+                  <option value="{{ b.nombre_banco }} - {{ b.numero_cuenta }}"></option>
+                {% endfor %}
+              </datalist>
+            </div>
+          </div>
+
+          <!-- FOOTER -->
+          <div class="modal-footer bg-light" style="border-radius: 0 0 16px 16px;">
+            <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-dark rounded-pill px-4 fw-semibold">
+              <i class="bi bi-check2-circle me-1"></i> Activar Contrato
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL EDITAR CONTRATO ================= -->
+  <div class="modal fade" id="modalEditarContrato" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg">
+        <form method="POST" id="formEditarContrato" action="">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <!-- HEADER -->
+          <div class="modal-header bg-warning" style="border-radius: 16px 16px 0 0;">
+            <div>
+              <h5 class="modal-title fw-bold mb-0 text-dark">Editar Contrato</h5>
+              <div class="small text-dark opacity-75 mt-1" id="editarContratoProyectoTexto"></div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <!-- BODY -->
+          <div class="modal-body p-4">
+            <div class="mb-4">
+              <label class="form-label fw-semibold text-dark">Valor Total (Monto pactado)</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0">$</span>
+                <input type="hidden" name="valor_total" id="editContratoValorTotal_hidden" required>
+                <input type="text" id="editContratoValorTotal" class="form-control border-start-0 ps-0" required oninput="formatearMoneda(this, 'editContratoValorTotal_hidden'); calcularEditarAnticipoPesos()">
+              </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold text-dark">% de Anticipo</label>
+                <div class="input-group">
+                  <input type="number" step="0.01" min="0" max="100" name="anticipo_porcentaje" id="editContratoAnticipoPorcentaje" class="form-control" required oninput="calcularEditarAnticipoPesos()">
+                  <span class="input-group-text bg-light">%</span>
+                </div>
+                <div class="form-text text-success fw-bold mt-2" id="editAnticipoPesosText">$0</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold text-dark">% Retención Garantía</label>
+                <div class="input-group">
+                  <input type="number" step="0.01" min="0" max="100" name="retencion_garantia_porcentaje" id="editContratoRetencionPorcentaje" class="form-control" required>
+                  <span class="input-group-text bg-light">%</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="alert alert-info py-2 small mb-0 rounded border-0" style="background-color:#e0f2fe; color:#0369a1;">
+              <i class="bi bi-info-circle me-1"></i> Si modificas el porcentaje o el valor total, se actualizará el movimiento de anticipo.
+            </div>
+          </div>
+
+          <!-- FOOTER -->
+          <div class="modal-footer bg-light" style="border-radius: 0 0 16px 16px;">
+            <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-warning rounded-pill px-4 fw-bold">
+              Guardar Cambios
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    // === Lógica para formateo de moneda ===
+    function formatearMoneda(inputVisual, idInputOculto) {
+      let valor = inputVisual.value.replace(/\D/g, "");
+      if(valor !== "") {
+        document.getElementById(idInputOculto).value = valor;
+        inputVisual.value = new Intl.NumberFormat('es-CO').format(parseInt(valor, 10));
+      } else {
+        document.getElementById(idInputOculto).value = "";
+        inputVisual.value = "";
+      }
+    }
+
+    // Modal Contrato
+    function abrirModalContrato(cotizacionId, proyectoNombre) {
+      document.getElementById('contratoProyectoTexto').innerText = proyectoNombre;
+      const form = document.getElementById('formGenerarContrato');
+      form.action = `/tesoreria/contratos/desde-cotizacion/${cotizacionId}`;
+      
+      document.getElementById('contratoValorTotal_hidden').value = '';
+      document.getElementById('contratoValorTotal').value = '';
+      document.getElementById('contratoAnticipoPorcentaje').value = '0';
+      document.getElementById('selectBancoAnticipo').value = '';
+      calcularAnticipoPesos();
+      
+      new bootstrap.Modal(document.getElementById('modalGenerarContrato')).show();
+    }
+
+    function calcularAnticipoPesos() {
+      const valorTotal = parseFloat(document.getElementById('contratoValorTotal_hidden').value) || 0;
+      const porcentaje = parseFloat(document.getElementById('contratoAnticipoPorcentaje').value) || 0;
+      
+      const anticipoCalculado = (valorTotal * porcentaje) / 100;
+      document.getElementById('anticipoPesosText').innerText = '$' + anticipoCalculado.toLocaleString('es-CO');
+      
+      const divBanco = document.getElementById('divBancoAnticipo');
+      const selectBanco = document.getElementById('selectBancoAnticipo');
+      
+      if (porcentaje > 0 && valorTotal > 0) {
+        divBanco.style.display = 'block';
+        selectBanco.required = true;
+      } else {
+        divBanco.style.display = 'none';
+        selectBanco.required = false;
+        selectBanco.value = '';
+      }
+    }
+
+    // Modal Editar Contrato
+    function abrirModalEditarContrato(idContrato, proyectoNombre, valorTotal, anticipoPorc, retencionPorc) {
+      document.getElementById('editarContratoProyectoTexto').innerText = proyectoNombre;
+      const form = document.getElementById('formEditarContrato');
+      form.action = `/tesoreria/contratos/editar/${idContrato}`;
+      document.getElementById('editContratoValorTotal_hidden').value = valorTotal;
+      document.getElementById('editContratoValorTotal').value = valorTotal ? new Intl.NumberFormat('es-CO').format(valorTotal) : '';
+      document.getElementById('editContratoAnticipoPorcentaje').value = anticipoPorc;
+      document.getElementById('editContratoRetencionPorcentaje').value = retencionPorc;
+      
+      calcularEditarAnticipoPesos();
+      
+      new bootstrap.Modal(document.getElementById('modalEditarContrato')).show();
+    }
+
+    function calcularEditarAnticipoPesos() {
+      const valorTotal = parseFloat(document.getElementById('editContratoValorTotal_hidden').value) || 0;
+      const porcentaje = parseFloat(document.getElementById('editContratoAnticipoPorcentaje').value) || 0;
+      
+      const anticipoCalculado = (valorTotal * porcentaje) / 100;
+      document.getElementById('editAnticipoPesosText').innerText = '$' + anticipoCalculado.toLocaleString('es-CO');
+    }
+
+    // Listar archivos de cotización
+    document.addEventListener('DOMContentLoaded', function() {
+      const inputArchivos = document.getElementById('archivos_cotizacion');
+      if (inputArchivos) {
+        inputArchivos.addEventListener('change', function(e) {
+          const lista = document.getElementById('lista_archivos');
+          lista.innerHTML = '';
+          if (this.files.length > 0) {
+            let ul = document.createElement('ul');
+            ul.className = 'mb-0 ps-3 mt-2';
+            for (let i = 0; i < this.files.length; i++) {
+              let li = document.createElement('li');
+              li.textContent = this.files[i].name;
+              ul.appendChild(li);
+            }
+            lista.appendChild(ul);
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>
