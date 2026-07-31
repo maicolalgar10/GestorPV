@@ -336,44 +336,70 @@ def gestion_materiales_oficina():
 @login_required
 @admin_oficina_required
 def proveedores():
-    from models import ProveedorFactura, Proveedor
-    usuario = Usuarios.query.get(session.get("user_id"))
-    notificaciones = Notificaciones.query.filter_by(
-        id_usuario_destino=session["user_id"], leido=False
-    ).order_by(Notificaciones.creado_en.desc()).all()
-    frase = frase_del_dia()
+    try:
+        from models import ProveedorFactura, Proveedor
+        
+        try:
+            usuario = Usuarios.query.get(session.get("user_id"))
+        except Exception as e:
+            db.session.rollback()
+            usuario = None
 
-    facturas = ProveedorFactura.query.order_by(ProveedorFactura.fecha_factura.desc()).all()
-    lista_proveedores = Proveedor.query.order_by(Proveedor.nombre.asc()).all()
+        try:
+            notificaciones = Notificaciones.query.filter_by(
+                id_usuario_destino=session["user_id"], leido=False
+            ).order_by(Notificaciones.creado_en.desc()).all()
+        except Exception as e:
+            db.session.rollback()
+            notificaciones = []
+            
+        frase = frase_del_dia()
 
-    deuda_por_proveedor = {}
-    for factura in facturas:
-        nombre = factura.nombre_proveedor
-        deuda_por_proveedor[nombre] = deuda_por_proveedor.get(nombre, 0) + float(factura.total_adeudado)
+        try:
+            facturas = ProveedorFactura.query.order_by(ProveedorFactura.fecha_factura.desc()).all()
+        except Exception as e:
+            db.session.rollback()
+            facturas = []
 
-    # Totales globales (usan los @property del modelo)
-    total_valor_neto      = sum(float(f.valor_neto or 0) for f in facturas)
-    total_iva             = sum(f.iva for f in facturas)
-    total_valor_total     = sum(f.valor_total for f in facturas)
-    total_retencion       = sum(f.retencion_pesos for f in facturas)
-    total_cancelado       = sum(float(f.valor_cancelado or 0) for f in facturas)
-    total_adeudado_global = sum(deuda_por_proveedor.values())
+        try:
+            lista_proveedores = Proveedor.query.order_by(Proveedor.nombre.asc()).all()
+        except Exception as e:
+            db.session.rollback()
+            lista_proveedores = []
 
-    return render_template(
-        "proveedores.html",
-        usuario=usuario,
-        notificaciones=notificaciones,
-        frase=frase,
-        facturas=facturas,
-        total_valor_neto=total_valor_neto,
-        total_iva=total_iva,
-        total_valor_total=total_valor_total,
-        total_retencion=total_retencion,
-        total_cancelado=total_cancelado,
-        total_adeudado_global=total_adeudado_global,
-        proveedores=lista_proveedores,
-        deuda_por_proveedor=deuda_por_proveedor,
-    )
+        deuda_por_proveedor = {}
+        for factura in facturas:
+            nombre = factura.nombre_proveedor
+            deuda_por_proveedor[nombre] = deuda_por_proveedor.get(nombre, 0) + float(factura.total_adeudado)
+
+        # Totales globales (usan los @property del modelo)
+        total_valor_neto      = sum(float(f.valor_neto or 0) for f in facturas)
+        total_iva             = sum(f.iva for f in facturas)
+        total_valor_total     = sum(f.valor_total for f in facturas)
+        total_retencion       = sum(f.retencion_pesos for f in facturas)
+        total_cancelado       = sum(float(f.valor_cancelado or 0) for f in facturas)
+        total_adeudado_global = sum(deuda_por_proveedor.values())
+
+        return render_template(
+            "proveedores.html",
+            usuario=usuario,
+            notificaciones=notificaciones,
+            frase=frase,
+            facturas=facturas,
+            total_valor_neto=total_valor_neto,
+            total_iva=total_iva,
+            total_valor_total=total_valor_total,
+            total_retencion=total_retencion,
+            total_cancelado=total_cancelado,
+            total_adeudado_global=total_adeudado_global,
+            proveedores=lista_proveedores,
+            deuda_por_proveedor=deuda_por_proveedor,
+        )
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"Error en proveedores:\n{error_trace}")
+        return f"<h1>Error 500 Interno en Proveedores</h1><pre>{error_trace}</pre>", 500
 
 # ─── GET /dashboard/proveedores/<nombre_proveedor> ────────
 @dashboard_bp.route("/dashboard/proveedores/<string:nombre_proveedor>")
