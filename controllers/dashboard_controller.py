@@ -240,22 +240,32 @@ def dashboard_oficina():
 
 
         # 📌 Historial de cotizaciones (todas)
-        cotizaciones_historial = (
-            Cotizacion.query
-            .order_by(Cotizacion.id.desc())
-            .limit(5)
-            .all()
-        )
+        try:
+            cotizaciones_historial = (
+                Cotizacion.query
+                .order_by(Cotizacion.id.desc())
+                .limit(5)
+                .all()
+            )
+        except Exception as e:
+            db.session.rollback()
+            print(f"Advertencia: No se pudo consultar Cotizacion ({e})")
+            cotizaciones_historial = []
 
         # 📌 Seguimiento de tesorería (solo con contrato)
         from models import Contrato
 
-        contratos = (
-            Contrato.query
-            .order_by(Contrato.id.desc())
-            .limit(5)
-            .all()
-        )
+        try:
+            contratos = (
+                Contrato.query
+                .order_by(Contrato.id.desc())
+                .limit(5)
+                .all()
+            )
+        except Exception as e:
+            db.session.rollback()
+            print(f"Advertencia: No se pudo consultar Contrato ({e})")
+            contratos = []
 
         # Notificaciones no leídas (con fallback por si la tabla no existe)
         try:
@@ -263,6 +273,7 @@ def dashboard_oficina():
                 id_usuario_destino=session["user_id"], leido=False
             ).order_by(Notificaciones.creado_en.desc()).all()
         except Exception as e:
+            db.session.rollback()
             print(f"Advertencia: No se pudo consultar Notificaciones ({e})")
             notificaciones = []
 
@@ -271,7 +282,12 @@ def dashboard_oficina():
         
         # 📌 Bancos disponibles para el nuevo modal
         from models import Bancos
-        bancos = Bancos.query.all()
+        try:
+            bancos = Bancos.query.all()
+        except Exception as e:
+            db.session.rollback()
+            print(f"Advertencia: No se pudo consultar Bancos ({e})")
+            bancos = []
 
         return render_template(
             "icc_sas/dashboard_oficina.html",
