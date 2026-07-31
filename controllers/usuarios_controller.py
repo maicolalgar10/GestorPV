@@ -56,11 +56,11 @@ def login():
             # Login normal (SOLO si NO debe cambiar contraseña)
             session['user_id'] = user.id_usuario
             session['nombre'] = user.nombre
-            session['rol'] = user.rol
+            session['rol'] = getattr(user.rol, 'value', str(user.rol))
             session['foto_perfil'] = user.foto_perfil or '/static/uploads/perfiles/default.png'
             
             flash("Login exitoso", "success")
-            return redirect(url_for('dashboard.dashboard'))
+            return redirect(url_for('dashboard.dashboard_oficina'))
         else:
             # Contraseña incorrecta
             flash("Usuario o contraseña incorrecta.", "danger")
