@@ -235,51 +235,54 @@ def dashboard_trabajador():
 @login_required
 @admin_oficina_required
 def dashboard_oficina():
-    frase = frase_del_dia()
+    try:
+        frase = frase_del_dia()
 
 
-    # 📌 Historial de cotizaciones (todas)
-    cotizaciones_historial = (
-        Cotizacion.query
-        .order_by(Cotizacion.id.desc())
-        .limit(5)
-        .all()
-    )
+        # 📌 Historial de cotizaciones (todas)
+        cotizaciones_historial = (
+            Cotizacion.query
+            .order_by(Cotizacion.id.desc())
+            .limit(5)
+            .all()
+        )
 
-    # 📌 Seguimiento de tesorería (solo con contrato)
-    from models import Contrato
+        # 📌 Seguimiento de tesorería (solo con contrato)
+        from models import Contrato
 
-    contratos = (
-        Contrato.query
-        .order_by(Contrato.id.desc())
-        .limit(5)
-        .all()
-    )
+        contratos = (
+            Contrato.query
+            .order_by(Contrato.id.desc())
+            .limit(5)
+            .all()
+        )
 
-    # Notificaciones no leídas
-    notificaciones = Notificaciones.query.filter_by(
-        id_usuario_destino=session["user_id"], leido=False
-    ).order_by(Notificaciones.creado_en.desc()).all()
+        # Notificaciones no leídas
+        notificaciones = Notificaciones.query.filter_by(
+            id_usuario_destino=session["user_id"], leido=False
+        ).order_by(Notificaciones.creado_en.desc()).all()
 
-    # Usuario actual
-    usuario = Usuarios.query.get(session.get("user_id"))
-    
-    print("TOTAL COTIZACIONES:", Cotizacion.query.count())
-    print("CON CONTRATO:", Cotizacion.query.filter(Cotizacion.contrato.has()).count())
+        # Usuario actual
+        usuario = Usuarios.query.get(session.get("user_id"))
+        
+        # 📌 Bancos disponibles para el nuevo modal
+        from models import Bancos
+        bancos = Bancos.query.all()
 
-    # 📌 Bancos disponibles para el nuevo modal
-    from models import Bancos
-    bancos = Bancos.query.all()
-
-    return render_template(
-        "icc_sas/dashboard_oficina.html",
-        usuario=usuario,
-        frase=frase,
-        cotizaciones_historial=cotizaciones_historial,
-        contratos=contratos,
-        notificaciones=notificaciones,
-        bancos=bancos
-    )
+        return render_template(
+            "icc_sas/dashboard_oficina.html",
+            usuario=usuario,
+            frase=frase,
+            cotizaciones_historial=cotizaciones_historial,
+            contratos=contratos,
+            notificaciones=notificaciones,
+            bancos=bancos
+        )
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"Error en dashboard_oficina:\n{error_trace}")
+        return f"<h1>Error 500 Interno</h1><pre>{error_trace}</pre>", 500
 
 # -----------------------------
 # DASHBOARD DE OFICINA -> MATERIALES
