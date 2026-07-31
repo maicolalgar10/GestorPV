@@ -19,7 +19,7 @@ dashboard_bp = Blueprint("dashboard", __name__)
 @dashboard_bp.route("/")
 def home():
     if "user_id" in session:
-        return redirect(url_for("dashboard.dashboard"))
+        return redirect(url_for("dashboard.dashboard_oficina"))
     return redirect(url_for("usuarios.login"))
 
 # -----------------------------
