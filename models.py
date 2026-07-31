@@ -29,8 +29,8 @@ class Usuarios(db.Model):
     notificaciones = db.relationship("Notificaciones", back_populates="destinatario", cascade="all, delete-orphan")
 
     # Relación uno a uno con Personal
-    personal_id = db.Column(db.Integer, db.ForeignKey("personal.id", ondelete="SET NULL"), nullable=True)
-    personal_data = db.relationship("Personal", back_populates="usuario_data")
+    # personal_id = db.Column(db.Integer, db.ForeignKey("personal.id", ondelete="SET NULL"), nullable=True)
+    # personal_data = db.relationship("Personal", back_populates="usuario_data")
 
 
 # ===========================================
@@ -54,10 +54,10 @@ class Personal(db.Model):
     horarios = db.relationship("Horario", back_populates="personal", cascade="all, delete-orphan")
 
     # Relación uno a uno con Usuarios
-    usuario_data = db.relationship(
-        "Usuarios",
-        back_populates="personal_data",
-        uselist=False)
+    # usuario_data = db.relationship(
+    #     "Usuarios",
+    #     back_populates="personal_data",
+    #     uselist=False)
     
     asignaciones_diarias = db.relationship("AsignacionDiaria", back_populates="personal", cascade="all, delete-orphan")
 
