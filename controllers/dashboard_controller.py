@@ -257,10 +257,14 @@ def dashboard_oficina():
             .all()
         )
 
-        # Notificaciones no leídas
-        notificaciones = Notificaciones.query.filter_by(
-            id_usuario_destino=session["user_id"], leido=False
-        ).order_by(Notificaciones.creado_en.desc()).all()
+        # Notificaciones no leídas (con fallback por si la tabla no existe)
+        try:
+            notificaciones = Notificaciones.query.filter_by(
+                id_usuario_destino=session["user_id"], leido=False
+            ).order_by(Notificaciones.creado_en.desc()).all()
+        except Exception as e:
+            print(f"Advertencia: No se pudo consultar Notificaciones ({e})")
+            notificaciones = []
 
         # Usuario actual
         usuario = Usuarios.query.get(session.get("user_id"))
