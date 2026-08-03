@@ -801,7 +801,7 @@
     // Funciones de Contratista
     function prepararModalEditarContratista(btn, e) {
       e.stopPropagation();
-      document.getElementById('formEditarContratista').action = `/contratistas/editar_contratista/${btn.dataset.id}`;
+      document.getElementById('formEditarContratista').action = `/contratistas/editar/${btn.dataset.id}`;
       document.getElementById('edit_nombre').value = btn.dataset.nombre;
       document.getElementById('edit_nit').value = btn.dataset.nit;
       document.getElementById('edit_telefono').value = btn.dataset.telefono;
