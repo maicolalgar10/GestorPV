@@ -167,6 +167,52 @@ def editar_contratista(id):
     return redirect(url_for("contratistas.index"))
 
 
+# ─── POST /contratistas/crear_contrato ────────────────────
+@contratistas_bp.route("/crear_contrato", methods=["POST"])
+@login_required
+@admin_oficina_required
+def crear_contrato_contratista():
+    from models import ContratosContratista
+    try:
+        contratista_id = request.form.get('contratista_id')
+        numero_contrato = request.form.get('numero_contrato')
+        objeto = request.form.get('objeto')
+        valor_total = parse_float_safe(request.form.get('valor_total'))
+        
+        fecha_inicio_str = request.form.get('fecha_inicio')
+        fecha_fin_str = request.form.get('fecha_fin')
+        fecha_inicio = dt.strptime(fecha_inicio_str, '%Y-%m-%d').date() if fecha_inicio_str else None
+        fecha_fin = dt.strptime(fecha_fin_str, '%Y-%m-%d').date() if fecha_fin_str else None
+
+        contrato_pdf = request.files.get('contrato_pdf')
+        url_contrato = subir_archivo_supabase(contrato_pdf) if contrato_pdf else None
+        
+        contratista = Contratista.query.get(contratista_id)
+        if not contratista:
+            flash("Contratista no encontrado", "danger")
+            return redirect(url_for('contratistas.index'))
+
+        nuevo_contrato = ContratosContratista(
+            contratista_id=contratista.id,
+            numero_contrato=numero_contrato,
+            objeto=objeto,
+            valor_total=valor_total,
+            fecha_inicio=fecha_inicio,
+            fecha_fin=fecha_fin,
+            archivo_pdf=url_contrato
+        )
+
+        db.session.add(nuevo_contrato)
+        db.session.commit()
+        flash('Contrato registrado exitosamente.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al crear contrato contratista: {e}")
+        flash(f'Error al registrar el contrato: {e}', 'danger')
+
+    return redirect(url_for('contratistas.index'))
+
+
 # ─── POST /contratistas/crear_factura ────────────────────
 @contratistas_bp.route("/crear_factura", methods=["POST"])
 @login_required

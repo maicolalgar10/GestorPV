@@ -1016,6 +1016,21 @@ class Contratista(db.Model):
     estado = db.Column(db.Enum('Activo', 'Inactivo', name='estado_contratista_enum'), default='Activo')
     fecha_registro = db.Column(db.DateTime, default=datetime.utcnow)
 
+class ContratosContratista(db.Model):
+    __tablename__ = "contratos_contratista"
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    contratista_id = db.Column(db.Integer, db.ForeignKey('contratistas.id'), nullable=False)
+    numero_contrato = db.Column(db.String(100), nullable=True)
+    objeto = db.Column(db.Text, nullable=True)
+    valor_total = db.Column(db.Numeric(14, 2), nullable=False, default=0)
+    fecha_inicio = db.Column(db.Date, nullable=True)
+    fecha_fin = db.Column(db.Date, nullable=True)
+    archivo_pdf = db.Column(db.String(500), nullable=True)
+    creado_en = db.Column(db.DateTime, default=datetime.utcnow)
+
+    contratista = db.relationship('Contratista', backref=db.backref('contratos', lazy=True))
+
 class ContratistaFactura(db.Model):
     __tablename__ = "contratista_facturas"
 

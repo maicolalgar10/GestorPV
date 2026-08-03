@@ -239,6 +239,9 @@
           data-bs-target="#modalCrearContratista">
           <i class="bi bi-person-plus me-1"></i> Nuevo Contratista
         </button>
+        <button class="btn btn-light rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#modalCrearContrato">
+          <i class="bi bi-file-earmark-plus me-1"></i> Crear Contrato
+        </button>
       </div>
     </div>
 
@@ -486,6 +489,74 @@
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
           <button type="submit" form="formEditarContratista" class="btn btn-confirm px-4"><i class="bi bi-save me-1"></i>
             Actualizar Contratista</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CREAR CONTRATO -->
+  <div class="modal fade modal-dark" id="modalCrearContrato" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <h5 class="modal-title"><i class="bi bi-file-earmark-plus me-2"></i>Registrar Nuevo Contrato</h5>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <form method="POST" id="formCrearContrato" action="{{ url_for('contratistas.crear_contrato_contratista') }}" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="row g-3">
+              <div class="col-12">
+                <label>Seleccionar Contratista *</label>
+                <select name="contratista_id" class="form-select" required>
+                  <option value="" selected disabled>Seleccione un contratista...</option>
+                  {% for c in contratistas %}
+                    <option value="{{ c.id }}">{{ c.nombre }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label>Número de Contrato</label>
+                <input type="text" name="numero_contrato" class="form-control" placeholder="Ej. CT-2026-01">
+              </div>
+              <div class="col-md-6">
+                <label>Valor Total del Contrato *</label>
+                <div class="input-group">
+                  <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                  <input type="text" name="valor_total" class="form-control money-input" value="0" required oninput="formatMoneyField(this)">
+                </div>
+              </div>
+              <div class="col-12">
+                <label>Objeto del Contrato</label>
+                <textarea name="objeto" class="form-control" rows="3" placeholder="Descripción detallada..."></textarea>
+              </div>
+              <div class="col-md-6">
+                <label>Fecha de Inicio</label>
+                <input type="date" name="fecha_inicio" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label>Fecha de Fin</label>
+                <input type="date" name="fecha_fin" class="form-control">
+              </div>
+              <div class="col-12">
+                <label>Contrato (PDF)</label>
+                <div class="upload-zone" onclick="this.querySelector('input').click()">
+                  <input type="file" name="contrato_pdf" accept=".pdf" onchange="mostrarNombreArchivo(this,'lbl_contrato')">
+                  <label id="lbl_contrato"><i class="bi bi-cloud-arrow-up me-1"></i>Subir PDF del Contrato</label>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="modal-footer d-flex justify-content-end gap-2 mt-4 border-top pt-3 bg-dark"
+          style="border-color:#3f3f5c !important;">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" form="formCrearContrato" class="btn btn-confirm px-4"><i class="bi bi-save me-1"></i>
+            Guardar Contrato</button>
         </div>
       </div>
     </div>
