@@ -20,21 +20,38 @@ def contratistas():
     ).order_by(Notificaciones.creado_en.desc()).all()
     frase = frase_del_dia()
 
-    facturas = ContratistaFactura.query.order_by(ContratistaFactura.fecha_factura.desc()).all()
+    # Obtener contratistas ordenados alfabéticamente
     lista_contratistas = Contratista.query.order_by(Contratista.nombre.asc()).all()
+    
+    # Obtener todas las facturas
+    facturas = ContratistaFactura.query.order_by(ContratistaFactura.fecha_factura.desc()).all()
 
-    deuda_por_contratista = {}
-    for factura in facturas:
-        nombre = factura.nombre_contratista
-        deuda_por_contratista[nombre] = deuda_por_contratista.get(nombre, 0) + float(factura.total_adeudado)
+    # Agrupar facturas por contratista (usando nombre_contratista para el enlace)
+    facturas_por_contratista = {c.nombre: [] for c in lista_contratistas}
+    for f in facturas:
+        if f.nombre_contratista in facturas_por_contratista:
+            facturas_por_contratista[f.nombre_contratista].append(f)
+        else:
+            facturas_por_contratista[f.nombre_contratista] = [f]
 
-    # Totales globales (usan los @property del modelo)
-    total_valor_neto      = sum(float(f.valor_neto or 0) for f in facturas)
-    total_iva             = sum(f.iva for f in facturas)
-    total_valor_total     = sum(f.valor_total for f in facturas)
-    total_retencion       = sum(f.retencion_pesos for f in facturas)
-    total_cancelado       = sum(float(f.valor_cancelado or 0) for f in facturas)
-    total_adeudado_global = sum(deuda_por_contratista.values())
+    # Calcular totales por contratista para el acordeón
+    totales_contratistas = {}
+    for contratista in lista_contratistas:
+        facturas_c = facturas_por_contratista.get(contratista.nombre, [])
+        total_facturado = sum(float(f.valor_total) for f in facturas_c)
+        total_rete_garantia = sum(float(f.retencion_pesos) for f in facturas_c)
+        # Usamos retencion_pesos como rete garantia o algo asimilable si se quiere
+        total_pagos = sum(float(f.valor_cancelado) for f in facturas_c)
+        saldo_adeudado = sum(float(f.total_adeudado) for f in facturas_c)
+        
+        totales_contratistas[contratista.nombre] = {
+            'total_facturado': total_facturado,
+            'total_rete_garantia': total_rete_garantia,
+            'total_retenciones_ley': 0.0, # Puede no aplicar a contratista
+            'total_pagos': total_pagos,
+            'saldo_adeudado': saldo_adeudado,
+            'facturas': facturas_c
+        }
 
     return render_template(
         "contratistas.html",
@@ -42,46 +59,13 @@ def contratistas():
         notificaciones=notificaciones,
         frase=frase,
         frase_del_dia=frase,
-        facturas=facturas,
-        total_valor_neto=total_valor_neto,
-        total_iva=total_iva,
-        total_valor_total=total_valor_total,
-        total_retencion=total_retencion,
-        total_cancelado=total_cancelado,
-        total_adeudado_global=total_adeudado_global,
         contratistas=lista_contratistas,
-        deuda_por_contratista=deuda_por_contratista,
+        totales_contratistas=totales_contratistas,
     )
 
-# ─── GET /contratistas/<nombre_contratista> ────────
-@contratistas_bp.route("/contratistas/<string:nombre_contratista>")
-@login_required
-@admin_oficina_required
-def facturas_contratista(nombre_contratista):
-    from models import ContratistaFactura
-    usuario = Usuarios.query.get(session.get("user_id"))
-    notificaciones = Notificaciones.query.filter_by(
-        id_usuario_destino=session["user_id"], leido=False
-    ).order_by(Notificaciones.creado_en.desc()).all()
-    frase = frase_del_dia()
 
-    facturas = ContratistaFactura.query.filter_by(nombre_contratista=nombre_contratista).order_by(ContratistaFactura.fecha_factura.desc()).all()
-    
-    deuda_total = sum(f.total_adeudado for f in facturas)
-
-    return render_template(
-        "facturas_contratista.html",
-        usuario=usuario,
-        notificaciones=notificaciones,
-        frase=frase,
-        frase_del_dia=frase,
-        facturas=facturas,
-        nombre_contratista=nombre_contratista,
-        deuda_total=deuda_total
-    )
-
-# ─── POST /contratistas/crear ────────────────────
-@contratistas_bp.route("/contratistas/crear", methods=["POST"])
+# ─── POST /contratistas/crear_contratista ────────────────────
+@contratistas_bp.route("/contratistas/crear_contratista", methods=["POST"])
 @login_required
 @admin_oficina_required
 def crear_contratista():
@@ -90,9 +74,11 @@ def crear_contratista():
         nombre = request.form.get("nombre", "").strip()
         nit = request.form.get("nit", "").strip()
         telefono = request.form.get("telefono", "").strip()
+        especialidad = request.form.get("especialidad", "").strip()
+        estado = request.form.get("estado", "Activo")
 
         if not nombre:
-            flash("El nombre del contratista es obligatorio.", "warning")
+            flash("El nombre/razón social es obligatorio.", "warning")
             return redirect(url_for("contratistas.contratistas"))
 
         existe = Contratista.query.filter(Contratista.nombre.ilike(nombre)).first()
@@ -100,7 +86,13 @@ def crear_contratista():
             flash("Ya existe un contratista con ese nombre.", "warning")
             return redirect(url_for("contratistas.contratistas"))
 
-        nuevo = Contratista(nombre=nombre, nit=nit, telefono=telefono)
+        nuevo = Contratista(
+            nombre=nombre, 
+            nit=nit, 
+            telefono=telefono,
+            especialidad=especialidad,
+            estado=estado
+        )
         db.session.add(nuevo)
         db.session.commit()
         flash("Contratista registrado correctamente.", "success")
@@ -110,11 +102,39 @@ def crear_contratista():
 
     return redirect(url_for("contratistas.contratistas"))
 
-# ─── POST /contratistas/nueva ────────────────────
-@contratistas_bp.route("/contratistas/nueva", methods=["POST"])
+
+# ─── POST /contratistas/editar_contratista/<int:id> ────────────────────
+@contratistas_bp.route("/contratistas/editar_contratista/<int:id>", methods=["POST"])
 @login_required
 @admin_oficina_required
-def nueva_factura_contratista():
+def editar_contratista(id):
+    from models import Contratista
+    try:
+        contratista = Contratista.query.get(id)
+        if not contratista:
+            flash('Contratista no encontrado.', 'danger')
+            return redirect(url_for('contratistas.contratistas'))
+
+        contratista.nombre = request.form.get("nombre", "").strip()
+        contratista.nit = request.form.get("nit", "").strip()
+        contratista.telefono = request.form.get("telefono", "").strip()
+        contratista.especialidad = request.form.get("especialidad", "").strip()
+        contratista.estado = request.form.get("estado", "Activo")
+
+        db.session.commit()
+        flash('Contratista actualizado exitosamente.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al actualizar contratista: {e}', 'danger')
+
+    return redirect(url_for("contratistas.contratistas"))
+
+
+# ─── POST /contratistas/crear_factura ────────────────────
+@contratistas_bp.route("/contratistas/crear_factura", methods=["POST"])
+@login_required
+@admin_oficina_required
+def crear_factura():
     from models import ContratistaFactura
 
     def upload_file(file_field):
@@ -122,7 +142,6 @@ def nueva_factura_contratista():
         if not f or f.filename == "":
             return None
         if supabase is None:
-            flash("Supabase no configurado. Archivo no subido.", "warning")
             return None
         try:
             ext = f.filename.rsplit(".", 1)[-1].lower()
@@ -135,7 +154,7 @@ def nueva_factura_contratista():
             )
             return supabase.storage.from_("tesoreria").get_public_url(path)
         except Exception as e:
-            flash(f"Error subiendo archivo: {e}", "warning")
+            print(f"Error subiendo archivo: {e}")
             return None
 
     try:
@@ -161,24 +180,25 @@ def nueva_factura_contratista():
             valor_cancelado        = parse_float_safe(request.form.get("valor_cancelado")),
             retencion              = parse_float_safe(request.form.get("retencion")),
             fecha_pago             = fecha_pago,
-            orden_compra_url       = upload_file("orden_compra"),
-            comprobante_compra_url = upload_file("comprobante_compra"),
-            banco_pago_url         = upload_file("banco_pago"),
+            orden_compra_url       = upload_file("orden_compra_pdf"),
+            comprobante_compra_url = upload_file("factura_pdf"),
+            banco_pago_url         = upload_file("comprobante_pago"),
         )
         db.session.add(factura)
         db.session.commit()
-        flash("Factura de contratista registrada correctamente.", "success")
+        flash("Factura/Reporte registrada correctamente.", "success")
     except Exception as e:
         db.session.rollback()
         flash(f"Error al registrar la factura: {e}", "danger")
 
     return redirect(url_for("contratistas.contratistas"))
 
-# ─── POST /contratistas/<id>/editar ──────────────
-@contratistas_bp.route("/contratistas/<int:id>/editar", methods=["POST"])
+
+# ─── POST /contratistas/editar_factura/<int:id> ──────────────
+@contratistas_bp.route("/contratistas/editar_factura/<int:id>", methods=["POST"])
 @login_required
 @admin_oficina_required
-def editar_factura_contratista(id):
+def editar_factura(id):
     from models import ContratistaFactura
 
     factura = ContratistaFactura.query.get_or_404(id)
@@ -200,7 +220,7 @@ def editar_factura_contratista(id):
             )
             return supabase.storage.from_("tesoreria").get_public_url(path)
         except Exception as e:
-            flash(f"Error subiendo archivo: {e}", "warning")
+            print(f"Error subiendo archivo: {e}")
             return current_url
 
     try:
@@ -212,30 +232,25 @@ def editar_factura_contratista(id):
                 return default
 
         fecha_pago_raw = request.form.get("fecha_pago", "").strip()
-        factura.nombre_contratista       = request.form["nombre_contratista"].strip()
+        if "nombre_contratista" in request.form:
+            factura.nombre_contratista       = request.form["nombre_contratista"].strip()
+            
         factura.fecha_factura          = dt.strptime(request.form["fecha_factura"], "%Y-%m-%d").date()
         factura.plazo_dias             = int(request.form.get("plazo_dias") or 0)
-        factura.fecha_vencimiento      = dt.strptime(request.form["fecha_vencimiento"], "%Y-%m-%d").date()
+        
+        # Fecha vencimiento podría venir vacía si hay un script, pero si es requerida:
+        if request.form.get("fecha_vencimiento"):
+            factura.fecha_vencimiento      = dt.strptime(request.form["fecha_vencimiento"], "%Y-%m-%d").date()
+            
         factura.valor_neto             = parse_float_safe(request.form.get("valor_neto"))
         factura.porcentaje_iva         = parse_float_safe(request.form.get("porcentaje_iva"), 19.0)
         factura.valor_cancelado        = parse_float_safe(request.form.get("valor_cancelado"))
         factura.retencion              = parse_float_safe(request.form.get("retencion"))
         factura.fecha_pago             = dt.strptime(fecha_pago_raw, "%Y-%m-%d").date() if fecha_pago_raw else None
         
-        if request.form.get("eliminar_orden") == "true":
-            factura.orden_compra_url = None
-        else:
-            factura.orden_compra_url = upload_or_keep("orden_compra", factura.orden_compra_url)
-            
-        if request.form.get("eliminar_comprobante") == "true":
-            factura.comprobante_compra_url = None
-        else:
-            factura.comprobante_compra_url = upload_or_keep("comprobante_compra", factura.comprobante_compra_url)
-            
-        if request.form.get("eliminar_soporte") == "true":
-            factura.banco_pago_url = None
-        else:
-            factura.banco_pago_url = upload_or_keep("banco_pago", factura.banco_pago_url)
+        factura.orden_compra_url = upload_or_keep("orden_compra_pdf", factura.orden_compra_url)
+        factura.comprobante_compra_url = upload_or_keep("factura_pdf", factura.comprobante_compra_url)
+        factura.banco_pago_url = upload_or_keep("comprobante_pago", factura.banco_pago_url)
 
         db.session.commit()
         flash("Factura actualizada correctamente.", "success")
@@ -245,11 +260,12 @@ def editar_factura_contratista(id):
 
     return redirect(url_for("contratistas.contratistas"))
 
+
 # ─── POST /contratistas/<id>/eliminar ────────────
-@contratistas_bp.route("/contratistas/<int:id>/eliminar", methods=["POST"])
+@contratistas_bp.route("/contratistas/eliminar_factura/<int:id>", methods=["POST"])
 @login_required
 @admin_oficina_required
-def eliminar_factura_contratista(id):
+def eliminar_factura(id):
     from models import ContratistaFactura
     factura = ContratistaFactura.query.get_or_404(id)
     try:

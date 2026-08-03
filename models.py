@@ -1012,6 +1012,8 @@ class Contratista(db.Model):
     nombre = db.Column(db.String(200), nullable=False, unique=True, index=True)
     nit = db.Column(db.String(50), nullable=True)
     telefono = db.Column(db.String(50), nullable=True)
+    especialidad = db.Column(db.String(150), nullable=True)
+    estado = db.Column(db.Enum('Activo', 'Inactivo', name='estado_contratista_enum'), default='Activo')
     fecha_registro = db.Column(db.DateTime, default=datetime.utcnow)
 
 class ContratistaFactura(db.Model):
