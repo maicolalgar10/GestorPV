@@ -769,8 +769,13 @@ def editar_comprobante_egreso(id):
         
         db.session.commit()
         flash("Comprobante actualizado exitosamente", "success")
+        return redirect(url_for("tesoreria.comprobantes_egresos"))
     except Exception as e:
         db.session.rollback()
+        import traceback
+        traceback_str = traceback.format_exc()
+        print(f"Error en editar_comprobante_egreso:\n{traceback_str}")
+        return f"Error interno en el servidor: <pre>{traceback_str}</pre>", 500
 @tesoreria_bp.route('/comprobantes-egresos/pdf/<string:id>')
 @admin_oficina_required
 def generar_pdf_comprobante(id):
