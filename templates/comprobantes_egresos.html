@@ -96,6 +96,9 @@
                 <span class="badge bg-success"><i class="bi bi-cash"></i> Efectivo</span>
               {% else %}
                 <span class="badge bg-primary"><i class="bi bi-bank"></i> Cheque</span>
+                {% if comp.numero_cheque %}
+                  <div class="small text-muted mt-1">N° {{ comp.numero_cheque }}</div>
+                {% endif %}
               {% endif %}
             </td>
             <td class="celda-banco text-center text-capitalize" data-banco-nombre="{{ comp.banco | default('', true) | lower | trim }}">
@@ -142,6 +145,24 @@
                 data-bs-toggle="modal" data-bs-target="#modalEditarComprobante">
                 <i class="bi bi-pencil-square"></i>
               </button>
+              <button class="btn btn-sm btn-outline-info btn-anotaciones" 
+                data-id="{{ comp.id }}" 
+                data-observaciones="{{ comp.observaciones or '' }}" 
+                data-bs-toggle="modal" data-bs-target="#modalAnotaciones" title="Anotaciones">
+                <i class="bi bi-chat-left-text"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAnotaciones{{ comp.id }}" aria-expanded="false" aria-controls="collapseAnotaciones{{ comp.id }}" title="Ver Anotaciones">
+                <i class="bi bi-chevron-down"></i>
+              </button>
+            </td>
+          </tr>
+          <!-- Fila colapsable para anotaciones -->
+          <tr class="collapse" id="collapseAnotaciones{{ comp.id }}">
+            <td colspan="10" class="bg-light border-bottom">
+              <div class="p-3 text-start">
+                <strong><i class="bi bi-journal-text me-1"></i> Anotaciones / Observaciones:</strong>
+                <p class="mb-0 mt-2 text-dark" style="white-space: pre-wrap; font-size: 0.9rem;">{{ comp.observaciones or 'No hay anotaciones registradas.' }}</p>
+              </div>
             </td>
           </tr>
           {% else %}
@@ -363,6 +384,31 @@
   </div>
 </div>
 
+<!-- Modal Anotaciones -->
+<div class="modal fade" id="modalAnotaciones" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content bg-dark text-light">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title fw-bold"><i class="bi bi-chat-left-text me-2"></i> Anotaciones / Observaciones</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="formAnotaciones">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-light">Observaciones del comprobante</label>
+            <textarea name="observaciones" id="anotaciones_text" class="form-control bg-dark text-light border-secondary" rows="5" placeholder="Escribe aquí las observaciones..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-secondary">
+          <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cerrar</button>
+          <button type="button" class="btn btn-info" id="btnGuardarAnotaciones">Guardar Anotaciones</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function() {
@@ -489,6 +535,58 @@
             });
         });
     });
+
+    // Lógica para Anotaciones
+    const btnAnotaciones = document.querySelectorAll('.btn-anotaciones');
+    let currentComprobanteId = null;
+
+    btnAnotaciones.forEach(btn => {
+      btn.addEventListener('click', function() {
+        currentComprobanteId = this.getAttribute('data-id');
+        document.getElementById('anotaciones_text').value = this.getAttribute('data-observaciones');
+      });
+    });
+
+    const btnGuardarAnotaciones = document.getElementById('btnGuardarAnotaciones');
+    if (btnGuardarAnotaciones) {
+      btnGuardarAnotaciones.addEventListener('click', function() {
+        if (!currentComprobanteId) return;
+        
+        // Cambiar estado a cargando
+        const originalText = this.innerHTML;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Guardando...';
+        this.disabled = true;
+
+        const observaciones = document.getElementById('anotaciones_text').value;
+        const csrfTokenInput = document.querySelector('input[name="csrf_token"]');
+        const csrf_token = csrfTokenInput ? csrfTokenInput.value : '';
+
+        fetch(`/tesoreria/comprobantes-egresos/anotaciones/${currentComprobanteId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrf_token
+          },
+          body: JSON.stringify({ observaciones: observaciones })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            location.reload(); // Recargar para mostrar los cambios
+          } else {
+            alert('Error al guardar anotaciones: ' + data.message);
+            this.innerHTML = originalText;
+            this.disabled = false;
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Ocurrió un error de red al guardar las anotaciones.');
+          this.innerHTML = originalText;
+          this.disabled = false;
+        });
+      });
+    }
   });
 </script>
 </body>

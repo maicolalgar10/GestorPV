@@ -776,6 +776,28 @@ def editar_comprobante_egreso(id):
         traceback_str = traceback.format_exc()
         print(f"Error en editar_comprobante_egreso:\n{traceback_str}")
         return f"Error interno en el servidor: <pre>{traceback_str}</pre>", 500
+@tesoreria_bp.route('/comprobantes-egresos/anotaciones/<string:id>', methods=['POST'])
+@admin_oficina_required
+def guardar_anotaciones_comprobante(id):
+    from models import db, ComprobanteEgreso
+    comprobante = ComprobanteEgreso.query.get_or_404(id)
+    try:
+        if request.is_json:
+            data = request.get_json()
+            observaciones = data.get("observaciones")
+        else:
+            observaciones = request.form.get("observaciones")
+            
+        comprobante.observaciones = observaciones
+        db.session.commit()
+        return jsonify({"success": True, "message": "Anotaciones guardadas exitosamente"})
+    except Exception as e:
+        db.session.rollback()
+        import traceback
+        traceback_str = traceback.format_exc()
+        print(f"Error en guardar_anotaciones_comprobante:\n{traceback_str}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
 @tesoreria_bp.route('/comprobantes-egresos/pdf/<string:id>')
 @admin_oficina_required
 def generar_pdf_comprobante(id):

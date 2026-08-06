@@ -998,6 +998,7 @@ class ComprobanteEgreso(db.Model):
     elaborado_por = db.Column(db.String(100), nullable=False)
     aprobado_por = db.Column(db.String(100), nullable=False)
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
+    observaciones = db.Column(db.Text, nullable=True)
 
     def __repr__(self):
         return f'<ComprobanteEgreso {self.numero_comprobante}>'
