@@ -15,17 +15,15 @@ contratistas_bp = Blueprint("contratistas", __name__, url_prefix='/contratistas'
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'pdf', 'png', 'jpg', 'jpeg', 'webp'}
 
-def parse_float_safe(value):
-    if not value:
+def limpiar_monto(val):
+    if not val:
         return 0.0
+    if isinstance(val, (int, float)):
+        return float(val)
+    # Elimina $, espacios y puntos de miles, ajusta comas decimales
+    texto_limpio = str(val).replace('$', '').replace(' ', '').replace('.', '').replace(',', '.')
     try:
-        val_str = str(value).replace('$', '').replace(' ', '').strip()
-        if ',' in val_str:
-            val_str = val_str.replace('.', '')
-            val_str = val_str.replace(',', '.')
-        elif val_str.count('.') > 1:
-            val_str = val_str.replace('.', '')
-        return float(val_str)
+        return float(texto_limpio)
     except ValueError:
         return 0.0
 
@@ -181,7 +179,7 @@ def crear_contrato_contratista():
         contratista_id = request.form.get('contratista_id')
         numero_contrato = request.form.get('numero_contrato')
         objeto = request.form.get('objeto')
-        valor_total = parse_float_safe(request.form.get('valor_total'))
+        valor_total = limpiar_monto(request.form.get('valor_total'))
         
         fecha_inicio_str = request.form.get('fecha_inicio')
         fecha_fin_str = request.form.get('fecha_fin')
@@ -245,10 +243,10 @@ def crear_factura():
             fecha_factura          = fecha_factura,
             plazo_dias             = int(request.form.get("plazo_dias") or 0),
             fecha_vencimiento      = fecha_vencimiento,
-            valor_neto             = parse_float_safe(request.form.get("valor_neto")),
-            porcentaje_iva         = parse_float_safe(request.form.get("porcentaje_iva")),
-            valor_cancelado        = parse_float_safe(request.form.get("valor_cancelado")),
-            retencion              = parse_float_safe(request.form.get("retencion")),
+            valor_neto             = limpiar_monto(request.form.get("valor_neto")),
+            porcentaje_iva         = limpiar_monto(request.form.get("porcentaje_iva")),
+            valor_cancelado        = limpiar_monto(request.form.get("valor_cancelado")),
+            retencion              = limpiar_monto(request.form.get("retencion")),
             fecha_pago             = fecha_pago,
             orden_compra_url       = url_orden,
             comprobante_compra_url = url_factura,
@@ -286,10 +284,10 @@ def editar_factura(id):
         if fecha_vencimiento_str:
             factura.fecha_vencimiento = dt.strptime(fecha_vencimiento_str, "%Y-%m-%d").date()
             
-        factura.valor_neto = parse_float_safe(request.form.get("valor_neto"))
-        factura.porcentaje_iva = parse_float_safe(request.form.get("porcentaje_iva"))
-        factura.valor_cancelado = parse_float_safe(request.form.get("valor_cancelado"))
-        factura.retencion = parse_float_safe(request.form.get("retencion"))
+        factura.valor_neto = limpiar_monto(request.form.get("valor_neto"))
+        factura.porcentaje_iva = limpiar_monto(request.form.get("porcentaje_iva"))
+        factura.valor_cancelado = limpiar_monto(request.form.get("valor_cancelado"))
+        factura.retencion = limpiar_monto(request.form.get("retencion"))
         
         if fecha_pago_str:
             factura.fecha_pago = dt.strptime(fecha_pago_str, "%Y-%m-%d").date()

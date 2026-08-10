@@ -14,17 +14,15 @@ clientes_bp = Blueprint('clientes', __name__, url_prefix='/clientes')
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'pdf', 'png', 'jpg', 'jpeg', 'webp'}
 
-def parse_float_safe(value):
-    if not value:
+def limpiar_monto(val):
+    if not val:
         return 0.0
+    if isinstance(val, (int, float)):
+        return float(val)
+    # Elimina $, espacios y puntos de miles, ajusta comas decimales
+    texto_limpio = str(val).replace('$', '').replace(' ', '').replace('.', '').replace(',', '.')
     try:
-        val_str = str(value).replace('$', '').replace(' ', '').strip()
-        if ',' in val_str:
-            val_str = val_str.replace('.', '')
-            val_str = val_str.replace(',', '.')
-        elif val_str.count('.') > 1:
-            val_str = val_str.replace('.', '')
-        return float(val_str)
+        return float(texto_limpio)
     except ValueError:
         return 0.0
 
@@ -85,10 +83,10 @@ def index():
 def crear_reporte():
     try:
         contrato_cliente_id = request.form.get('contrato_cliente_id')
-        valor_factura = parse_float_safe(request.form.get('valor_factura'))
-        porcentaje_rete_garantia = parse_float_safe(request.form.get('porcentaje_rete_garantia'))
-        retencion_ley = parse_float_safe(request.form.get('retencion_ley'))
-        pago_realizado = parse_float_safe(request.form.get('pago_realizado'))
+        valor_factura = limpiar_monto(request.form.get('valor_factura'))
+        porcentaje_rete_garantia = limpiar_monto(request.form.get('porcentaje_rete_garantia'))
+        retencion_ley = limpiar_monto(request.form.get('retencion_ley'))
+        pago_realizado = limpiar_monto(request.form.get('pago_realizado'))
         fecha_pago_str = request.form.get('fecha_pago')
         fecha_factura_str = request.form.get('fecha_factura')
         
@@ -143,10 +141,10 @@ def editar_reporte(reporte_id):
             flash('Reporte no encontrado.', 'danger')
             return redirect(url_for('clientes.index'))
 
-        reporte.valor_factura = parse_float_safe(request.form.get('valor_factura'))
-        reporte.porcentaje_rete_garantia = parse_float_safe(request.form.get('porcentaje_rete_garantia'))
-        reporte.retencion_ley = parse_float_safe(request.form.get('retencion_ley'))
-        reporte.pago_realizado = parse_float_safe(request.form.get('pago_realizado'))
+        reporte.valor_factura = limpiar_monto(request.form.get('valor_factura'))
+        reporte.porcentaje_rete_garantia = limpiar_monto(request.form.get('porcentaje_rete_garantia'))
+        reporte.retencion_ley = limpiar_monto(request.form.get('retencion_ley'))
+        reporte.pago_realizado = limpiar_monto(request.form.get('pago_realizado'))
         
         fecha_pago_str = request.form.get('fecha_pago')
         if fecha_pago_str:
@@ -223,8 +221,8 @@ def crear_contrato_cliente():
     try:
         cliente_id = request.form.get('cliente_id')
         proyecto_nombre = request.form.get('nombre_proyecto')
-        valor_total = parse_float_safe(request.form.get('valor_total'))
-        porcentaje_retegarantia = parse_float_safe(request.form.get('porcentaje_retegarantia'))
+        valor_total = limpiar_monto(request.form.get('valor_total'))
+        porcentaje_retegarantia = limpiar_monto(request.form.get('porcentaje_retegarantia'))
         
         # Archivo PDF del contrato (si lo hay)
         contrato_pdf = request.files.get('contrato_pdf')
@@ -287,8 +285,8 @@ def editar_contrato_cliente(contrato_id):
             return redirect(url_for('clientes.index'))
 
         contrato.nombre_proyecto = request.form.get('nombre_proyecto')
-        contrato.valor_total = parse_float_safe(request.form.get('valor_total'))
-        contrato.porcentaje_retegarantia = parse_float_safe(request.form.get('porcentaje_retegarantia'))
+        contrato.valor_total = limpiar_monto(request.form.get('valor_total'))
+        contrato.porcentaje_retegarantia = limpiar_monto(request.form.get('porcentaje_retegarantia'))
         
         # Archivo PDF del contrato (si lo hay)
         nuevo_contrato_pdf = request.files.get('contrato_pdf')

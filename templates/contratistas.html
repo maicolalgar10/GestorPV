@@ -968,7 +968,7 @@
 
       let vn = document.getElementById('edit_valor_neto');
       vn.setAttribute('data-raw-value', valor_neto);
-      formatMoneyField(vn);
+      vn.value = valor_neto;
 
       let iv = document.getElementById('edit_porcentaje_iva');
       iv.setAttribute('data-raw-value', iva_pct);
@@ -980,7 +980,7 @@
 
       let p = document.getElementById('edit_valor_cancelado');
       p.setAttribute('data-raw-value', pago);
-      formatMoneyField(p);
+      p.value = pago;
 
       document.getElementById('edit_fecha_pago').value = f_pago;
       

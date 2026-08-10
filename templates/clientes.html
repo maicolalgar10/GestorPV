@@ -1042,7 +1042,6 @@
       const inpFactura = document.getElementById('valor_factura_edit');
       inpFactura.dataset.rawValue = valorFactura;
       inpFactura.value = valorFactura;
-      formatMoneyField(inpFactura);
 
       const inpRete = document.getElementById('porcentaje_rete_garantia_edit');
       inpRete.dataset.rawValue = porcRete;
@@ -1052,12 +1051,10 @@
       const inpRetLey = document.getElementById('retencion_ley_edit');
       inpRetLey.dataset.rawValue = retencionLey;
       inpRetLey.value = retencionLey;
-      formatMoneyField(inpRetLey);
 
       const inpPago = document.getElementById('pago_realizado_edit');
       inpPago.dataset.rawValue = pagoRealizado;
       inpPago.value = pagoRealizado;
-      formatMoneyField(inpPago);
 
       document.getElementById('fecha_pago_edit').value = fechaPago;
       document.getElementById('fecha_factura_edit').value = fechaFactura;
@@ -1123,7 +1120,6 @@
       const inpValor = document.getElementById('edit_contrato_valor_total');
       inpValor.dataset.rawValue = valor;
       inpValor.value = valor;
-      formatMoneyField(inpValor);
 
       const inpRete = document.getElementById('edit_contrato_rete_garantia_pct');
       inpRete.dataset.rawValue = rete;
