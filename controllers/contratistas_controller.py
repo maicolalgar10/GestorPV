@@ -83,7 +83,11 @@ def index():
         total_pagos = sum(float(f.valor_cancelado) for f in facturas_c)
         saldo_adeudado = sum(float(f.total_adeudado) for f in facturas_c)
         
+        # Calcular el valor total de los contratos de este contratista
+        valor_total_contrato = sum(float(contrato.valor_total) for contrato in contratista.contratos)
+        
         totales_contratistas[contratista.nombre] = {
+            'valor_total_contrato': valor_total_contrato,
             'total_facturado': total_facturado,
             'total_rete_garantia': total_rete_garantia,
             'total_retenciones_ley': 0.0,

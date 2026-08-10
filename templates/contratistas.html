@@ -271,7 +271,13 @@
                   <span class="text-muted">{{ c.especialidad or 'Sin especialidad' }} ({{ c.estado or 'Activo' }})</span>
                 </div>
                 {% set tc = totales_contratistas[c.nombre] %}
-                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-3 mb-2 w-100 mx-0 mt-1">
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-6 g-3 mb-2 w-100 mx-0 mt-1">
+                  <div class="col">
+                    <div class="card shadow-sm h-100 border-0 border-start border-4 border-primary text-center p-3">
+                      <div class="fs-4 fw-bold text-primary">${{ "{:,.0f}".format(tc.valor_total_contrato) | replace(",",".") }}</div>
+                      <div class="small text-muted mt-1" style="text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px;">VALOR TOTAL CONTRATO</div>
+                    </div>
+                  </div>
                   <div class="col">
                     <div class="card shadow-sm h-100 border-0 border-start border-4 border-warning text-center p-3">
                       <div class="fs-4 fw-bold text-warning">${{ "{:,.0f}".format(tc.total_facturado) | replace(",",".") }}</div>
@@ -279,9 +285,15 @@
                     </div>
                   </div>
                   <div class="col">
+                    <div class="card shadow-sm h-100 border-0 border-start border-4 border-secondary text-center p-3">
+                      <div class="fs-4 fw-bold text-secondary">${{ "{:,.0f}".format(tc.total_retenciones_ley) | replace(",",".") }}</div>
+                      <div class="small text-muted mt-1" style="text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px;">TOTAL RETENCIONES LEY</div>
+                    </div>
+                  </div>
+                  <div class="col">
                     <div class="card shadow-sm h-100 border-0 border-start border-4 border-info text-center p-3">
                       <div class="fs-4 fw-bold text-info">${{ "{:,.0f}".format(tc.total_rete_garantia) | replace(",",".") }}</div>
-                      <div class="small text-muted mt-1" style="text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px;">TOTAL RETENCIONES</div>
+                      <div class="small text-muted mt-1" style="text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px;">RETE GARANTÍA</div>
                     </div>
                   </div>
                   <div class="col">
@@ -293,7 +305,7 @@
                   <div class="col">
                     <div class="card shadow-sm h-100 border-0 border-start border-4 border-danger text-center p-3">
                       <div class="fs-4 fw-bold text-danger">${{ "{:,.0f}".format(tc.saldo_adeudado) | replace(",",".") }}</div>
-                      <div class="small text-muted mt-1" style="text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px;">SALDO ADEUDADO</div>
+                      <div class="small text-muted mt-1" style="text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px;">SALDO (FAC-RET-CONSIG)</div>
                     </div>
                   </div>
                 </div>
