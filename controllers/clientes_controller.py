@@ -26,6 +26,17 @@ def limpiar_monto(val):
     except ValueError:
         return 0.0
 
+def limpiar_porcentaje(val):
+    if not val:
+        return 0.0
+    if isinstance(val, (int, float)):
+        return float(val)
+    texto_limpio = str(val).replace('%', '').replace(' ', '').replace(',', '.')
+    try:
+        return float(texto_limpio)
+    except ValueError:
+        return 0.0
+
 def subir_archivo_supabase(file_obj, carpeta="clientes"):
     """Sube un archivo a Supabase Storage y retorna la URL pública."""
     if not file_obj or file_obj.filename == '':
@@ -85,7 +96,7 @@ def crear_reporte():
         contrato_cliente_id = request.form.get('contrato_cliente_id')
         valor_factura = limpiar_monto(request.form.get('valor_factura'))
         amortizacion = limpiar_monto(request.form.get('amortizacion'))
-        porcentaje_rete_garantia = limpiar_monto(request.form.get('porcentaje_rete_garantia'))
+        porcentaje_rete_garantia = limpiar_porcentaje(request.form.get('porcentaje_rete_garantia'))
         retencion_ley = limpiar_monto(request.form.get('retencion_ley'))
         pago_realizado = limpiar_monto(request.form.get('pago_realizado'))
         fecha_pago_str = request.form.get('fecha_pago')
@@ -145,7 +156,7 @@ def editar_reporte(reporte_id):
 
         reporte.valor_factura = limpiar_monto(request.form.get('valor_factura'))
         reporte.amortizacion = limpiar_monto(request.form.get('amortizacion'))
-        reporte.porcentaje_rete_garantia = limpiar_monto(request.form.get('porcentaje_rete_garantia'))
+        reporte.porcentaje_rete_garantia = limpiar_porcentaje(request.form.get('porcentaje_rete_garantia'))
         reporte.retencion_ley = limpiar_monto(request.form.get('retencion_ley'))
         reporte.pago_realizado = limpiar_monto(request.form.get('pago_realizado'))
         
