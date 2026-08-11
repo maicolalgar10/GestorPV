@@ -19,10 +19,22 @@ def limpiar_monto(val):
         return 0.0
     if isinstance(val, (int, float)):
         return float(val)
-    # Elimina $, espacios y puntos de miles, ajusta comas decimales
-    texto_limpio = str(val).replace('$', '').replace(' ', '').replace('.', '').replace(',', '.')
+
+    texto = str(val).strip().replace('$', '').replace(' ', '')
+
+    # Formato CO: 1.641.589,48
+    if '.' in texto and ',' in texto:
+        texto = texto.replace('.', '').replace(',', '.')
+    elif ',' in texto:
+        texto = texto.replace(',', '.')
+    elif '.' in texto:
+        # Si tiene puntos de miles (ej: 1.641.589)
+        partes = texto.split('.')
+        if len(partes) > 2 or (len(partes) == 2 and len(partes[1]) == 3):
+            texto = texto.replace('.', '')
+
     try:
-        return float(texto_limpio)
+        return float(texto)
     except ValueError:
         return 0.0
 
