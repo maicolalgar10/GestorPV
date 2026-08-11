@@ -188,6 +188,25 @@ def editar_reporte(reporte_id):
 
     return redirect(url_for('clientes.index'))
 
+@clientes_bp.route('/reportes/eliminar/<string:id>', methods=['POST', 'DELETE'])
+@login_required
+@admin_oficina_required
+def eliminar_reporte(id):
+    try:
+        reporte = ReporteClientes.query.get(id)
+        if reporte:
+            db.session.delete(reporte)
+            db.session.commit()
+            flash('Factura eliminada exitosamente.', 'success')
+        else:
+            flash('No se encontró la factura a eliminar.', 'warning')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al eliminar factura: {e}")
+        flash('Ocurrió un error al intentar eliminar la factura.', 'danger')
+        
+    return redirect(url_for('clientes.index'))
+
 @clientes_bp.route('/crear', methods=['POST'])
 @login_required
 @admin_oficina_required

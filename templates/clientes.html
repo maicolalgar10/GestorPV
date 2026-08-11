@@ -351,6 +351,12 @@
                           onclick="abrirModalEditarReporte('{{ r.id }}', '{{ (r.valor_factura or 0)|int }}', '{{ (r.amortizacion or 0)|int }}', '{{ r.porcentaje_rete_garantia or 0 }}', '{{ (r.retencion_ley or 0)|int }}', '{{ (r.pago_realizado or 0)|int }}', '{{ r.fecha_pago if r.fecha_pago else '' }}', '{{ r.fecha_factura if r.fecha_factura else '' }}')">
                           <i class="bi bi-pencil-square"></i>
                         </button>
+                        <form action="{{ url_for('clientes.eliminar_reporte', id=r.id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de eliminar esta factura? Esta acción no se puede deshacer.');">
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                          <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2 py-0 ms-1" title="Eliminar">
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        </form>
                         {% if r.factura_pdf_url %}
                         <a href="{{ r.factura_pdf_url }}" target="_blank"
                           class="btn btn-sm btn-outline-danger rounded-pill px-2 py-0 ms-1" title="Ver Factura">
