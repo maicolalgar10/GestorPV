@@ -871,7 +871,7 @@ class ContratosClientes(db.Model):
     cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id', ondelete='CASCADE'), nullable=False)
     nombre_proyecto = db.Column(db.String(255), nullable=False)
     valor_total = db.Column(db.Numeric(15, 2), nullable=False, default=0.00)
-    porcentaje_retegarantia = db.Column(db.Numeric(10, 5), default=0.00)
+    porcentaje_retegarantia = db.Column(db.Numeric(20, 10), default=0.00)
     archivo_pdf = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
@@ -933,7 +933,7 @@ class ReporteClientes(db.Model):
     
     # Retenciones y Pagos
     amortizacion = db.Column(db.Numeric(15, 2), default=0.00)
-    porcentaje_rete_garantia = db.Column(db.Numeric(10, 5), default=0.00)
+    porcentaje_rete_garantia = db.Column(db.Numeric(20, 10), default=0.00)
     retencion_ley = db.Column(db.Numeric(15, 2), default=0.00)
     pago_realizado = db.Column(db.Numeric(15, 2), default=0.00)
     fecha_pago = db.Column(db.Date, nullable=True)
