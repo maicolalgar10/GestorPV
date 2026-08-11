@@ -84,6 +84,7 @@ def crear_reporte():
     try:
         contrato_cliente_id = request.form.get('contrato_cliente_id')
         valor_factura = limpiar_monto(request.form.get('valor_factura'))
+        amortizacion = limpiar_monto(request.form.get('amortizacion'))
         porcentaje_rete_garantia = limpiar_monto(request.form.get('porcentaje_rete_garantia'))
         retencion_ley = limpiar_monto(request.form.get('retencion_ley'))
         pago_realizado = limpiar_monto(request.form.get('pago_realizado'))
@@ -111,6 +112,7 @@ def crear_reporte():
             contrato_cliente_id=contrato_cliente_id,
             actas_pdf_url=url_actas,
             valor_factura=valor_factura,
+            amortizacion=amortizacion,
             factura_pdf_url=url_factura,
             porcentaje_rete_garantia=porcentaje_rete_garantia,
             retencion_ley=retencion_ley,
@@ -142,6 +144,7 @@ def editar_reporte(reporte_id):
             return redirect(url_for('clientes.index'))
 
         reporte.valor_factura = limpiar_monto(request.form.get('valor_factura'))
+        reporte.amortizacion = limpiar_monto(request.form.get('amortizacion'))
         reporte.porcentaje_rete_garantia = limpiar_monto(request.form.get('porcentaje_rete_garantia'))
         reporte.retencion_ley = limpiar_monto(request.form.get('retencion_ley'))
         reporte.pago_realizado = limpiar_monto(request.form.get('pago_realizado'))

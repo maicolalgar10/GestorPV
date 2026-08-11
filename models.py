@@ -882,7 +882,7 @@ class ContratosClientes(db.Model):
     @property
     def total_facturado(self):
         try:
-            return sum(float(r.valor_factura or 0.0) for r in self.reportes)
+            return sum(r.valor_facturado_neto for r in self.reportes)
         except Exception:
             return 0.0
 
@@ -910,7 +910,7 @@ class ContratosClientes(db.Model):
     @property
     def saldo_adeudado(self):
         try:
-            return float(self.valor_total or 0.0) - self.total_pagos
+            return sum(r.valor_adeudado_factura for r in self.reportes)
         except Exception:
             return 0.0
 
@@ -932,6 +932,7 @@ class ReporteClientes(db.Model):
     factura_pdf_url = db.Column(db.Text, nullable=True)
     
     # Retenciones y Pagos
+    amortizacion = db.Column(db.Numeric(15, 2), default=0.00)
     porcentaje_rete_garantia = db.Column(db.Numeric(5, 2), default=0.00)
     retencion_ley = db.Column(db.Numeric(15, 2), default=0.00)
     pago_realizado = db.Column(db.Numeric(15, 2), default=0.00)
@@ -945,9 +946,16 @@ class ReporteClientes(db.Model):
 
     # Campos Calculados
     @property
+    def valor_facturado_neto(self):
+        try:
+            return float(self.valor_factura or 0.0) - float(self.amortizacion or 0.0)
+        except Exception:
+            return 0.0
+
+    @property
     def rete_garantia_valor(self):
         try:
-            return float(self.valor_factura or 0.0) * (float(self.porcentaje_rete_garantia or 0.0) / 100.0)
+            return self.valor_facturado_neto * (float(self.porcentaje_rete_garantia or 0.0) / 100.0)
         except Exception:
             return 0.0
 
@@ -961,7 +969,7 @@ class ReporteClientes(db.Model):
     @property
     def valor_adeudado_factura(self):
         try:
-            return float(self.valor_factura or 0.0) - self.rete_garantia_valor - float(self.retencion_ley or 0.0) - self.total_pagos_realizados
+            return self.valor_facturado_neto - self.rete_garantia_valor - float(self.retencion_ley or 0.0) - self.total_pagos_realizados
         except Exception:
             return 0.0
 
