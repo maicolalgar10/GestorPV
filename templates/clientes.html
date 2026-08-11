@@ -1060,25 +1060,29 @@
       form.action = "{{ url_for('clientes.editar_reporte', reporte_id=0) }}".replace('0', reporteId);
 
       const inpFactura = document.getElementById('valor_factura_edit');
-      inpFactura.dataset.rawValue = valorFactura;
-      inpFactura.value = valorFactura;
+      inpFactura.dataset.rawValue = valorFactura || 0;
+      inpFactura.value = valorFactura || 0;
+      formatMoneyField(inpFactura);
 
       const inpAmort = document.getElementById('amortizacion_edit');
-      inpAmort.dataset.rawValue = amortizacion;
-      inpAmort.value = amortizacion;
+      inpAmort.dataset.rawValue = amortizacion || 0;
+      inpAmort.value = amortizacion || 0;
+      formatMoneyField(inpAmort);
 
       const inpRete = document.getElementById('porcentaje_rete_garantia_edit');
-      inpRete.dataset.rawValue = porcRete;
-      inpRete.value = porcRete;
+      inpRete.dataset.rawValue = porcRete || 0;
+      inpRete.value = porcRete || 0;
       formatPercentField(inpRete);
 
       const inpRetLey = document.getElementById('retencion_ley_edit');
-      inpRetLey.dataset.rawValue = retencionLey;
-      inpRetLey.value = retencionLey;
+      inpRetLey.dataset.rawValue = retencionLey || 0;
+      inpRetLey.value = retencionLey || 0;
+      formatMoneyField(inpRetLey);
 
       const inpPago = document.getElementById('pago_realizado_edit');
-      inpPago.dataset.rawValue = pagoRealizado;
-      inpPago.value = pagoRealizado;
+      inpPago.dataset.rawValue = pagoRealizado || 0;
+      inpPago.value = pagoRealizado || 0;
+      formatMoneyField(inpPago);
 
       document.getElementById('fecha_pago_edit').value = fechaPago;
       document.getElementById('fecha_factura_edit').value = fechaFactura;
