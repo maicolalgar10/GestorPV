@@ -5,7 +5,7 @@ import uuid
 import re
 from werkzeug.utils import secure_filename
 
-from models import db, Usuarios, Notificaciones, Contratista, ContratistaFactura
+from models import db, Usuarios, Notificaciones, Contratista, ContratistaFactura, ContratosContratista
 from supabase_client import supabase
 from decorators import login_required, admin_oficina_required
 from frases import frase_del_dia
