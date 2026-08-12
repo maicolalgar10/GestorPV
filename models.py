@@ -1039,6 +1039,7 @@ class ContratosContratista(db.Model):
     creado_en = db.Column(db.DateTime, default=datetime.utcnow)
 
     contratista = db.relationship('Contratista', backref=db.backref('contratos', lazy=True))
+    facturas = db.relationship('ContratistaFactura', backref='contrato_ref', lazy=True, cascade="all, delete-orphan")
 
 class ContratistaFactura(db.Model):
     __tablename__ = "contratista_facturas"
@@ -1047,6 +1048,7 @@ class ContratistaFactura(db.Model):
 
     # ─── Identificación ─────────────────────────────────────────────
     nombre_contratista = db.Column(db.String(200), nullable=False, index=True)
+    contrato_id = db.Column(db.Integer, db.ForeignKey('contratos_contratista.id', ondelete='CASCADE'), nullable=True)
 
     # ─── Documentos (URLs de Supabase Storage) ──────────────────────
     orden_compra_url      = db.Column(db.String(500), nullable=True)

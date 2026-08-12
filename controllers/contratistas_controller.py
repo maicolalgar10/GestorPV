@@ -76,34 +76,24 @@ def index():
     frase = frase_del_dia()
 
     lista_contratistas = Contratista.query.order_by(Contratista.nombre.asc()).all()
-    facturas = ContratistaFactura.query.order_by(ContratistaFactura.fecha_factura.desc()).all()
+    lista_contratos = ContratosContratista.query.all()
 
-    facturas_por_contratista = {c.nombre: [] for c in lista_contratistas}
-    for f in facturas:
-        if f.nombre_contratista in facturas_por_contratista:
-            facturas_por_contratista[f.nombre_contratista].append(f)
-        else:
-            facturas_por_contratista[f.nombre_contratista] = [f]
-
-    totales_contratistas = {}
-    for contratista in lista_contratistas:
-        facturas_c = facturas_por_contratista.get(contratista.nombre, [])
+    totales_contratos = {}
+    for contrato in lista_contratos:
+        facturas_c = contrato.facturas
         total_facturado = sum(float(f.valor_total) for f in facturas_c)
         total_rete_garantia = sum(float(f.retencion_pesos) for f in facturas_c)
         total_pagos = sum(float(f.valor_cancelado) for f in facturas_c)
         saldo_adeudado = sum(float(f.total_adeudado) for f in facturas_c)
         
-        # Calcular el valor total de los contratos de este contratista
-        valor_total_contrato = sum(float(contrato.valor_total) for contrato in contratista.contratos)
-        
-        totales_contratistas[contratista.nombre] = {
-            'valor_total_contrato': valor_total_contrato,
+        totales_contratos[contrato.id] = {
+            'valor_total_contrato': float(contrato.valor_total),
             'total_facturado': total_facturado,
             'total_rete_garantia': total_rete_garantia,
             'total_retenciones_ley': 0.0,
             'total_pagos': total_pagos,
             'saldo_adeudado': saldo_adeudado,
-            'facturas': facturas_c
+            'facturas': sorted(facturas_c, key=lambda f: f.fecha_factura, reverse=True) if facturas_c else []
         }
 
     return render_template(
@@ -113,7 +103,8 @@ def index():
         frase=frase,
         frase_del_dia=frase,
         contratistas=lista_contratistas,
-        totales_contratistas=totales_contratistas,
+        contratos=lista_contratos,
+        totales_contratos=totales_contratos,
     )
 
 
@@ -252,6 +243,7 @@ def crear_factura():
 
         factura = ContratistaFactura(
             nombre_contratista       = request.form.get("nombre_contratista", "").strip(),
+            contrato_id              = request.form.get("contrato_id"),
             fecha_factura          = fecha_factura,
             plazo_dias             = int(request.form.get("plazo_dias") or 0),
             fecha_vencimiento      = fecha_vencimiento,
@@ -285,6 +277,9 @@ def editar_factura(id):
         fecha_pago_str = request.form.get("fecha_pago", "").strip()
         if "nombre_contratista" in request.form:
             factura.nombre_contratista = request.form.get("nombre_contratista").strip()
+            
+        if "contrato_id" in request.form:
+            factura.contrato_id = request.form.get("contrato_id")
             
         fecha_factura_str = request.form.get("fecha_factura")
         if fecha_factura_str:

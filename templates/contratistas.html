@@ -248,29 +248,29 @@
     <!-- CONTENIDO PRINCIPAL (Acordeones por Contratista) -->
     <div class="mt-4">
       <div class="accordion" id="accordionContratos">
-        {% if contratistas %}
-        {% for c in contratistas %}
+        {% if contratos %}
+        {% for contrato in contratos %}
         <div class="accordion-item mb-3"
           style="border-radius: var(--radius); border: none; overflow: hidden; box-shadow: var(--shadow-sm);">
-          <h2 class="accordion-header" id="heading{{ c.id }}">
+          <h2 class="accordion-header" id="heading{{ contrato.id }}">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-              data-bs-target="#collapse{{ c.id }}" style="background: white; color: #1f2937; font-weight: 600;">
+              data-bs-target="#collapse{{ contrato.id }}" style="background: white; color: #1f2937; font-weight: 600;">
               <div class="d-flex flex-column w-100 me-3 gap-2 text-start">
                 <div>
-                  <span class="badge bg-primary me-2">CONTRATISTA #{{ c.id }}</span>
-                  <strong>{{ c.nombre }}</strong>
-                  <span role="button" class="btn btn-sm btn-link p-0 ms-1 text-secondary" title="Editar Contratista"
-                    data-bs-toggle="modal" data-bs-target="#modalEditarContratista" data-id="{{ c.id }}"
-                    data-nombre="{{ c.nombre }}" data-nit="{{ c.nit or '' }}"
-                    data-telefono="{{ c.telefono or '' }}"
-                    data-especialidad="{{ c.especialidad or '' }}" data-estado="{{ c.estado or 'Activo' }}"
-                    onclick="prepararModalEditarContratista(this, event)">
+                  <span class="badge bg-primary me-2">CONTRATO #{{ contrato.numero_contrato or 'S/N' }}</span>
+                  <strong>{{ contrato.contratista.nombre }}</strong>
+                  <span role="button" class="btn btn-sm btn-link p-0 ms-1 text-secondary" title="Editar Contrato"
+                    data-bs-toggle="modal" data-bs-target="#modalEditarContrato" data-id="{{ contrato.id }}"
+                    data-contratista="{{ contrato.contratista.id }}" data-numero="{{ contrato.numero_contrato or '' }}"
+                    data-objeto="{{ contrato.objeto or '' }}" data-valor="{{ (contrato.valor_total or 0)|int }}"
+                    data-inicio="{{ contrato.fecha_inicio if contrato.fecha_inicio else '' }}" data-fin="{{ contrato.fecha_fin if contrato.fecha_fin else '' }}"
+                    onclick="prepararModalEditarContrato(this, event)">
                     <i class="bi bi-pencil-square"></i>
                   </span>
                   <span class="text-muted mx-1">&mdash;</span>
-                  <span class="text-muted">{{ c.especialidad or 'Sin especialidad' }} ({{ c.estado or 'Activo' }})</span>
+                  <span class="text-muted">{{ contrato.objeto or 'Sin objeto definido' }}</span>
                 </div>
-                {% set tc = totales_contratistas[c.nombre] %}
+                {% set tc = totales_contratos[contrato.id] %}
                 <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-6 g-3 mb-2 w-100 mx-0 mt-1">
                   <div class="col">
                     <div class="card shadow-sm h-100 border-0 border-start border-4 border-primary text-center p-3">
@@ -312,7 +312,7 @@
               </div>
             </button>
           </h2>
-          <div id="collapse{{ c.id }}" class="accordion-collapse collapse" data-bs-parent="#accordionContratos">
+          <div id="collapse{{ contrato.id }}" class="accordion-collapse collapse" data-bs-parent="#accordionContratos">
             <div class="accordion-body p-0">
               <div class="table-responsive">
                 <table class="table mb-0" style="font-size: .84rem;">
@@ -345,7 +345,7 @@
                       <td class="text-danger fw-bold">${{ "{:,.0f}".format(r.total_adeudado or 0) | replace(",",".") }}</td>
                       <td class="text-center pe-4">
                         <button class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0" title="Editar"
-                          onclick="abrirModalEditarFactura('{{ r.id }}', '{{ c.nombre | escape }}', '{{ (r.valor_neto or 0)|int }}', '{{ r.porcentaje_iva or 0 }}', '{{ (r.retencion or 0)|int }}', '{{ (r.valor_cancelado or 0)|int }}', '{{ r.fecha_pago if r.fecha_pago else '' }}', '{{ r.fecha_factura if r.fecha_factura else '' }}', '{{ r.fecha_vencimiento if r.fecha_vencimiento else '' }}', '{{ r.plazo_dias }}')">
+                          onclick="abrirModalEditarFactura('{{ r.id }}', '{{ contrato.contratista.nombre | escape }}', '{{ contrato.id }}', '{{ (r.valor_neto or 0)|int }}', '{{ r.porcentaje_iva or 0 }}', '{{ (r.retencion or 0)|int }}', '{{ (r.valor_cancelado or 0)|int }}', '{{ r.fecha_pago if r.fecha_pago else '' }}', '{{ r.fecha_factura if r.fecha_factura else '' }}', '{{ r.fecha_vencimiento if r.fecha_vencimiento else '' }}', '{{ r.plazo_dias }}')">
                           <i class="bi bi-pencil-square"></i>
                         </button>
                         {% if r.comprobante_compra_url %}
@@ -381,7 +381,7 @@
               </div>
               <div class="p-3 bg-light text-end border-top" style="border-radius: 0 0 var(--radius) var(--radius);">
                 <button type="button" class="btn btn-sm btn-primary rounded-pill fw-bold" data-bs-toggle="modal"
-                  data-bs-target="#modalCrearFactura" onclick="prepararModalCrearFactura('{{ c.nombre | escape }}');">
+                  data-bs-target="#modalCrearFactura" onclick="prepararModalCrearFactura('{{ contrato.contratista.nombre | escape }}', '{{ contrato.id }}');">
                   <i class="bi bi-plus-circle me-1"></i> Registrar Factura
                 </button>
               </div>
@@ -590,6 +590,7 @@
             enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="nombre_contratista" id="hidden_nombre_contratista_fact" value="">
+            <input type="hidden" name="contrato_id" id="hidden_contrato_id_fact" value="">
             <div class="row g-3">
 
               <div class="col-12">
@@ -721,8 +722,9 @@
         </div>
 
         <div class="modal-body">
-          <form method="POST" id="formEditarFactura" action="" enctype="multipart/form-data">
+            <form method="POST" id="formEditarFactura" action="" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="contrato_id" id="edit_contrato_id_fact" value="">
             <div class="row g-3">
               <div class="col-12">
                 <div class="section-sep mt-0"><i class="bi bi-receipt me-1"></i>1. Fechas y Valores Monetarios</div>
@@ -892,8 +894,9 @@
       document.getElementById('edit_estado').value = btn.dataset.estado;
     }
 
-    function prepararModalCrearFactura(nombreContratista) {
+    function prepararModalCrearFactura(nombreContratista, contratoId) {
       document.getElementById('hidden_nombre_contratista_fact').value = nombreContratista;
+      document.getElementById('hidden_contrato_id_fact').value = contratoId;
       // Reset forms
       document.getElementById('formCrearFactura').reset();
       document.querySelectorAll('#formCrearFactura .money-input').forEach(el => {
@@ -958,9 +961,10 @@
       document.getElementById('calc_adeudado_factura_edit').innerText = '$' + new Intl.NumberFormat('es-CO').format(adeudado);
     }
 
-    function abrirModalEditarFactura(id, nombre, valor_neto, iva_pct, ret, pago, f_pago, f_factura, f_venc, plazo) {
+    function abrirModalEditarFactura(id, nombre, contratoId, valor_neto, iva_pct, ret, pago, f_pago, f_factura, f_venc, plazo) {
       document.getElementById('formEditarFactura').action = `/contratistas/editar_factura/${id}`;
       document.getElementById('formEliminarFactura').action = `/contratistas/eliminar_factura/${id}`;
+      document.getElementById('edit_contrato_id_fact').value = contratoId;
       
       document.getElementById('edit_fecha_factura').value = f_factura;
       document.getElementById('edit_plazo_dias').value = plazo;
