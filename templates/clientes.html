@@ -382,6 +382,7 @@
                         {% endfor %}
                         <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-0 ms-1 position-relative" title="Sub-facturas"
                           data-subs='{{ subs_data | tojson | forceescape }}'
+                          data-valor='{{ r.valor_factura or 0 }}'
                           onclick="abrirModalSubfacturas('{{ r.id }}', this)">
                           <i class="bi bi-list-ul"></i>
                           {% if r.subfacturas|length > 0 %}
@@ -952,6 +953,28 @@
         </div>
         
         <div class="modal-body p-4">
+          <!-- Métricas de Control -->
+          <div class="row text-center mb-4 g-2">
+            <div class="col-md-4">
+              <div class="p-3 bg-secondary bg-opacity-25 rounded border border-secondary h-100">
+                <small class="text-light text-uppercase fw-bold d-block mb-1">Valor Original Factura</small>
+                <h5 class="mb-0 text-white" id="subf-metric-original">$0</h5>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 bg-primary bg-opacity-25 rounded border border-primary h-100">
+                <small class="text-primary text-uppercase fw-bold d-block mb-1">Total Subfacturado</small>
+                <h5 class="mb-0 text-white" id="subf-metric-total">$0</h5>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 bg-info bg-opacity-25 rounded border border-info h-100">
+                <small class="text-info text-uppercase fw-bold d-block mb-1">Saldo Restante</small>
+                <h5 class="mb-0 text-white" id="subf-metric-saldo">$0</h5>
+              </div>
+            </div>
+          </div>
+
           <div class="table-responsive mb-4">
             <table class="table table-dark table-hover table-striped align-middle custom-table">
               <thead>
@@ -1019,6 +1042,9 @@
       const tbody = document.getElementById('tbody-subfacturas');
       tbody.innerHTML = '';
       
+      let valorOriginal = parseFloat(btnElement.getAttribute('data-valor')) || 0;
+      let totalSub = 0;
+      
       try {
         const subsData = JSON.parse(btnElement.getAttribute('data-subs'));
         
@@ -1026,6 +1052,7 @@
           tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No hay sub-facturas registradas.</td></tr>';
         } else {
           subsData.forEach(sub => {
+            totalSub += parseFloat(sub.valor) || 0;
             const tr = document.createElement('tr');
             
             // Format money locally using Intl.NumberFormat
@@ -1052,6 +1079,22 @@
         }
       } catch (e) {
         console.error("Error parsing subs_data", e);
+      }
+      
+      const saldoRestante = valorOriginal - totalSub;
+      
+      const formatter = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
+      document.getElementById('subf-metric-original').innerText = formatter.format(valorOriginal);
+      document.getElementById('subf-metric-total').innerText = formatter.format(totalSub);
+      document.getElementById('subf-metric-saldo').innerText = formatter.format(saldoRestante);
+      
+      const saldoEl = document.getElementById('subf-metric-saldo');
+      if (saldoRestante < 0) {
+        saldoEl.classList.add('text-danger');
+        saldoEl.classList.remove('text-white');
+      } else {
+        saldoEl.classList.remove('text-danger');
+        saldoEl.classList.add('text-white');
       }
       
       const modal = new bootstrap.Modal(document.getElementById('modalSubFacturas'));

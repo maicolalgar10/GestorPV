@@ -383,10 +383,6 @@ def crear_subfactura():
         db.session.add(nueva_sub)
         db.session.commit()
         
-        # Recalcular valor_factura de la factura padre
-        factura_padre.valor_factura = sum(sf.valor for sf in factura_padre.subfacturas)
-        db.session.commit()
-
         flash('Sub-factura registrada correctamente.', 'success')
     except Exception as e:
         db.session.rollback()
@@ -410,13 +406,6 @@ def eliminar_subfactura(id):
         db.session.delete(subfactura)
         db.session.commit()
         
-        # Recalcular valor_factura de la factura padre
-        if factura_padre.subfacturas:
-            factura_padre.valor_factura = sum(sf.valor for sf in factura_padre.subfacturas)
-        else:
-            factura_padre.valor_factura = 0.0
-        db.session.commit()
-
         flash('Sub-factura eliminada.', 'success')
     except Exception as e:
         db.session.rollback()
