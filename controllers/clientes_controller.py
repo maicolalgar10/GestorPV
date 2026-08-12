@@ -87,6 +87,11 @@ def index():
     # 2. Traer todos los reportes (o podemos usar la relación de contratos en la vista)
     reportes_lista = ReporteClientes.query.all()
     
+    # Calcular dinámicamente el pago_realizado basado en las subfacturas
+    for r in reportes_lista:
+        if r.subfacturas:
+            r.pago_realizado = sum(sf.valor for sf in r.subfacturas)
+            
     # También necesitamos los clientes por si el usuario quiere crear un Contrato desde ahí
     clientes_lista = Clientes.query.all()
     
