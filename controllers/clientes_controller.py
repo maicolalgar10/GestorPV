@@ -383,6 +383,11 @@ def crear_subfactura():
         db.session.add(nueva_sub)
         db.session.commit()
         
+        # Asignar la suma total de subfacturas a pago_realizado
+        total_subfacturas = db.session.query(db.func.sum(ClienteSubFactura.valor)).filter_by(factura_id=factura_padre.id).scalar() or 0.0
+        factura_padre.pago_realizado = total_subfacturas
+        db.session.commit()
+
         flash('Sub-factura registrada correctamente.', 'success')
     except Exception as e:
         db.session.rollback()
@@ -406,6 +411,11 @@ def eliminar_subfactura(id):
         db.session.delete(subfactura)
         db.session.commit()
         
+        # Asignar la suma total de subfacturas a pago_realizado
+        total_subfacturas = db.session.query(db.func.sum(ClienteSubFactura.valor)).filter_by(factura_id=factura_padre.id).scalar() or 0.0
+        factura_padre.pago_realizado = total_subfacturas
+        db.session.commit()
+
         flash('Sub-factura eliminada.', 'success')
     except Exception as e:
         db.session.rollback()
