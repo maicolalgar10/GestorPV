@@ -218,6 +218,45 @@ def crear_contrato_contratista():
     return redirect(url_for('contratistas.index'))
 
 
+# ─── POST /contratistas/editar_contrato/<id> ─────────────
+@contratistas_bp.route("/editar_contrato/<int:id>", methods=["POST"])
+@login_required
+@admin_oficina_required
+def editar_contrato(id):
+    try:
+        contrato = ContratosContratista.query.get_or_404(id)
+        
+        contrato.numero_contrato = request.form.get('numero_contrato', contrato.numero_contrato)
+        contrato.objeto = request.form.get('objeto', contrato.objeto)
+        
+        val_total_str = request.form.get('valor_total')
+        if val_total_str:
+            contrato.valor_total = limpiar_monto(val_total_str)
+            
+        f_inicio = request.form.get('fecha_inicio')
+        if f_inicio:
+            contrato.fecha_inicio = dt.strptime(f_inicio, '%Y-%m-%d').date()
+            
+        f_fin = request.form.get('fecha_fin')
+        if f_fin:
+            contrato.fecha_fin = dt.strptime(f_fin, '%Y-%m-%d').date()
+            
+        contrato_pdf = request.files.get('contrato_pdf')
+        if contrato_pdf and contrato_pdf.filename:
+            url_contrato = subir_archivo_supabase(contrato_pdf)
+            if url_contrato:
+                contrato.archivo_pdf = url_contrato
+                
+        db.session.commit()
+        flash("Contrato actualizado exitosamente.", "success")
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al editar contrato: {e}")
+        flash(f"Error al editar el contrato: {e}", "danger")
+        
+    return redirect(url_for('contratistas.index'))
+
+
 # ─── POST /contratistas/crear_factura ────────────────────
 @contratistas_bp.route("/crear_factura", methods=["POST"])
 @login_required

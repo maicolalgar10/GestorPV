@@ -259,14 +259,6 @@
                 <div>
                   <span class="badge bg-primary me-2">CONTRATO #{{ contrato.numero_contrato or 'S/N' }}</span>
                   <strong>{{ contrato.contratista.nombre }}</strong>
-                  <span role="button" class="btn btn-sm btn-link p-0 ms-1 text-secondary" title="Editar Contrato"
-                    data-bs-toggle="modal" data-bs-target="#modalEditarContrato" data-id="{{ contrato.id }}"
-                    data-contratista="{{ contrato.contratista.id }}" data-numero="{{ contrato.numero_contrato or '' }}"
-                    data-objeto="{{ contrato.objeto or '' }}" data-valor="{{ (contrato.valor_total or 0)|int }}"
-                    data-inicio="{{ contrato.fecha_inicio if contrato.fecha_inicio else '' }}" data-fin="{{ contrato.fecha_fin if contrato.fecha_fin else '' }}"
-                    onclick="prepararModalEditarContrato(this, event)">
-                    <i class="bi bi-pencil-square"></i>
-                  </span>
                   <span class="text-muted mx-1">&mdash;</span>
                   <span class="text-muted">{{ contrato.objeto or 'Sin objeto definido' }}</span>
                 </div>
@@ -379,7 +371,24 @@
                   </tbody>
                 </table>
               </div>
-              <div class="p-3 bg-light text-end border-top" style="border-radius: 0 0 var(--radius) var(--radius);">
+              <div class="p-3 bg-light d-flex justify-content-end gap-2 border-top" style="border-radius: 0 0 var(--radius) var(--radius);">
+                {% if contrato.archivo_pdf %}
+                <a href="{{ contrato.archivo_pdf }}" target="_blank" class="btn btn-sm btn-outline-danger rounded-pill fw-bold">
+                  <i class="bi bi-file-earmark-pdf me-1"></i> Ver Contrato
+                </a>
+                {% else %}
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill fw-bold" disabled title="No hay archivo PDF">
+                  <i class="bi bi-file-earmark-pdf me-1"></i> Ver Contrato
+                </button>
+                {% endif %}
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill fw-bold" title="Editar Contrato"
+                  data-bs-toggle="modal" data-bs-target="#modalEditarContrato" data-id="{{ contrato.id }}"
+                  data-contratista="{{ contrato.contratista.id }}" data-numero="{{ contrato.numero_contrato or '' }}"
+                  data-objeto="{{ contrato.objeto or '' }}" data-valor="{{ (contrato.valor_total or 0)|int }}"
+                  data-inicio="{{ contrato.fecha_inicio if contrato.fecha_inicio else '' }}" data-fin="{{ contrato.fecha_fin if contrato.fecha_fin else '' }}"
+                  onclick="prepararModalEditarContrato(this, event)">
+                  <i class="bi bi-pencil-square me-1"></i> Editar Contrato
+                </button>
                 <button type="button" class="btn btn-sm btn-primary rounded-pill fw-bold" data-bs-toggle="modal"
                   data-bs-target="#modalCrearFactura" onclick="prepararModalCrearFactura('{{ contrato.contratista.nombre | escape }}', '{{ contrato.id }}');">
                   <i class="bi bi-plus-circle me-1"></i> Registrar Factura
@@ -569,6 +578,65 @@
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
           <button type="submit" form="formCrearContrato" class="btn btn-confirm px-4"><i class="bi bi-save me-1"></i>
             Guardar Contrato</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL EDITAR CONTRATO -->
+  <div class="modal fade modal-dark" id="modalEditarContrato" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Editar Contrato</h5>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <form method="POST" id="formEditarContrato" action="" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label>Número de Contrato</label>
+                <input type="text" name="numero_contrato" id="edit_contrato_numero" class="form-control" placeholder="Ej. CT-2026-01">
+              </div>
+              <div class="col-md-6">
+                <label>Valor Total del Contrato *</label>
+                <div class="input-group">
+                  <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                  <input type="text" name="valor_total" id="edit_contrato_valor" class="form-control money-input" value="0" required oninput="formatMoneyField(this)">
+                </div>
+              </div>
+              <div class="col-12">
+                <label>Objeto del Contrato</label>
+                <textarea name="objeto" id="edit_contrato_objeto" class="form-control" rows="3" placeholder="Descripción detallada..."></textarea>
+              </div>
+              <div class="col-md-6">
+                <label>Fecha de Inicio</label>
+                <input type="date" name="fecha_inicio" id="edit_contrato_inicio" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label>Fecha de Fin</label>
+                <input type="date" name="fecha_fin" id="edit_contrato_fin" class="form-control">
+              </div>
+              <div class="col-12">
+                <label>Actualizar Contrato (PDF) - Opcional</label>
+                <div class="upload-zone" onclick="this.querySelector('input').click()">
+                  <input type="file" name="contrato_pdf" accept=".pdf" onchange="mostrarNombreArchivo(this,'lbl_edit_contrato')">
+                  <label id="lbl_edit_contrato"><i class="bi bi-cloud-arrow-up me-1"></i>Subir nuevo PDF del Contrato</label>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="modal-footer d-flex justify-content-end gap-2 mt-4 border-top pt-3 bg-dark"
+          style="border-color:#3f3f5c !important;">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" form="formEditarContrato" class="btn btn-confirm px-4"><i class="bi bi-save me-1"></i>
+            Actualizar Contrato</button>
         </div>
       </div>
     </div>
@@ -892,6 +960,20 @@
       document.getElementById('edit_telefono').value = btn.dataset.telefono;
       document.getElementById('edit_especialidad').value = btn.dataset.especialidad;
       document.getElementById('edit_estado').value = btn.dataset.estado;
+    }
+
+    function prepararModalEditarContrato(btn, e) {
+      e.stopPropagation();
+      document.getElementById('formEditarContrato').action = `/contratistas/editar_contrato/${btn.dataset.id}`;
+      document.getElementById('edit_contrato_numero').value = btn.dataset.numero;
+      document.getElementById('edit_contrato_objeto').value = btn.dataset.objeto;
+      document.getElementById('edit_contrato_inicio').value = btn.dataset.inicio;
+      document.getElementById('edit_contrato_fin').value = btn.dataset.fin;
+      
+      let val = document.getElementById('edit_contrato_valor');
+      val.setAttribute('data-raw-value', btn.dataset.valor);
+      val.value = btn.dataset.valor;
+      formatMoneyField(val);
     }
 
     function prepararModalCrearFactura(nombreContratista, contratoId) {
