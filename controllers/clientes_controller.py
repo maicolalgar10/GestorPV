@@ -5,7 +5,7 @@ import uuid
 import re
 from werkzeug.utils import secure_filename
 
-from models import db, Clientes, ReporteClientes, Usuarios, Contrato, ContratosClientes
+from models import db, Clientes, ReporteClientes, Usuarios, Contrato, ContratosClientes, ClienteSubFactura
 from supabase_client import supabase
 from decorators import login_required, admin_oficina_required
 
@@ -346,5 +346,81 @@ def editar_contrato_cliente(contrato_id):
         db.session.rollback()
         print(f"Error al actualizar contrato cliente: {e}")
         flash(f'Error al actualizar contrato: {e}', 'danger')
+
+    return redirect(url_for('clientes.index'))
+
+
+@clientes_bp.route('/subfactura/crear', methods=['POST'])
+@login_required
+@admin_oficina_required
+def crear_subfactura():
+    try:
+        factura_id = request.form.get('factura_id')
+        factura_padre = ReporteClientes.query.get(factura_id)
+        if not factura_padre:
+            flash('Factura principal no encontrada.', 'danger')
+            return redirect(url_for('clientes.index'))
+
+        numero = request.form.get('numero_subfactura', '')
+        fecha_str = request.form.get('fecha_subfactura', '')
+        fecha = datetime.strptime(fecha_str, "%Y-%m-%d").date() if fecha_str else None
+        concepto = request.form.get('concepto', '')
+        valor = limpiar_monto(request.form.get('valor', 0))
+
+        pdf = request.files.get('pdf_subfactura')
+        url_pdf = None
+        if pdf and pdf.filename:
+            url_pdf = subir_archivo_supabase(pdf)
+
+        nueva_sub = ClienteSubFactura(
+            factura_id=factura_padre.id,
+            numero_subfactura=numero,
+            fecha=fecha,
+            concepto=concepto,
+            valor=valor,
+            archivo_pdf_url=url_pdf
+        )
+        db.session.add(nueva_sub)
+        db.session.commit()
+        
+        # Recalcular valor_factura de la factura padre
+        factura_padre.valor_factura = sum(sf.valor for sf in factura_padre.subfacturas)
+        db.session.commit()
+
+        flash('Sub-factura registrada correctamente.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al crear subfactura: {e}")
+        flash('Error al crear sub-factura.', 'danger')
+
+    return redirect(url_for('clientes.index'))
+
+
+@clientes_bp.route('/subfactura/eliminar/<int:id>', methods=['POST'])
+@login_required
+@admin_oficina_required
+def eliminar_subfactura(id):
+    try:
+        subfactura = ClienteSubFactura.query.get(id)
+        if not subfactura:
+            flash('Sub-factura no encontrada.', 'danger')
+            return redirect(url_for('clientes.index'))
+
+        factura_padre = subfactura.factura_padre
+        db.session.delete(subfactura)
+        db.session.commit()
+        
+        # Recalcular valor_factura de la factura padre
+        if factura_padre.subfacturas:
+            factura_padre.valor_factura = sum(sf.valor for sf in factura_padre.subfacturas)
+        else:
+            factura_padre.valor_factura = 0.0
+        db.session.commit()
+
+        flash('Sub-factura eliminada.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al eliminar subfactura: {e}")
+        flash('Error al eliminar sub-factura.', 'danger')
 
     return redirect(url_for('clientes.index'))

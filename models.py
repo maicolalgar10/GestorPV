@@ -1125,3 +1125,16 @@ class ContratistaFactura(db.Model):
         elif self.dias_mora > 0:
             return "MORA"
         return "POR PAGAR"
+
+class ClienteSubFactura(db.Model):
+    __tablename__ = 'cliente_subfacturas'
+    id = db.Column(db.Integer, primary_key=True)
+    factura_id = db.Column(db.Integer, db.ForeignKey('reporte_clientes.id', ondelete='CASCADE'), nullable=False)
+    numero_subfactura = db.Column(db.String(100), nullable=True)
+    fecha = db.Column(db.Date, nullable=True)
+    concepto = db.Column(db.String(255), nullable=True)
+    valor = db.Column(db.Numeric(15, 2), default=0.0)
+    archivo_pdf_url = db.Column(db.String(500), nullable=True)
+
+    factura_padre = db.relationship('ReporteClientes', backref=db.backref('subfacturas', lazy=True, cascade="all, delete-orphan"))
+

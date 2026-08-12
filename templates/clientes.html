@@ -369,6 +369,27 @@
                           <i class="bi bi-file-earmark-check"></i>
                         </a>
                         {% endif %}
+                        {% set subs_data = [] %}
+                        {% for sf in r.subfacturas %}
+                          {% set _ = subs_data.append({
+                             'id': sf.id,
+                             'numero': sf.numero_subfactura or '',
+                             'fecha': sf.fecha.strftime('%Y-%m-%d') if sf.fecha else '',
+                             'concepto': sf.concepto or '',
+                             'valor': sf.valor|float,
+                             'pdf': sf.archivo_pdf_url or ''
+                          }) %}
+                        {% endfor %}
+                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-0 ms-1 position-relative" title="Sub-facturas"
+                          data-subs='{{ subs_data | tojson | forceescape }}'
+                          onclick="abrirModalSubfacturas('{{ r.id }}', this)">
+                          <i class="bi bi-list-ul"></i>
+                          {% if r.subfacturas|length > 0 %}
+                          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
+                            {{ r.subfacturas|length }}
+                          </span>
+                          {% endif %}
+                        </button>
                         {% if r.comprobante_pago_url and r.comprobante_pago_url != '' and r.comprobante_pago_url !=
                         'None' %}
                         <a href="{{ r.comprobante_pago_url }}" target="_blank"
@@ -921,8 +942,121 @@
     </div>
   </div>
 
+  <!-- MODAL SUB-FACTURAS -->
+  <div class="modal fade modal-dark" id="modalSubFacturas" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header border-bottom border-secondary">
+          <h5 class="modal-title"><i class="bi bi-list-ul me-2"></i>Desglose de Sub-facturas</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        
+        <div class="modal-body p-4">
+          <div class="table-responsive mb-4">
+            <table class="table table-dark table-hover table-striped align-middle custom-table">
+              <thead>
+                <tr>
+                  <th>No. Subfactura</th>
+                  <th>Fecha</th>
+                  <th>Concepto</th>
+                  <th>Valor</th>
+                  <th class="text-center">PDF</th>
+                  <th class="text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-subfacturas">
+                <!-- Se llena via JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <h6 class="border-bottom border-secondary pb-2 mb-3 text-primary"><i class="bi bi-plus-circle me-1"></i>Agregar Nueva Sub-factura</h6>
+          <form method="POST" id="formCrearSubfactura" action="{{ url_for('clientes.crear_subfactura') }}" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="factura_id" id="subfactura_factura_id" value="">
+            <div class="row g-3">
+              <div class="col-md-3">
+                <label>Número</label>
+                <input type="text" name="numero_subfactura" class="form-control" placeholder="Ej: 001-A">
+              </div>
+              <div class="col-md-3">
+                <label>Fecha</label>
+                <input type="date" name="fecha_subfactura" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label>Concepto</label>
+                <input type="text" name="concepto" class="form-control" placeholder="Descripción breve...">
+              </div>
+              <div class="col-md-4">
+                <label>Valor *</label>
+                <div class="input-group">
+                  <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                  <input type="text" name="valor" class="form-control money-input" value="0" required oninput="formatMoneyField(this)">
+                </div>
+              </div>
+              <div class="col-md-8">
+                <label>Archivo PDF (Opcional)</label>
+                <div class="upload-zone py-2 px-3" onclick="this.querySelector('input').click()">
+                  <input type="file" name="pdf_subfactura" accept=".pdf" onchange="mostrarNombreArchivo(this,'lbl_pdf_subfactura')">
+                  <label id="lbl_pdf_subfactura" class="m-0"><i class="bi bi-cloud-arrow-up me-1"></i>Subir archivo PDF</label>
+                </div>
+              </div>
+            </div>
+            <div class="text-end mt-3">
+              <button type="submit" class="btn btn-confirm px-4"><i class="bi bi-save me-1"></i> Registrar Sub-factura</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+    function abrirModalSubfacturas(facturaId, btnElement) {
+      document.getElementById('subfactura_factura_id').value = facturaId;
+      
+      const tbody = document.getElementById('tbody-subfacturas');
+      tbody.innerHTML = '';
+      
+      try {
+        const subsData = JSON.parse(btnElement.getAttribute('data-subs'));
+        
+        if (subsData.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No hay sub-facturas registradas.</td></tr>';
+        } else {
+          subsData.forEach(sub => {
+            const tr = document.createElement('tr');
+            
+            // Format money locally using Intl.NumberFormat
+            const formatter = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
+            const valorFmt = formatter.format(sub.valor);
+            
+            let pdfHtml = sub.pdf ? `<a href="${sub.pdf}" target="_blank" class="btn btn-sm btn-outline-info rounded-pill"><i class="bi bi-file-earmark-pdf"></i> Ver</a>` : '<span class="text-muted">N/A</span>';
+            
+            tr.innerHTML = `
+              <td>${sub.numero}</td>
+              <td>${sub.fecha || '---'}</td>
+              <td>${sub.concepto}</td>
+              <td class="text-success fw-bold">${valorFmt}</td>
+              <td class="text-center">${pdfHtml}</td>
+              <td class="text-center">
+                <form action="/clientes/subfactura/eliminar/${sub.id}" method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar esta sub-factura?');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill"><i class="bi bi-trash"></i></button>
+                </form>
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+      } catch (e) {
+        console.error("Error parsing subs_data", e);
+      }
+      
+      const modal = new bootstrap.Modal(document.getElementById('modalSubFacturas'));
+      modal.show();
+    }
     function fmtPeso(num) {
       if (isNaN(num)) num = 0;
       return '$ ' + parseFloat(num).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
