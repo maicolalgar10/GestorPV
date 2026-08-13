@@ -372,6 +372,11 @@ def facturas_proveedor(nombre_proveedor):
 
     facturas = ProveedorFactura.query.filter_by(nombre_proveedor=nombre_proveedor).order_by(ProveedorFactura.fecha_factura.desc()).all()
     
+    # Calcular dinámicamente el valor_cancelado basado en las subfacturas
+    for f in facturas:
+        if f.subfacturas:
+            f.valor_cancelado = sum(sf.valor for sf in f.subfacturas)
+            
     deuda_total = sum(f.total_adeudado for f in facturas)
 
     return render_template(
@@ -796,6 +801,9 @@ def crear_proveedor_subfactura():
         db.session.rollback()
         flash(f"Error al crear sub-factura: {e}", "danger")
 
+    redirect_to = request.form.get("redirect_to")
+    if redirect_to == "facturas_proveedor" and 'factura_padre' in locals() and factura_padre:
+        return redirect(url_for("dashboard.facturas_proveedor", nombre_proveedor=factura_padre.nombre_proveedor))
     return redirect(url_for("dashboard.proveedores"))
 
 
@@ -825,4 +833,7 @@ def eliminar_proveedor_subfactura(id):
         db.session.rollback()
         flash(f"Error al eliminar sub-factura: {e}", "danger")
 
+    redirect_to = request.form.get("redirect_to")
+    if redirect_to == "facturas_proveedor" and 'factura_padre' in locals() and factura_padre:
+        return redirect(url_for("dashboard.facturas_proveedor", nombre_proveedor=factura_padre.nombre_proveedor))
     return redirect(url_for("dashboard.proveedores"))
