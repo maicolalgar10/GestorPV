@@ -1249,8 +1249,8 @@ function abrirModalProveedorSubFacturas(facturaId, nombreProveedor, valorNeto, v
 
       tr.innerHTML = `
         <td class="fw-semibold text-white">${sf.numero}</td>
-        <td class="small">${sf.fecha}</td>
-        <td class="small text-muted">${sf.concepto}</td>
+        <td class="small text-white">${sf.fecha}</td>
+        <td class="small text-white">${sf.concepto}</td>
         <td class="text-end fw-semibold text-success">${fmtPeso(sf.valor)}</td>
         <td class="text-center">${pdfBtn}${delBtn}</td>
       `;
