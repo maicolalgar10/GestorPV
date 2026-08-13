@@ -695,7 +695,7 @@
           <div class="col-lg-5">
             <div class="p-3" style="background:#1d1d2b; border:1px solid #3f3f5c; border-radius:12px;">
               <h6 class="text-white mb-3 border-bottom border-secondary pb-2">Registrar Nueva Sub-factura / Pago</h6>
-              <form method="POST" action="{{ url_for('dashboard.crear_proveedor_subfactura') }}" enctype="multipart/form-data">
+              <form method="POST" action="{{ url_for('dashboard.crear_proveedor_subfactura') }}" enctype="multipart/form-data" onsubmit="limpiarMontoSubFactura(event)">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="factura_id" id="hidden_factura_id_sub">
                 <!-- Para redireccionar de vuelta al detalle -->
@@ -713,10 +713,7 @@
                   </div>
                   <div class="col-6">
                     <label class="form-label text-secondary small">Valor ($) *</label>
-                    <div class="input-group">
-                      <span class="input-group-text">$</span>
-                      <input type="text" class="form-control" name="valor" id="inputValorSubFactura" placeholder="0" required oninput="formatCurrencyInput(this)">
-                    </div>
+                    <input type="text" class="form-control" name="valor" id="inputValorSubFactura" placeholder="$ 0" required oninput="formatCurrencyInput(this)">
                   </div>
                 </div>
                 
@@ -746,20 +743,27 @@
    CÁLCULOS EN TIEMPO REAL
 ══════════════════════════════════════════════════════════ */
 function formatCurrencyInput(input) {
-  let val = input.value;
-  if (!val) return;
-  // Permitir coma o punto como separador decimal
-  let cleanVal = val.toString().replace(/[^0-9.,]/g, '');
-  if (cleanVal.includes(',') && cleanVal.includes('.')) {
-    cleanVal = cleanVal.replace('.', '').replace(',', '.');
-  } else if (cleanVal.includes(',')) {
-    cleanVal = cleanVal.replace(',', '.');
+  // 1. Eliminar todo lo que no sea dígito
+  let rawValue = input.value.replace(/\D/g, '');
+  
+  if (!rawValue) {
+      input.value = '';
+      return;
   }
-  let parts = cleanVal.split('.');
-  let enteros = parts[0];
-  let decimales = parts.length > 1 ? '.' + parts[1].substring(0,2) : '';
-  enteros = enteros.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  input.value = enteros + (val.endsWith(',') && parts.length === 1 ? ',' : decimales.replace('.', ','));
+  
+  // 2. Formatear como entero con separadores de miles (punto)
+  let formatted = new Intl.NumberFormat('es-CO', {
+      maximumFractionDigits: 0
+  }).format(parseInt(rawValue, 10));
+  
+  input.value = '$ ' + formatted;
+}
+
+function limpiarMontoSubFactura(event) {
+  let inputVal = document.getElementById('inputValorSubFactura');
+  if (inputVal && inputVal.value) {
+    inputVal.value = inputVal.value.replace(/\D/g, '');
+  }
 }
 
 function abrirModalProveedorSubFacturas(facturaId, nombreProveedor, valorNeto, valorCancelado, totalAdeudado, subfacturas) {
