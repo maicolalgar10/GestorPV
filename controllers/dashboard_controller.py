@@ -735,7 +735,11 @@ def crear_proveedor_subfactura():
         if supabase is None:
             return None
         try:
+            ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'webp'}
             ext = f.filename.rsplit(".", 1)[-1].lower()
+            if ext not in ALLOWED_EXTENSIONS:
+                flash(f"Extensión .{ext} no permitida. Solo PDF e imágenes.", "danger")
+                return None
             filename = f"{uuid.uuid4().hex}.{ext}"
             path = f"proveedores/{filename}"
             data = f.read()
