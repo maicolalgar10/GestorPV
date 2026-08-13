@@ -708,6 +708,9 @@ def marcar_todas_leidas():
         
     except Exception as e:
         db.session.rollback()
+        flash(f"Error al marcar notificaciones: {str(e)}", "danger")
+    
+    return redirect(url_for('dashboard.dashboard'))  # Redirige al dashboard
 
 
 # ─── POST /dashboard/proveedores/subfactura/crear ────────────────────
@@ -823,7 +826,3 @@ def eliminar_proveedor_subfactura(id):
         flash(f"Error al eliminar sub-factura: {e}", "danger")
 
     return redirect(url_for("dashboard.proveedores"))
-
-        flash(f"Error al marcar notificaciones: {str(e)}", "danger")
-    
-    return redirect(url_for('dashboard.dashboard'))  # Redirige al dashboard
