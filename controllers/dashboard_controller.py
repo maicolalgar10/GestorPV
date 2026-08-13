@@ -313,7 +313,7 @@ def gestion_materiales_oficina():
 @login_required
 @admin_oficina_required
 def proveedores():
-    from models import ProveedorFactura, Proveedor
+    from models import ProveedorFactura, Proveedor, ProveedorSubFactura
     usuario = Usuarios.query.get(session.get("user_id"))
     notificaciones = Notificaciones.query.filter_by(
         id_usuario_destino=session["user_id"], leido=False
@@ -321,6 +321,12 @@ def proveedores():
     frase = frase_del_dia()
 
     facturas = ProveedorFactura.query.order_by(ProveedorFactura.fecha_factura.desc()).all()
+    
+    # Calcular dinámicamente el valor_cancelado basado en las subfacturas
+    for f in facturas:
+        if f.subfacturas:
+            f.valor_cancelado = sum(sf.valor for sf in f.subfacturas)
+
     lista_proveedores = Proveedor.query.order_by(Proveedor.nombre.asc()).all()
 
     deuda_por_proveedor = {}
@@ -702,6 +708,122 @@ def marcar_todas_leidas():
         
     except Exception as e:
         db.session.rollback()
+
+
+# ─── POST /dashboard/proveedores/subfactura/crear ────────────────────
+@dashboard_bp.route("/dashboard/proveedores/subfactura/crear", methods=["POST"])
+@login_required
+@admin_oficina_required
+def crear_proveedor_subfactura():
+    from models import ProveedorFactura, ProveedorSubFactura
+    from datetime import datetime as dt
+    from supabase_client import supabase
+    import uuid
+
+    def upload_file(file_field):
+        f = request.files.get(file_field)
+        if not f or f.filename == "":
+            return None
+        if supabase is None:
+            return None
+        try:
+            ext = f.filename.rsplit(".", 1)[-1].lower()
+            filename = f"{uuid.uuid4().hex}.{ext}"
+            path = f"proveedores/{filename}"
+            data = f.read()
+            supabase.storage.from_("tesoreria").upload(
+                path, data,
+                {"content-type": f.content_type, "upsert": "false"}
+            )
+            return supabase.storage.from_("tesoreria").get_public_url(path)
+        except Exception as e:
+            return None
+
+    try:
+        factura_id = request.form.get("factura_id")
+        factura_padre = ProveedorFactura.query.get(factura_id)
+        if not factura_padre:
+            flash("Factura de proveedor no encontrada.", "danger")
+            return redirect(url_for("dashboard.proveedores"))
+
+        numero = request.form.get("numero_subfactura", "")
+        fecha_str = request.form.get("fecha_subfactura", "")
+        fecha = dt.strptime(fecha_str, "%Y-%m-%d").date() if fecha_str else None
+        concepto = request.form.get("concepto", "")
+        
+        # parse valor
+        valor_raw = request.form.get("valor", "0")
+        valor_limpio = str(valor_raw).replace('$', '').replace(' ', '')
+        
+        # Format CO: 1.641.589,48
+        if ',' in valor_limpio and '.' in valor_limpio:
+            valor_limpio = valor_limpio.replace('.', '').replace(',', '.')
+        elif ',' in valor_limpio:
+            valor_limpio = valor_limpio.replace(',', '.')
+        elif '.' in valor_limpio:
+            partes = valor_limpio.split('.')
+            if len(partes) > 2 or (len(partes) == 2 and len(partes[1]) == 3):
+                valor_limpio = valor_limpio.replace('.', '')
+                
+        try:
+            valor = float(valor_limpio)
+        except ValueError:
+            valor = 0.0
+
+        pdf_url = upload_file("pdf_subfactura")
+
+        nueva_sub = ProveedorSubFactura(
+            factura_id=factura_padre.id,
+            numero_subfactura=numero,
+            fecha=fecha,
+            concepto=concepto,
+            valor=valor,
+            archivo_pdf_url=pdf_url
+        )
+        db.session.add(nueva_sub)
+        db.session.commit()
+
+        # Recalcular valor_cancelado
+        total_sub = db.session.query(db.func.sum(ProveedorSubFactura.valor)).filter_by(factura_id=factura_padre.id).scalar() or 0.0
+        factura_padre.valor_cancelado = total_sub
+        db.session.commit()
+
+        flash("Sub-factura registrada correctamente.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al crear sub-factura: {e}", "danger")
+
+    return redirect(url_for("dashboard.proveedores"))
+
+
+# ─── POST /dashboard/proveedores/subfactura/eliminar/<id> ─────────
+@dashboard_bp.route("/dashboard/proveedores/subfactura/eliminar/<int:id>", methods=["POST"])
+@login_required
+@admin_oficina_required
+def eliminar_proveedor_subfactura(id):
+    from models import ProveedorSubFactura
+    try:
+        sub = ProveedorSubFactura.query.get(id)
+        if not sub:
+            flash("Sub-factura no encontrada.", "danger")
+            return redirect(url_for("dashboard.proveedores"))
+
+        factura_padre = sub.factura_padre
+        db.session.delete(sub)
+        db.session.commit()
+
+        # Recalcular valor_cancelado
+        total_sub = db.session.query(db.func.sum(ProveedorSubFactura.valor)).filter_by(factura_id=factura_padre.id).scalar() or 0.0
+        factura_padre.valor_cancelado = total_sub
+        db.session.commit()
+
+        flash("Sub-factura eliminada.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al eliminar sub-factura: {e}", "danger")
+
+    return redirect(url_for("dashboard.proveedores"))
+
         flash(f"Error al marcar notificaciones: {str(e)}", "danger")
     
     return redirect(url_for('dashboard.dashboard'))  # Redirige al dashboard
