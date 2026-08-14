@@ -280,6 +280,13 @@ def crear_factura():
         url_factura = subir_archivo_supabase(factura_pdf)
         url_pago = subir_archivo_supabase(comprobante_pago)
 
+        def parse_pct(val, default=0.0):
+            if val is None or str(val).strip() == "": return default
+            try:
+                return float(str(val).replace(',', '.').strip())
+            except ValueError:
+                return default
+
         factura = ContratistaFactura(
             nombre_contratista       = request.form.get("nombre_contratista", "").strip(),
             contrato_id              = request.form.get("contrato_id"),
@@ -287,9 +294,9 @@ def crear_factura():
             plazo_dias             = int(request.form.get("plazo_dias") or 0),
             fecha_vencimiento      = fecha_vencimiento,
             valor_neto             = limpiar_monto(request.form.get("valor_neto")),
-            porcentaje_iva         = limpiar_monto(request.form.get("porcentaje_iva")),
+            porcentaje_iva         = parse_pct(request.form.get("porcentaje_iva")),
             valor_cancelado        = limpiar_monto(request.form.get("valor_cancelado")),
-            retencion              = limpiar_monto(request.form.get("retencion")),
+            retencion              = parse_pct(request.form.get("retencion")),
             fecha_pago             = fecha_pago,
             orden_compra_url       = url_orden,
             comprobante_compra_url = url_factura,
@@ -330,10 +337,17 @@ def editar_factura(id):
         if fecha_vencimiento_str:
             factura.fecha_vencimiento = dt.strptime(fecha_vencimiento_str, "%Y-%m-%d").date()
             
+        def parse_pct(val, default=0.0):
+            if val is None or str(val).strip() == "": return default
+            try:
+                return float(str(val).replace(',', '.').strip())
+            except ValueError:
+                return default
+
         factura.valor_neto = limpiar_monto(request.form.get("valor_neto"))
-        factura.porcentaje_iva = limpiar_monto(request.form.get("porcentaje_iva"))
+        factura.porcentaje_iva = parse_pct(request.form.get("porcentaje_iva"))
         factura.valor_cancelado = limpiar_monto(request.form.get("valor_cancelado"))
-        factura.retencion = limpiar_monto(request.form.get("retencion"))
+        factura.retencion = parse_pct(request.form.get("retencion"))
         
         if fecha_pago_str:
             factura.fecha_pago = dt.strptime(fecha_pago_str, "%Y-%m-%d").date()
