@@ -762,7 +762,7 @@ class ProveedorFactura(db.Model):
     # ─── Auditoría ───────────────────────────────────────────────────
     creado_en = db.Column(db.DateTime, default=datetime.utcnow)
 
-    porcentaje_iva = db.Column(db.Numeric(14, 2), nullable=False, default=19.0)
+    porcentaje_iva = db.Column(db.Numeric(14, 3), nullable=False, default=19.0)
 
     # ─── Campos calculados (@property) ───────────────────────────────
 
@@ -1064,12 +1064,12 @@ class ContratistaFactura(db.Model):
     # ─── Valores monetarios ──────────────────────────────────────────
     valor_neto      = db.Column(db.Numeric(14, 2), nullable=False, default=0)
     valor_cancelado = db.Column(db.Numeric(14, 2), nullable=False, default=0)
-    retencion       = db.Column(db.Numeric(14, 2), nullable=False, default=0)
+    retencion       = db.Column(db.Numeric(14, 3), nullable=False, default=0)
 
     # ─── Auditoría ───────────────────────────────────────────────────
     creado_en = db.Column(db.DateTime, default=datetime.utcnow)
 
-    porcentaje_iva = db.Column(db.Numeric(14, 2), nullable=False, default=19.0)
+    porcentaje_iva = db.Column(db.Numeric(14, 3), nullable=False, default=19.0)
 
     # ─── Campos calculados (@property) ───────────────────────────────
     @property
