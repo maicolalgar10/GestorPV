@@ -505,8 +505,8 @@
             <div class="col-md-3">
               <label>IVA (%)</label>
               <div class="input-group mb-2">
-                <input type="number" name="porcentaje_iva" id="e_porcentaje_iva" class="form-control pct-input"
-                       placeholder="19" min="0" max="100" step="any" value="19" oninput="calcularIVA('e')">
+                <input type="text" name="porcentaje_iva" id="e_porcentaje_iva" class="form-control pct-input"
+                       placeholder="19" value="19" oninput="formatPercentageInput(this); calcularIVA('e')">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
               </div>
               <div class="calc-box d-flex justify-content-between align-items-center py-1 px-2">
@@ -524,8 +524,8 @@
             <div class="col-md-3">
               <label>RetenciÃ³n (%)</label>
               <div class="input-group">
-                <input type="number" name="retencion" id="e_retencion" class="form-control"
-                       min="0" max="100" step="any" value="0" oninput="calcularIVA('e')">
+                <input type="text" name="retencion" id="e_retencion" class="form-control pct-input"
+                       value="0" oninput="formatPercentageInput(this); calcularIVA('e')">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
               </div>
             </div>
@@ -652,10 +652,27 @@ function parseMonto(valorString) {
     return parseFloat(limpiarMonto(valorString)) || 0;
 }
 
+function formatPercentageInput(input) {
+    let value = input.value;
+    if (!value) return;
+    
+    value = value.replace(/[^0-9,]/g, '');
+    const parts = value.split(',');
+    if (parts.length > 2) {
+        value = parts[0] + ',' + parts.slice(1).join('').replace(/,/g, '');
+    }
+    input.value = value;
+}
+
+function parsePorcentaje(valorString) {
+    if (!valorString) return 0;
+    return parseFloat(String(valorString).replace(',', '.')) || 0;
+}
+
 function calcularIVA(prefix) {
   const neto     = parseMonto(document.getElementById(prefix + '_valor_neto')?.value);
-  const pct_iva  = parseFloat(document.getElementById(prefix + '_porcentaje_iva')?.value) || 0;
-  const ret_porc = parseFloat(document.getElementById(prefix + '_retencion')?.value)   || 0;
+  const pct_iva  = parsePorcentaje(document.getElementById(prefix + '_porcentaje_iva')?.value);
+  const ret_porc = parsePorcentaje(document.getElementById(prefix + '_retencion')?.value);
   const cancelado= parseMonto(document.getElementById(prefix + '_cancelado')?.value);
 
   const iva      = neto * (pct_iva / 100);
@@ -738,8 +755,11 @@ function abrirModalEditar(id, nombre, fecha_factura, plazo, fecha_venc, valor_ne
   elNeto.value = valor_neto.toString().replace('.', ',');
   formatCurrencyInput(elNeto);
   
-  document.getElementById('e_porcentaje_iva').value   = porcentaje_iva;
-  document.getElementById('e_retencion').value        = retencion;
+  let elIva = document.getElementById('e_porcentaje_iva');
+  elIva.value = porcentaje_iva.toString().replace('.', ',');
+  
+  let elRet = document.getElementById('e_retencion');
+  elRet.value = retencion.toString().replace('.', ',');
   
   let elCancelado = document.getElementById('e_cancelado');
   elCancelado.value = valor_cancelado.toString().replace('.', ',');
@@ -904,6 +924,13 @@ async function procesarFormulario(e, btnSelector) {
     form.querySelectorAll('.currency-input').forEach(input => {
       if (input.name) {
         formData.set(input.name, limpiarMonto(input.value));
+      }
+    });
+
+    // Limpiar campos de porcentaje
+    form.querySelectorAll('.pct-input').forEach(input => {
+      if (input.name) {
+        formData.set(input.name, String(input.value).replace(',', '.'));
       }
     });
 

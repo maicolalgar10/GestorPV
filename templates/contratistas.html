@@ -929,9 +929,19 @@
     }
 
     function formatPercentField(input) {
-      let val = input.value.replace(/[^0-9.,]/g, '').replace(',', '.');
-      input.setAttribute('data-raw-value', val);
-      input.value = val;
+      let value = input.value;
+      if (!value) {
+          input.setAttribute('data-raw-value', '0');
+          return;
+      }
+      
+      value = value.replace(/[^0-9,]/g, '');
+      const parts = value.split(',');
+      if (parts.length > 2) {
+          value = parts[0] + ',' + parts.slice(1).join('').replace(/,/g, '');
+      }
+      input.value = value;
+      input.setAttribute('data-raw-value', value.replace(',', '.'));
     }
 
     function parseRawValue(id) {
@@ -950,6 +960,20 @@
         label.classList.remove('text-success');
       }
     }
+
+    // Clean inputs before form submission
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function() {
+          this.querySelectorAll('.money-input, .pct-input').forEach(input => {
+            const raw = input.getAttribute('data-raw-value');
+            if (raw !== null && raw !== undefined) {
+              input.value = raw;
+            }
+          });
+        });
+      });
+    });
 
     // Funciones de Contratista
     function prepararModalEditarContratista(btn, e) {
