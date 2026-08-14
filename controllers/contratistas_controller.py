@@ -395,7 +395,7 @@ def eliminar_factura(id):
     except Exception as e:
         db.session.rollback()
         flash(f"Error al eliminar: {e}", "danger")
-    return redirect(url_for("contratistas.index"))
+    return redirect(request.form.get("redirect_to") or url_for("contratistas.index"))
 
 
 # ─── POST /contratistas/subfactura/crear ──────────────────────
