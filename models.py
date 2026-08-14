@@ -795,10 +795,13 @@ class ProveedorFactura(db.Model):
     def total_adeudado(self):
         """(valor_total - retencion_en_pesos) - valor_cancelado."""
         try:
+            val_cancelado = float(self.valor_cancelado or 0)
+            if hasattr(self, 'subfacturas') and self.subfacturas:
+                val_cancelado = sum([float(s.valor) for s in self.subfacturas if s.valor]) or 0.0
             return round(
                 self.valor_total
                 - self.retencion_pesos
-                - float(self.valor_cancelado or 0),
+                - val_cancelado,
                 2
             )
         except (ValueError, TypeError):
@@ -983,7 +986,8 @@ class ReporteClientes(db.Model):
             return valor_macro - self.total_pagos_realizados - float(self.retencion_ley or 0.0)
         except Exception:
             return 0.0
-
+
+
 
 # ===========================================
 # Comprobantes de Egreso
@@ -1097,7 +1101,10 @@ class ContratistaFactura(db.Model):
     @property
     def total_adeudado(self):
         try:
-            return round(self.valor_total - self.retencion_pesos - float(self.valor_cancelado or 0), 2)
+            val_cancelado = float(self.valor_cancelado or 0)
+            if hasattr(self, 'subfacturas') and self.subfacturas:
+                val_cancelado = sum([float(s.valor) for s in self.subfacturas if s.valor]) or 0.0
+            return round(self.valor_total - self.retencion_pesos - val_cancelado, 2)
         except (ValueError, TypeError):
             return 0.0
 
