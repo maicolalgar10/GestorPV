@@ -274,7 +274,7 @@ def dashboard_oficina():
     # Cálculo seguro de stock de materiales
     try:
         from models import db, Materiales
-        total_m = db.session.query(db.func.sum(Materiales.cantidad)).scalar()
+        total_m = db.session.query(db.func.count(Materiales.id_material)).scalar()
         total_materiales = int(total_m) if total_m else 0
     except Exception as e:
         print("Error calculando total_materiales:", e)

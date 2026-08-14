@@ -1160,7 +1160,7 @@ class ProveedorSubFactura(db.Model):
 
 
 class ContratistaSubFactura(db.Model):
-    __tablename__ = 'contratista_subfacturas'
+    __tablename__ = 'contratistas_subfacturas'
     id = db.Column(db.Integer, primary_key=True)
     factura_id = db.Column(db.Integer, db.ForeignKey('contratista_facturas.id', ondelete='CASCADE'), nullable=False)
     numero_subfactura = db.Column(db.String(100), nullable=True)
