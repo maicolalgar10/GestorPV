@@ -336,7 +336,27 @@
                       <td>{{ r.fecha_pago.strftime('%Y-%m-%d') if r.fecha_pago else '---' }}</td>
                       <td class="text-danger fw-bold">${{ "{:,.0f}".format(r.total_adeudado or 0) | replace(",",".") }}</td>
                       <td class="text-center pe-4">
-                        <button class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0" title="Editar"
+                        {% set subfacturas_json = [] %}
+                        {% for sf in r.subfacturas %}
+                          {% set _ = subfacturas_json.append({
+                              "id": sf.id,
+                              "numero": sf.numero_subfactura or '',
+                              "fecha": sf.fecha.strftime('%Y-%m-%d') if sf.fecha else '',
+                              "concepto": sf.concepto or '',
+                              "valor": sf.valor | float,
+                              "pdf_url": sf.archivo_pdf_url or ''
+                          }) %}
+                        {% endfor %}
+                        <button class="btn btn-sm btn-outline-info rounded-pill px-2 py-0 position-relative" title="Sub-Facturas"
+                          onclick="abrirModalContratistaSubFacturas('{{ r.id }}', '{{ contrato.contratista.nombre | replace("\'","\\\'")|replace('\"','\\\"') }}', {{ r.valor_neto }}, {{ r.valor_cancelado }}, {{ r.total_adeudado }}, {{ subfacturas_json | tojson | forceescape }})">
+                          <i class="bi bi-list-ul"></i>
+                          {% if r.subfacturas|length > 0 %}
+                          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.5rem; padding: 0.2em 0.4em;">
+                            {{ r.subfacturas|length }}
+                          </span>
+                          {% endif %}
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0 ms-1" title="Editar"
                           onclick="abrirModalEditarFactura('{{ r.id }}', '{{ contrato.contratista.nombre | escape }}', '{{ contrato.id }}', '{{ (r.valor_neto or 0)|int }}', '{{ r.porcentaje_iva or 0 }}', '{{ (r.retencion or 0)|int }}', '{{ (r.valor_cancelado or 0)|int }}', '{{ r.fecha_pago if r.fecha_pago else '' }}', '{{ r.fecha_factura if r.fecha_factura else '' }}', '{{ r.fecha_vencimiento if r.fecha_vencimiento else '' }}', '{{ r.plazo_dias }}')">
                           <i class="bi bi-pencil-square"></i>
                         </button>
@@ -918,7 +938,112 @@
   </div>
 
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  
+
+<!-- Modal Contratista Sub-facturas -->
+<div class="modal fade modal-dark" id="modalContratistaSubFacturas" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content">
+      <div class="modal-header border-bottom-0 pb-0">
+        <div>
+          <h5 class="modal-title" id="tituloModalSubFacturasContratista"><i class="bi bi-list-ul me-2"></i>Desglose de Sub-facturas</h5>
+          <p class="text-muted small mb-0" id="subtituloModalSubFacturasContratista"></p>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body pt-2">
+        <!-- Tarjetas de métricas -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <div class="metric-card h-100" style="background:#232338; border:1px solid #3f3f5c; border-radius:12px; padding:15px;">
+              <h6 class="text-secondary small fw-semibold mb-1">VALOR ORIGINAL FACTURA (CON IVA)</h6>
+              <h3 class="mb-0 text-white fw-bold" id="metric-valor-original-contratista">$0</h3>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="metric-card h-100" style="background:#232338; border:1px solid #3f3f5c; border-radius:12px; padding:15px;">
+              <h6 class="text-secondary small fw-semibold mb-1">TOTAL SUBFACTURADO (CANCELADO)</h6>
+              <h3 class="mb-0 text-success fw-bold" id="metric-total-subfacturado-contratista">$0</h3>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="metric-card h-100" style="background:#232338; border:1px solid #3f3f5c; border-radius:12px; padding:15px;">
+              <h6 class="text-secondary small fw-semibold mb-1">SALDO RESTANTE (TOTAL ADEUDADO)</h6>
+              <h3 class="mb-0 text-warning fw-bold" id="metric-saldo-restante-contratista">$0</h3>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-4">
+          <!-- Columna Izquierda: Lista de Sub-facturas -->
+          <div class="col-lg-7">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="text-white mb-0">Historial de Sub-facturas</h6>
+            </div>
+            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+              <table class="table table-hover table-dark align-middle">
+                <thead>
+                  <tr>
+                    <th style="background:#232338;">Número</th>
+                    <th style="background:#232338;">Fecha</th>
+                    <th style="background:#232338;">Concepto</th>
+                    <th style="background:#232338;" class="text-end">Valor</th>
+                    <th style="background:#232338;" class="text-center">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="tablaContratistaSubFacturasBody">
+                  <!-- JS llena esta tabla -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <!-- Columna Derecha: Formulario Nueva Sub-factura -->
+          <div class="col-lg-5">
+            <div class="p-3" style="background:#1d1d2b; border:1px solid #3f3f5c; border-radius:12px;">
+              <h6 class="text-white mb-3 border-bottom border-secondary pb-2">Registrar Nueva Sub-factura / Pago</h6>
+              <form method="POST" action="{{ url_for('contratistas.crear_contratista_subfactura') }}" enctype="multipart/form-data" onsubmit="limpiarMontoSubFacturaContratista(event)">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="factura_padre_id" id="hidden_factura_id_sub_contratista">
+                
+                <div class="mb-3">
+                  <label class="form-label text-secondary small">Número de Sub-factura / Soporte</label>
+                  <input type="text" class="form-control" name="numero_subfactura" placeholder="Ej: 001-A">
+                </div>
+                
+                <div class="row g-2 mb-3">
+                  <div class="col-6">
+                    <label class="form-label text-secondary small">Fecha</label>
+                    <input type="date" class="form-control" name="fecha_subfactura" required>
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label text-secondary small">Valor ($) *</label>
+                    <input type="text" class="form-control" name="valor" id="inputValorSubFacturaContratista" placeholder="$ 0" required oninput="formatCurrencyInput(this)">
+                  </div>
+                </div>
+                
+                <div class="mb-3">
+                  <label class="form-label text-secondary small">Concepto</label>
+                  <input type="text" class="form-control" name="concepto" placeholder="Descripción breve...">
+                </div>
+                
+                <div class="mb-4">
+                  <label class="form-label text-secondary small">Archivo (PDF o Imagen, Opcional)</label>
+                  <input type="file" class="form-control" name="pdf_subfactura" accept=".pdf, .png, .jpg, .jpeg, .webp, application/pdf, image/*">
+                </div>
+                
+                <button type="submit" class="btn btn-primary w-100 fw-bold"><i class="bi bi-plus-circle me-2"></i>Registrar Sub-factura</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     // FORMATEADORES PARA MODALES DARK
     function formatMoneyField(input) {
@@ -1097,6 +1222,57 @@
       calcularFacturaEdit();
       new bootstrap.Modal(document.getElementById('modalEditarFactura')).show();
     }
-  </script>
+  
+function limpiarMontoSubFacturaContratista(event) {
+  let inputVal = document.getElementById('inputValorSubFacturaContratista');
+  if (inputVal && inputVal.value) {
+    inputVal.value = inputVal.value.replace(/\D/g, '');
+  }
+}
+
+function abrirModalContratistaSubFacturas(facturaId, nombreContratista, valorNeto, valorCancelado, totalAdeudado, subfacturas) {
+  document.getElementById('hidden_factura_id_sub_contratista').value = facturaId;
+  document.getElementById('tituloModalSubFacturasContratista').innerHTML = `<i class="bi bi-list-ul me-2"></i>Sub-facturas de: ${nombreContratista}`;
+  document.getElementById('subtituloModalSubFacturasContratista').innerText = `ID Factura Principal: #${facturaId}`;
+
+  let baseOriginal = totalAdeudado + valorCancelado;
+
+  document.getElementById('metric-valor-original-contratista').innerText = '$' + new Intl.NumberFormat('es-CO').format(baseOriginal);
+  document.getElementById('metric-total-subfacturado-contratista').innerText = '$' + new Intl.NumberFormat('es-CO').format(valorCancelado);
+  document.getElementById('metric-saldo-restante-contratista').innerText = '$' + new Intl.NumberFormat('es-CO').format(totalAdeudado);
+
+  const tbody = document.getElementById('tablaContratistaSubFacturasBody');
+  tbody.innerHTML = '';
+
+  if (subfacturas.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">No hay sub-facturas registradas</td></tr>`;
+  } else {
+    subfacturas.forEach(sf => {
+      let tr = document.createElement('tr');
+      
+      let pdfBtn = sf.pdf_url ? `<a href="${sf.pdf_url}" target="_blank" class="btn btn-sm btn-outline-info rounded-pill px-2 me-1" title="Ver PDF"><i class="bi bi-file-earmark-pdf"></i></a>` : '';
+      let delBtn = `
+        <form method="POST" action="/contratistas/subfactura/eliminar/${sf.id}" class="d-inline" onsubmit="return confirm('¿Eliminar esta sub-factura?');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-sm btn-outline-danger rounded-pill px-2" title="Eliminar"><i class="bi bi-trash"></i></button>
+        </form>
+      `;
+
+      tr.innerHTML = `
+        <td class="fw-semibold text-white">${sf.numero}</td>
+        <td class="small text-white">${sf.fecha}</td>
+        <td class="small text-white">${sf.concepto}</td>
+        <td class="text-end fw-semibold text-success">$${new Intl.NumberFormat('es-CO').format(sf.valor)}</td>
+        <td class="text-center">${pdfBtn}${delBtn}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  document.getElementById('inputValorSubFacturaContratista').value = '';
+  new bootstrap.Modal(document.getElementById('modalContratistaSubFacturas')).show();
+}
+
+</script>
 </body>
 </html>
