@@ -271,6 +271,15 @@ def dashboard_oficina():
     from models import Bancos
     bancos = Bancos.query.all()
 
+    # Cálculo seguro de stock de materiales
+    try:
+        from models import db, Materiales
+        total_m = db.session.query(db.func.sum(Materiales.cantidad)).scalar()
+        total_materiales = int(total_m) if total_m else 0
+    except Exception as e:
+        print("Error calculando total_materiales:", e)
+        total_materiales = 0
+
     return render_template(
         "dashboard_oficina.html",
         usuario=usuario,
@@ -278,7 +287,8 @@ def dashboard_oficina():
         cotizaciones_historial=cotizaciones_historial,
         contratos=contratos,
         notificaciones=notificaciones,
-        bancos=bancos
+        bancos=bancos,
+        total_materiales=total_materiales
     )
 
 # -----------------------------

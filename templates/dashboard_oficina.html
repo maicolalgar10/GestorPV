@@ -211,9 +211,9 @@
                 {% for f in contratos %}
                   <tr>
                     <td>
-                      <strong>{{ f.cotizacion.proyecto }}</strong>
+                      <strong>{{ f.cotizacion.proyecto if f.cotizacion else 'Sin proyecto' }}</strong>
                     </td>
-                    <td>{{ f.cotizacion.cliente }}</td>
+                    <td>{{ f.cotizacion.cliente if f.cotizacion else 'N/A' }}</td>
                     
                     <td>${{ "{:,.2f}".format(f.valor_total) }}</td>
 
@@ -234,10 +234,10 @@
                     </td>
 
                     <td class="text-end">
-                      <button type="button" class="btn btn-warning btn-sm rounded-pill px-3 me-1 mb-1" 
-                              onclick="abrirModalEditarContrato({{ f.id }}, '{{ f.cotizacion.proyecto | replace('\'', '\\\'') }}', {{ f.valor_total }}, {{ f.anticipo_porcentaje }}, {{ f.retencion_garantia_porcentaje }})">
-                          <i class="bi bi-pencil-square"></i> Editar
-                      </button>
+                            <button type="button" class="btn btn-warning btn-sm rounded-pill px-3 me-2" title="Editar Contrato"
+                              onclick="abrirModalEditarContrato({{ f.id }}, '{{ f.cotizacion.proyecto | replace('\'', '\\\'') if f.cotizacion else '' }}', {{ f.valor_total }}, {{ f.anticipo_porcentaje }}, {{ f.retencion_garantia_porcentaje }})">
+                              <i class="bi bi-pencil-square"></i> Editar
+                            </button>
                       <a href="{{ url_for('tesoreria.ver_tesoreria') }}"
                         class="btn btn-primary btn-sm rounded-pill px-3 mb-1">
                         Ver Detalles
