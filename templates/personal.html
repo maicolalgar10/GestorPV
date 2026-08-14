@@ -336,7 +336,7 @@
 
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Costo Diario ($)</label>
-                <input type="number" class="form-control bg-light" name="costo_diario" step="0.01" required>
+                <input type="text" class="form-control bg-light currency-input" name="costo_diario" required oninput="formatCurrencyInput(this)">
               </div>
 
               <div class="col-md-6">
@@ -420,8 +420,8 @@
 
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Costo Diario</label>
-                <input type="number" class="form-control bg-light" name="costo_diario" step="0.01"
-                  value="{{ p.costo_diario }}" min="0" required>
+                <input type="text" class="form-control bg-light currency-input" name="costo_diario"
+                  value="{{ p.costo_diario|string|replace('.', ',') }}" required oninput="formatCurrencyInput(this)">
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Contacto</label>
@@ -513,10 +513,59 @@
       if (rol === "Otra") {
         div.style.display = "block";
       } else {
-        div.style.display = "none";
-      }
+      div.style.display = 'none';
     }
-  </script>
+  }
+
+  // Formateador de moneda
+  window.formatCurrencyInput = function(input) {
+      let value = input.value;
+      if (!value) return;
+      
+      let parts = value.split(',');
+      let integerPart = parts[0].replace(/\D/g, '');
+      
+      if (integerPart) {
+          integerPart = new Intl.NumberFormat('es-CO').format(parseInt(integerPart, 10));
+      }
+      
+      if (parts.length > 1) {
+          let decimalPart = parts[1].replace(/\D/g, '').slice(0, 2);
+          input.value = '$ ' + integerPart + ',' + decimalPart;
+      } else if (value.includes(',')) {
+          input.value = '$ ' + integerPart + ',';
+      } else {
+          input.value = integerPart ? '$ ' + integerPart : '';
+      }
+  };
+
+  window.limpiarMonto = function(valorString) {
+      if (!valorString) return '0';
+      return String(valorString)
+          .replace(/\$/g, '')
+          .replace(/\./g, '')
+          .replace(',', '.')
+          .trim();
+  };
+
+  // Aplicar formato inicial a los valores de edición
+  document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('.currency-input').forEach(input => {
+          if (input.value) {
+              formatCurrencyInput(input);
+          }
+      });
+  });
+
+  // Limpiar campos de moneda antes de enviar
+  document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', function() {
+      this.querySelectorAll('.currency-input').forEach(input => {
+        input.value = window.limpiarMonto(input.value);
+      });
+    });
+  });
+</script>
   
 </body>
 

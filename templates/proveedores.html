@@ -717,8 +717,8 @@
               <label>Valor Neto (sin IVA) *</label>
               <div class="input-group">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
-                <input type="number" name="valor_neto" id="n_valor_neto" class="form-control"
-                       placeholder="0" min="0" step="any" required oninput="calcularIVA('n')">
+                <input type="text" name="valor_neto" id="n_valor_neto" class="form-control currency-input"
+                       placeholder="0" required oninput="formatCurrencyInput(this); calcularIVA('n')">
               </div>
             </div>
 
@@ -772,8 +772,8 @@
               <label>Valor Cancelado / Abonado</label>
               <div class="input-group">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
-                <input type="number" name="valor_cancelado" id="n_cancelado" class="form-control"
-                       placeholder="0" min="0" step="any" value="0" oninput="calcularIVA('n')">
+                <input type="text" name="valor_cancelado" id="n_cancelado" class="form-control currency-input"
+                       placeholder="0" value="0" oninput="formatCurrencyInput(this); calcularIVA('n')">
               </div>
             </div>
             <div class="col-md-4">
@@ -882,8 +882,8 @@
               <label>Valor Neto *</label>
               <div class="input-group">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
-                <input type="number" name="valor_neto" id="e_valor_neto" class="form-control"
-                       min="0" step="any" required oninput="calcularIVA('e')">
+                <input type="text" name="valor_neto" id="e_valor_neto" class="form-control currency-input"
+                       required oninput="formatCurrencyInput(this); calcularIVA('e')">
               </div>
             </div>
             <div class="col-md-3">
@@ -930,8 +930,8 @@
               <label>Valor Cancelado / Abonado</label>
               <div class="input-group">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
-                <input type="number" name="valor_cancelado" id="e_cancelado" class="form-control"
-                       min="0" step="any" value="0" oninput="calcularIVA('e')">
+                <input type="text" name="valor_cancelado" id="e_cancelado" class="form-control currency-input"
+                       value="0" oninput="formatCurrencyInput(this); calcularIVA('e')">
               </div>
             </div>
             <div class="col-md-4">
@@ -1106,11 +1106,24 @@ function fmtPeso(num) {
   return '$' + parseFloat(num).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function limpiarMonto(valorString) {
+    if (!valorString) return '0';
+    return String(valorString)
+        .replace(/\$/g, '')
+        .replace(/\./g, '')
+        .replace(',', '.')
+        .trim();
+}
+
+function parseMonto(valorString) {
+    return parseFloat(limpiarMonto(valorString)) || 0;
+}
+
 function calcularIVA(prefix) {
-  const neto     = parseFloat(document.getElementById(prefix + '_valor_neto')?.value)  || 0;
+  const neto     = parseMonto(document.getElementById(prefix + '_valor_neto')?.value);
   const pct_iva  = parseFloat(document.getElementById(prefix + '_porcentaje_iva')?.value) || 0;
   const ret_porc = parseFloat(document.getElementById(prefix + '_retencion')?.value)   || 0;
-  const cancelado= parseFloat(document.getElementById(prefix + '_cancelado')?.value)   || 0;
+  const cancelado= parseMonto(document.getElementById(prefix + '_cancelado')?.value);
 
   const iva      = neto * (pct_iva / 100);
   const total    = neto + iva;
@@ -1187,20 +1200,24 @@ calcularIVA = function(prefix) {
    MODAL SUB-FACTURAS
 ══════════════════════════════════════════════════════════ */
 function formatCurrencyInput(input) {
-  // 1. Eliminar todo lo que no sea dígito
-  let rawValue = input.value.replace(/\D/g, '');
-  
-  if (!rawValue) {
-      input.value = '';
-      return;
-  }
-  
-  // 2. Formatear como entero con separadores de miles (punto)
-  let formatted = new Intl.NumberFormat('es-CO', {
-      maximumFractionDigits: 0
-  }).format(parseInt(rawValue, 10));
-  
-  input.value = '$ ' + formatted;
+    let value = input.value;
+    if (!value) return;
+    
+    let parts = value.split(',');
+    let integerPart = parts[0].replace(/\D/g, '');
+    
+    if (integerPart) {
+        integerPart = new Intl.NumberFormat('es-CO').format(parseInt(integerPart, 10));
+    }
+    
+    if (parts.length > 1) {
+        let decimalPart = parts[1].replace(/\D/g, '').slice(0, 2);
+        input.value = '$ ' + integerPart + ',' + decimalPart;
+    } else if (value.includes(',')) {
+        input.value = '$ ' + integerPart + ',';
+    } else {
+        input.value = integerPart ? '$ ' + integerPart : '';
+    }
 }
 
 function limpiarMontoSubFactura(event) {
@@ -1272,10 +1289,18 @@ function abrirModalEditar(id, nombre, fecha_factura, plazo, fecha_venc, valor_ne
   document.getElementById('e_fecha_factura').value    = fecha_factura;
   document.getElementById('e_plazo_dias').value       = plazo;
   document.getElementById('e_fecha_vencimiento').value= fecha_venc;
-  document.getElementById('e_valor_neto').value       = valor_neto;
+  
+  let elNeto = document.getElementById('e_valor_neto');
+  elNeto.value = valor_neto.toString().replace('.', ',');
+  formatCurrencyInput(elNeto);
+  
   document.getElementById('e_porcentaje_iva').value   = porcentaje_iva;
   document.getElementById('e_retencion').value        = retencion;
-  document.getElementById('e_cancelado').value        = valor_cancelado;
+  
+  let elCancelado = document.getElementById('e_cancelado');
+  elCancelado.value = valor_cancelado.toString().replace('.', ',');
+  formatCurrencyInput(elCancelado);
+  
   document.getElementById('e_fecha_pago').value       = fecha_pago;
 
   // Renderizar Botones de 'Ver Archivo Actual' si existen en Supabase
@@ -1441,6 +1466,13 @@ async function procesarFormulario(e, btnSelector) {
     fileInputs.forEach(input => {
       if (input.files && input.files.length > 0) {
         formData.set(input.name, input.files[0]);
+      }
+    });
+
+    // Limpiar campos de moneda
+    form.querySelectorAll('.currency-input').forEach(input => {
+      if (input.name) {
+        formData.set(input.name, limpiarMonto(input.value));
       }
     });
 
