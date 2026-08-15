@@ -175,14 +175,24 @@
         </div>
       </div>
       <div class="col-md-3">
-        <a href="{{ url_for('tesoreria.ver_bancos') }}" class="text-decoration-none">
-          <div class="card stat-card p-3 mb-3" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
-            <div class="card-body text-center">
-              <h2 class="fw-bold m-0 text-white"><i class="bi bi-bank"></i></h2>
-              <p class="mb-0 opacity-75 small fw-bold text-uppercase text-white mt-1">Bancos y Cuentas</p>
+        <div class="d-flex flex-column gap-4">
+          <a href="{{ url_for('tesoreria.ver_bancos') }}" class="text-decoration-none">
+            <div class="card stat-card p-3" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+              <div class="card-body text-center">
+                <h2 class="fw-bold m-0 text-white"><i class="bi bi-bank"></i></h2>
+                <p class="mb-0 opacity-75 small fw-bold text-uppercase text-white mt-1">Bancos y Cuentas</p>
+              </div>
             </div>
-          </div>
-        </a>
+          </a>
+          <a href="{{ url_for('dian.index') }}" class="text-decoration-none">
+            <div class="card stat-card p-3" style="background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);">
+              <div class="card-body text-center">
+                <h2 class="fw-bold m-0 text-white"><i class="bi bi-receipt-cutoff"></i></h2>
+                <p class="mb-0 opacity-75 small fw-bold text-uppercase text-white mt-1">DIAN (Impuestos)</p>
+              </div>
+            </div>
+          </a>
+        </div>
       </div>
     </div>
 

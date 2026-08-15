@@ -1170,3 +1170,19 @@ class ContratistaSubFactura(db.Model):
     archivo_pdf_url = db.Column(db.String(500), nullable=True)
 
     factura_padre = db.relationship('ContratistaFactura', backref=db.backref('subfacturas', lazy=True, cascade='all, delete-orphan'))
+
+# ===========================================
+# 22. Módulo DIAN (Impuestos y Facturas)
+# ===========================================
+class DianFactura(db.Model):
+    __tablename__ = 'dian_facturas'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    concepto = db.Column(db.String(255), nullable=True)
+    valor = db.Column(db.Numeric(15, 2), default=0.0)
+    pago = db.Column(db.String(255), nullable=True)
+    fecha_pago = db.Column(db.Date, nullable=True)
+    fecha_vencimiento = db.Column(db.Date, nullable=True)
+    tipo_impuesto = db.Column(db.String(100), nullable=True)
+    archivo_url = db.Column(db.String(500), nullable=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
