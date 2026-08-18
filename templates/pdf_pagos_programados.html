@@ -114,13 +114,13 @@
       <tr>
         <td class="text-center">{{ pago.fecha_programada.strftime('%d/%m/%Y') }}</td>
         <td>{{ pago.proveedor.nombre }}</td>
-        <td class="text-right">${{ "{:,.0f}".format(pago.deuda_actual) | replace(",", ".") }}</td>
-        <td class="text-right"><strong>${{ "{:,.0f}".format(pago.monto) | replace(",", ".") }}</strong></td>
+        <td class="text-right">${{ "{:,.0f}".format(pago.deuda_actual or 0) | replace(",", ".") }}</td>
+        <td class="text-right"><strong>${{ "{:,.0f}".format(pago.monto or 0) | replace(",", ".") }}</strong></td>
         <td class="text-right">
-          {% if pago.saldo_restante <= 0 %}
+          {% if (pago.saldo_restante or 0) <= 0 %}
             <span style="color: green; font-weight: bold;">Paz y Salvo</span>
           {% else %}
-            ${{ "{:,.0f}".format(pago.saldo_restante) | replace(",", ".") }}
+            ${{ "{:,.0f}".format(pago.saldo_restante or 0) | replace(",", ".") }}
           {% endif %}
         </td>
         <td class="text-center">

@@ -84,30 +84,37 @@ def eliminar_programacion(id):
 @login_required
 @admin_oficina_required
 def generar_pdf_programacion():
-    from models import ProveedorFactura, ProgramacionPagoProveedor
-    
-    facturas = ProveedorFactura.query.all()
-    # Calcular dinámicamente el valor_cancelado basado en las subfacturas si existen
-    for f in facturas:
-        if hasattr(f, 'subfacturas') and f.subfacturas:
-            f.valor_cancelado = sum(sf.valor for sf in f.subfacturas)
+    try:
+        from models import ProveedorFactura, ProgramacionPagoProveedor
+        
+        facturas = ProveedorFactura.query.all()
+        # Calcular dinámicamente el valor_cancelado basado en las subfacturas si existen
+        for f in facturas:
+            if hasattr(f, 'subfacturas') and f.subfacturas:
+                f.valor_cancelado = sum(float(sf.valor or 0) for sf in f.subfacturas)
 
-    deuda_por_proveedor = {}
-    for factura in facturas:
-        nombre = factura.nombre_proveedor
-        deuda_por_proveedor[nombre] = deuda_por_proveedor.get(nombre, 0) + float(factura.total_adeudado)
+        deuda_por_proveedor = {}
+        for factura in facturas:
+            nombre = factura.nombre_proveedor
+            deuda_por_proveedor[nombre] = deuda_por_proveedor.get(nombre, 0) + float(factura.total_adeudado or 0)
 
-    pagos_programados = ProgramacionPagoProveedor.query.order_by(ProgramacionPagoProveedor.fecha_programada.asc()).all()
+        pagos_programados = ProgramacionPagoProveedor.query.order_by(ProgramacionPagoProveedor.fecha_programada.asc()).all()
 
-    total_programado = 0
-    for pago in pagos_programados:
-        pago.deuda_actual = deuda_por_proveedor.get(pago.proveedor.nombre, 0)
-        pago.saldo_restante = pago.deuda_actual - float(pago.monto)
-        total_programado += float(pago.monto)
+        total_programado = 0.0
+        for pago in pagos_programados:
+            prov_nombre = pago.proveedor.nombre if pago.proveedor else "Desconocido"
+            pago.deuda_actual = float(deuda_por_proveedor.get(prov_nombre, 0.0))
+            monto_val = float(pago.monto or 0.0)
+            pago.saldo_restante = pago.deuda_actual - monto_val
+            total_programado += monto_val
 
-    return render_template(
-        "pdf_pagos_programados.html",
-        pagos_programados=pagos_programados,
-        total_programado=total_programado,
-        fecha_reporte=dt.now()
-    )
+        return render_template(
+            "pdf_pagos_programados.html",
+            pagos_programados=pagos_programados,
+            total_programado=total_programado,
+            fecha_reporte=dt.now()
+        )
+    except Exception as e:
+        print(f"Error generando PDF de pagos programados: {e}")
+        flash(f"Error al generar el reporte PDF: {str(e)}", "danger")
+        return redirect(url_for("dashboard.proveedores"))
