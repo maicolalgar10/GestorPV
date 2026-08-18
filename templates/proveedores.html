@@ -385,6 +385,7 @@
             <th>NIT</th>
             <th>Teléfono</th>
             <th class="text-end">Deuda Total</th>
+            <th class="text-center">Programar</th>
           </tr>
         </thead>
         <tbody>
@@ -406,6 +407,17 @@
                 <span class="text-danger fw-bold">${{ "{:,.0f}".format(deuda) | replace(",",".") }}</span>
               {% endif %}
             </td>
+            <td class="text-center">
+              {% if deuda > 0 %}
+                <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="abrirModalProgramarPago({{ p.id }}, '{{ p.nombre | replace("'","\\'") | replace('"', '\\"') }}', {{ deuda }})">
+                  <i class="bi bi-calendar-plus"></i>
+                </button>
+              {% else %}
+                <button class="btn btn-sm btn-outline-secondary rounded-pill" disabled>
+                  <i class="bi bi-calendar-plus"></i>
+                </button>
+              {% endif %}
+            </td>
           </tr>
           {% else %}
           <tr>
@@ -414,6 +426,70 @@
           {% endfor %}
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       PRÓXIMOS PAGOS PROGRAMADOS
+  ═══════════════════════════════════════════════════════ -->
+  <div class="table-card mb-4">
+    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+      <h5 class="mb-0 fw-bold"><i class="bi bi-calendar-event me-2 text-warning"></i>Próximos Pagos Programados</h5>
+      <button class="btn btn-sm btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePagosProgramados" aria-expanded="false">
+        Mostrar / Ocultar
+      </button>
+    </div>
+    <div class="collapse show" id="collapsePagosProgramados">
+      <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+        <table class="table table-hover mb-0">
+          <thead style="position: sticky; top: 0; z-index: 1;">
+            <tr>
+              <th>Fecha Programada</th>
+              <th>Proveedor</th>
+              <th class="text-end">Monto</th>
+              <th>Observación</th>
+              <th class="text-center">Estado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for pago in pagos_programados %}
+            <tr>
+              <td class="fw-semibold">{{ pago.fecha_programada.strftime('%d/%m/%Y') }}</td>
+              <td>{{ pago.proveedor.nombre }}</td>
+              <td class="text-end text-primary fw-bold">${{ "{:,.0f}".format(pago.monto) | replace(",",".") }}</td>
+              <td class="small text-muted">{{ pago.observacion or '—' }}</td>
+              <td class="text-center">
+                {% if pago.estado == 'Programado' %}
+                  <span class="badge bg-warning text-dark">Programado</span>
+                {% elif pago.estado == 'Realizado' %}
+                  <span class="badge bg-success">Realizado</span>
+                {% else %}
+                  <span class="badge bg-secondary">Cancelado</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                {% if pago.estado == 'Programado' %}
+                <form method="POST" action="{{ url_for('proveedores.cambiar_estado', id=pago.id) }}" class="d-inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="estado" value="Realizado">
+                  <button type="submit" class="btn btn-sm btn-outline-success rounded-pill" title="Marcar como Realizado"><i class="bi bi-check-circle"></i></button>
+                </form>
+                {% endif %}
+                <form method="POST" action="{{ url_for('proveedores.eliminar_programacion', id=pago.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar esta programación?');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Eliminar"><i class="bi bi-trash"></i></button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="6" class="text-center text-muted py-4">No hay pagos programados</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -598,6 +674,52 @@
   </div>
 </div><!-- /container -->
 
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL — PROGRAMAR PAGO
+═══════════════════════════════════════════════════════════ -->
+<div class="modal fade modal-dark" id="modalProgramarPago" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-calendar-plus me-2"></i>Programar Pago a <span id="lblProveedorNombre"></span></h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form method="POST" action="{{ url_for('proveedores.programar_pago') }}" id="formProgramarPago">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="proveedor_id" id="prog_proveedor_id">
+          
+          <div class="alert alert-info py-2 mb-3" style="background-color: #2d2d3f; border-color: #3f3f5c; color: #a5b4fc;">
+            <small class="fw-bold text-light">Deuda Actual Estimada:</small> 
+            <span class="fs-5 fw-bold ms-2 text-warning" id="prog_deuda_actual">$0</span>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-12">
+              <label>Fecha Programada de Pago *</label>
+              <input type="date" name="fecha_programada" class="form-control" required>
+            </div>
+            <div class="col-12">
+              <label>Valor a Pagar ($) *</label>
+              <div class="input-group">
+                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                <input type="text" name="monto" id="prog_monto" class="form-control currency-input" required oninput="formatCurrencyInput(this)">
+              </div>
+            </div>
+            <div class="col-12">
+              <label>Observación / Notas</label>
+              <input type="text" name="observacion" class="form-control" placeholder="Ej: Pago cuota 1 de 3">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer d-flex justify-content-end border-top pt-3 bg-dark" style="border-color:#3f3f5c !important;">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" form="formProgramarPago" class="btn btn-info px-4 text-white"><i class="bi bi-calendar-check me-1"></i> Programar</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════════════════════════════════════════════════════
      MODAL — NUEVO PROVEEDOR
@@ -1523,6 +1645,22 @@ async function procesarFormulario(e, btnSelector) {
 document.getElementById('formNuevaFactura').addEventListener('submit', (e) => procesarFormulario(e, 'button[form="formNuevaFactura"]'));
 document.getElementById('formEditarFactura').addEventListener('submit', (e) => procesarFormulario(e, 'button[form="formEditarFactura"]'));
 document.getElementById('formNuevoProveedor').addEventListener('submit', (e) => procesarFormulario(e, 'button[form="formNuevoProveedor"]'));
+
+function abrirModalProgramarPago(proveedor_id, proveedor_nombre, deuda_actual) {
+  document.getElementById('prog_proveedor_id').value = proveedor_id;
+  document.getElementById('lblProveedorNombre').innerText = proveedor_nombre;
+  
+  // Formatear deuda
+  let deudaStr = new Intl.NumberFormat('es-CO').format(deuda_actual);
+  document.getElementById('prog_deuda_actual').innerText = '$' + deudaStr;
+  
+  // Autocompletar el monto con la deuda total
+  let montoInput = document.getElementById('prog_monto');
+  montoInput.value = deudaStr;
+  
+  var modal = new bootstrap.Modal(document.getElementById('modalProgramarPago'));
+  modal.show();
+}
 
 </script>
 

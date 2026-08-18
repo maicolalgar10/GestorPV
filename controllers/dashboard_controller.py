@@ -323,7 +323,7 @@ def gestion_materiales_oficina():
 @login_required
 @admin_oficina_required
 def proveedores():
-    from models import ProveedorFactura, Proveedor, ProveedorSubFactura
+    from models import ProveedorFactura, Proveedor, ProveedorSubFactura, ProgramacionPagoProveedor
     usuario = Usuarios.query.get(session.get("user_id"))
     notificaciones = Notificaciones.query.filter_by(
         id_usuario_destino=session["user_id"], leido=False
@@ -352,6 +352,8 @@ def proveedores():
     total_cancelado       = sum(float(f.valor_cancelado or 0) for f in facturas)
     total_adeudado_global = sum(deuda_por_proveedor.values())
 
+    pagos_programados = ProgramacionPagoProveedor.query.order_by(ProgramacionPagoProveedor.fecha_programada.asc()).all()
+
     return render_template(
         "proveedores.html",
         usuario=usuario,
@@ -366,6 +368,7 @@ def proveedores():
         total_adeudado_global=total_adeudado_global,
         proveedores=lista_proveedores,
         deuda_por_proveedor=deuda_por_proveedor,
+        pagos_programados=pagos_programados
     )
 
 # ─── GET /dashboard/proveedores/<nombre_proveedor> ────────

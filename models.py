@@ -726,6 +726,8 @@ class Proveedor(db.Model):
     nit = db.Column(db.String(50), nullable=True)
     telefono = db.Column(db.String(50), nullable=True)
     fecha_registro = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    pagos_programados = db.relationship('ProgramacionPagoProveedor', backref='proveedor', lazy=True, cascade='all, delete-orphan')
 
 # ===========================================
 # 19. ProveedorFactura
@@ -1184,3 +1186,16 @@ class DianFactura(db.Model):
     fecha_vencimiento = db.Column(db.Date, nullable=True)
     tipo_impuesto = db.Column(db.String(100), nullable=True)
     archivo_url = db.Column(db.String(500), nullable=True)
+
+# ===========================================
+# 23. Programación de Pagos a Proveedores
+# ===========================================
+class ProgramacionPagoProveedor(db.Model):
+    __tablename__ = 'programacion_pagos_proveedores'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    proveedor_id = db.Column(db.Integer, db.ForeignKey('proveedores.id', ondelete='CASCADE'), nullable=False)
+    fecha_programada = db.Column(db.Date, nullable=False)
+    monto = db.Column(db.Numeric(15, 2), nullable=False)
+    estado = db.Column(db.String(50), nullable=False, default='Programado') # 'Programado', 'Realizado', 'Cancelado'
+    observacion = db.Column(db.Text, nullable=True)
+    creado_en = db.Column(db.DateTime, default=datetime.utcnow)
