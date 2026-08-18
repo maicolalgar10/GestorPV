@@ -118,3 +118,29 @@ def generar_pdf_programacion():
         print(f"Error generando PDF de pagos programados: {e}")
         flash(f"Error al generar el reporte PDF: {str(e)}", "danger")
         return redirect(url_for("dashboard.proveedores"))
+
+@proveedores_bp.route("/programacion/historial", methods=["GET"])
+@login_required
+@admin_oficina_required
+def historial_pagos():
+    fecha_busqueda = request.args.get("fecha")
+    
+    query = ProgramacionPagoProveedor.query.filter_by(estado='Realizado')
+    
+    if fecha_busqueda:
+        try:
+            fecha_obj = dt.strptime(fecha_busqueda, "%Y-%m-%d").date()
+            query = query.filter(ProgramacionPagoProveedor.fecha_programada == fecha_obj)
+        except ValueError:
+            flash("Formato de fecha inválido.", "warning")
+            
+    pagos_realizados = query.order_by(ProgramacionPagoProveedor.fecha_programada.desc()).all()
+    
+    total_pagado = sum(float(pago.monto or 0.0) for pago in pagos_realizados)
+    
+    return render_template(
+        "historial_pagos_proveedores.html",
+        pagos=pagos_realizados,
+        total_pagado=total_pagado,
+        fecha_busqueda=fecha_busqueda
+    )
