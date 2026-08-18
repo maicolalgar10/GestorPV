@@ -79,3 +79,35 @@ def eliminar_programacion(id):
         db.session.rollback()
         flash(f"Error al eliminar programación: {e}", "danger")
     return redirect(url_for("dashboard.proveedores"))
+
+@proveedores_bp.route("/programacion/pdf", methods=["GET"])
+@login_required
+@admin_oficina_required
+def generar_pdf_programacion():
+    from models import ProveedorFactura, ProgramacionPagoProveedor
+    
+    facturas = ProveedorFactura.query.all()
+    # Calcular dinámicamente el valor_cancelado basado en las subfacturas si existen
+    for f in facturas:
+        if hasattr(f, 'subfacturas') and f.subfacturas:
+            f.valor_cancelado = sum(sf.valor for sf in f.subfacturas)
+
+    deuda_por_proveedor = {}
+    for factura in facturas:
+        nombre = factura.nombre_proveedor
+        deuda_por_proveedor[nombre] = deuda_por_proveedor.get(nombre, 0) + float(factura.total_adeudado)
+
+    pagos_programados = ProgramacionPagoProveedor.query.order_by(ProgramacionPagoProveedor.fecha_programada.asc()).all()
+
+    total_programado = 0
+    for pago in pagos_programados:
+        pago.deuda_actual = deuda_por_proveedor.get(pago.proveedor.nombre, 0)
+        pago.saldo_restante = pago.deuda_actual - float(pago.monto)
+        total_programado += float(pago.monto)
+
+    return render_template(
+        "pdf_pagos_programados.html",
+        pagos_programados=pagos_programados,
+        total_programado=total_programado,
+        fecha_reporte=dt.now()
+    )

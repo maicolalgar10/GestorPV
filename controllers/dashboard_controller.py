@@ -354,6 +354,10 @@ def proveedores():
 
     pagos_programados = ProgramacionPagoProveedor.query.order_by(ProgramacionPagoProveedor.fecha_programada.asc()).all()
 
+    for pago in pagos_programados:
+        pago.deuda_actual = deuda_por_proveedor.get(pago.proveedor.nombre, 0)
+        pago.saldo_restante = pago.deuda_actual - float(pago.monto)
+
     return render_template(
         "proveedores.html",
         usuario=usuario,

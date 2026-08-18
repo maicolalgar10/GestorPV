@@ -434,7 +434,12 @@
   ═══════════════════════════════════════════════════════ -->
   <div class="table-card mb-4">
     <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-      <h5 class="mb-0 fw-bold"><i class="bi bi-calendar-event me-2 text-warning"></i>Próximos Pagos Programados</h5>
+      <div class="d-flex align-items-center gap-2">
+        <h5 class="mb-0 fw-bold"><i class="bi bi-calendar-event me-2 text-warning"></i>Próximos Pagos Programados</h5>
+        <a href="{{ url_for('proveedores.generar_pdf_programacion') }}" class="btn btn-sm btn-danger ms-2" target="_blank" title="Exportar PDF">
+          <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
+        </a>
+      </div>
       <button class="btn btn-sm btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePagosProgramados" aria-expanded="false">
         Mostrar / Ocultar
       </button>
@@ -446,7 +451,9 @@
             <tr>
               <th>Fecha Programada</th>
               <th>Proveedor</th>
-              <th class="text-end">Monto</th>
+              <th class="text-end">Deuda Actual</th>
+              <th class="text-end">Monto Programado</th>
+              <th class="text-end">Saldo Restante</th>
               <th>Observación</th>
               <th class="text-center">Estado</th>
               <th class="text-center">Acciones</th>
@@ -457,7 +464,15 @@
             <tr>
               <td class="fw-semibold">{{ pago.fecha_programada.strftime('%d/%m/%Y') }}</td>
               <td>{{ pago.proveedor.nombre }}</td>
+              <td class="text-end fw-semibold">${{ "{:,.0f}".format(pago.deuda_actual) | replace(",",".") }}</td>
               <td class="text-end text-primary fw-bold">${{ "{:,.0f}".format(pago.monto) | replace(",",".") }}</td>
+              <td class="text-end fw-semibold">
+                {% if pago.saldo_restante <= 0 %}
+                  <span class="badge bg-success">Paz y Salvo</span>
+                {% else %}
+                  <span class="text-danger">${{ "{:,.0f}".format(pago.saldo_restante) | replace(",",".") }}</span>
+                {% endif %}
+              </td>
               <td class="small text-muted">{{ pago.observacion or '—' }}</td>
               <td class="text-center">
                 {% if pago.estado == 'Programado' %}
@@ -484,7 +499,7 @@
             </tr>
             {% else %}
             <tr>
-              <td colspan="6" class="text-center text-muted py-4">No hay pagos programados</td>
+              <td colspan="8" class="text-center text-muted py-4">No hay pagos programados</td>
             </tr>
             {% endfor %}
           </tbody>

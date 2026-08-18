@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Reporte de Pagos Programados</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #000;
+      padding-bottom: 15px;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+      text-transform: uppercase;
+    }
+    .header p {
+      margin: 5px 0 0 0;
+      font-size: 14px;
+      color: #555;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+      font-weight: bold;
+      text-transform: uppercase;
+      font-size: 11px;
+    }
+    .text-right {
+      text-align: right;
+    }
+    .text-center {
+      text-align: center;
+    }
+    .badge-estado {
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 10px;
+    }
+    .estado-programado { background-color: #fff3cd; color: #856404; }
+    .estado-realizado { background-color: #d4edda; color: #155724; }
+    .estado-cancelado { background-color: #e2e3e5; color: #383d41; }
+    .totals {
+      width: 100%;
+      border-top: 2px solid #000;
+      padding-top: 10px;
+      margin-top: 20px;
+    }
+    .totals table {
+      width: 50%;
+      margin-left: auto;
+      border: none;
+    }
+    .totals th, .totals td {
+      border: none;
+      padding: 5px 10px;
+      font-size: 14px;
+    }
+    @media print {
+      body {
+        padding: 0;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body onload="window.print()">
+
+  <div class="no-print" style="margin-bottom: 20px; text-align: right;">
+    <button onclick="window.print()" style="padding: 10px 20px; font-size: 14px; background: #0d6efd; color: white; border: none; border-radius: 5px; cursor: pointer;">
+      Imprimir / Guardar como PDF
+    </button>
+  </div>
+
+  <div class="header">
+    <h1>Reporte de Pagos Programados a Proveedores</h1>
+    <p>Fecha de Generación: {{ fecha_reporte.strftime('%d/%m/%Y %H:%M') }}</p>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Fecha Prog.</th>
+        <th>Proveedor</th>
+        <th class="text-right">Deuda Actual</th>
+        <th class="text-right">Monto Programado</th>
+        <th class="text-right">Saldo Restante</th>
+        <th>Estado</th>
+        <th>Observación</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for pago in pagos_programados %}
+      <tr>
+        <td class="text-center">{{ pago.fecha_programada.strftime('%d/%m/%Y') }}</td>
+        <td>{{ pago.proveedor.nombre }}</td>
+        <td class="text-right">${{ "{:,.0f}".format(pago.deuda_actual) | replace(",", ".") }}</td>
+        <td class="text-right"><strong>${{ "{:,.0f}".format(pago.monto) | replace(",", ".") }}</strong></td>
+        <td class="text-right">
+          {% if pago.saldo_restante <= 0 %}
+            <span style="color: green; font-weight: bold;">Paz y Salvo</span>
+          {% else %}
+            ${{ "{:,.0f}".format(pago.saldo_restante) | replace(",", ".") }}
+          {% endif %}
+        </td>
+        <td class="text-center">
+          {% if pago.estado == 'Programado' %}
+            <span class="badge-estado estado-programado">Programado</span>
+          {% elif pago.estado == 'Realizado' %}
+            <span class="badge-estado estado-realizado">Realizado</span>
+          {% else %}
+            <span class="badge-estado estado-cancelado">Cancelado</span>
+          {% endif %}
+        </td>
+        <td>{{ pago.observacion or '' }}</td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="7" class="text-center">No hay pagos programados.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="totals">
+    <table>
+      <tr>
+        <th class="text-right">Total Dinero Programado:</th>
+        <td class="text-right" style="font-weight: bold; font-size: 16px;">
+          ${{ "{:,.0f}".format(total_programado) | replace(",", ".") }}
+        </td>
+      </tr>
+    </table>
+  </div>
+
+</body>
+</html>
