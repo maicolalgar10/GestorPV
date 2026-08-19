@@ -85,7 +85,7 @@ def index():
         total_rete_garantia = sum(float(getattr(f, 'retegarantia_pesos', 0.0)) for f in facturas_c)
         total_retenciones_ley = sum(float(f.retencion_pesos) for f in facturas_c)
         total_pagos = sum(float(f.valor_cancelado) for f in facturas_c)
-        saldo_adeudado = sum(float(f.total_adeudado) for f in facturas_c)
+        saldo_adeudado = float(contrato.valor_total or 0) - total_retenciones_ley - total_pagos
         
         totales_contratos[contrato.id] = {
             'valor_total_contrato': float(contrato.valor_total),
