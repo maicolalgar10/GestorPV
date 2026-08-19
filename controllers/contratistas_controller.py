@@ -347,7 +347,7 @@ def editar_factura(id):
                 return default
 
         factura.valor_neto = limpiar_monto(request.form.get("valor_neto"))
-                factura.porcentaje_iva = parse_pct(request.form.get("porcentaje_iva"))
+        factura.porcentaje_iva = parse_pct(request.form.get("porcentaje_iva"))
         factura.valor_cancelado = limpiar_monto(request.form.get("valor_cancelado"))
         factura.retencion = parse_pct(request.form.get("retencion"))
         factura.porcentaje_retegarantia = parse_pct(request.form.get("retegarantia"))
