@@ -357,7 +357,7 @@
                           {% endif %}
                         </button>
                         <button class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0 ms-1" title="Editar"
-                          onclick="abrirModalEditarFactura('{{ r.id }}', '{{ contrato.contratista.nombre | escape }}', '{{ contrato.id }}', '{{ (r.valor_neto or 0)|int }}', '{{ r.porcentaje_iva or 0 }}', '{{ (r.retencion or 0)|int }}', '{{ (r.valor_cancelado or 0)|int }}', '{{ r.fecha_pago if r.fecha_pago else '' }}', '{{ r.fecha_factura if r.fecha_factura else '' }}', '{{ r.fecha_vencimiento if r.fecha_vencimiento else '' }}', '{{ r.plazo_dias }}')">
+                          onclick="abrirModalEditarFactura('{{ r.id }}', '{{ contrato.contratista.nombre | escape }}', '{{ contrato.id }}', '{{ (r.valor_neto or 0)|int }}', '{{ r.porcentaje_iva or 0 }}', '{{ (r.retencion or 0)|int }}', '{{ (r.porcentaje_retegarantia or 0)|int }}', '{{ (r.valor_cancelado or 0)|int }}', '{{ r.fecha_pago if r.fecha_pago else '' }}', '{{ r.fecha_factura if r.fecha_factura else '' }}', '{{ r.fecha_vencimiento if r.fecha_vencimiento else '' }}', '{{ r.plazo_dias }}')">
                           <i class="bi bi-pencil-square"></i>
                         </button>
                         {% if r.comprobante_compra_url %}
@@ -721,14 +721,22 @@
                   <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
                 </div>
               </div>
-              <div class="col-md-3">
-                <label>% Retención</label>
-                <div class="input-group">
-                  <input type="text" name="retencion" id="retencion" class="form-control pct-input"
-                    value="0" data-raw-value="0" oninput="formatPercentField(this); calcularFactura()">
-                  <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
+                              <div class="col-md-3">
+                  <label>% Retención</label>
+                  <div class="input-group">
+                    <input type="text" name="retencion" id="retencion" class="form-control pct-input"
+                      value="0" data-raw-value="0" oninput="formatPercentField(this); calcularFactura()">
+                    <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
+                  </div>
                 </div>
-              </div>
+                <div class="col-md-3">
+                  <label>% ReteGarantía</label>
+                  <div class="input-group">
+                    <input type="text" name="retegarantia" id="retegarantia" class="form-control pct-input"
+                      value="0" data-raw-value="0" oninput="formatPercentField(this); calcularFactura()">
+                    <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
+                  </div>
+                </div>
 
               <div class="col-md-6">
                 <label>Orden de Compra (PDF)</label>
@@ -854,14 +862,22 @@
                   <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
                 </div>
               </div>
-              <div class="col-md-3">
-                <label>% Retención</label>
-                <div class="input-group">
-                  <input type="text" name="retencion" id="edit_retencion" class="form-control pct-input"
-                    value="0" data-raw-value="0" oninput="formatPercentField(this); calcularFacturaEdit()">
-                  <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
+                              <div class="col-md-3">
+                  <label>% Retención</label>
+                  <div class="input-group">
+                    <input type="text" name="retencion" id="edit_retencion" class="form-control pct-input"
+                      value="0" data-raw-value="0" oninput="formatPercentField(this); calcularFacturaEdit()">
+                    <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
+                  </div>
                 </div>
-              </div>
+                <div class="col-md-3">
+                  <label>% ReteGarantía</label>
+                  <div class="input-group">
+                    <input type="text" name="retegarantia" id="edit_retegarantia" class="form-control pct-input"
+                      value="0" data-raw-value="0" oninput="formatPercentField(this); calcularFacturaEdit()">
+                    <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
+                  </div>
+                </div>
 
               <div class="col-md-6">
                 <label>Actualizar OC (PDF)</label>
@@ -1143,7 +1159,9 @@
         el.value = '0';
       });
       document.getElementById('porcentaje_iva').setAttribute('data-raw-value', '19');
-      document.getElementById('retencion').setAttribute('data-raw-value', '0');
+            document.getElementById('retencion').setAttribute('data-raw-value', '0');
+      let rg = document.getElementById('retegarantia');
+      if(rg){ rg.setAttribute('data-raw-value', '0'); rg.value='0'; }
       calcularFactura();
     }
 
@@ -1168,39 +1186,47 @@
       }
     }
 
-    function calcularFactura() {
+        function calcularFactura() {
       const bruto = parseRawValue('valor_neto');
       const iva_pct = parseRawValue('porcentaje_iva');
       const ret_pct = parseRawValue('retencion');
+      const retegarantia_pct = parseRawValue('retegarantia');
       const pago = parseRawValue('valor_cancelado');
 
       const val_iva = bruto * (iva_pct / 100);
       const val_ret = bruto * (ret_pct / 100);
-      const total = bruto + val_iva;
-      const adeudado = total - val_ret - pago;
+      const val_retegarantia = bruto * (retegarantia_pct / 100);
+      const total = bruto - val_ret;
+      const adeudado = total - pago;
 
+      let el_retegarantia = document.getElementById('calc_retegarantia_factura');
+      if(el_retegarantia) el_retegarantia.innerText = '$' + new Intl.NumberFormat('es-CO').format(val_retegarantia);
       document.getElementById('calc_retencion_factura').innerText = '$' + new Intl.NumberFormat('es-CO').format(val_ret);
       document.getElementById('calc_total_factura').innerText = '$' + new Intl.NumberFormat('es-CO').format(total);
       document.getElementById('calc_adeudado_factura').innerText = '$' + new Intl.NumberFormat('es-CO').format(adeudado);
     }
 
-    function calcularFacturaEdit() {
+        function calcularFacturaEdit() {
       const bruto = parseRawValue('edit_valor_neto');
       const iva_pct = parseRawValue('edit_porcentaje_iva');
       const ret_pct = parseRawValue('edit_retencion');
+      const retegarantia_pct = parseRawValue('edit_retegarantia');
       const pago = parseRawValue('edit_valor_cancelado');
 
       const val_iva = bruto * (iva_pct / 100);
       const val_ret = bruto * (ret_pct / 100);
-      const total = bruto + val_iva;
-      const adeudado = total - val_ret - pago;
+      const val_retegarantia = bruto * (retegarantia_pct / 100);
+      const total = bruto - val_ret;
+      const adeudado = total - pago;
 
+      let el_retegarantia = document.getElementById('calc_retegarantia_factura_edit');
+      if(el_retegarantia) el_retegarantia.innerText = '$' + new Intl.NumberFormat('es-CO').format(val_retegarantia);
       document.getElementById('calc_retencion_factura_edit').innerText = '$' + new Intl.NumberFormat('es-CO').format(val_ret);
       document.getElementById('calc_total_factura_edit').innerText = '$' + new Intl.NumberFormat('es-CO').format(total);
       document.getElementById('calc_adeudado_factura_edit').innerText = '$' + new Intl.NumberFormat('es-CO').format(adeudado);
     }
 
-    function abrirModalEditarFactura(id, nombre, contratoId, valor_neto, iva_pct, ret, pago, f_pago, f_factura, f_venc, plazo) {
+    function abrirModalEditarFactura(id, nombre, contratoId, valor_neto, iva_pct, ret, retegarantia, pago, f_pago, f_factura, f_venc, plazo) {
       document.getElementById('formEditarFactura').action = `/contratistas/editar_factura/${id}`;
       document.getElementById('formEliminarFactura').action = `/contratistas/eliminar_factura/${id}`;
       document.getElementById('edit_contrato_id_fact').value = contratoId;
@@ -1220,6 +1246,12 @@
       let r = document.getElementById('edit_retencion');
       r.setAttribute('data-raw-value', ret);
       r.value = ret;
+
+      let rg = document.getElementById('edit_retegarantia');
+      if(rg) {
+        rg.setAttribute('data-raw-value', retegarantia);
+        rg.value = retegarantia;
+      }
 
       let p = document.getElementById('edit_valor_cancelado');
       p.setAttribute('data-raw-value', pago);

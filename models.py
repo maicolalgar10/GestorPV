@@ -765,12 +765,11 @@ class ProveedorFactura(db.Model):
     creado_en = db.Column(db.DateTime, default=datetime.utcnow)
 
     porcentaje_iva = db.Column(db.Numeric(14, 3), nullable=False, default=19.0)
+    porcentaje_retegarantia = db.Column(db.Numeric(14, 3), nullable=False, default=0.0)
 
     # ─── Campos calculados (@property) ───────────────────────────────
-
     @property
     def iva(self):
-        """IVA calculado basado en el porcentaje_iva."""
         try:
             pct = float(self.porcentaje_iva) if self.porcentaje_iva is not None else 19.0
             return round(float(self.valor_neto or 0) * (pct / 100.0), 2)
@@ -778,34 +777,34 @@ class ProveedorFactura(db.Model):
             return 0.0
 
     @property
-    def valor_total(self):
-        """valor_neto + IVA."""
-        try:
-            return round(float(self.valor_neto or 0) + self.iva, 2)
-        except (ValueError, TypeError):
-            return 0.0
-
-    @property
     def retencion_pesos(self):
-        """Valor en pesos de la retención calculada a partir del porcentaje."""
         try:
             return float(self.valor_neto or 0) * (float(self.retencion or 0) / 100.0)
         except (ValueError, TypeError):
             return 0.0
 
     @property
+    def retegarantia_pesos(self):
+        try:
+            return float(self.valor_neto or 0) * (float(self.porcentaje_retegarantia or 0) / 100.0)
+        except (ValueError, TypeError):
+            return 0.0
+
+    @property
+    def valor_total(self):
+        try:
+            # VALOR TOTAL FACTURA = Valor Bruto - TOTAL RETENCIÓN
+            return round(float(self.valor_neto or 0) - self.retencion_pesos, 2)
+        except (ValueError, TypeError):
+            return 0.0
+
+    @property
     def total_adeudado(self):
-        """(valor_total - retencion_en_pesos) - valor_cancelado."""
         try:
             val_cancelado = float(self.valor_cancelado or 0)
             if hasattr(self, 'subfacturas') and self.subfacturas:
                 val_cancelado = sum([float(s.valor) for s in self.subfacturas if s.valor]) or 0.0
-            return round(
-                self.valor_total
-                - self.retencion_pesos
-                - val_cancelado,
-                2
-            )
+            return round(self.valor_total - val_cancelado, 2)
         except (ValueError, TypeError):
             return 0.0
 
@@ -1076,6 +1075,7 @@ class ContratistaFactura(db.Model):
     creado_en = db.Column(db.DateTime, default=datetime.utcnow)
 
     porcentaje_iva = db.Column(db.Numeric(14, 3), nullable=False, default=19.0)
+    porcentaje_retegarantia = db.Column(db.Numeric(14, 3), nullable=False, default=0.0)
 
     # ─── Campos calculados (@property) ───────────────────────────────
     @property
@@ -1087,16 +1087,24 @@ class ContratistaFactura(db.Model):
             return 0.0
 
     @property
-    def valor_total(self):
+    def retencion_pesos(self):
         try:
-            return round(float(self.valor_neto or 0) + self.iva, 2)
+            return float(self.valor_neto or 0) * (float(self.retencion or 0) / 100.0)
         except (ValueError, TypeError):
             return 0.0
 
     @property
-    def retencion_pesos(self):
+    def retegarantia_pesos(self):
         try:
-            return float(self.valor_neto or 0) * (float(self.retencion or 0) / 100.0)
+            return float(self.valor_neto or 0) * (float(self.porcentaje_retegarantia or 0) / 100.0)
+        except (ValueError, TypeError):
+            return 0.0
+
+    @property
+    def valor_total(self):
+        try:
+            # VALOR TOTAL FACTURA = Valor Bruto - TOTAL RETENCIÓN
+            return round(float(self.valor_neto or 0) - self.retencion_pesos, 2)
         except (ValueError, TypeError):
             return 0.0
 
@@ -1106,7 +1114,7 @@ class ContratistaFactura(db.Model):
             val_cancelado = float(self.valor_cancelado or 0)
             if hasattr(self, 'subfacturas') and self.subfacturas:
                 val_cancelado = sum([float(s.valor) for s in self.subfacturas if s.valor]) or 0.0
-            return round(self.valor_total - self.retencion_pesos - val_cancelado, 2)
+            return round(self.valor_total - val_cancelado, 2)
         except (ValueError, TypeError):
             return 0.0
 

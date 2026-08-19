@@ -82,7 +82,8 @@ def index():
     for contrato in lista_contratos:
         facturas_c = contrato.facturas
         total_facturado = sum(float(f.valor_total) for f in facturas_c)
-        total_rete_garantia = sum(float(f.retencion_pesos) for f in facturas_c)
+        total_rete_garantia = sum(float(getattr(f, 'retegarantia_pesos', 0.0)) for f in facturas_c)
+        total_retenciones_ley = sum(float(f.retencion_pesos) for f in facturas_c)
         total_pagos = sum(float(f.valor_cancelado) for f in facturas_c)
         saldo_adeudado = sum(float(f.total_adeudado) for f in facturas_c)
         
@@ -90,7 +91,7 @@ def index():
             'valor_total_contrato': float(contrato.valor_total),
             'total_facturado': total_facturado,
             'total_rete_garantia': total_rete_garantia,
-            'total_retenciones_ley': 0.0,
+            'total_retenciones_ley': total_retenciones_ley,
             'total_pagos': total_pagos,
             'saldo_adeudado': saldo_adeudado,
             'facturas': sorted(facturas_c, key=lambda f: f.fecha_factura, reverse=True) if facturas_c else []
@@ -294,9 +295,10 @@ def crear_factura():
             plazo_dias             = int(request.form.get("plazo_dias") or 0),
             fecha_vencimiento      = fecha_vencimiento,
             valor_neto             = limpiar_monto(request.form.get("valor_neto")),
-            porcentaje_iva         = parse_pct(request.form.get("porcentaje_iva")),
+                        porcentaje_iva         = parse_pct(request.form.get("porcentaje_iva")),
             valor_cancelado        = limpiar_monto(request.form.get("valor_cancelado")),
             retencion              = parse_pct(request.form.get("retencion")),
+            porcentaje_retegarantia= parse_pct(request.form.get("retegarantia")),
             fecha_pago             = fecha_pago,
             orden_compra_url       = url_orden,
             comprobante_compra_url = url_factura,
@@ -345,9 +347,10 @@ def editar_factura(id):
                 return default
 
         factura.valor_neto = limpiar_monto(request.form.get("valor_neto"))
-        factura.porcentaje_iva = parse_pct(request.form.get("porcentaje_iva"))
+                factura.porcentaje_iva = parse_pct(request.form.get("porcentaje_iva"))
         factura.valor_cancelado = limpiar_monto(request.form.get("valor_cancelado"))
         factura.retencion = parse_pct(request.form.get("retencion"))
+        factura.porcentaje_retegarantia = parse_pct(request.form.get("retegarantia"))
         
         if fecha_pago_str:
             factura.fecha_pago = dt.strptime(fecha_pago_str, "%Y-%m-%d").date()
