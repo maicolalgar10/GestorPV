@@ -335,7 +335,7 @@ def proveedores():
     # Calcular dinámicamente el valor_cancelado basado en las subfacturas
     for f in facturas:
         if f.subfacturas:
-            f.valor_cancelado = sum(sf.valor for sf in f.subfacturas)
+            f.valor_cancelado = sum(float(sf.valor or 0) for sf in f.subfacturas)
 
     lista_proveedores = Proveedor.query.order_by(Proveedor.nombre.asc()).all()
 
@@ -355,8 +355,9 @@ def proveedores():
     pagos_programados = ProgramacionPagoProveedor.query.order_by(ProgramacionPagoProveedor.fecha_programada.asc()).all()
 
     for pago in pagos_programados:
-        pago.deuda_actual = deuda_por_proveedor.get(pago.proveedor.nombre, 0)
-        pago.saldo_restante = pago.deuda_actual - float(pago.monto)
+        prov_nombre = pago.proveedor.nombre if pago.proveedor else "Desconocido"
+        pago.deuda_actual = float(deuda_por_proveedor.get(prov_nombre, 0.0))
+        pago.saldo_restante = pago.deuda_actual - float(pago.monto or 0.0)
 
     return render_template(
         "proveedores.html",
@@ -392,7 +393,7 @@ def facturas_proveedor(nombre_proveedor):
     # Calcular dinámicamente el valor_cancelado basado en las subfacturas
     for f in facturas:
         if f.subfacturas:
-            f.valor_cancelado = sum(sf.valor for sf in f.subfacturas)
+            f.valor_cancelado = sum(float(sf.valor or 0) for sf in f.subfacturas)
             
     deuda_total = sum(f.total_adeudado for f in facturas)
 
