@@ -793,8 +793,9 @@ class ProveedorFactura(db.Model):
     @property
     def valor_total(self):
         try:
-            # VALOR TOTAL FACTURA = Valor Bruto - TOTAL RETENCIÓN
-            return round(float(self.valor_neto or 0) - self.retencion_pesos, 2)
+            # VALOR TOTAL FACTURA = Valor Neto + IVA - TOTAL RETENCIÓN
+            neto = float(self.valor_neto or 0)
+            return round(neto + self.iva - self.retencion_pesos, 2)
         except (ValueError, TypeError):
             return 0.0
 

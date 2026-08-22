@@ -1283,9 +1283,9 @@ function calcularIVA(prefix) {
   const cancelado= parseMonto(document.getElementById(prefix + '_cancelado')?.value);
 
   const iva      = neto * (pct_iva / 100);
-  const total    = neto + iva;
   const ret_pesos= neto * (ret_porc / 100);
-  const adeudado = total - ret_pesos - cancelado;
+  const total    = neto + iva - ret_pesos;
+  const adeudado = total - cancelado;
   
   const final_adeudado = Math.max(adeudado, 0);
 
