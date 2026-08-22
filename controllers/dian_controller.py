@@ -71,6 +71,7 @@ def crear():
         fecha_vencimiento = dt.strptime(fecha_vencimiento_raw, "%Y-%m-%d").date() if fecha_vencimiento_raw else None
         
         archivo_url = upload_file("archivo")
+        recibo_pago_url = upload_file("recibo_pago")
 
         nueva_factura = DianFactura(
             concepto=concepto,
@@ -79,7 +80,8 @@ def crear():
             fecha_pago=fecha_pago,
             fecha_vencimiento=fecha_vencimiento,
             tipo_impuesto=tipo_impuesto,
-            archivo_url=archivo_url
+            archivo_url=archivo_url,
+            recibo_pago_url=recibo_pago_url
         )
         
         db.session.add(nueva_factura)
@@ -88,6 +90,77 @@ def crear():
     except Exception as e:
         db.session.rollback()
         flash(f"Error al registrar: {e}", "danger")
+        
+    return redirect(url_for("dian.index"))
+
+@dian_bp.route("/editar/<int:id>", methods=["POST"])
+@login_required
+@admin_oficina_required
+def editar(id):
+    factura = DianFactura.query.get_or_404(id)
+    
+    def upload_or_keep(file_field, current_url):
+        f = request.files.get(file_field)
+        if not f or f.filename == "":
+            return current_url
+        if supabase is None:
+            return current_url
+        try:
+            ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'webp'}
+            ext = f.filename.rsplit(".", 1)[-1].lower()
+            if ext not in ALLOWED_EXTENSIONS:
+                flash(f"Extensión .{ext} no permitida. Solo PDF e imágenes.", "danger")
+                return current_url
+            filename = f"{uuid.uuid4().hex}.{ext}"
+            path = f"dian/{filename}"
+            data = f.read()
+            supabase.storage.from_("tesoreria").upload(
+                path, data,
+                {"content-type": f.content_type, "upsert": "false"}
+            )
+            return supabase.storage.from_("tesoreria").get_public_url(path)
+        except Exception as e:
+            return current_url
+
+    try:
+        factura.concepto = request.form.get("concepto", "").strip()
+        
+        valor_raw = request.form.get("valor", "0")
+        valor_limpio = str(valor_raw).replace('$', '').replace(' ', '')
+        if ',' in valor_limpio and '.' in valor_limpio:
+            valor_limpio = valor_limpio.replace('.', '').replace(',', '.')
+        elif ',' in valor_limpio:
+            valor_limpio = valor_limpio.replace(',', '.')
+        elif '.' in valor_limpio:
+            partes = valor_limpio.split('.')
+            if len(partes[-1]) == 3:
+                valor_limpio = valor_limpio.replace('.', '')
+        factura.valor = float(valor_limpio) if valor_limpio else 0.0
+        
+        factura.pago = request.form.get("pago", "").strip()
+        factura.tipo_impuesto = request.form.get("tipo_impuesto", "").strip()
+
+        fecha_pago_raw = request.form.get("fecha_pago", "").strip()
+        factura.fecha_pago = dt.strptime(fecha_pago_raw, "%Y-%m-%d").date() if fecha_pago_raw else None
+        
+        fecha_vencimiento_raw = request.form.get("fecha_vencimiento", "").strip()
+        factura.fecha_vencimiento = dt.strptime(fecha_vencimiento_raw, "%Y-%m-%d").date() if fecha_vencimiento_raw else None
+        
+        if request.form.get("eliminar_archivo") == "true":
+            factura.archivo_url = None
+        else:
+            factura.archivo_url = upload_or_keep("archivo", factura.archivo_url)
+            
+        if request.form.get("eliminar_recibo_pago") == "true":
+            factura.recibo_pago_url = None
+        else:
+            factura.recibo_pago_url = upload_or_keep("recibo_pago", factura.recibo_pago_url)
+
+        db.session.commit()
+        flash("Registro editado correctamente.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al editar: {e}", "danger")
         
     return redirect(url_for("dian.index"))
 

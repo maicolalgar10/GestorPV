@@ -58,14 +58,25 @@
               <td>{{ f.fecha_pago.strftime('%d/%m/%Y') if f.fecha_pago else '-' }}</td>
               <td class="text-center">
                 {% if f.archivo_url %}
-                <a href="{{ f.archivo_url }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill" title="Ver Soporte">
-                  <i class="bi bi-file-earmark-text"></i> Ver
+                <a href="{{ f.archivo_url }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill mb-1" title="Ver Declaración/Soporte">
+                  <i class="bi bi-file-earmark-text"></i> Dec.
                 </a>
-                {% else %}
-                <span class="text-muted small">Sin soporte</span>
+                {% endif %}
+                {% if f.recibo_pago_url %}
+                <a href="{{ f.recibo_pago_url }}" target="_blank" class="btn btn-sm btn-outline-success rounded-pill mb-1" title="Ver Recibo de Pago">
+                  <i class="bi bi-receipt"></i> Pago
+                </a>
+                {% endif %}
+                {% if not f.archivo_url and not f.recibo_pago_url %}
+                <span class="text-muted small">Sin soportes</span>
                 {% endif %}
               </td>
-              <td class="text-center">
+              <td class="text-center text-nowrap">
+                <button type="button" class="btn btn-sm btn-outline-warning rounded-pill" title="Editar" 
+                  onclick="abrirModalEditar({{ f.id }}, '{{ f.concepto | replace("'", "\\'") }}', '{{ f.tipo_impuesto }}', {{ f.valor }}, '{{ f.pago }}', '{{ f.fecha_vencimiento or '' }}', '{{ f.fecha_pago or '' }}', '{{ f.archivo_url or '' }}', '{{ f.recibo_pago_url or '' }}')">
+                  <i class="bi bi-pencil"></i>
+                </button>
+
                 <form method="POST" action="{{ url_for('dian.eliminar', id=f.id) }}" class="d-inline" onsubmit="return confirm('¿Seguro que deseas eliminar este registro?');">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Eliminar">
@@ -138,10 +149,15 @@
                 <input type="date" name="fecha_pago" class="form-control">
               </div>
 
-              <div class="col-12 mt-3">
-                <label class="form-label fw-semibold">Archivo de Soporte (PDF / Imagen)</label>
-                <input type="file" name="archivo" class="form-control" accept=".pdf,image/*">
-                <div class="form-text">Adjunte el soporte del pago o la factura de la DIAN.</div>
+              <div class="col-md-6 mt-3">
+                <label class="form-label fw-semibold">Declaración / Soporte (PDF/Img)</label>
+                <input type="file" name="archivo" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.webp">
+                <div class="form-text">Adjunte la declaración o factura.</div>
+              </div>
+              <div class="col-md-6 mt-3">
+                <label class="form-label fw-semibold">Recibo de Pago (PDF/Img)</label>
+                <input type="file" name="recibo_pago" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.webp">
+                <div class="form-text">Adjunte el comprobante de pago.</div>
               </div>
             </div>
           </div>
@@ -149,6 +165,92 @@
           <div class="modal-footer border-0">
             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
             <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Guardar Registro</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Editar Factura DIAN -->
+  <div class="modal fade" id="modalEditarDian" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+        <form method="POST" id="formEditarDian" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          
+          <div class="modal-header border-0 bg-warning text-dark" style="border-radius: 20px 20px 0 0;">
+            <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square"></i> Editar Registro DIAN</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body p-4 bg-light">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Concepto / Descripción</label>
+                <input type="text" name="concepto" id="e_concepto" class="form-control" required>
+              </div>
+              
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Tipo de Impuesto</label>
+                <select name="tipo_impuesto" id="e_tipo_impuesto" class="form-select" required>
+                  <option value="" disabled>Seleccione...</option>
+                  <option value="IVA">IVA</option>
+                  <option value="Retefuente">Retefuente</option>
+                  <option value="Renta">Renta</option>
+                  <option value="ICA">ICA</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </div>
+              
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Valor</label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input type="hidden" name="valor" id="e_valor_hidden" required>
+                  <input type="text" id="e_valor_visual" class="form-control" required oninput="formatearMoneda(this, 'e_valor_hidden')">
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Estado de Pago (Opcional)</label>
+                <input type="text" name="pago" id="e_pago" class="form-control" placeholder="Ej: Pagado, Pendiente, 50%...">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Fecha de Vencimiento</label>
+                <input type="date" name="fecha_vencimiento" id="e_fecha_vencimiento" class="form-control">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Fecha de Pago (Opcional)</label>
+                <input type="date" name="fecha_pago" id="e_fecha_pago" class="form-control">
+              </div>
+
+              <div class="col-md-6 mt-3">
+                <label class="form-label fw-semibold">Declaración / Soporte (PDF/Img)</label>
+                <input type="file" name="archivo" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.webp">
+                <div class="form-check mt-1">
+                  <input class="form-check-input" type="checkbox" name="eliminar_archivo" value="true" id="e_eliminar_archivo">
+                  <label class="form-check-label text-danger small" for="e_eliminar_archivo">Eliminar archivo actual</label>
+                </div>
+                <div id="e_archivo_actual" class="small mt-1 text-primary"></div>
+              </div>
+              
+              <div class="col-md-6 mt-3">
+                <label class="form-label fw-semibold">Recibo de Pago (PDF/Img)</label>
+                <input type="file" name="recibo_pago" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.webp">
+                <div class="form-check mt-1">
+                  <input class="form-check-input" type="checkbox" name="eliminar_recibo_pago" value="true" id="e_eliminar_recibo_pago">
+                  <label class="form-check-label text-danger small" for="e_eliminar_recibo_pago">Eliminar recibo actual</label>
+                </div>
+                <div id="e_recibo_pago_actual" class="small mt-1 text-success"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer border-0">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-warning fw-bold"><i class="bi bi-pencil"></i> Guardar Cambios</button>
           </div>
         </form>
       </div>
@@ -166,6 +268,41 @@
         document.getElementById(idInputOculto).value = "";
         inputVisual.value = "";
       }
+    }
+    
+    function abrirModalEditar(id, concepto, tipo_impuesto, valor, pago, fecha_vencimiento, fecha_pago, archivo_url, recibo_pago_url) {
+      document.getElementById('formEditarDian').action = `/dian/editar/${id}`;
+      document.getElementById('e_concepto').value = concepto;
+      document.getElementById('e_tipo_impuesto').value = tipo_impuesto;
+      document.getElementById('e_valor_hidden').value = valor;
+      
+      const vVisual = document.getElementById('e_valor_visual');
+      vVisual.value = valor;
+      formatearMoneda(vVisual, 'e_valor_hidden');
+      
+      document.getElementById('e_pago').value = pago !== 'None' ? pago : '';
+      document.getElementById('e_fecha_vencimiento').value = fecha_vencimiento !== 'None' ? fecha_vencimiento : '';
+      document.getElementById('e_fecha_pago').value = fecha_pago !== 'None' ? fecha_pago : '';
+      
+      const lblArchivo = document.getElementById('e_archivo_actual');
+      if (archivo_url && archivo_url !== 'None' && archivo_url.trim() !== '') {
+          lblArchivo.innerHTML = `<i class="bi bi-check-circle-fill"></i> Documento actual guardado`;
+      } else {
+          lblArchivo.innerHTML = ``;
+      }
+      
+      const lblRecibo = document.getElementById('e_recibo_pago_actual');
+      if (recibo_pago_url && recibo_pago_url !== 'None' && recibo_pago_url.trim() !== '') {
+          lblRecibo.innerHTML = `<i class="bi bi-check-circle-fill"></i> Recibo de pago guardado`;
+      } else {
+          lblRecibo.innerHTML = ``;
+      }
+      
+      document.getElementById('e_eliminar_archivo').checked = false;
+      document.getElementById('e_eliminar_recibo_pago').checked = false;
+      
+      var modal = new bootstrap.Modal(document.getElementById('modalEditarDian'));
+      modal.show();
     }
   </script>
 </body>

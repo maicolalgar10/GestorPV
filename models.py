@@ -1195,6 +1195,7 @@ class DianFactura(db.Model):
     fecha_vencimiento = db.Column(db.Date, nullable=True)
     tipo_impuesto = db.Column(db.String(100), nullable=True)
     archivo_url = db.Column(db.String(500), nullable=True)
+    recibo_pago_url = db.Column(db.String(500), nullable=True)
 
 # ===========================================
 # 23. Programación de Pagos a Proveedores
