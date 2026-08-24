@@ -16,8 +16,15 @@ def index():
         id_usuario_destino=session["user_id"], leido=False
     ).order_by(Notificaciones.creado_en.desc()).all()
     
-    facturas = DianFactura.query.order_by(DianFactura.fecha_vencimiento.desc()).all()
-    return render_template("dian.html", usuario=usuario, notificaciones=notificaciones, facturas=facturas)
+    order = request.args.get('order', 'desc')
+    if order == 'asc':
+        facturas = DianFactura.query.order_by(DianFactura.fecha_vencimiento.asc()).all()
+    else:
+        facturas = DianFactura.query.order_by(DianFactura.fecha_vencimiento.desc()).all()
+        
+    total_valor = sum(f.valor for f in facturas if f.valor)
+    
+    return render_template("dian.html", usuario=usuario, notificaciones=notificaciones, facturas=facturas, total_valor=total_valor, current_order=order)
 
 @dian_bp.route("/crear", methods=["POST"])
 @login_required

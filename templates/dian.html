@@ -41,7 +41,12 @@
               <th>Tipo Impuesto</th>
               <th class="text-end">Valor</th>
               <th>Estado de Pago</th>
-              <th>Vencimiento</th>
+              <th>
+                Vencimiento
+                <a href="{{ url_for('dian.index', order='asc' if current_order == 'desc' else 'desc') }}" class="text-decoration-none ms-1 text-secondary" title="Ordenar por Fecha">
+                  <i class="bi bi-sort-numeric-{{ 'down' if current_order == 'asc' else 'up' }}"></i>
+                </a>
+              </th>
               <th>Fecha Pago</th>
               <th class="text-center">Soporte</th>
               <th class="text-center">Acciones</th>
@@ -89,6 +94,13 @@
             <tr><td colspan="8" class="text-center text-muted">No hay registros de DIAN.</td></tr>
             {% endfor %}
           </tbody>
+          <tfoot>
+            <tr class="table-light fw-bold">
+              <td colspan="2" class="text-end text-uppercase">Suma Total:</td>
+              <td class="text-end text-primary fs-5">${{ "{:,.2f}".format(total_valor|default(0)) }}</td>
+              <td colspan="5"></td>
+            </tr>
+          </tfoot>
         </table>
       </div>
     </div>
