@@ -17,14 +17,21 @@ def index():
     ).order_by(Notificaciones.creado_en.desc()).all()
     
     order = request.args.get('order', 'desc')
-    if order == 'asc':
-        facturas = DianFactura.query.order_by(DianFactura.fecha_vencimiento.asc()).all()
+    sort_by = request.args.get('sort_by', 'fecha_pago')
+    
+    if sort_by == 'vencimiento':
+        order_col = DianFactura.fecha_vencimiento
     else:
-        facturas = DianFactura.query.order_by(DianFactura.fecha_vencimiento.desc()).all()
+        order_col = db.func.coalesce(DianFactura.fecha_pago, DianFactura.fecha_vencimiento)
+
+    if order == 'asc':
+        facturas = DianFactura.query.order_by(order_col.asc()).all()
+    else:
+        facturas = DianFactura.query.order_by(order_col.desc()).all()
         
     total_valor = sum(f.valor for f in facturas if f.valor)
     
-    return render_template("dian.html", usuario=usuario, notificaciones=notificaciones, facturas=facturas, total_valor=total_valor, current_order=order)
+    return render_template("dian.html", usuario=usuario, notificaciones=notificaciones, facturas=facturas, total_valor=total_valor, current_order=order, current_sort=sort_by)
 
 @dian_bp.route("/crear", methods=["POST"])
 @login_required

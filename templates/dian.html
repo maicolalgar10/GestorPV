@@ -43,11 +43,16 @@
               <th>Estado de Pago</th>
               <th>
                 Vencimiento
-                <a href="{{ url_for('dian.index', order='asc' if current_order == 'desc' else 'desc') }}" class="text-decoration-none ms-1 text-secondary" title="Ordenar por Fecha">
-                  <i class="bi bi-sort-numeric-{{ 'down' if current_order == 'asc' else 'up' }}"></i>
+                <a href="{{ url_for('dian.index', sort_by='vencimiento', order='asc' if (current_sort == 'vencimiento' and current_order == 'desc') else 'desc') }}" class="text-decoration-none ms-1 {% if current_sort == 'vencimiento' %}text-primary{% else %}text-secondary{% endif %}" title="Ordenar por Vencimiento">
+                  <i class="bi bi-sort-numeric-{{ 'down' if (current_sort == 'vencimiento' and current_order == 'asc') else 'up' }}"></i>
                 </a>
               </th>
-              <th>Fecha Pago</th>
+              <th>
+                Fecha Pago
+                <a href="{{ url_for('dian.index', sort_by='fecha_pago', order='asc' if (current_sort == 'fecha_pago' and current_order == 'desc') else 'desc') }}" class="text-decoration-none ms-1 {% if current_sort == 'fecha_pago' %}text-primary{% else %}text-secondary{% endif %}" title="Ordenar por Fecha de Pago">
+                  <i class="bi bi-sort-numeric-{{ 'down' if (current_sort == 'fecha_pago' and current_order == 'asc') else 'up' }}"></i>
+                </a>
+              </th>
               <th class="text-center">Soporte</th>
               <th class="text-center">Acciones</th>
             </tr>
