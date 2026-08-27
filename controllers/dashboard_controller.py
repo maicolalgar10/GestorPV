@@ -816,6 +816,18 @@ def crear_proveedor_subfactura():
 
         pdf_url = upload_file("pdf_subfactura")
 
+        # Si es la primera subfactura y ya había un valor cancelado previo, crear una subfactura base
+        if len(factura_padre.subfacturas) == 0 and float(factura_padre.valor_cancelado or 0) > 0:
+            sub_inicial = ProveedorSubFactura(
+                factura_id=factura_padre.id,
+                numero_subfactura="Abono Inicial",
+                fecha=factura_padre.fecha_factura or dt.utcnow().date(),
+                concepto="Abono inicial previamente registrado",
+                valor=float(factura_padre.valor_cancelado),
+                archivo_pdf_url=None
+            )
+            db.session.add(sub_inicial)
+
         nueva_sub = ProveedorSubFactura(
             factura_id=factura_padre.id,
             numero_subfactura=numero,
