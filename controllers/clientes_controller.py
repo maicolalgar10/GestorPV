@@ -82,7 +82,7 @@ def index():
     usuario = Usuarios.query.get(session['user_id'])
     
     # 1. Traer todos los contratos de clientes existentes
-    contratos_lista = ContratosClientes.query.all()
+    contratos_lista = ContratosClientes.query.join(Clientes).order_by(Clientes.nombre_cliente.asc(), ContratosClientes.nombre_proyecto.asc()).all()
     
     # 2. Traer todos los reportes (o podemos usar la relación de contratos en la vista)
     reportes_lista = ReporteClientes.query.all()
@@ -93,7 +93,7 @@ def index():
             r.pago_realizado = sum(sf.valor for sf in r.subfacturas)
             
     # También necesitamos los clientes por si el usuario quiere crear un Contrato desde ahí
-    clientes_lista = Clientes.query.all()
+    clientes_lista = Clientes.query.order_by(Clientes.nombre_cliente.asc()).all()
     
     # 3. Pasarle las listas a la plantilla HTML
     return render_template(
