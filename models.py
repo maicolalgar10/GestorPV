@@ -998,7 +998,7 @@ class ComprobanteEgreso(db.Model):
     __tablename__ = 'comprobantes_egreso'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    numero_comprobante = db.Column(db.Integer, nullable=False, unique=True)
+    numero_comprobante = db.Column(db.String(100), nullable=False, unique=True)
     fecha = db.Column(db.Date, nullable=False, default=datetime.utcnow)
     concepto = db.Column(db.Text, nullable=False)
     valor = db.Column(db.Numeric(12, 2), nullable=False)

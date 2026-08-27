@@ -191,7 +191,7 @@
             
             <div class="col-md-4">
               <label class="form-label fw-bold small text-muted">Nº de Comprobante</label>
-              <input type="number" name="numero_comprobante" class="form-control" required placeholder="Ej: 1001">
+              <input type="text" name="numero_comprobante" id="nuevo_numero_comprobante" class="form-control" readonly placeholder="Autogenerado al guardar">
             </div>
             
             <div class="col-md-4">
@@ -225,7 +225,7 @@
 
             <div class="col-md-6">
               <label class="form-label fw-bold small text-muted">Banco (Opcional si es efectivo)</label>
-              <input type="text" name="banco" class="form-control" placeholder="Nombre del banco o cuenta">
+              <input type="text" name="banco" id="banco_input" class="form-control" placeholder="Nombre del banco o cuenta">
             </div>
 
             <div class="col-md-6" id="container-numero-cheque">
@@ -295,7 +295,7 @@
             
             <div class="col-md-4">
               <label class="form-label fw-bold small text-muted">Nº de Comprobante</label>
-              <input type="number" name="numero_comprobante" id="edit_numero_comprobante" class="form-control" required>
+              <input type="text" name="numero_comprobante" id="edit_numero_comprobante" class="form-control" readonly>
             </div>
             
             <div class="col-md-4">
@@ -489,7 +489,8 @@
           document.getElementById('edit_tipo_doc_nit').checked = true;
         }
         
-        document.getElementById('edit_documento_numero').value = this.getAttribute('data-numdoc');
+        document.getElementById('edit_documento_numero').value = this.getAttribute('data-documento');
+        document.getElementById('edit_observaciones').value = this.getAttribute('data-observaciones');
         document.getElementById('edit_elaborado_por').value = this.getAttribute('data-elaborado');
         document.getElementById('edit_aprobado_por').value = this.getAttribute('data-aprobado');
       });
@@ -631,6 +632,22 @@
           this.innerHTML = originalText;
           this.disabled = false;
         });
+      });
+    }
+
+    // Fetch dynamic prefix based on selected bank for new comprobantes
+    const bancoInput = document.getElementById('banco_input');
+    if (bancoInput) {
+      bancoInput.addEventListener('input', function() {
+        const banco = this.value;
+        fetch(`/tesoreria/comprobantes-egresos/siguiente-numero?banco=${encodeURIComponent(banco)}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.numero) {
+              document.getElementById('nuevo_numero_comprobante').value = data.numero;
+            }
+          })
+          .catch(err => console.error("Error fetching comprobante number:", err));
       });
     }
   });

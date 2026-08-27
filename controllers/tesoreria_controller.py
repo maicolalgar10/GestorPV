@@ -644,6 +644,39 @@ def webhook_pluggy():
 
     return jsonify({"status": "received"}), 200
 
+def generar_prefijo_banco(nombre_banco):
+    if not nombre_banco:
+        return 'CM'
+    nombre_upper = nombre_banco.upper().strip()
+    if 'BANCOLOMBIA' in nombre_upper: return 'BC'
+    if 'DAVIVIENDA' in nombre_upper: return 'DV'
+    if 'BBVA' in nombre_upper: return 'BB'
+    if 'CAJA SOCIAL' in nombre_upper: return 'BCS'
+    if 'BOGOTA' in nombre_upper or 'BOGOTÁ' in nombre_upper: return 'BDB'
+    if 'AV VILLAS' in nombre_upper: return 'AV'
+    if 'OCCIDENTE' in nombre_upper: return 'BO'
+    if 'POPULAR' in nombre_upper: return 'BP'
+    
+    palabras = nombre_upper.split()
+    iniciales = ''.join(p[0] for p in palabras if p.isalpha())
+    return iniciales[:3] if iniciales else 'CM'
+
+@tesoreria_bp.route("/comprobantes-egresos/siguiente-numero", methods=["GET"])
+@admin_oficina_required
+def siguiente_numero_comprobante():
+    from models import ComprobanteEgreso
+    banco = request.args.get("banco", "")
+    prefijo = generar_prefijo_banco(banco)
+    ultimo = ComprobanteEgreso.query.filter(ComprobanteEgreso.numero_comprobante.like(f"{prefijo}-%")).order_by(ComprobanteEgreso.id.desc()).first()
+    siguiente = 1
+    if ultimo:
+        try:
+            num_parte = int(ultimo.numero_comprobante.split('-')[1])
+            siguiente = num_parte + 1
+        except:
+            pass
+    return jsonify({"numero": f"{prefijo}-{siguiente:04d}"})
+
 @tesoreria_bp.route("/comprobantes-egresos", methods=["GET", "POST"])
 @admin_oficina_required
 def comprobantes_egresos():
@@ -651,13 +684,25 @@ def comprobantes_egresos():
     
     if request.method == "POST":
         try:
-            numero = request.form.get("numero_comprobante")
+            banco = request.form.get("banco")
+            
+            # Autogenerar número siempre en el backend para evitar colisiones y condiciones de carrera
+            prefijo = generar_prefijo_banco(banco)
+            ultimo = ComprobanteEgreso.query.filter(ComprobanteEgreso.numero_comprobante.like(f"{prefijo}-%")).order_by(ComprobanteEgreso.id.desc()).first()
+            siguiente = 1
+            if ultimo:
+                try:
+                    num_parte = int(ultimo.numero_comprobante.split('-')[1])
+                    siguiente = num_parte + 1
+                except:
+                    pass
+            numero = f"{prefijo}-{siguiente:04d}"
+
             fecha_str = request.form.get("fecha")
             concepto = request.form.get("concepto")
             valor = request.form.get("valor")
             metodo = request.form.get("metodo_pago")
             num_cheque = request.form.get("numero_cheque") if metodo == "Cheque" else None
-            banco = request.form.get("banco")
             debitese_a = request.form.get("debitese_a")
             tipo_doc = request.form.get("tipo_documento")
             doc_num = request.form.get("documento_numero")
