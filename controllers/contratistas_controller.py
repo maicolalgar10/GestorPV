@@ -76,7 +76,7 @@ def index():
     frase = frase_del_dia()
 
     lista_contratistas = Contratista.query.order_by(Contratista.nombre.asc()).all()
-    lista_contratos = ContratosContratista.query.all()
+    lista_contratos = ContratosContratista.query.join(Contratista).order_by(Contratista.nombre.asc(), ContratosContratista.objeto.asc()).all()
 
     totales_contratos = {}
     for contrato in lista_contratos:
