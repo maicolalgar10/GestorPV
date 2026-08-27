@@ -66,6 +66,42 @@ def cambiar_estado(id):
         flash(f"Error al actualizar estado: {e}", "danger")
     return redirect(url_for("dashboard.proveedores"))
 
+@proveedores_bp.route("/programacion_pago/editar/<int:id>", methods=["POST"])
+@login_required
+@admin_oficina_required
+def editar_programacion(id):
+    pago = ProgramacionPagoProveedor.query.get_or_404(id)
+    try:
+        fecha_raw = request.form.get("fecha_programada")
+        monto_raw = request.form.get("monto", "0")
+        observacion = request.form.get("observacion", "").strip()
+
+        if fecha_raw:
+            pago.fecha_programada = dt.strptime(fecha_raw, "%Y-%m-%d").date()
+        
+        monto_limpio = str(monto_raw).replace('$', '').replace(' ', '')
+        if ',' in monto_limpio and '.' in monto_limpio:
+            monto_limpio = monto_limpio.replace('.', '').replace(',', '.')
+        elif ',' in monto_limpio:
+            monto_limpio = monto_limpio.replace(',', '.')
+        elif '.' in monto_limpio:
+            partes = monto_limpio.split('.')
+            if len(partes[-1]) == 3:
+                monto_limpio = monto_limpio.replace('.', '')
+        monto = float(monto_limpio) if monto_limpio else 0.0
+        
+        if monto > 0:
+            pago.monto = monto
+        
+        pago.observacion = observacion
+        
+        db.session.commit()
+        flash("Programación de pago actualizada correctamente.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al editar programación: {e}", "danger")
+    return redirect(url_for("dashboard.proveedores"))
+
 @proveedores_bp.route("/programacion/eliminar/<int:id>", methods=["POST"])
 @login_required
 @admin_oficina_required

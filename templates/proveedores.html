@@ -488,6 +488,9 @@
               </td>
               <td class="text-center">
                 {% if pago.estado == 'Programado' %}
+                <button class="btn btn-sm btn-outline-primary rounded-pill me-1" title="Editar Programación" onclick="abrirModalEditarPagoProgramado({{ pago.id }}, '{{ pago.fecha_programada.strftime('%Y-%m-%d') }}', '{{ pago.proveedor.nombre | replace("'", "\\'") | replace('"', '\\"') }}', {{ pago.monto }}, '{{ pago.observacion or '' }}')">
+                  <i class="bi bi-pencil-square"></i>
+                </button>
                 <form method="POST" action="{{ url_for('proveedores.cambiar_estado', id=pago.id) }}" class="d-inline">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="estado" value="Realizado">
@@ -734,6 +737,46 @@
       <div class="modal-footer d-flex justify-content-end border-top pt-3 bg-dark" style="border-color:#3f3f5c !important;">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
         <button type="submit" form="formProgramarPago" class="btn btn-info px-4 text-white"><i class="bi bi-calendar-check me-1"></i> Programar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL — EDITAR PAGO PROGRAMADO
+═══════════════════════════════════════════════════════════ -->
+<div class="modal fade modal-dark" id="modalEditarPagoProgramado" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Editar Pago Programado - <span id="lblEditProveedorNombre"></span></h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form method="POST" action="" id="formEditarPagoProgramado">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="row g-3">
+            <div class="col-12">
+              <label>Fecha Programada de Pago *</label>
+              <input type="date" name="fecha_programada" id="edit_prog_fecha" class="form-control" required>
+            </div>
+            <div class="col-12">
+              <label>Valor a Pagar ($) *</label>
+              <div class="input-group">
+                <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                <input type="text" name="monto" id="edit_prog_monto" class="form-control currency-input" required oninput="formatCurrencyInput(this)">
+              </div>
+            </div>
+            <div class="col-12">
+              <label>Observación / Notas</label>
+              <input type="text" name="observacion" id="edit_prog_observacion" class="form-control" placeholder="Ej: Pago cuota 1 de 3">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer d-flex justify-content-end border-top pt-3 bg-dark" style="border-color:#3f3f5c !important;">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" form="formEditarPagoProgramado" class="btn btn-primary px-4 text-white"><i class="bi bi-save me-1"></i> Guardar Cambios</button>
       </div>
     </div>
   </div>
@@ -1677,6 +1720,23 @@ function abrirModalProgramarPago(proveedor_id, proveedor_nombre, deuda_actual) {
   montoInput.value = deudaStr;
   
   var modal = new bootstrap.Modal(document.getElementById('modalProgramarPago'));
+  modal.show();
+}
+
+function abrirModalEditarPagoProgramado(id, fecha, proveedor_nombre, monto, observacion) {
+  document.getElementById('lblEditProveedorNombre').innerText = proveedor_nombre;
+  document.getElementById('edit_prog_fecha').value = fecha;
+  
+  // Formatear monto
+  let montoStr = new Intl.NumberFormat('es-CO').format(monto);
+  document.getElementById('edit_prog_monto').value = montoStr;
+  
+  document.getElementById('edit_prog_observacion').value = observacion || '';
+  
+  // Configurar la acción del formulario
+  document.getElementById('formEditarPagoProgramado').action = `/proveedores/programacion_pago/editar/${id}`;
+  
+  var modal = new bootstrap.Modal(document.getElementById('modalEditarPagoProgramado'));
   modal.show();
 }
 
