@@ -245,9 +245,79 @@
       </div>
     </div>
 
+    <!-- ═══════════════════════════════════════════════════════
+         DIRECTORIO DE CONTRATISTAS
+    ═══════════════════════════════════════════════════════ -->
+    <div class="table-card mb-4 mt-4">
+      <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold"><i class="bi bi-journal-bookmark-fill me-2 text-primary"></i>Directorio de Contratistas</h5>
+        <div class="d-flex align-items-center">
+          <input type="text" id="filtroDirectorio" class="form-control form-control-sm rounded-pill px-3" placeholder="Buscar contratista..." style="max-width: 250px;" oninput="filtrarDirectorioContratistas(this.value)">
+        </div>
+      </div>
+      <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+        <table class="table table-hover mb-0" id="tablaDirectorio">
+          <thead style="position: sticky; top: 0; z-index: 1;">
+            <tr>
+              <th>ID</th>
+              <th>Contratista</th>
+              <th>NIT / Cédula</th>
+              <th>Teléfono</th>
+              <th class="text-end">Deuda Total / Estado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in contratistas %}
+            <tr class="fila-contratista" data-nombre="{{ c.nombre | lower }}">
+              <td class="text-muted small">{{ c.id }}</td>
+              <td class="fw-semibold">
+                {{ c.nombre }}
+                {% if c.estado == 'Inactivo' %}
+                  <span class="badge bg-secondary ms-1" style="font-size: 0.65rem;">Inactivo</span>
+                {% endif %}
+              </td>
+              <td>{{ c.nit or '—' }}</td>
+              <td>{{ c.telefono or '—' }}</td>
+              <td class="text-end">
+                {% set deuda = deuda_por_contratista.get(c.id, 0) %}
+                {% if deuda <= 0 %}
+                  <span class="badge bg-success">Paz y Salvo</span>
+                {% else %}
+                  <span class="text-danger fw-bold">${{ "{:,.0f}".format(deuda) | replace(",",".") }}</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                <button class="btn btn-sm btn-outline-primary rounded-pill me-1" title="Editar Contratista"
+                        data-bs-toggle="modal" data-bs-target="#modalEditarContratista"
+                        data-id="{{ c.id }}" data-nombre="{{ c.nombre | escape }}" data-nit="{{ c.nit or '' }}" 
+                        data-telefono="{{ c.telefono or '' }}" data-especialidad="{{ c.especialidad or '' }}" 
+                        data-estado="{{ c.estado or 'Activo' }}"
+                        onclick="prepararModalEditarContratista(this, event)">
+                  <i class="bi bi-pencil-square"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-success rounded-pill" title="Crear Contrato"
+                        data-bs-toggle="modal" data-bs-target="#modalCrearContrato"
+                        onclick="document.querySelector('#modalCrearContrato select[name=\'contratista_id\']').value = '{{ c.id }}'">
+                  <i class="bi bi-file-earmark-plus"></i>
+                </button>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="6" class="text-center text-muted py-4">No hay contratistas registrados</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- CONTENIDO PRINCIPAL (Acordeones por Contratista) -->
     <div class="mt-4">
+      <h5 class="fw-bold mb-3"><i class="bi bi-file-earmark-text me-2"></i>Contratos Activos</h5>
       <div class="accordion" id="accordionContratos">
+
         {% if contratos %}
         {% for contrato in contratos %}
         <div class="accordion-item mb-3"
@@ -1311,6 +1381,19 @@ function abrirModalContratistaSubFacturas(facturaId, nombreContratista, valorNet
 
   document.getElementById('inputValorSubFacturaContratista').value = '';
   new bootstrap.Modal(document.getElementById('modalContratistaSubFacturas')).show();
+}
+
+function filtrarDirectorioContratistas(texto) {
+  let val = texto.toLowerCase();
+  let filas = document.querySelectorAll('.fila-contratista');
+  filas.forEach(f => {
+    let nombre = f.getAttribute('data-nombre') || '';
+    if (nombre.includes(val)) {
+      f.style.display = '';
+    } else {
+      f.style.display = 'none';
+    }
+  });
 }
 
 </script>

@@ -78,6 +78,7 @@ def index():
     lista_contratistas = Contratista.query.order_by(Contratista.nombre.asc()).all()
     lista_contratos = ContratosContratista.query.join(Contratista).order_by(Contratista.nombre.asc(), ContratosContratista.objeto.asc()).all()
 
+    deuda_por_contratista = {c.id: 0.0 for c in lista_contratistas}
     totales_contratos = {}
     for contrato in lista_contratos:
         facturas_c = contrato.facturas
@@ -97,6 +98,9 @@ def index():
             'facturas': sorted(facturas_c, key=lambda f: f.fecha_factura, reverse=True) if facturas_c else []
         }
 
+        if contrato.contratista_id in deuda_por_contratista:
+            deuda_por_contratista[contrato.contratista_id] += saldo_adeudado
+
     return render_template(
         "contratistas.html",
         usuario=usuario,
@@ -106,6 +110,7 @@ def index():
         contratistas=lista_contratistas,
         contratos=lista_contratos,
         totales_contratos=totales_contratos,
+        deuda_por_contratista=deuda_por_contratista,
     )
 
 
