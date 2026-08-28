@@ -78,12 +78,14 @@ def index():
     try:
         lista_contratistas = Contratista.query.order_by(Contratista.nombre.asc()).all()
     except Exception as e:
+        db.session.rollback()
         lista_contratistas = []
         flash(f"Error cargando contratistas: {str(e)}", "danger")
 
     try:
         lista_contratos = ContratosContratista.query.join(Contratista).order_by(Contratista.nombre.asc(), ContratosContratista.objeto.asc()).all()
     except Exception as e:
+        db.session.rollback()
         lista_contratos = []
         flash(f"Error cargando contratos: {str(e)}", "danger")
 
@@ -112,12 +114,14 @@ def index():
             if contrato.contratista_id in deuda_por_contratista:
                 deuda_por_contratista[contrato.contratista_id] += saldo_adeudado
     except Exception as e:
+        db.session.rollback()
         print(f"Error calculando totales contratos: {e}")
         # Continue gracefully
 
     try:
         pagos_programados = ProgramacionPagoContratista.query.order_by(ProgramacionPagoContratista.fecha_programada.asc()).all()
     except Exception as e:
+        db.session.rollback()
         pagos_programados = []
         print(f"Error cargando pagos programados: {e}")
 
@@ -159,7 +163,7 @@ def programar_pago():
 
         if not contratista_id or not fecha_programada or monto <= 0:
             flash("Datos inválidos para programar el pago.", "danger")
-            return redirect(url_for("dashboard.contratistas"))
+            return redirect(url_for("contratistas.index"))
 
         nuevo_pago = ProgramacionPagoContratista(
             contratista_id=contratista_id,
@@ -174,7 +178,7 @@ def programar_pago():
     except Exception as e:
         db.session.rollback()
         flash(f"Error al programar el pago: {str(e)}", "danger")
-    return redirect(url_for("dashboard.contratistas"))
+    return redirect(url_for("contratistas.index"))
 
 @contratistas_bp.route("/programacion/cambiar_estado/<int:id>", methods=["POST"])
 @login_required
@@ -192,7 +196,7 @@ def cambiar_estado(id):
     except Exception as e:
         db.session.rollback()
         flash(f"Error al cambiar el estado: {str(e)}", "danger")
-    return redirect(url_for("dashboard.contratistas"))
+    return redirect(url_for("contratistas.index"))
 
 @contratistas_bp.route("/programacion_pago/editar/<int:id>", methods=["POST"])
 @login_required
@@ -219,7 +223,7 @@ def editar_programacion(id):
 
         if not fecha_programada or monto <= 0:
             flash("Datos inválidos para editar la programación.", "danger")
-            return redirect(url_for("dashboard.contratistas"))
+            return redirect(url_for("contratistas.index"))
 
         pago.fecha_programada = fecha_programada
         pago.monto = monto
@@ -229,7 +233,7 @@ def editar_programacion(id):
     except Exception as e:
         db.session.rollback()
         flash(f"Error al editar la programación: {str(e)}", "danger")
-    return redirect(url_for("dashboard.contratistas"))
+    return redirect(url_for("contratistas.index"))
 
 @contratistas_bp.route("/programacion/eliminar/<int:id>", methods=["POST"])
 @login_required
@@ -243,7 +247,7 @@ def eliminar_programacion(id):
     except Exception as e:
         db.session.rollback()
         flash(f"Error al eliminar la programación: {str(e)}", "danger")
-    return redirect(url_for("dashboard.contratistas"))
+    return redirect(url_for("contratistas.index"))
 
 
 # ─── POST /contratistas/crear ────────────────────
