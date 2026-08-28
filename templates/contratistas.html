@@ -344,13 +344,13 @@
             {% for pago in pagos_programados %}
             <tr>
               <td class="text-muted small">{{ pago.id }}</td>
-              <td class="fw-semibold">{{ pago.fecha_programada.strftime('%d/%m/%Y') }}</td>
+              <td class="fw-semibold">{{ pago.fecha_programada.strftime('%d/%m/%Y') if pago.fecha_programada else '—' }}</td>
               <td>{{ pago.contratista.nombre if pago.contratista else 'Desconocido' }}</td>
               <td class="text-end fw-semibold text-danger">
                 {% set deuda_actual = deuda_por_contratista.get(pago.contratista_id, 0) %}
-                ${{ "{:,.0f}".format(deuda_actual) | replace(",",".") }}
+                ${{ "{:,.0f}".format(deuda_actual or 0) | replace(",",".") }}
               </td>
-              <td class="text-end text-primary fw-bold">${{ "{:,.0f}".format(pago.monto) | replace(",",".") }}</td>
+              <td class="text-end text-primary fw-bold">${{ "{:,.0f}".format(pago.monto or 0) | replace(",",".") }}</td>
               <td class="small text-muted">{{ pago.observacion or '—' }}</td>
               <td class="text-center">
                 {% if pago.estado == 'Programado' %}
@@ -364,7 +364,7 @@
               <td class="text-center">
                 {% if pago.estado == 'Programado' %}
                 <button class="btn btn-sm btn-outline-primary rounded-pill me-1" title="Editar Programación" 
-                        onclick="abrirModalEditarPagoProgramadoContratista({{ pago.id }}, '{{ pago.fecha_programada.strftime('%Y-%m-%d') }}', '{{ pago.contratista.nombre | replace("'", "\\'") | replace('"', '\\"') }}', {{ pago.monto }}, '{{ pago.observacion or '' }}')">
+                        onclick="abrirModalEditarPagoProgramadoContratista({{ pago.id }}, '{{ pago.fecha_programada.strftime('%Y-%m-%d') if pago.fecha_programada else '' }}', '{{ (pago.contratista.nombre if pago.contratista else 'Desconocido') | replace("'", "\\'") | replace('"', '\\"') }}', {{ pago.monto or 0 }}, '{{ pago.observacion or '' }}')">
                   <i class="bi bi-pencil-square"></i>
                 </button>
                 <form method="POST" action="{{ url_for('contratistas.cambiar_estado', id=pago.id) }}" class="d-inline">

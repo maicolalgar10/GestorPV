@@ -75,33 +75,51 @@ def index():
     ).order_by(Notificaciones.creado_en.desc()).all()
     frase = frase_del_dia()
 
-    lista_contratistas = Contratista.query.order_by(Contratista.nombre.asc()).all()
-    lista_contratos = ContratosContratista.query.join(Contratista).order_by(Contratista.nombre.asc(), ContratosContratista.objeto.asc()).all()
+    try:
+        lista_contratistas = Contratista.query.order_by(Contratista.nombre.asc()).all()
+    except Exception as e:
+        lista_contratistas = []
+        flash(f"Error cargando contratistas: {str(e)}", "danger")
+
+    try:
+        lista_contratos = ContratosContratista.query.join(Contratista).order_by(Contratista.nombre.asc(), ContratosContratista.objeto.asc()).all()
+    except Exception as e:
+        lista_contratos = []
+        flash(f"Error cargando contratos: {str(e)}", "danger")
 
     deuda_por_contratista = {c.id: 0.0 for c in lista_contratistas}
     totales_contratos = {}
-    for contrato in lista_contratos:
-        facturas_c = contrato.facturas
-        total_facturado = sum(float(f.valor_total) for f in facturas_c)
-        total_rete_garantia = sum(float(getattr(f, 'retegarantia_pesos', 0.0)) for f in facturas_c)
-        total_retenciones_ley = sum(float(f.retencion_pesos) for f in facturas_c)
-        total_pagos = sum(float(f.valor_cancelado) for f in facturas_c)
-        saldo_adeudado = float(contrato.valor_total or 0) - total_retenciones_ley - total_pagos
-        
-        totales_contratos[contrato.id] = {
-            'valor_total_contrato': float(contrato.valor_total),
-            'total_facturado': total_facturado,
-            'total_rete_garantia': total_rete_garantia,
-            'total_retenciones_ley': total_retenciones_ley,
-            'total_pagos': total_pagos,
-            'saldo_adeudado': saldo_adeudado,
-            'facturas': sorted(facturas_c, key=lambda f: f.fecha_factura, reverse=True) if facturas_c else []
-        }
+    
+    try:
+        for contrato in lista_contratos:
+            facturas_c = getattr(contrato, 'facturas', [])
+            total_facturado = sum(float(getattr(f, 'valor_total', 0.0) or 0) for f in facturas_c)
+            total_rete_garantia = sum(float(getattr(f, 'retegarantia_pesos', 0.0) or 0) for f in facturas_c)
+            total_retenciones_ley = sum(float(getattr(f, 'retencion_pesos', 0.0) or 0) for f in facturas_c)
+            total_pagos = sum(float(getattr(f, 'valor_cancelado', 0.0) or 0) for f in facturas_c)
+            saldo_adeudado = float(getattr(contrato, 'valor_total', 0.0) or 0) - total_retenciones_ley - total_pagos
+            
+            totales_contratos[contrato.id] = {
+                'valor_total_contrato': float(getattr(contrato, 'valor_total', 0.0) or 0),
+                'total_facturado': total_facturado,
+                'total_rete_garantia': total_rete_garantia,
+                'total_retenciones_ley': total_retenciones_ley,
+                'total_pagos': total_pagos,
+                'saldo_adeudado': saldo_adeudado,
+                'facturas': sorted(facturas_c, key=lambda f: getattr(f, 'fecha_factura', dt.today().date()), reverse=True) if facturas_c else []
+            }
 
-        if contrato.contratista_id in deuda_por_contratista:
-            deuda_por_contratista[contrato.contratista_id] += saldo_adeudado
+            if contrato.contratista_id in deuda_por_contratista:
+                deuda_por_contratista[contrato.contratista_id] += saldo_adeudado
+    except Exception as e:
+        print(f"Error calculando totales contratos: {e}")
+        # Continue gracefully
 
-    pagos_programados = ProgramacionPagoContratista.query.order_by(ProgramacionPagoContratista.fecha_programada.asc()).all()
+    try:
+        pagos_programados = ProgramacionPagoContratista.query.order_by(ProgramacionPagoContratista.fecha_programada.asc()).all()
+    except Exception as e:
+        pagos_programados = []
+        print(f"Error cargando pagos programados: {e}")
 
     return render_template(
         "contratistas.html",
