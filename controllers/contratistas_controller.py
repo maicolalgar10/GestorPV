@@ -120,6 +120,10 @@ def index():
 
     try:
         pagos_programados = ProgramacionPagoContratista.query.order_by(ProgramacionPagoContratista.fecha_programada.asc()).all()
+        for pago in pagos_programados:
+            pago.deuda_actual = float(deuda_por_contratista.get(pago.contratista_id, 0.0))
+            monto_val = float(pago.monto or 0.0)
+            pago.saldo_restante = pago.deuda_actual - monto_val
     except Exception as e:
         db.session.rollback()
         pagos_programados = []

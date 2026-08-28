@@ -320,68 +320,84 @@
 
     {% if pagos_programados %}
     <!-- ═══════════════════════════════════════════════════════
-         TABLA DE PAGOS PROGRAMADOS
+         PRÓXIMOS PAGOS PROGRAMADOS
     ═══════════════════════════════════════════════════════ -->
     <div class="table-card mb-4 mt-4">
       <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0 fw-bold"><i class="bi bi-calendar-check-fill me-2 text-warning"></i>Pagos Programados</h5>
+        <div class="d-flex align-items-center gap-2">
+          <h5 class="mb-0 fw-bold"><i class="bi bi-calendar-event me-2 text-warning"></i>Próximos Pagos Programados</h5>
+          <a href="#" onclick="alert('Historial en desarrollo'); return false;" class="btn btn-sm btn-outline-success ms-2" title="Historial">
+            <i class="bi bi-clock-history"></i> Historial de Pagos
+          </a>
+          <a href="#" onclick="alert('Exportación PDF en desarrollo'); return false;" class="btn btn-sm btn-danger" title="Exportar PDF">
+            <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
+          </a>
+        </div>
+        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePagosProgramadosContratistas" aria-expanded="false">
+          Mostrar / Ocultar
+        </button>
       </div>
-      <div class="table-responsive">
-        <table class="table table-hover mb-0">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Fecha Programada</th>
-              <th>Contratista</th>
-              <th class="text-end">Deuda Restante</th>
-              <th class="text-end">Monto a Pagar</th>
-              <th>Observación</th>
-              <th class="text-center">Estado</th>
-              <th class="text-center">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for pago in pagos_programados %}
-            <tr>
-              <td class="text-muted small">{{ pago.id }}</td>
-              <td class="fw-semibold">{{ pago.fecha_programada.strftime('%d/%m/%Y') if pago.fecha_programada else '—' }}</td>
-              <td>{{ pago.contratista.nombre if pago.contratista else 'Desconocido' }}</td>
-              <td class="text-end fw-semibold text-danger">
-                {% set deuda_actual = deuda_por_contratista.get(pago.contratista_id, 0) %}
-                ${{ "{:,.0f}".format(deuda_actual or 0) | replace(",",".") }}
-              </td>
-              <td class="text-end text-primary fw-bold">${{ "{:,.0f}".format(pago.monto or 0) | replace(",",".") }}</td>
-              <td class="small text-muted">{{ pago.observacion or '—' }}</td>
-              <td class="text-center">
-                {% if pago.estado == 'Programado' %}
-                  <span class="badge bg-warning text-dark">Programado</span>
-                {% elif pago.estado == 'Realizado' %}
-                  <span class="badge bg-success">Realizado</span>
-                {% else %}
-                  <span class="badge bg-secondary">Cancelado</span>
-                {% endif %}
-              </td>
-              <td class="text-center">
-                {% if pago.estado == 'Programado' %}
-                <button class="btn btn-sm btn-outline-primary rounded-pill me-1" title="Editar Programación" 
-                        onclick="abrirModalEditarPagoProgramadoContratista({{ pago.id }}, '{{ pago.fecha_programada.strftime('%Y-%m-%d') if pago.fecha_programada else '' }}', '{{ (pago.contratista.nombre if pago.contratista else 'Desconocido') | replace("'", "\\'") | replace('"', '\\"') }}', {{ pago.monto or 0 }}, '{{ pago.observacion or '' }}')">
-                  <i class="bi bi-pencil-square"></i>
-                </button>
-                <form method="POST" action="{{ url_for('contratistas.cambiar_estado', id=pago.id) }}" class="d-inline">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <input type="hidden" name="estado" value="Realizado">
-                  <button type="submit" class="btn btn-sm btn-outline-success rounded-pill" title="Marcar como Realizado"><i class="bi bi-check-circle"></i></button>
-                </form>
-                <form method="POST" action="{{ url_for('contratistas.eliminar_programacion', id=pago.id) }}" class="d-inline ms-1" onsubmit="return confirm('¿Eliminar esta programación?');">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Eliminar"><i class="bi bi-trash"></i></button>
-                </form>
-                {% endif %}
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      <div class="collapse show" id="collapsePagosProgramadosContratistas">
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+          <table class="table table-hover mb-0">
+            <thead style="position: sticky; top: 0; z-index: 1;">
+              <tr>
+                <th>Fecha Programada</th>
+                <th>Contratista</th>
+                <th class="text-end">Deuda Actual</th>
+                <th class="text-end">Monto Programado</th>
+                <th class="text-end">Saldo Restante</th>
+                <th>Observación</th>
+                <th class="text-center">Estado</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for pago in pagos_programados %}
+              <tr>
+                <td class="fw-semibold">{{ pago.fecha_programada.strftime('%d/%m/%Y') if pago.fecha_programada else '—' }}</td>
+                <td>{{ pago.contratista.nombre if pago.contratista else 'Desconocido' }}</td>
+                <td class="text-end fw-semibold">${{ "{:,.0f}".format(pago.deuda_actual) | replace(",",".") }}</td>
+                <td class="text-end text-primary fw-bold">${{ "{:,.0f}".format(pago.monto) | replace(",",".") }}</td>
+                <td class="text-end fw-semibold">
+                  {% if pago.saldo_restante <= 0 %}
+                    <span class="badge bg-success">Paz y Salvo</span>
+                  {% else %}
+                    <span class="text-danger">${{ "{:,.0f}".format(pago.saldo_restante) | replace(",",".") }}</span>
+                  {% endif %}
+                </td>
+                <td class="small text-muted">{{ pago.observacion or '—' }}</td>
+                <td class="text-center">
+                  {% if pago.estado == 'Programado' %}
+                    <span class="badge bg-warning text-dark">Programado</span>
+                  {% elif pago.estado == 'Realizado' %}
+                    <span class="badge bg-success">Realizado</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Cancelado</span>
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  {% if pago.estado == 'Programado' %}
+                  <button class="btn btn-sm btn-outline-primary rounded-pill me-1" title="Editar Programación" 
+                          onclick="abrirModalEditarPagoProgramadoContratista({{ pago.id }}, '{{ pago.fecha_programada.strftime('%Y-%m-%d') if pago.fecha_programada else '' }}', '{{ (pago.contratista.nombre if pago.contratista else 'Desconocido') | replace("'", "\\'") | replace('"', '\\"') }}', {{ pago.monto or 0 }}, '{{ pago.observacion or '' }}')">
+                    <i class="bi bi-pencil-square"></i>
+                  </button>
+                  <form method="POST" action="{{ url_for('contratistas.cambiar_estado', id=pago.id) }}" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="estado" value="Realizado">
+                    <button type="submit" class="btn btn-sm btn-outline-success rounded-pill" title="Marcar como Realizado"><i class="bi bi-check-circle"></i></button>
+                  </form>
+                  <form method="POST" action="{{ url_for('contratistas.eliminar_programacion', id=pago.id) }}" class="d-inline ms-1" onsubmit="return confirm('¿Eliminar esta programación?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Eliminar"><i class="bi bi-trash"></i></button>
+                  </form>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
     {% endif %}
