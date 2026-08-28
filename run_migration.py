@@ -9,34 +9,19 @@ def run_migration():
     conn.autocommit = True
     cursor = conn.cursor()
     try:
-        print("Eliminando foreign key id_ubicacion de actividades...")
-        cursor.execute("ALTER TABLE actividades DROP COLUMN IF EXISTS id_ubicacion CASCADE;")
-        
-        print("Eliminando tabla antigua proyecto_ubicacion...")
-        cursor.execute("DROP TABLE IF EXISTS proyecto_ubicacion CASCADE;")
-        
-        print("Creando tabla sub_proyectos si no existe...")
+        print("Creando tabla programacion_pagos_contratistas...")
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS sub_proyectos (
+            CREATE TABLE IF NOT EXISTS programacion_pagos_contratistas (
                 id SERIAL PRIMARY KEY,
-                proyecto_id INTEGER NOT NULL REFERENCES proyectos(id) ON DELETE CASCADE,
-                nombre_miniproyecto VARCHAR(100) NOT NULL
+                contratista_id INTEGER NOT NULL REFERENCES contratistas(id) ON DELETE CASCADE,
+                fecha_programada DATE NOT NULL,
+                monto NUMERIC(15, 2) NOT NULL,
+                estado VARCHAR(50) NOT NULL DEFAULT 'Programado',
+                observacion TEXT,
+                creado_en TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
         """)
         
-        print("Añadiendo columna sub_proyecto_id a actividades...")
-        cursor.execute("ALTER TABLE actividades ADD COLUMN IF NOT EXISTS sub_proyecto_id INTEGER;")
-        
-        try:
-            cursor.execute("""
-                ALTER TABLE actividades 
-                ADD CONSTRAINT fk_actividad_subproyecto 
-                FOREIGN KEY (sub_proyecto_id) REFERENCES sub_proyectos(id) ON DELETE SET NULL;
-            """)
-            print("Constraint fk_actividad_subproyecto añadida.")
-        except Exception as e:
-            print(f"La constraint ya podría existir: {e}")
-            
         print("✅ MIGRACIÓN COMPLETADA CON ÉXITO")
     except Exception as e:
         print(f"❌ ERROR: {e}")

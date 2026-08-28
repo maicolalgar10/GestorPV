@@ -296,11 +296,16 @@
                         onclick="prepararModalEditarContratista(this, event)">
                   <i class="bi bi-pencil-square"></i>
                 </button>
-                <button class="btn btn-sm btn-outline-success rounded-pill" title="Crear Contrato"
-                        data-bs-toggle="modal" data-bs-target="#modalCrearContrato"
-                        onclick="document.querySelector('#modalCrearContrato select[name=\'contratista_id\']').value = '{{ c.id }}'">
-                  <i class="bi bi-file-earmark-plus"></i>
+                {% if deuda > 0 %}
+                <button class="btn btn-sm btn-outline-success rounded-pill" title="Programar Pago"
+                        onclick="abrirModalProgramarPagoContratista({{ c.id }}, '{{ c.nombre | escape }}', {{ deuda }})">
+                  <i class="bi bi-calendar-plus"></i>
                 </button>
+                {% else %}
+                <button class="btn btn-sm btn-outline-secondary rounded-pill" title="Programar Pago" disabled>
+                  <i class="bi bi-calendar-plus"></i>
+                </button>
+                {% endif %}
               </td>
             </tr>
             {% else %}
@@ -313,7 +318,75 @@
       </div>
     </div>
 
-    <!-- CONTENIDO PRINCIPAL (Acordeones por Contratista) -->
+    {% if pagos_programados %}
+    <!-- ═══════════════════════════════════════════════════════
+         TABLA DE PAGOS PROGRAMADOS
+    ═══════════════════════════════════════════════════════ -->
+    <div class="table-card mb-4 mt-4">
+      <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold"><i class="bi bi-calendar-check-fill me-2 text-warning"></i>Pagos Programados</h5>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Fecha Programada</th>
+              <th>Contratista</th>
+              <th class="text-end">Deuda Restante</th>
+              <th class="text-end">Monto a Pagar</th>
+              <th>Observación</th>
+              <th class="text-center">Estado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for pago in pagos_programados %}
+            <tr>
+              <td class="text-muted small">{{ pago.id }}</td>
+              <td class="fw-semibold">{{ pago.fecha_programada.strftime('%d/%m/%Y') }}</td>
+              <td>{{ pago.contratista.nombre if pago.contratista else 'Desconocido' }}</td>
+              <td class="text-end fw-semibold text-danger">
+                {% set deuda_actual = deuda_por_contratista.get(pago.contratista_id, 0) %}
+                ${{ "{:,.0f}".format(deuda_actual) | replace(",",".") }}
+              </td>
+              <td class="text-end text-primary fw-bold">${{ "{:,.0f}".format(pago.monto) | replace(",",".") }}</td>
+              <td class="small text-muted">{{ pago.observacion or '—' }}</td>
+              <td class="text-center">
+                {% if pago.estado == 'Programado' %}
+                  <span class="badge bg-warning text-dark">Programado</span>
+                {% elif pago.estado == 'Realizado' %}
+                  <span class="badge bg-success">Realizado</span>
+                {% else %}
+                  <span class="badge bg-secondary">Cancelado</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                {% if pago.estado == 'Programado' %}
+                <button class="btn btn-sm btn-outline-primary rounded-pill me-1" title="Editar Programación" 
+                        onclick="abrirModalEditarPagoProgramadoContratista({{ pago.id }}, '{{ pago.fecha_programada.strftime('%Y-%m-%d') }}', '{{ pago.contratista.nombre | replace("'", "\\'") | replace('"', '\\"') }}', {{ pago.monto }}, '{{ pago.observacion or '' }}')">
+                  <i class="bi bi-pencil-square"></i>
+                </button>
+                <form method="POST" action="{{ url_for('contratistas.cambiar_estado', id=pago.id) }}" class="d-inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="estado" value="Realizado">
+                  <button type="submit" class="btn btn-sm btn-outline-success rounded-pill" title="Marcar como Realizado"><i class="bi bi-check-circle"></i></button>
+                </form>
+                <form method="POST" action="{{ url_for('contratistas.eliminar_programacion', id=pago.id) }}" class="d-inline ms-1" onsubmit="return confirm('¿Eliminar esta programación?');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Eliminar"><i class="bi bi-trash"></i></button>
+                </form>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- CONTENIDO PRINCIPAL (Acordeones por Contrato) -->
     <div class="mt-4">
       <h5 class="fw-bold mb-3"><i class="bi bi-file-earmark-text me-2"></i>Contratos Activos</h5>
       <div class="accordion" id="accordionContratos">
@@ -1034,6 +1107,87 @@
 
   
 
+<!-- Modal Programar Pago Contratista -->
+<div class="modal fade modal-dark" id="modalProgramarPagoContratista" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-calendar-plus me-2"></i>Programar Pago a <span id="lblContratistaNombre"></span></h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('contratistas.programar_pago') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="contratista_id" id="prog_contratista_id">
+        <div class="modal-body p-4">
+          <div class="alert alert-info py-2 mb-4 d-flex align-items-center">
+            <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+            <div>
+              <div class="small fw-bold">Deuda Actual</div>
+              <div class="fs-5" id="prog_deuda_actual">$0</div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold text-white-50">Fecha Programada <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" name="fecha_programada" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold text-white-50">Monto a Pagar <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input type="text" class="form-control text-end fs-5 fw-bold text-success" name="monto" id="prog_monto" required>
+            </div>
+            <div class="form-text text-muted small">Use números enteros sin comas ni puntos.</div>
+          </div>
+          <div class="mb-0">
+            <label class="form-label fw-semibold text-white-50">Observación</label>
+            <textarea class="form-control" name="observacion" rows="2" placeholder="Opcional..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-top border-secondary border-opacity-25">
+          <button type="button" class="btn btn-outline-light rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary rounded-pill fw-bold px-4">Guardar Programación</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Editar Programacion Pago Contratista -->
+<div class="modal fade modal-dark" id="modalEditarPagoProgramadoContratista" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Editar Programación: <span id="lblEditContratistaNombre"></span></h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="formEditarPagoProgramadoContratista" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label class="form-label fw-semibold text-white-50">Fecha Programada <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" name="fecha_programada" id="edit_prog_fecha" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold text-white-50">Monto <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input type="text" class="form-control text-end fw-bold text-success" name="monto" id="edit_prog_monto" required>
+            </div>
+          </div>
+          <div class="mb-0">
+            <label class="form-label fw-semibold text-white-50">Observación</label>
+            <textarea class="form-control" name="observacion" id="edit_prog_observacion" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-top border-secondary border-opacity-25">
+          <button type="button" class="btn btn-outline-light rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary rounded-pill fw-bold">Actualizar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Contratista Sub-facturas -->
 <div class="modal fade modal-dark" id="modalContratistaSubFacturas" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered modal-xl">
@@ -1381,6 +1535,29 @@ function abrirModalContratistaSubFacturas(facturaId, nombreContratista, valorNet
 
   document.getElementById('inputValorSubFacturaContratista').value = '';
   new bootstrap.Modal(document.getElementById('modalContratistaSubFacturas')).show();
+}
+
+function abrirModalProgramarPagoContratista(id, nombre, deuda) {
+  document.getElementById('prog_contratista_id').value = id;
+  document.getElementById('lblContratistaNombre').innerText = nombre;
+  let deudaStr = new Intl.NumberFormat('es-CO').format(deuda);
+  document.getElementById('prog_deuda_actual').innerText = '$' + deudaStr;
+  let montoInput = document.getElementById('prog_monto');
+  if (montoInput) {
+    montoInput.value = deudaStr;
+  }
+  var modal = new bootstrap.Modal(document.getElementById('modalProgramarPagoContratista'));
+  modal.show();
+}
+
+function abrirModalEditarPagoProgramadoContratista(id, fecha, nombre, monto, observacion) {
+  document.getElementById('lblEditContratistaNombre').innerText = nombre;
+  document.getElementById('edit_prog_fecha').value = fecha;
+  document.getElementById('edit_prog_monto').value = new Intl.NumberFormat('es-CO').format(monto);
+  document.getElementById('edit_prog_observacion').value = observacion;
+  document.getElementById('formEditarPagoProgramadoContratista').action = `/contratistas/programacion_pago/editar/${id}`;
+  var modal = new bootstrap.Modal(document.getElementById('modalEditarPagoProgramadoContratista'));
+  modal.show();
 }
 
 function filtrarDirectorioContratistas(texto) {
