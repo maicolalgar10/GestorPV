@@ -540,50 +540,84 @@
                             NUEVOS CAMPOS DEL MODELO
                             ========================== -->
                             <hr class="my-3">
-
-                            <div class="row g-2">
-                              <div class="col-md-3">
-                                <label class="form-label">Trayecto</label>
-                                <input type="text" name="trayecto" class="form-control">
-                              </div>
-
-                              <div class="col-md-3">
-                                <label class="form-label">Calzada</label>
-                                <input type="text" name="calzada" class="form-control">
-                              </div>
-
-                              <div class="col-md-3">
-                                <label class="form-label">Carril</label>
-                                <input type="text" name="carril" class="form-control">
-                              </div>
-
-                              <div class="col-md-3">
-                                <label class="form-label">Ubicación PR</label>
-                                <input type="text" name="ubicacion_pr" class="form-control">
+                            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-geo-alt"></i> Ubicación Técnica y Geometría</h6>
+                            <div class="campos-dinamicos" data-tipo="{{ actividad.tipo_unidad }}">
+                              <div class="row g-2">
+                                <div class="col-md-3 campo-trayecto" style="display: none;">
+                                  <label class="form-label">Trayecto</label>
+                                  <input type="text" name="trayecto" class="form-control">
+                                </div>
+                                <div class="col-md-3 campo-calzada" style="display: none;">
+                                  <label class="form-label">Calzada</label>
+                                  <input type="text" name="calzada" class="form-control">
+                                </div>
+                                <div class="col-md-3 campo-carril" style="display: none;">
+                                  <label class="form-label">Carril</label>
+                                  <input type="text" name="carril" class="form-control">
+                                </div>
+                                <div class="col-md-3 campo-margen" style="display: none;">
+                                  <label class="form-label">Margen</label>
+                                  <input type="text" name="margen" class="form-control">
+                                </div>
+                                <div class="col-md-3 campo-ubicacion-pr" style="display: none;">
+                                  <label class="form-label">Ubicación PR</label>
+                                  <input type="text" name="ubicacion_pr" class="form-control">
+                                </div>
+                                <div class="col-md-3 campo-pr-inicio" style="display: none;">
+                                  <label class="form-label">PR Inicio</label>
+                                  <input type="text" name="pr_inicio" class="form-control">
+                                </div>
+                                <div class="col-md-3 campo-pr-fin" style="display: none;">
+                                  <label class="form-label">PR Fin</label>
+                                  <input type="text" name="pr_fin" class="form-control">
+                                </div>
+                                <div class="col-md-3 campo-longitud-lineal" style="display: none;">
+                                  <label class="form-label">Longitud Lineal / Longitud</label>
+                                  <input type="number" step="0.01" name="longitud_lineal" class="form-control">
+                                </div>
+                                <div class="col-md-3 campo-color-lineal" style="display: none;">
+                                  <label class="form-label">Color Lineal</label>
+                                  <input type="text" name="color_lineal" class="form-control">
+                                </div>
+                                <div class="col-md-3 campo-tipo" style="display: none;">
+                                  <label class="form-label">Tipo</label>
+                                  <input type="text" name="tipo" class="form-control">
+                                </div>
+                                <div class="col-md-3 campo-elemento" style="display: none;">
+                                  <label class="form-label">Elemento</label>
+                                  <input type="text" name="elemento" class="form-control">
+                                </div>
+                                <div class="col-md-3 campo-ancho" style="display: none;">
+                                  <label class="form-label">Ancho</label>
+                                  <input type="number" step="0.01" name="ancho" class="form-control">
+                                </div>
+                                <div class="col-md-3 campo-largo" style="display: none;">
+                                  <label class="form-label">Largo</label>
+                                  <input type="number" step="0.01" name="largo" class="form-control">
+                                </div>
+                                <div class="col-md-3 campo-cantidad" style="display: none;">
+                                  <label class="form-label">Cantidad</label>
+                                  <input type="number" step="0.01" name="cantidad" class="form-control">
+                                </div>
+                                <div class="col-md-3 campo-tamano" style="display: none;">
+                                  <label class="form-label">Tamaño</label>
+                                  <input type="text" name="tamano" class="form-control">
+                                </div>
+                                <div class="col-md-3 campo-color" style="display: none;">
+                                  <label class="form-label">Color</label>
+                                  <input type="text" name="color" class="form-control">
+                                </div>
+                                <div class="col-md-3 campo-area-elemento" style="display: none;">
+                                  <label class="form-label">Área elemento</label>
+                                  <input type="number" step="0.01" name="area_elemento" class="form-control">
+                                </div>
+                                <div class="col-md-3 campo-area-total" style="display: none;">
+                                  <label class="form-label">Área total</label>
+                                  <input type="number" step="0.01" name="area_total" class="form-control">
+                                </div>
                               </div>
                             </div>
 
-                            <div class="row g-2 mt-2">
-                              <div class="col-md-4">
-                                <label class="form-label">Tipo</label>
-                                <input type="text" name="tipo" class="form-control">
-                              </div>
-
-                              <div class="col-md-4">
-                                <label class="form-label">Elemento</label>
-                                <input type="text" name="elemento" class="form-control">
-                              </div>
-
-                              <div class="col-md-2">
-                                <label class="form-label">Área elemento</label>
-                                <input type="number" step="0.01" name="area_elemento" class="form-control">
-                              </div>
-
-                              <div class="col-md-2">
-                                <label class="form-label">Área total</label>
-                                <input type="number" step="0.01" name="area_total" class="form-control">
-                              </div>
-                            </div>
 
                             <!-- =========================
                                 EVIDENCIAS
@@ -1169,6 +1203,34 @@ function filtrarActividades() {
         }
     });
 }
+
+// Lógica para mostrar/ocultar campos técnicos según el tipo de unidad
+document.addEventListener('DOMContentLoaded', function() {
+    const contenedores = document.querySelectorAll('.campos-dinamicos');
+    
+    // Reglas de visibilidad de clases
+    const reglasCampos = {
+        "Metro Lineal": [".campo-trayecto", ".campo-calzada", ".campo-margen", ".campo-pr-inicio", ".campo-pr-fin", ".campo-longitud-lineal", ".campo-color-lineal", ".campo-tipo", ".campo-elemento"],
+        "Metro Cuadrado": [".campo-trayecto", ".campo-calzada", ".campo-margen", ".campo-ubicacion-pr", ".campo-tipo", ".campo-elemento", ".campo-ancho", ".campo-largo", ".campo-cantidad", ".campo-area-total"],
+        "Señalización Vertical": [".campo-trayecto", ".campo-calzada", ".campo-margen", ".campo-ubicacion-pr", ".campo-tipo", ".campo-tamano", ".campo-cantidad"],
+        "Tachas y tachones, captafaros, hitos": [".campo-trayecto", ".campo-calzada", ".campo-margen", ".campo-pr-inicio", ".campo-pr-fin", ".campo-color", ".campo-cantidad"],
+        "Defensa": [".campo-trayecto", ".campo-calzada", ".campo-carril", ".campo-ubicacion-pr", ".campo-tipo", ".campo-longitud-lineal"]
+    };
+
+    contenedores.forEach(container => {
+        const tipo = container.getAttribute('data-tipo');
+        
+        // Si el tipo existe en nuestras reglas
+        const camposMostrar = reglasCampos[tipo] || [];
+        
+        camposMostrar.forEach(selector => {
+            const element = container.querySelector(selector);
+            if(element) {
+                element.style.display = 'block';
+            }
+        });
+    });
+});
 </script>
 
 

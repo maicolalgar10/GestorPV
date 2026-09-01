@@ -55,6 +55,18 @@ def registrar_avance(id_actividad):
         elemento = request.form.get("elemento")
         area_elemento = request.form.get("area_elemento")
         area_total = request.form.get("area_total")
+        
+        # Nuevos campos de ubicación/geometría
+        margen = request.form.get("margen")
+        pr_inicio = request.form.get("pr_inicio")
+        pr_fin = request.form.get("pr_fin")
+        longitud_lineal = request.form.get("longitud_lineal")
+        color_lineal = request.form.get("color_lineal")
+        ancho = request.form.get("ancho")
+        largo = request.form.get("largo")
+        cantidad = request.form.get("cantidad")
+        tamano = request.form.get("tamano")
+        color = request.form.get("color")
 
         # ==========================
         # Crear avance
@@ -73,6 +85,16 @@ def registrar_avance(id_actividad):
             elemento=elemento,
             area_elemento=area_elemento,
             area_total=area_total,
+            margen=margen,
+            pr_inicio=pr_inicio,
+            pr_fin=pr_fin,
+            longitud_lineal=longitud_lineal,
+            color_lineal=color_lineal,
+            ancho=ancho,
+            largo=largo,
+            cantidad=cantidad,
+            tamano=tamano,
+            color=color,
         )
 
         db.session.add(nuevo_avance)

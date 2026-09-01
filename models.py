@@ -205,6 +205,16 @@ class Avances(db.Model):
     elemento = db.Column(db.String(100))
     area_elemento = db.Column(db.Float)
     area_total = db.Column(db.Float)
+    margen = db.Column(db.String(100))
+    pr_inicio = db.Column(db.String(100))
+    pr_fin = db.Column(db.String(100))
+    longitud_lineal = db.Column(db.Float)
+    color_lineal = db.Column(db.String(100))
+    ancho = db.Column(db.Float)
+    largo = db.Column(db.Float)
+    cantidad = db.Column(db.Integer)
+    tamano = db.Column(db.String(100))
+    color = db.Column(db.String(100))
 
     # Relaciones
     actividad = db.relationship("Actividades", back_populates="avances")
