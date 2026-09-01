@@ -156,6 +156,7 @@ class Actividades(db.Model):
     nombre = db.Column(db.String(150), nullable=False)
     descripcion = db.Column(db.Text)
     unidades_totales = db.Column(db.Integer, nullable=True)
+    tipo_unidad = db.Column(db.String(100), nullable=True)
 
     # Relaciones
     proyecto = db.relationship("Proyectos", back_populates="actividades")

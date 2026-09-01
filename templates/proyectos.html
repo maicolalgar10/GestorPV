@@ -396,7 +396,7 @@ background: rgba(255, 255, 255, 0.85);
                     <span class="badge bg-secondary mb-1" style="font-size: 0.85rem;">
                       {{ actividad.avanzado|formato_miles }} / {{ actividad.unidades_totales|formato_miles }}
                     </span>
-                    <div class="small text-muted">unidades</div>
+                    <div class="small text-muted">{{ actividad.tipo_unidad or 'unidades' }}</div>
                   </div>
                 </div>
 
@@ -470,6 +470,17 @@ background: rgba(255, 255, 255, 0.85);
                           <label class="form-label">Unidades Totales</label>
                           <input type="number" class="form-control" name="unidades_totales" min="1"
                             value="{{ actividad.unidades_totales }}" required>
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">Tipo de Unidad</label>
+                          <select class="form-select" name="tipo_unidad">
+                            <option value="">-- Seleccione --</option>
+                            <option value="Metro Lineal" {% if actividad.tipo_unidad == 'Metro Lineal' %}selected{% endif %}>Metro Lineal</option>
+                            <option value="Metro Cuadrado" {% if actividad.tipo_unidad == 'Metro Cuadrado' %}selected{% endif %}>Metro Cuadrado</option>
+                            <option value="Señalización Vertical" {% if actividad.tipo_unidad == 'Señalización Vertical' %}selected{% endif %}>Señalización Vertical</option>
+                            <option value="Tachas y tachones, captafaros, hitos" {% if actividad.tipo_unidad == 'Tachas y tachones, captafaros, hitos' %}selected{% endif %}>Tachas y tachones, captafaros, hitos</option>
+                            <option value="Defensa" {% if actividad.tipo_unidad == 'Defensa' %}selected{% endif %}>Defensa</option>
+                          </select>
                         </div>
                         <div class="mb-3">
                           <label class="form-label">SubProyecto (Ciudad)</label>
@@ -785,6 +796,17 @@ background: rgba(255, 255, 255, 0.85);
                 <div class="mb-3">
                   <label class="form-label">Unidades Totales</label>
                   <input type="number" class="form-control" name="unidades_totales" min="1" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Tipo de Unidad</label>
+                  <select class="form-select" name="tipo_unidad">
+                    <option value="">-- Seleccione --</option>
+                    <option value="Metro Lineal">Metro Lineal</option>
+                    <option value="Metro Cuadrado">Metro Cuadrado</option>
+                    <option value="Señalización Vertical">Señalización Vertical</option>
+                    <option value="Tachas y tachones, captafaros, hitos">Tachas y tachones, captafaros, hitos</option>
+                    <option value="Defensa">Defensa</option>
+                  </select>
                 </div>
                 <div class="mb-3">
                   <label class="form-label">SubProyecto (Ciudad)</label>

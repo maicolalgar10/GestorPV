@@ -240,7 +240,8 @@ def manage_proyectos():
                 "avanzado": avanzado,
                 "porcentaje": porcentaje,
                 "sub_proyecto_id": act.sub_proyecto_id,
-                "nombre_sub_proyecto": act.sub_proyecto.nombre_miniproyecto if act.sub_proyecto else None
+                "nombre_sub_proyecto": act.sub_proyecto.nombre_miniproyecto if act.sub_proyecto else None,
+                "tipo_unidad": act.tipo_unidad
             })
         
         # Calcular progreso estimado por fecha
@@ -661,13 +662,15 @@ def agregar_actividad(id_proyecto):
         descripcion = request.form.get('descripcion')
         unidades_totales = int(request.form.get('unidades_totales', 0))
         sub_proyecto_id = request.form.get('sub_proyecto_id')
+        tipo_unidad = request.form.get('tipo_unidad')
 
         nueva_actividad = Actividades(
             id_proyecto=id_proyecto,
             sub_proyecto_id=int(sub_proyecto_id) if sub_proyecto_id else None,
             nombre=nombre,
             descripcion=descripcion,
-            unidades_totales=unidades_totales
+            unidades_totales=unidades_totales,
+            tipo_unidad=tipo_unidad
         )
         db.session.add(nueva_actividad)
         db.session.commit()
