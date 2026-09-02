@@ -943,7 +943,11 @@ class ReporteClientes(db.Model):
     actas_pdf_url = db.Column(db.Text, nullable=True)
     
     # Datos de Facturación
-    valor_factura = db.Column(db.Numeric(15, 2), nullable=False, default=0.00)
+    valor_bruto = db.Column(db.Numeric(15, 2), nullable=False, default=0.00)
+    porcentaje_iva = db.Column(db.Numeric(20, 10), default=0.00)
+    valor_iva = db.Column(db.Numeric(15, 2), default=0.00)
+    valor_total = db.Column(db.Numeric(15, 2), nullable=False, default=0.00)
+    valor_factura = db.Column(db.Numeric(15, 2), nullable=False, default=0.00) # Mantener para compatibilidad si hay datos viejos
     fecha_factura = db.Column(db.Date, nullable=True)
     factura_pdf_url = db.Column(db.Text, nullable=True)
     
@@ -964,7 +968,9 @@ class ReporteClientes(db.Model):
     @property
     def valor_facturado_neto(self):
         try:
-            return float(self.valor_factura or 0.0) - float(self.amortizacion or 0.0)
+            # Usar valor_total como la base principal (Bruto + IVA) o valor_factura por fallback
+            base_factura = float(self.valor_total or self.valor_factura or 0.0)
+            return base_factura - float(self.amortizacion or 0.0)
         except Exception:
             return 0.0
 

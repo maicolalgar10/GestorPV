@@ -124,6 +124,8 @@ def crear_reporte():
         porcentaje_rete_garantia = limpiar_porcentaje(request.form.get('porcentaje_rete_garantia'))
         retencion_ley = limpiar_monto(request.form.get('retencion_ley'))
         pago_realizado = limpiar_monto(request.form.get('pago_realizado'))
+        valor_bruto = parse_float(request.form.get('valor_bruto'))
+        valor_total = parse_float(request.form.get('valor_total'))
         porcentaje_iva = parse_float(request.form.get('porcentaje_iva'))
         valor_iva = parse_float(request.form.get('valor_iva'))
         fecha_pago_str = request.form.get('fecha_pago')
@@ -149,9 +151,11 @@ def crear_reporte():
         nuevo_reporte = ReporteClientes(
             contrato_cliente_id=contrato_cliente_id,
             actas_pdf_url=url_actas,
-            valor_factura=valor_factura,
+            valor_factura=valor_bruto or 0,
             amortizacion=amortizacion,
             factura_pdf_url=url_factura,
+            valor_bruto=valor_bruto,
+            valor_total=valor_total,
             porcentaje_rete_garantia=porcentaje_rete_garantia,
             retencion_ley=retencion_ley,
             pago_realizado=pago_realizado,
@@ -183,7 +187,9 @@ def editar_reporte(reporte_id):
             flash('Reporte no encontrado.', 'danger')
             return redirect(url_for('clientes.index'))
 
-        reporte.valor_factura = limpiar_monto(request.form.get('valor_factura'))
+        reporte.valor_bruto = parse_float(request.form.get('valor_bruto'))
+        reporte.valor_total = parse_float(request.form.get('valor_total'))
+        reporte.valor_factura = reporte.valor_bruto or 0 # Fallback 
         reporte.amortizacion = limpiar_monto(request.form.get('amortizacion'))
         reporte.porcentaje_rete_garantia = limpiar_porcentaje(request.form.get('porcentaje_rete_garantia'))
         reporte.retencion_ley = limpiar_monto(request.form.get('retencion_ley'))
