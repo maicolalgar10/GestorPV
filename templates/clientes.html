@@ -348,7 +348,7 @@
                         replace(",",".") }}</td>
                       <td class="text-center pe-4">
                         <button class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0" title="Editar"
-                          onclick="abrirModalEditarReporte('{{ r.id }}', '{{ (r.valor_factura or 0)|int }}', '{{ (r.amortizacion or 0)|int }}', '{{ r.porcentaje_rete_garantia or 0 }}', '{{ (r.retencion_ley or 0)|int }}', '{{ (r.pago_realizado or 0)|int }}', '{{ r.fecha_pago if r.fecha_pago else '' }}', '{{ r.fecha_factura if r.fecha_factura else '' }}')">
+                          onclick="abrirModalEditarReporte('{{ r.id }}', '{{ (r.valor_factura or 0)|int }}', '{{ (r.amortizacion or 0)|int }}', '{{ r.porcentaje_rete_garantia or 0 }}', '{{ (r.retencion_ley or 0)|int }}', '{{ (r.pago_realizado or 0)|int }}', '{{ r.fecha_pago if r.fecha_pago else '' }}', '{{ r.fecha_factura if r.fecha_factura else '' }}', '{{ r.porcentaje_iva or 0 }}')">
                           <i class="bi bi-pencil-square"></i>
                         </button>
                         <form action="{{ url_for('clientes.eliminar_reporte', id=r.id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de eliminar esta factura? Esta acción no se puede deshacer.');">
@@ -488,6 +488,20 @@
                 </div>
               </div>
               <div class="col-md-3">
+                <label>% IVA</label>
+                <div class="input-group">
+                  <input type="number" name="porcentaje_iva" id="porcentaje_iva" step="any" min="0" max="100" placeholder="Ej: 19 o 19.5" class="form-control" oninput="calcularValores()">
+                  <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <label>Valor IVA</label>
+                <div class="input-group">
+                  <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                  <input type="number" name="valor_iva" id="valor_iva" step="any" placeholder="$ 0" class="form-control" readonly>
+                </div>
+              </div>
+              <div class="col-md-3">
                 <label>% Rete Garantía</label>
                 <div class="input-group">
                   <input type="text" name="porcentaje_rete_garantia" id="porcentaje_rete_garantia"
@@ -623,6 +637,20 @@
                   <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
                   <input type="text" name="amortizacion" id="amortizacion_edit" class="form-control money-input"
                     value="0" data-raw-value="0" oninput="formatMoneyField(this); calcularValoresEdit()">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <label>% IVA</label>
+                <div class="input-group">
+                  <input type="number" name="porcentaje_iva" id="porcentaje_iva_edit" step="any" min="0" max="100" placeholder="Ej: 19 o 19.5" class="form-control" oninput="calcularValoresEdit()">
+                  <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <label>Valor IVA</label>
+                <div class="input-group">
+                  <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
+                  <input type="number" name="valor_iva" id="valor_iva_edit" step="any" placeholder="$ 0" class="form-control" readonly>
                 </div>
               </div>
               <div class="col-md-3">
@@ -1188,6 +1216,8 @@
         input.dataset.rawValue = "0";
         input.value = "0";
       });
+      document.getElementById('porcentaje_iva').value = "";
+      document.getElementById('valor_iva').value = "";
 
       // Limpiar etiquetas de archivos
       document.getElementById('lbl_actas').innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i>Subir Actas PDF';
@@ -1207,7 +1237,13 @@
       const retencionLey = getRawVal('retencion_ley');
       const pagoRealizado = getRawVal('pago_realizado');
 
-      const valorFacturadoNeto = valorFactura - amortizacion;
+      const ivaEl = document.getElementById('porcentaje_iva');
+      const porcIva = ivaEl && ivaEl.value ? parseFloat(ivaEl.value) : 0;
+      const valorIva = valorFactura * (porcIva / 100);
+      const valorIvaEl = document.getElementById('valor_iva');
+      if (valorIvaEl) valorIvaEl.value = valorIva.toFixed(2);
+
+      const valorFacturadoNeto = valorFactura + valorIva - amortizacion;
       const reteGarantiaValor = valorFacturadoNeto * (porcRete / 100);
       const totalPagosRealizados = pagoRealizado;
       const adeudadoFactura = valorFacturadoNeto - reteGarantiaValor - retencionLey - totalPagosRealizados;
@@ -1229,7 +1265,13 @@
       const retencionLey = getRawVal('retencion_ley_edit');
       const pagoRealizado = getRawVal('pago_realizado_edit');
 
-      const valorFacturadoNeto = valorFactura - amortizacion;
+      const ivaEl = document.getElementById('porcentaje_iva_edit');
+      const porcIva = ivaEl && ivaEl.value ? parseFloat(ivaEl.value) : 0;
+      const valorIva = valorFactura * (porcIva / 100);
+      const valorIvaEl = document.getElementById('valor_iva_edit');
+      if (valorIvaEl) valorIvaEl.value = valorIva.toFixed(2);
+
+      const valorFacturadoNeto = valorFactura + valorIva - amortizacion;
       const reteGarantiaValor = valorFacturadoNeto * (porcRete / 100);
       const totalPagosRealizados = pagoRealizado;
       const adeudadoFactura = valorFacturadoNeto - reteGarantiaValor - retencionLey - totalPagosRealizados;
@@ -1244,7 +1286,7 @@
       }
     }
 
-    function abrirModalEditarReporte(reporteId, valorFactura, amortizacion, porcRete, retencionLey, pagoRealizado, fechaPago, fechaFactura) {
+    function abrirModalEditarReporte(reporteId, valorFactura, amortizacion, porcRete, retencionLey, pagoRealizado, fechaPago, fechaFactura, porcIvaFactura) {
       const form = document.getElementById('formEditarReporte');
       form.action = "{{ url_for('clientes.editar_reporte', reporte_id=0) }}".replace('0', reporteId);
 
@@ -1272,6 +1314,9 @@
       inpPago.dataset.rawValue = pagoRealizado || 0;
       inpPago.value = pagoRealizado || 0;
       formatMoneyField(inpPago);
+
+      const inpIva = document.getElementById('porcentaje_iva_edit');
+      inpIva.value = porcIvaFactura || 0;
 
       document.getElementById('fecha_pago_edit').value = fechaPago;
       document.getElementById('fecha_factura_edit').value = fechaFactura;
