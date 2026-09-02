@@ -502,10 +502,10 @@
                 </div>
               </div>
               <div class="col-md-3">
-                <label>Valor Total Factura</label>
+                <label>Valor Factura</label>
                 <div class="input-group">
                   <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
-                  <input type="number" name="valor_total" id="valor_total" step="any" placeholder="$ 0" class="form-control" readonly>
+                  <input type="number" name="valor_factura" id="valor_factura" step="any" placeholder="$ 0" class="form-control" readonly>
                 </div>
               </div>
               <div class="col-md-3">
@@ -661,10 +661,10 @@
                 </div>
               </div>
               <div class="col-md-3">
-                <label>Valor Total Factura</label>
+                <label>Valor Factura</label>
                 <div class="input-group">
                   <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
-                  <input type="number" name="valor_total" id="valor_total_edit" step="any" placeholder="$ 0" class="form-control" readonly>
+                  <input type="number" name="valor_factura" id="valor_factura_edit" step="any" placeholder="$ 0" class="form-control" readonly>
                 </div>
               </div>
               <div class="col-md-3">
@@ -1257,11 +1257,11 @@
       const valorIvaEl = document.getElementById('valor_iva');
       if (valorIvaEl) valorIvaEl.value = valorIva.toFixed(2);
       
-      const valorTotal = valorBruto + valorIva;
-      const valorTotalEl = document.getElementById('valor_total');
-      if (valorTotalEl) valorTotalEl.value = valorTotal.toFixed(2);
+      const valorFactura = valorBruto + valorIva;
+      const valorFacturaEl = document.getElementById('valor_factura');
+      if (valorFacturaEl) valorFacturaEl.value = valorFactura.toFixed(2);
 
-      const valorFacturadoNeto = valorTotal - amortizacion;
+      const valorFacturadoNeto = valorFactura - amortizacion;
       const reteGarantiaValor = valorFacturadoNeto * (porcRete / 100);
       const totalPagosRealizados = pagoRealizado;
       const adeudadoFactura = valorFacturadoNeto - reteGarantiaValor - retencionLey - totalPagosRealizados;
@@ -1289,11 +1289,11 @@
       const valorIvaEl = document.getElementById('valor_iva_edit');
       if (valorIvaEl) valorIvaEl.value = valorIva.toFixed(2);
 
-      const valorTotal = valorBruto + valorIva;
-      const valorTotalEl = document.getElementById('valor_total_edit');
-      if (valorTotalEl) valorTotalEl.value = valorTotal.toFixed(2);
+      const valorFactura = valorBruto + valorIva;
+      const valorFacturaEl = document.getElementById('valor_factura_edit');
+      if (valorFacturaEl) valorFacturaEl.value = valorFactura.toFixed(2);
 
-      const valorFacturadoNeto = valorTotal - amortizacion;
+      const valorFacturadoNeto = valorFactura - amortizacion;
       const reteGarantiaValor = valorFacturadoNeto * (porcRete / 100);
       const totalPagosRealizados = pagoRealizado;
       const adeudadoFactura = valorFacturadoNeto - reteGarantiaValor - retencionLey - totalPagosRealizados;
