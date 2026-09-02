@@ -21,6 +21,14 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def parse_float(val):
+    if val is None or str(val).strip() == "":
+        return None
+    try:
+        return float(val)
+    except ValueError:
+        return None
+
 avances_bp = Blueprint("avances", __name__)
 
 
@@ -53,18 +61,18 @@ def registrar_avance(id_actividad):
         ubicacion_pr = request.form.get("ubicacion_pr")
         tipo = request.form.get("tipo")
         elemento = request.form.get("elemento")
-        area_elemento = request.form.get("area_elemento")
-        area_total = request.form.get("area_total")
+        area_elemento = parse_float(request.form.get("area_elemento"))
+        area_total = parse_float(request.form.get("area_total"))
         
         # Nuevos campos de ubicación/geometría
         margen = request.form.get("margen")
         pr_inicio = request.form.get("pr_inicio")
         pr_fin = request.form.get("pr_fin")
-        longitud_lineal = request.form.get("longitud_lineal")
+        longitud_lineal = parse_float(request.form.get("longitud_lineal"))
         color_lineal = request.form.get("color_lineal")
-        ancho = request.form.get("ancho")
-        largo = request.form.get("largo")
-        cantidad = request.form.get("cantidad")
+        ancho = parse_float(request.form.get("ancho"))
+        largo = parse_float(request.form.get("largo"))
+        cantidad = parse_float(request.form.get("cantidad"))
         tamano = request.form.get("tamano")
         color = request.form.get("color")
 
