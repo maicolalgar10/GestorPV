@@ -218,6 +218,14 @@
       opacity: .88;
       color: white;
     }
+
+    /* Modal Editar Subfactura Overlay */
+    #modalEditarSubfactura {
+      z-index: 1060 !important;
+    }
+    .modal-backdrop:nth-of-type(even) {
+      z-index: 1055 !important;
+    }
   </style>
 </head>
 
@@ -1667,6 +1675,18 @@ function filtrarDirectorioContratistas(texto) {
   });
 }
 
+// Control de apilamiento para los modales anidados
+document.addEventListener('DOMContentLoaded', function() {
+  const modalEditarSubfacturaEl = document.getElementById('modalEditarSubfactura');
+  if (modalEditarSubfacturaEl) {
+    modalEditarSubfacturaEl.addEventListener('hidden.bs.modal', function () {
+      const modalContratistaSubFacturasEl = document.getElementById('modalContratistaSubFacturas');
+      if (modalContratistaSubFacturasEl && modalContratistaSubFacturasEl.classList.contains('show')) {
+        document.body.classList.add('modal-open');
+      }
+    });
+  }
+});
 </script>
 </body>
 </html>
