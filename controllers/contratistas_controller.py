@@ -628,3 +628,53 @@ def eliminar_contratista_subfactura(id):
     if redirect_to == "facturas_contratista" and 'factura_padre' in locals() and factura_padre:
         return redirect(url_for("contratistas.facturas_contratista", nombre_contratista=factura_padre.nombre_contratista))
     return redirect(url_for("contratistas.index"))
+
+
+# ─── POST /contratistas/subfactura/editar/<int:id_subfactura> ──────────────
+@contratistas_bp.route("/subfactura/editar/<int:id_subfactura>", methods=["POST"])
+@login_required
+@admin_oficina_required
+def editar_contratista_subfactura(id_subfactura):
+    from models import ContratistaSubFactura
+    from datetime import datetime as dt
+    try:
+        sub = ContratistaSubFactura.query.get_or_404(id_subfactura)
+        
+        numero = request.form.get("numero_subfactura", "").strip()
+        fecha_str = request.form.get("fecha_subfactura")
+        concepto = request.form.get("concepto", "").strip()
+        
+        if fecha_str:
+            sub.fecha = dt.strptime(fecha_str, "%Y-%m-%d").date()
+            
+        sub.numero_subfactura = numero
+        sub.concepto = concepto
+        
+        valor_limpio = limpiar_monto(request.form.get("valor"))
+        try:
+            valor = float(valor_limpio)
+        except ValueError:
+            valor = 0.0
+            
+        sub.valor = valor
+
+        pdf_subfactura = request.files.get("pdf_subfactura")
+        if pdf_subfactura and pdf_subfactura.filename:
+            pdf_url = subir_archivo_supabase(pdf_subfactura)
+            if pdf_url:
+                sub.archivo_pdf_url = pdf_url
+
+        db.session.commit()
+
+        # Recalcular valor_cancelado en la factura padre
+        factura_padre = sub.factura_padre
+        total_sub = db.session.query(db.func.sum(ContratistaSubFactura.valor)).filter_by(factura_id=factura_padre.id).scalar() or 0.0
+        factura_padre.valor_cancelado = total_sub
+        db.session.commit()
+
+        flash("Sub-factura actualizada correctamente.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al actualizar sub-factura: {e}", "danger")
+
+    return redirect(url_for("contratistas.index"))
