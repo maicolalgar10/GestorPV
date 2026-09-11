@@ -910,26 +910,34 @@ def exportar_pdf_pagos_consolidados():
             return unicodedata.normalize('NFKD', str(text)).encode('ASCII', 'ignore').decode('utf-8')
 
         for p in pagos_prov:
-            prov_nombre = clean_text(p.proveedor.nombre if (hasattr(p, 'proveedor') and p.proveedor) else "S/N")
+            prov_nombre = p.proveedor.nombre if (hasattr(p, 'proveedor') and p.proveedor) else "Proveedor N/A"
+            cuenta_or = getattr(p, 'cuenta_origen', None)
+            cuenta_or_texto = clean_text(cuenta_or) if cuenta_or else 'N/A'
+            obs = getattr(p, 'observacion', None)
+            
             consolidados.append({
                 'fecha_programada': p.fecha_programada,
                 'tipo': 'Proveedor',
-                'entidad': prov_nombre,
+                'entidad': clean_text(prov_nombre),
                 'monto': float(p.monto or 0),
-                'cuenta_origen': clean_text(p.cuenta_origen if p.cuenta_origen else 'N/A'),
-                'concepto': clean_text(p.observacion if hasattr(p, 'observacion') and p.observacion else ''),
+                'cuenta_origen': cuenta_or_texto,
+                'concepto': clean_text(obs if obs else ''),
                 'estado': clean_text(p.estado)
             })
             
         for p in pagos_tar:
-            tar_nombre = clean_text(p.tarjeta.nombre if (hasattr(p, 'tarjeta') and p.tarjeta) else "S/N")
+            tar_nombre = p.tarjeta.nombre if (hasattr(p, 'tarjeta') and p.tarjeta) else "Tarjeta N/A"
+            cuenta_or = getattr(p, 'cuenta_origen', None)
+            cuenta_or_texto = clean_text(cuenta_or) if cuenta_or else 'N/A'
+            obs = getattr(p, 'concepto', None)
+            
             consolidados.append({
                 'fecha_programada': p.fecha_programada,
                 'tipo': 'Tarjeta',
-                'entidad': tar_nombre,
+                'entidad': clean_text(tar_nombre),
                 'monto': float(p.monto or 0),
-                'cuenta_origen': clean_text(p.cuenta_origen if p.cuenta_origen else 'N/A'),
-                'concepto': clean_text(p.concepto if hasattr(p, 'concepto') and p.concepto else ''),
+                'cuenta_origen': cuenta_or_texto,
+                'concepto': clean_text(obs if obs else ''),
                 'estado': clean_text(p.estado)
             })
             
@@ -991,4 +999,4 @@ def exportar_pdf_pagos_consolidados():
         print(f"Error generando PDF: {str(e)}")
         print(traceback.format_exc())
         flash(f"Error generando PDF: {str(e)}", "danger")
-        return redirect(url_for("dashboard.oficina"))
+        return redirect(url_for("dashboard.dashboard_oficina"))
