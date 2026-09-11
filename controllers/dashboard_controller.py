@@ -356,7 +356,7 @@ def proveedores():
     total_cancelado       = sum(float(f.valor_cancelado or 0) for f in facturas)
     total_adeudado_global = sum(deuda_por_proveedor.values())
 
-    pagos_programados = ProgramacionPagoProveedor.query.order_by(ProgramacionPagoProveedor.fecha_programada.asc()).all()
+    pagos_programados = ProgramacionPagoProveedor.query.filter(ProgramacionPagoProveedor.estado != 'Realizado').order_by(ProgramacionPagoProveedor.fecha_programada.asc()).all()
 
     for pago in pagos_programados:
         prov_nombre = pago.proveedor.nombre if pago.proveedor else "Desconocido"

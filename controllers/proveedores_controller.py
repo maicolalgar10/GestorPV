@@ -134,7 +134,7 @@ def generar_pdf_programacion():
             nombre = factura.nombre_proveedor
             deuda_por_proveedor[nombre] = deuda_por_proveedor.get(nombre, 0) + float(factura.total_adeudado or 0)
 
-        pagos_programados = ProgramacionPagoProveedor.query.order_by(ProgramacionPagoProveedor.fecha_programada.asc()).all()
+        pagos_programados = ProgramacionPagoProveedor.query.filter(ProgramacionPagoProveedor.estado != 'Realizado').order_by(ProgramacionPagoProveedor.fecha_programada.asc()).all()
 
         total_programado = 0.0
         for pago in pagos_programados:
