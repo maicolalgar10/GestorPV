@@ -1239,3 +1239,10 @@ class ProgramacionPagoContratista(db.Model):
     estado = db.Column(db.String(50), nullable=False, default='Programado') # 'Programado', 'Realizado', 'Cancelado'
     observacion = db.Column(db.Text, nullable=True)
     creado_en = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class Tarjeta(db.Model):
+    __tablename__ = 'tarjetas'
+    id_tarjeta = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(100), nullable=False)
+    numero = db.Column(db.String(50), nullable=False)
