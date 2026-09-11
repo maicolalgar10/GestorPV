@@ -1246,3 +1246,16 @@ class Tarjeta(db.Model):
     id_tarjeta = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
     numero = db.Column(db.String(50), nullable=False)
+    
+    pagos_programados = db.relationship('ProgramacionPagoTarjeta', backref='tarjeta', lazy=True)
+
+class ProgramacionPagoTarjeta(db.Model):
+    __tablename__ = 'programacion_pagos_tarjetas'
+    id = db.Column(db.Integer, primary_key=True)
+    tarjeta_id = db.Column(db.Integer, db.ForeignKey('tarjetas.id_tarjeta'), nullable=False)
+    monto = db.Column(db.Float, nullable=False)
+    fecha_programada = db.Column(db.Date, nullable=False)
+    concepto = db.Column(db.Text)
+    cuenta_origen = db.Column(db.String(100))
+    estado = db.Column(db.String(20), default='PENDIENTE')
+    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
