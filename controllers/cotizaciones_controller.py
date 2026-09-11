@@ -119,10 +119,17 @@ def cambiar_estado_cotizacion(id, estado):
 
         admins = Usuarios.query.filter_by(rol="ADMIN").all()
 
+        mensaje_admin = f"La cotización #{cotizacion.numero_cotizacion} fue ACEPTADA y está lista para facturar."
+        if cotizacion.imagen_cotizacion:
+            urls = cotizacion.imagen_cotizacion.split(",")
+            for i, url in enumerate(urls, 1):
+                enlace = url if url.startswith('http') else url_for('static', filename='uploads/cotizaciones/' + url)
+                mensaje_admin += f"<br><a href='{enlace}' target='_blank' class='btn btn-sm btn-primary mt-1'>Ver soporte {i}</a>"
+
         for admin in admins:
             notificacion = Notificaciones(
                 id_usuario_destino=admin.id_usuario,
-                mensaje=f"La cotización #{cotizacion.numero_cotizacion} fue ACEPTADA y está lista para facturar.",
+                mensaje=mensaje_admin,
                 leido=False,
                 creado_en=datetime.utcnow()
             )
