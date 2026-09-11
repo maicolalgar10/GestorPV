@@ -62,7 +62,7 @@
           <button type="button" class="btn btn-sm btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#modalHistorialPagosTarjetas" onclick="event.stopPropagation();">
             <i class="bi bi-clock-history"></i> Historial de Pagos
           </button>
-          <a href="{{ url_for('trabajadores.exportar_pdf_tarjetas') }}" class="btn btn-sm btn-outline-danger me-2" target="_blank" onclick="event.stopPropagation();">
+          <a href="{{ url_for('dashboard.exportar_pdf_pagos_consolidados') }}" class="btn btn-sm btn-outline-danger me-2" target="_blank" onclick="event.stopPropagation();">
             <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
           </a>
           <button class="btn btn-sm btn-outline-primary rounded-circle"><i class="bi bi-chevron-down"></i></button>
