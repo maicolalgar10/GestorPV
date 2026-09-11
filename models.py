@@ -567,6 +567,10 @@ class Cotizacion(db.Model):
         nullable=False
     )
     imagen_cotizacion = db.Column(db.Text, nullable=True)
+    
+    trabajador_id = db.Column(db.Integer, db.ForeignKey("usuarios.id_usuario", ondelete="SET NULL"), nullable=True)
+    trabajador = db.relationship("Usuarios", foreign_keys=[trabajador_id])
+
     contrato = db.relationship(
         "Contrato",
         uselist=False,

@@ -296,10 +296,38 @@
                     
                     <div class="mt-1">
                         {% if c.estado == "PENDIENTE" %}
-                        <form method="POST" action="{{ url_for('cotizaciones.cambiar_estado_cotizacion', id=c.id, estado='ACEPTADA') }}" class="d-inline">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button class="btn btn-success btn-sm p-0 px-1" title="Aceptar">✔</button>
-                        </form>
+                        <button type="button" class="btn btn-success btn-sm p-0 px-1" title="Aceptar" data-bs-toggle="modal" data-bs-target="#modalAceptarCotizacion_{{c.id}}">✔</button>
+                        
+                        <!-- Modal de Aceptar Cotización -->
+                        <div class="modal fade" id="modalAceptarCotizacion_{{c.id}}" tabindex="-1" style="text-align: left;">
+                          <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content border-0 shadow">
+                              <form method="POST" action="{{ url_for('cotizaciones.cambiar_estado_cotizacion', id=c.id, estado='ACEPTADA') }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <div class="modal-header bg-success text-white border-0">
+                                  <h5 class="modal-title fw-bold">Aceptar Cotización</h5>
+                                  <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body text-start">
+                                  <p>¿Estás seguro de aceptar la cotización <strong>{{ c.numero_cotizacion }}</strong> de <strong>{{ c.cliente }}</strong>?</p>
+                                  <div class="mb-3">
+                                    <label class="form-label fw-bold">Asignar Trabajador Responsable</label>
+                                    <select class="form-select" name="id_trabajador" required>
+                                      <option value="">-- Seleccione un trabajador --</option>
+                                      {% for t in trabajadores %}
+                                        <option value="{{ t.id_usuario }}">{{ t.nombre }}</option>
+                                      {% endfor %}
+                                    </select>
+                                  </div>
+                                </div>
+                                <div class="modal-footer border-0">
+                                  <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                                  <button type="submit" class="btn btn-success">Aceptar y Asignar</button>
+                                </div>
+                              </form>
+                            </div>
+                          </div>
+                        </div>
                         <form method="POST" action="{{ url_for('cotizaciones.cambiar_estado_cotizacion', id=c.id, estado='RECHAZADA') }}" class="d-inline">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button class="btn btn-danger btn-sm p-0 px-1" title="Rechazar">✖</button>

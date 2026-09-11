@@ -92,9 +92,22 @@ def cambiar_estado_cotizacion(id, estado):
     cotizacion.estado = estado
     
     # ============================
-    # 🔔 NOTIFICACIÓN AL ADMIN
+    # 🔔 NOTIFICACIÓN AL ADMIN Y AL TRABAJADOR
     # ============================
     if estado == "ACEPTADA":
+        id_trabajador = request.form.get("id_trabajador")
+        if id_trabajador:
+            cotizacion.trabajador_id = int(id_trabajador)
+            
+            # Notificación al trabajador asignado
+            notif_trabajador = Notificaciones(
+                id_usuario_destino=cotizacion.trabajador_id,
+                mensaje=f"Has sido asignado a la cotización #{cotizacion.numero_cotizacion} - {cotizacion.proyecto}, la cual ha sido ACEPTADA.",
+                leido=False,
+                creado_en=datetime.utcnow()
+            )
+            db.session.add(notif_trabajador)
+
         admins = Usuarios.query.filter_by(rol="ADMIN").all()
 
         for admin in admins:

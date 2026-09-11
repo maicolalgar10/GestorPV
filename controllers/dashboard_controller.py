@@ -271,6 +271,9 @@ def dashboard_oficina():
     from models import Bancos
     bancos = Bancos.query.all()
 
+    # Trabajadores (Empleados)
+    trabajadores = Usuarios.query.filter_by(rol="EMPLEADO").all()
+
     # Cálculo seguro de stock de materiales
     try:
         from models import db, Materiales
@@ -288,6 +291,7 @@ def dashboard_oficina():
         contratos=contratos,
         notificaciones=notificaciones,
         bancos=bancos,
+        trabajadores=trabajadores,
         total_materiales=total_materiales
     )
 
