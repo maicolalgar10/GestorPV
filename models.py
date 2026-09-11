@@ -155,7 +155,7 @@ class Actividades(db.Model):
 
     nombre = db.Column(db.String(150), nullable=False)
     descripcion = db.Column(db.Text)
-    unidades_totales = db.Column(db.Integer, nullable=True)
+    unidades_totales = db.Column(db.Float, nullable=True)
     tipo_unidad = db.Column(db.String(100), nullable=True)
 
     # Relaciones
@@ -194,7 +194,7 @@ class Avances(db.Model):
     id_actividad = db.Column(db.Integer, db.ForeignKey("actividades.id_actividad", ondelete="CASCADE"), nullable=False)
     id_usuario = db.Column(db.Integer, db.ForeignKey("usuarios.id_usuario", ondelete="SET NULL"), nullable=True)
     fecha = db.Column(db.Date, default=datetime.utcnow)
-    unidades_avanzadas = db.Column(db.Integer, nullable=True)
+    unidades_avanzadas = db.Column(db.Float, nullable=True)
     mensaje = db.Column(db.Text)
 
     trayecto = db.Column(db.String(100))

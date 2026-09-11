@@ -660,7 +660,8 @@ def agregar_actividad(id_proyecto):
     try:
         nombre = request.form['nombre']
         descripcion = request.form.get('descripcion')
-        unidades_totales = int(request.form.get('unidades_totales', 0))
+        un_tot_str = str(request.form.get('unidades_totales', 0)).replace(',', '.')
+        unidades_totales = float(un_tot_str) if un_tot_str else 0.0
         sub_proyecto_id = request.form.get('sub_proyecto_id')
         tipo_unidad = request.form.get('tipo_unidad')
 

@@ -468,7 +468,7 @@ background: rgba(255, 255, 255, 0.85);
                         </div>
                         <div class="mb-3">
                           <label class="form-label">Unidades Totales</label>
-                          <input type="number" class="form-control" name="unidades_totales" min="1"
+                          <input type="number" step="any" min="0" class="form-control" name="unidades_totales"
                             value="{{ actividad.unidades_totales }}" required>
                         </div>
                         <div class="mb-3">
@@ -651,7 +651,7 @@ background: rgba(255, 255, 255, 0.85);
                                   <strong>{{ m.nombre }}</strong>
                                   <div class="small text-muted">{{ m.unidad }} (Stock: {{ m.cantidad }})</div>
                                 </div>
-                                <input type="number" class="form-control ms-3 cantidad-input"
+                                <input type="number" step="any" min="0" class="form-control ms-3 cantidad-input"
                                   name="cantidad_{{ m.id_material }}" data-id="{{ m.id_material }}" min="1"
                                   placeholder="Cant."
                                   value="{% if m.id_material in item.materiales_asignados %}{{ item.materiales_asignados[m.id_material] }}{% endif %}"
@@ -795,7 +795,7 @@ background: rgba(255, 255, 255, 0.85);
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Unidades Totales</label>
-                  <input type="number" class="form-control" name="unidades_totales" min="1" required>
+                  <input type="number" step="any" min="0" class="form-control" name="unidades_totales" required>
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Tipo de Unidad</label>
@@ -996,7 +996,7 @@ background: rgba(255, 255, 255, 0.85);
                         </div>
                         <div class="mb-3">
                           <label class="form-label">Unidades Totales</label>
-                          <input type="number" class="form-control" name="unidades_totales" min="1"
+                          <input type="number" step="any" min="0" class="form-control" name="unidades_totales"
                             value="{{ actividad.unidades_totales }}" required>
                         </div>
                         <div class="mb-3">
@@ -1163,7 +1163,7 @@ background: rgba(255, 255, 255, 0.85);
                                   <strong>{{ m.nombre }}</strong>
                                   <div class="small text-muted">{{ m.unidad }} (Stock: {{ m.cantidad }})</div>
                                 </div>
-                                <input type="number" class="form-control ms-3 cantidad-input"
+                                <input type="number" step="any" min="0" class="form-control ms-3 cantidad-input"
                                   name="cantidad_{{ m.id_material }}" data-id="{{ m.id_material }}" min="1"
                                   placeholder="Cant."
                                   value="{% if m.id_material in item.materiales_asignados %}{{ item.materiales_asignados[m.id_material] }}{% endif %}"
@@ -1309,7 +1309,7 @@ background: rgba(255, 255, 255, 0.85);
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Unidades Totales</label>
-                  <input type="number" class="form-control" name="unidades_totales" min="1" required>
+                  <input type="number" step="any" min="0" class="form-control" name="unidades_totales" required>
                 </div>
               </div>
               <div class="modal-footer">

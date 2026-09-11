@@ -49,7 +49,7 @@ def registrar_avance(id_actividad):
         # ==========================
         # Datos base
         # ==========================
-        unidades = int(request.form["unidades_avanzadas"])
+        unidades = parse_float(request.form.get("unidades_avanzadas", 0))
         fecha_str = request.form["fecha"]
         fecha = datetime.strptime(fecha_str, "%Y-%m-%d").date()
         mensaje = request.form.get("mensaje", "")

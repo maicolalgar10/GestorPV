@@ -484,7 +484,7 @@
                             <div class="row g-2 align-items-end">
                               <div class="col-md-3">
                                 <label class="form-label">Unidades avanzadas</label>
-                                <input type="number" name="unidades_avanzadas" class="form-control" min="1" required>
+                                <input type="number" step="any" min="0" name="unidades_avanzadas" class="form-control" placeholder="Ej: 12.5" required>
                               </div>
 
                               <div class="col-md-3">
@@ -518,7 +518,7 @@
                                       <span class="input-group-text w-50 text-wrap small" style="font-size: 0.75rem;">
                                         {{ mp.material.nombre }} ({{ mp.material.unidad }})
                                       </span>
-                                      <input type="number" step="0.01" 
+                                      <input type="number" step="any" min="0" 
                                             name="material_{{ mp.id_material }}" 
                                             class="form-control" 
                                             placeholder="0" 
@@ -573,7 +573,7 @@
                                 </div>
                                 <div class="col-md-3 campo-longitud-lineal" style="display: none;">
                                   <label class="form-label">Longitud Lineal / Longitud</label>
-                                  <input type="number" step="0.01" name="longitud_lineal" class="form-control">
+                                  <input type="number" step="any" min="0" name="longitud_lineal" class="form-control">
                                 </div>
                                 <div class="col-md-3 campo-color-lineal" style="display: none;">
                                   <label class="form-label">Color Lineal</label>
@@ -589,15 +589,15 @@
                                 </div>
                                 <div class="col-md-3 campo-ancho" style="display: none;">
                                   <label class="form-label">Ancho</label>
-                                  <input type="number" step="0.01" name="ancho" class="form-control">
+                                  <input type="number" step="any" min="0" name="ancho" class="form-control">
                                 </div>
                                 <div class="col-md-3 campo-largo" style="display: none;">
                                   <label class="form-label">Largo</label>
-                                  <input type="number" step="0.01" name="largo" class="form-control">
+                                  <input type="number" step="any" min="0" name="largo" class="form-control">
                                 </div>
                                 <div class="col-md-3 campo-cantidad" style="display: none;">
                                   <label class="form-label">Cantidad</label>
-                                  <input type="number" step="0.01" name="cantidad" class="form-control">
+                                  <input type="number" step="any" min="0" name="cantidad" class="form-control">
                                 </div>
                                 <div class="col-md-3 campo-tamano" style="display: none;">
                                   <label class="form-label">Tamaño</label>
@@ -609,11 +609,11 @@
                                 </div>
                                 <div class="col-md-3 campo-area-elemento" style="display: none;">
                                   <label class="form-label">Área elemento</label>
-                                  <input type="number" step="0.01" name="area_elemento" class="form-control">
+                                  <input type="number" step="any" min="0" name="area_elemento" class="form-control">
                                 </div>
                                 <div class="col-md-3 campo-area-total" style="display: none;">
                                   <label class="form-label">Área total</label>
-                                  <input type="number" step="0.01" name="area_total" class="form-control">
+                                  <input type="number" step="any" min="0" name="area_total" class="form-control">
                                 </div>
                               </div>
                             </div>
@@ -909,7 +909,7 @@
                                                 required>
                                             </td>
                                             <td>
-                                                <input type="number" name="cantidad[]" class="form-control" min="1" value="1" required>
+                                                <input type="number" step="any" min="0" name="cantidad[]" class="form-control" value="1" required>
                                             </td>
                                             <td class="text-center">
                                                 <button type="button" class="btn btn-link text-danger p-0 eliminar-fila">

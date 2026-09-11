@@ -12,7 +12,8 @@ def agregar_actividad():
     try:
         nombre = request.form['nombre'].strip()
         descripcion = request.form.get('descripcion')
-        unidades_totales = int(request.form.get('unidades_totaleas', 0))
+        unidades_totales_str = str(request.form.get('unidades_totales', request.form.get('unidades_totaleas', 0))).replace(',', '.')
+        unidades_totales = float(unidades_totales_str) if unidades_totales_str else 0.0
         proyecto_id = request.form.get('proyecto_id')
         sub_proyecto_id = request.form.get('sub_proyecto_id')  # opcional
         tipo_unidad = request.form.get('tipo_unidad')
@@ -46,7 +47,8 @@ def editar_actividad(id_actividad):
     try:
         actividad.nombre = request.form['nombre'].strip()
         actividad.descripcion = request.form.get('descripcion')
-        actividad.unidades_totales = int(request.form.get('unidades_totales', 0))
+        un_tot_str = str(request.form.get('unidades_totales', 0)).replace(',', '.')
+        actividad.unidades_totales = float(un_tot_str) if un_tot_str else 0.0
         sub_proyecto_id = request.form.get('sub_proyecto_id')
         actividad.sub_proyecto_id = int(sub_proyecto_id) if sub_proyecto_id else None
         actividad.tipo_unidad = request.form.get('tipo_unidad')
