@@ -99,10 +99,19 @@ def cambiar_estado_cotizacion(id, estado):
         if id_trabajador:
             cotizacion.trabajador_id = int(id_trabajador)
             
+            mensaje_notif = f"Has sido asignado a la cotización #{cotizacion.numero_cotizacion} - {cotizacion.proyecto}, la cual ha sido ACEPTADA."
+            
+            # Incluir soporte de archivo si existe
+            if cotizacion.imagen_cotizacion:
+                urls = cotizacion.imagen_cotizacion.split(",")
+                for i, url in enumerate(urls, 1):
+                    enlace = url if url.startswith('http') else url_for('static', filename='uploads/cotizaciones/' + url)
+                    mensaje_notif += f"<br><a href='{enlace}' target='_blank' class='btn btn-sm btn-outline-primary mt-1'>Ver soporte {i}</a>"
+
             # Notificación al trabajador asignado
             notif_trabajador = Notificaciones(
                 id_usuario_destino=cotizacion.trabajador_id,
-                mensaje=f"Has sido asignado a la cotización #{cotizacion.numero_cotizacion} - {cotizacion.proyecto}, la cual ha sido ACEPTADA.",
+                mensaje=mensaje_notif,
                 leido=False,
                 creado_en=datetime.utcnow()
             )

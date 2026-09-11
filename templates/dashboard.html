@@ -411,10 +411,10 @@
       {% if n.id_notificacion %}
       <a href="{{ url_for('avances.leer_notificacion', id_notificacion=n.id_notificacion) }}"
         class="d-block text-decoration-none {% if not n.leido %}fw-semibold text-primary{% endif %}">
-        {{ n.mensaje }}
+        {{ n.mensaje | safe }}
       </a>
       {% else %}
-      <span class="d-block">{{ n.mensaje }}</span>
+      <span class="d-block">{{ n.mensaje | safe }}</span>
       {% endif %}
       <small class="text-muted d-block">{{ n.creado_en|to_colombia }}</small>
       {% if not loop.last %}

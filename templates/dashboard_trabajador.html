@@ -275,10 +275,10 @@
               {% if n.id_horario %}
               <a href="{{ url_for('horarios.detalle_horario', id=n.id_horario) }}"
                 class="text-decoration-none fw-semibold d-block text-primary">
-                {{ n.mensaje }}
+                {{ n.mensaje | safe }}
               </a>
               {% else %}
-              <span class="d-block">{{ n.mensaje }}</span>
+              <span class="d-block">{{ n.mensaje | safe }}</span>
               {% endif %}
               <small class="text-muted d-block">{{ n.creado_en.strftime('%d/%m/%Y %H:%M') }}</small>
               {% if not loop.last %}

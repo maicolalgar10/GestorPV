@@ -55,7 +55,7 @@
                 <ul class="list-group">
                     {% for notif in notificaciones %}
                         <li class="list-group-item notificacion-item">
-                            <div class="mensaje">{{ notif.mensaje }}</div>
+                            <div class="mensaje">{{ notif.mensaje | safe }}</div>
                             <div class="fecha">
                                 {{ notif.creado_en|to_colombia }}
                                 {% if not notif.leido %}
