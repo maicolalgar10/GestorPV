@@ -26,7 +26,8 @@ def nomina():
 def tarjetas():
     usuario = Usuarios.query.get(session["user_id"])
     tarjetas_lista = Tarjeta.query.all()
-    return render_template("trabajadores/tarjetas.html", usuario=usuario, tarjetas=tarjetas_lista)
+    pagos_programados = ProgramacionPagoTarjeta.query.order_by(ProgramacionPagoTarjeta.fecha_programada.asc()).all()
+    return render_template("trabajadores/tarjetas.html", usuario=usuario, tarjetas=tarjetas_lista, pagos_programados=pagos_programados)
 
 @trabajadores_bp.route("/oficina/trabajadores/tarjetas/crear", methods=["POST"])
 @login_required
@@ -82,5 +83,20 @@ def programar_pago_tarjeta():
     except Exception as e:
         db.session.rollback()
         flash(f"Error al programar el pago: {str(e)}", "danger")
+        
+    return redirect(url_for("trabajadores.tarjetas"))
+
+@trabajadores_bp.route("/oficina/trabajadores/tarjetas/eliminar-pago/<int:id>", methods=["POST"])
+@login_required
+@admin_oficina_required
+def eliminar_pago_tarjeta(id):
+    try:
+        pago = ProgramacionPagoTarjeta.query.get_or_404(id)
+        db.session.delete(pago)
+        db.session.commit()
+        flash("Pago programado eliminado correctamente", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al eliminar el pago: {str(e)}", "danger")
         
     return redirect(url_for("trabajadores.tarjetas"))
