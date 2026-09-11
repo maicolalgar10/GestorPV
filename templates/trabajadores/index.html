@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Módulo de Trabajadores</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary-grad: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+      --success-grad: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --warning-grad: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    }
+    body { background-color: #f3f4f6; font-family: 'Inter', sans-serif; color: #1f2937; }
+    .stat-card {
+      border: none;
+      border-radius: 20px;
+      transition: transform 0.3s ease;
+      color: white;
+    }
+    .stat-card:hover { transform: translateY(-5px); }
+    .bg-grad-blue { background: var(--primary-grad); }
+    .bg-grad-green { background: var(--success-grad); }
+  </style>
+</head>
+<body>
+  {% include 'mensajes.html' %}
+
+  <div class="container mt-4 pb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h2 class="fw-bold m-0"><i class="bi bi-person-badge text-primary"></i> Módulo de Trabajadores</h2>
+        <p class="text-secondary small">Gestión de Nómina y Tarjetas de Identificación | {{ usuario.nombre }}</p>
+      </div>
+      <div>
+        <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-outline-secondary" style="border-radius: 12px;">
+          <i class="bi bi-arrow-left"></i> Volver a Oficina
+        </a>
+      </div>
+    </div>
+
+    <div class="row g-4 mt-2 justify-content-center">
+      <div class="col-md-4">
+        <a href="{{ url_for('trabajadores.nomina') }}" class="text-decoration-none">
+          <div class="card stat-card bg-grad-blue p-4 text-center shadow">
+            <div class="card-body">
+              <h1 class="fw-bold m-0" style="font-size: 3rem;"><i class="bi bi-cash-coin"></i></h1>
+              <h4 class="fw-bold mt-3 text-uppercase">Nómina</h4>
+              <p class="mb-0 opacity-75 mt-2">Gestión de liquidaciones, horas y pagos de empleados.</p>
+              <div class="mt-4 bg-white text-primary fw-bold py-2 rounded-pill shadow-sm" style="font-size:0.9rem;">
+                Ingresar <i class="bi bi-arrow-right-circle ms-1"></i>
+              </div>
+            </div>
+          </div>
+        </a>
+      </div>
+
+      <div class="col-md-4">
+        <a href="{{ url_for('trabajadores.tarjetas') }}" class="text-decoration-none">
+          <div class="card stat-card p-4 text-center shadow" style="background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);">
+            <div class="card-body">
+              <h1 class="fw-bold m-0" style="font-size: 3rem;"><i class="bi bi-person-vcard"></i></h1>
+              <h4 class="fw-bold mt-3 text-uppercase">Tarjetas</h4>
+              <p class="mb-0 opacity-75 mt-2">Directorio y generación de carnés de identificación operativa.</p>
+              <div class="mt-4 bg-white text-teal fw-bold py-2 rounded-pill shadow-sm" style="font-size:0.9rem; color: #0f766e;">
+                Ingresar <i class="bi bi-arrow-right-circle ms-1"></i>
+              </div>
+            </div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -14,6 +14,7 @@ from .clientes_controller import clientes_bp
 from .contratistas_controller import contratistas_bp
 from .dian_controller import dian_bp
 from .proveedores_controller import proveedores_bp
+from .trabajadores_controller import trabajadores_bp
 
 def register_controllers(app):
     app.register_blueprint(dashboard_bp)
@@ -32,3 +33,4 @@ def register_controllers(app):
     app.register_blueprint(contratistas_bp)
     app.register_blueprint(dian_bp)
     app.register_blueprint(proveedores_bp)
+    app.register_blueprint(trabajadores_bp)
