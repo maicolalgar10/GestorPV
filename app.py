@@ -144,6 +144,7 @@ def create_app():
     print("[Mailjet] MAILJET_SENDER:", app.config.get("MAILJET_SENDER_EMAIL"))
 
     app.config['CORREO_GLOBAL'] = 'corseing@gmail.com'
+    app.config['CLIENTE'] = os.getenv('CLIENTE', 'corseing').lower().strip()
 
     @app.context_processor
     def inject_cliente():
