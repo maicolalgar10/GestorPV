@@ -1,0 +1,7 @@
+/* Tema ICC */
+:root {
+  --primary-color: #004481; /* Azul ICC (ejemplo) */
+  --secondary-color: #d9251c; /* Rojo ICC (ejemplo) */
+  --dark-color: #1a1a1a;
+  --light-color: #ffffff;
+}

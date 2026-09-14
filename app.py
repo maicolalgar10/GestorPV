@@ -145,6 +145,10 @@ def create_app():
 
     app.config['CORREO_GLOBAL'] = 'corseing@gmail.com'
 
+    @app.context_processor
+    def inject_cliente():
+        return dict(cliente=os.environ.get("CLIENTE", "corseing"))
+
     return app
 
 

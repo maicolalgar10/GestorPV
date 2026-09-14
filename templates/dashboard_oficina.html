@@ -98,6 +98,7 @@
     .collapsed .rotate-icon { transform: rotate(0deg); }
     .btn-toggle:not(.collapsed) .rotate-icon { transform: rotate(180deg); }
   </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-' + cliente + '.css') }}">
 </head>
 <body>
   {% include 'mensajes.html' %}

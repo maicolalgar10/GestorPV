@@ -354,6 +354,7 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-' + cliente + '.css') }}">
 </head>
 <body>
   {% include 'mensajes.html' %}
@@ -363,7 +364,7 @@
     <!-- Header con avatar -->
     <div class="profile-header">
       <h4><i class="bi bi-person-badge me-2"></i>Mi Perfil</h4>
-      <div class="company-subtitle">CORSEING</div>
+      <div class="company-subtitle">{% if cliente == 'icc' %}ICC S.A.S.{% else %}CORSEING{% endif %}</div>
       <div class="profile-avatar-container">
         <img src="{{ session.get('foto_perfil', usuario.foto_perfil or '/static/uploads/perfiles/default.png') }}"
             class="profile-avatar"

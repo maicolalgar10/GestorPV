@@ -25,6 +25,7 @@
     .bg-grad-blue { background: var(--primary-grad); }
     .bg-grad-green { background: var(--success-grad); }
   </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-' + cliente + '.css') }}">
 </head>
 <body>
   {% include 'mensajes.html' %}

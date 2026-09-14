@@ -49,13 +49,19 @@
             color: #333;
         }
     </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-' + cliente + '.css') }}">
 </head>
 <body>
   {% include 'mensajes.html' %}
 
 <div class="login-container text-center">
     <div class="logo mb-3">
-        <img src="{{ url_for('static', filename='../static/uploads/logos/corseing_logo.png') }}" alt="Logo" width="320" height="120">
+        {% if cliente == 'icc' %}
+            <img src="{{ url_for('static', filename='uploads/logos/icc_logo.png') }}" alt="Logo ICC" width="320" height="120">
+            <h4 class="mt-2 text-dark fw-bold">ICC S.A.S.</h4>
+        {% else %}
+            <img src="{{ url_for('static', filename='uploads/logos/corseing_logo.png') }}" alt="Logo Corseing" width="320" height="120">
+        {% endif %}
     </div>
 
     <h3 class="fw-bold mb-3"><i class="bi bi-key-fill"></i> Iniciar Sesión</h3>
