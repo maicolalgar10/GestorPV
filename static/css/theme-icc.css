@@ -5,3 +5,36 @@
   --dark-color: #1a1a1a;
   --light-color: #ffffff;
 }
+
+.card-link-compact {
+  display: block;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-left-width: 5px !important;
+  border-radius: 8px;
+  padding: 10px 14px;
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+}
+
+.card-link-compact:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  background-color: #f8fafc;
+}
+
+.card-link-compact .card-title {
+  display: block;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #1e293b;
+}
+
+.card-link-compact .card-sub {
+  display: block;
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 2px;
+}

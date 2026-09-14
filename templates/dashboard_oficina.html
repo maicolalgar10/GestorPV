@@ -121,6 +121,247 @@
       </div>
     </div>
 
+    {% if config.get('CLIENTE') == 'icc' %}
+    <div class="row g-4">
+      <div class="col-12 col-md-4 col-lg-3">
+        <h5 class="section-title mb-3"><i class="bi bi-grid-1x2 text-primary"></i> Módulos</h5>
+        <div class="d-flex flex-column gap-2">
+          <a href="{{ url_for('dashboard.proveedores') }}" class="card-link-compact border-primary">
+            <span class="card-title">Proveedores</span>
+            <span class="card-sub">Gestión y pagos</span>
+          </a>
+          <a href="{{ url_for('contratistas.index') }}" class="card-link-compact border-info">
+            <span class="card-title">Contratistas</span>
+            <span class="card-sub">Personal externo</span>
+          </a>
+          <a href="{{ url_for('dashboard.clientes') }}" class="card-link-compact border-success">
+            <span class="card-title">Clientes</span>
+            <span class="card-sub">Cartera y proyectos</span>
+          </a>
+          <a href="{{ url_for('trabajadores.index') }}" class="card-link-compact border-warning">
+            <span class="card-title">Trabajadores</span>
+            <span class="card-sub">Nómina y asistencia</span>
+          </a>
+          <a href="{{ url_for('dashboard.gestion_materiales_oficina') }}" class="card-link-compact border-danger">
+            <span class="card-title">Materiales</span>
+            <span class="card-sub">Inventario</span>
+          </a>
+          <a href="{{ url_for('tesoreria.comprobantes_egresos') }}" class="card-link-compact border-secondary">
+            <span class="card-title">Comprobantes</span>
+            <span class="card-sub">Egresos</span>
+          </a>
+          <a href="{{ url_for('tesoreria.ver_bancos') }}" class="card-link-compact border-dark">
+            <span class="card-title">Bancos</span>
+            <span class="card-sub">Cuentas y saldos</span>
+          </a>
+          <a href="{{ url_for('dian.index') }}" class="card-link-compact border-primary">
+            <span class="card-title">DIAN</span>
+            <span class="card-sub">Impuestos</span>
+          </a>
+        </div>
+      </div>
+      <div class="col-12 col-md-8 col-lg-9">
+    <div class="row g-4">
+      
+      <div class="col-lg-8">
+        <div class="module-card p-4">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="section-title m-0"><i class="bi bi-wallet2 text-success"></i> Facturación y Contratos</h5>
+            <a href="{{ url_for('tesoreria.ver_tesoreria') }}" class="btn btn-outline-success btn-sm rounded-pill px-3">
+              <i class="bi bi-box-arrow-up-right me-1"></i> Abrir Facturación
+            </a>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Proyecto</th>
+                  <th>Cliente</th>
+                  <th>Valor Total</th>
+                  <th>Estado</th>
+                  <th class="text-end">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for f in contratos %}
+                  <tr>
+                    <td>
+                      <strong>{{ f.cotizacion.proyecto if f.cotizacion else 'Sin proyecto' }}</strong>
+                    </td>
+                    <td>{{ f.cotizacion.cliente if f.cotizacion else 'N/A' }}</td>
+                    
+                    <td>${{ "{:,.2f}".format(f.valor_total) }}</td>
+
+                    <td class="text-center">
+                      {% if f.estado == 'activo' %}
+                        <span class="badge bg-light text-success border border-success">
+                          Activo
+                        </span>
+                      {% elif f.estado == 'pausado' %}
+                        <span class="badge bg-light text-warning border border-warning">
+                          Pausado
+                        </span>
+                      {% elif f.estado == 'cerrado' %}
+                        <span class="badge bg-light text-secondary border">
+                          Cerrado
+                        </span>
+                      {% endif %}
+                    </td>
+
+                    <td class="text-end">
+                            <button type="button" class="btn btn-warning btn-sm rounded-pill px-3 me-2" title="Editar Contrato"
+                              onclick="abrirModalEditarContrato({{ f.id }}, '{{ f.cotizacion.proyecto | replace('\'', '\\\'') if f.cotizacion else '' }}', {{ f.valor_total }}, {{ f.anticipo_porcentaje }}, {{ f.retencion_garantia_porcentaje }})">
+                              <i class="bi bi-pencil-square"></i> Editar
+                            </button>
+                      <a href="{{ url_for('tesoreria.ver_tesoreria') }}"
+                        class="btn btn-primary btn-sm rounded-pill px-3 mb-1">
+                        Ver Detalles
+                      </a>
+                    </td>
+
+                  </tr>
+
+
+
+                {% else %}
+                  <tr><td colspan="5" class="text-center text-muted">No hay contratos registrados</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="module-card p-4 mb-4" style="border-top: 4px solid #4f46e5;">
+          <h5 class="section-title"><i class="bi bi-calculator text-primary"></i> Cotizador</h5>
+          <p class="text-muted small">Crea presupuestos y expórtalos a PDF.</p>
+          <button class="btn btn-primary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#modalCotizacion">
+            <i class="bi bi-plus-circle me-1"></i> Nueva Cotización
+          </button>
+        </div>
+
+        <div class="module-card p-4">
+          <h5 class="section-title"><i class="bi bi-receipt-cutoff text-success"></i> Historial</h5>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Cliente</th>
+                  <th class="text-end">Total</th>
+                  <th class="text-center">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for c in cotizaciones_historial %}
+                <tr>
+                  <td>
+                    <strong>{{ c.cliente }}</strong>
+                    <div class="small text-muted">{{ c.proyecto }}</div>
+                    
+                    <div class="mt-1">
+                        {% if c.estado == "PENDIENTE" %}
+                        <button type="button" class="btn btn-success btn-sm p-0 px-1" title="Aceptar" data-bs-toggle="modal" data-bs-target="#modalAceptarCotizacion_{{c.id}}">✔</button>
+                        
+                        <!-- Modal de Aceptar Cotización -->
+                        <div class="modal fade" id="modalAceptarCotizacion_{{c.id}}" tabindex="-1" style="text-align: left;">
+                          <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content border-0 shadow">
+                              <form method="POST" action="{{ url_for('cotizaciones.cambiar_estado_cotizacion', id=c.id, estado='ACEPTADA') }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <div class="modal-header bg-success text-white border-0">
+                                  <h5 class="modal-title fw-bold">Aceptar Cotización</h5>
+                                  <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body text-start">
+                                  <p>¿Estás seguro de aceptar la cotización <strong>{{ c.numero_cotizacion }}</strong> de <strong>{{ c.cliente }}</strong>?</p>
+                                  <div class="mb-3">
+                                    <label class="form-label fw-bold">Asignar Trabajador Responsable</label>
+                                    <select class="form-select" name="id_trabajador" required>
+                                      <option value="">-- Seleccione un trabajador --</option>
+                                      {% for t in trabajadores %}
+                                        <option value="{{ t.id_usuario }}">{{ t.nombre }}</option>
+                                      {% endfor %}
+                                    </select>
+                                  </div>
+                                </div>
+                                <div class="modal-footer border-0">
+                                  <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                                  <button type="submit" class="btn btn-success">Aceptar y Asignar</button>
+                                </div>
+                              </form>
+                            </div>
+                          </div>
+                        </div>
+                        <form method="POST" action="{{ url_for('cotizaciones.cambiar_estado_cotizacion', id=c.id, estado='RECHAZADA') }}" class="d-inline">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="btn btn-danger btn-sm p-0 px-1" title="Rechazar">✖</button>
+                        </form>
+                        {% endif %}
+
+                        {% if c.imagen_cotizacion %}
+                          {% set urls = c.imagen_cotizacion.split(',') %}
+                          {% for url in urls %}
+                          <a href="{{ url if url.startswith('http') else url_for('static', filename='uploads/cotizaciones/' ~ url) }}"
+                            target="_blank"
+                            class="btn btn-light btn-sm border me-1 mb-1"
+                            title="Ver archivo adjunto">
+                            {% if '.pdf' in url|lower %}
+                              <i class="bi bi-file-earmark-pdf text-danger"></i>
+                            {% else %}
+                              <i class="bi bi-image text-primary"></i>
+                            {% endif %}
+                          </a>
+                          {% endfor %}
+                        {% endif %}
+
+
+                        {% if c.estado == "ACEPTADA" and not c.contrato %}
+                        <button type="button" class="btn btn-light btn-sm border me-1 text-success" title="Configurar Contrato" onclick="abrirModalContrato({{ c.id }}, '{{ c.proyecto | replace("'", "\\'") }}')">
+                            <i class="bi bi-file-earmark-text"></i> Generar Contrato
+                        </button>
+                        {% endif %}
+
+
+                        <!-- BOTÓN ELIMINAR -->
+                        <form method="POST"
+                              action="{{ url_for('cotizaciones.eliminar_cotizacion', id=c.id) }}"
+                              class="d-inline"
+                              onsubmit="return confirm('¿Seguro que deseas eliminar esta cotización? Esta acción no se puede deshacer.')">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="btn btn-light btn-sm border p-0 px-1 text-danger"
+                                    title="Eliminar cotización">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                  </td>
+
+                  <td class="text-end">${{ "{:,.0f}".format(c.contrato.valor_total if c.contrato else 0) }}</td>
+
+                  <td class="text-center">
+                    {% if c.estado == "PENDIENTE" %}
+                      <span class="badge bg-warning">Pendiente</span>
+                    {% elif c.estado == "ACEPTADA" %}
+                      <span class="badge bg-success">Aceptada</span>
+                    {% else %}
+                      <span class="badge bg-danger">Rechazada</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3" class="text-center text-muted">No hay cotizaciones</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+
+      </div>
+    </div>
+    {% else %}
     <div class="row g-4 mb-5">
       <div class="col-md-3">
         <div class="d-flex flex-column gap-4">
@@ -207,6 +448,7 @@
         </div>
       </div>
     </div>
+
 
     <div class="row g-4">
       
@@ -405,6 +647,8 @@
         </div>
       </div>
 
+
+    {% endif %}
     </div> <div class="text-center mt-5">
       <span class="badge bg-white text-secondary p-3 rounded-pill shadow-sm">
           <i class="bi bi-stars text-warning me-2"></i> {{ frase }}
