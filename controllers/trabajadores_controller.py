@@ -54,6 +54,31 @@ def crear_tarjeta():
         
     return redirect(url_for("trabajadores.tarjetas"))
 
+@trabajadores_bp.route("/oficina/trabajadores/tarjetas/editar", methods=["POST"])
+@login_required
+@admin_oficina_required
+def editar_tarjeta():
+    try:
+        id_tarjeta = request.form.get("id_tarjeta")
+        nombre = request.form.get("nombre")
+        numero = request.form.get("numero")
+        
+        tarjeta = Tarjeta.query.get_or_404(id_tarjeta)
+        
+        if nombre and numero:
+            tarjeta.nombre = nombre
+            tarjeta.numero = numero
+            db.session.commit()
+            flash("Tarjeta actualizada con éxito", "success")
+        else:
+            flash("Nombre y número son obligatorios", "warning")
+            
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al actualizar la tarjeta: {str(e)}", "danger")
+        
+    return redirect(url_for("trabajadores.tarjetas"))
+
 @trabajadores_bp.route("/oficina/trabajadores/tarjetas/programar-pago", methods=["POST"])
 @login_required
 @admin_oficina_required

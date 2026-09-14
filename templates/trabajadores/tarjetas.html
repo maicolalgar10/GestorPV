@@ -173,6 +173,13 @@
                   <button class="btn btn-sm btn-outline-teal text-teal border mb-1" style="border-color: #0f766e; color: #0f766e;" title="Imprimir" disabled>
                     <i class="bi bi-printer"></i>
                   </button>
+                  <button type="button" 
+                          class="btn btn-sm btn-outline-primary mb-1" 
+                          data-bs-toggle="modal" 
+                          data-bs-target="#modalEditarTarjeta" 
+                          onclick="prepararModalEditarTarjeta({{ t.id_tarjeta }}, '{{ t.nombre|e }}', '{{ t.numero|e }}')">
+                    <i class="bi bi-pencil"></i> Editar
+                  </button>
                   <button type="button" class="btn btn-sm btn-warning mb-1" data-bs-toggle="modal" data-bs-target="#modalProgramarPago" onclick="prepararModalPago({{ t.id_tarjeta }}, '{{ t.nombre|e }}')">
                     <i class="bi bi-calendar-event"></i> Programar Pago
                   </button>
@@ -258,11 +265,47 @@
     </div>
   </div>
 
+  <!-- Modal Editar Tarjeta -->
+  <div class="modal fade" id="modalEditarTarjeta" tabindex="-1" aria-labelledby="modalEditarTarjetaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 16px;">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold" id="modalEditarTarjetaLabel"><i class="bi bi-pencil-square text-primary"></i> Editar Tarjeta</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <form action="{{ url_for('trabajadores.editar_tarjeta') }}" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="id_tarjeta" id="inputEditarTarjetaId">
+          <div class="modal-body pt-3">
+            <div class="mb-3">
+              <label class="form-label fw-semibold text-secondary small">Nombre de la Tarjeta</label>
+              <input type="text" name="nombre" id="inputEditarTarjetaNombre" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold text-secondary small">Número de la Tarjeta</label>
+              <input type="text" name="numero" id="inputEditarTarjetaNumero" class="form-control" required>
+            </div>
+          </div>
+          <div class="modal-footer border-0 pt-0">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 8px;">Cancelar</button>
+            <button type="submit" class="btn btn-primary" style="border-radius: 8px;">Guardar Cambios</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     function prepararModalPago(id, nombre) {
       document.getElementById("inputTarjetaIdPago").value = id;
       document.getElementById("nombreTarjetaPago").innerText = nombre;
+    }
+
+    function prepararModalEditarTarjeta(id, nombre, numero) {
+      document.getElementById("inputEditarTarjetaId").value = id;
+      document.getElementById("inputEditarTarjetaNombre").value = nombre;
+      document.getElementById("inputEditarTarjetaNumero").value = numero;
     }
 
     function filtrarTabla() {
