@@ -1,4 +1,4 @@
-from flask import Blueprint, request, redirect, url_for, flash, render_template, send_file
+from flask import Blueprint, request, redirect, url_for, flash, render_template, send_file, current_app
 import io
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.lib import colors
@@ -272,16 +272,14 @@ def exportar_pdf_historial():
     styles = getSampleStyleSheet()
 
     # Logo
-    logo_path = os.path.join(os.path.dirname(__file__), '..', 'static', 'img', 'logo.png')
-    if not os.path.exists(logo_path):
-        logo_path = os.path.join(os.path.dirname(__file__), '..', 'static', 'img', 'corseing_logo.png')
-        
+    logo_path = os.path.join(current_app.root_path, 'static', 'uploads', 'logos', 'corseing_logo.png')
+    
     if os.path.exists(logo_path):
         try:
-            img = Image(logo_path, width=1.8*inch, height=0.6*inch)
+            img = Image(logo_path, width=2.0*inch, height=0.75*inch)
             img.hAlign = 'LEFT'
             elements.append(img)
-            elements.append(Spacer(1, 12))
+            elements.append(Spacer(1, 10))
         except Exception:
             pass
             
