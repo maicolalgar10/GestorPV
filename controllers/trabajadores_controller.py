@@ -4,7 +4,7 @@ from flask import send_file, Blueprint, render_template, session, redirect, url_
 from models import db, Usuarios, Tarjeta, ProgramacionPagoTarjeta
 from datetime import datetime
 from decorators import login_required, admin_oficina_required
-import pandas as pd
+from openpyxl import Workbook
 
 trabajadores_bp = Blueprint("trabajadores", __name__)
 
@@ -268,22 +268,25 @@ def exportar_excel_historial_tarjetas():
             
     historial = query.order_by(ProgramacionPagoTarjeta.fecha_programada.desc()).all()
     
-    data = []
-    for p in historial:
-        data.append({
-            "Fecha": p.fecha_programada.strftime('%d/%m/%Y'),
-            "Tarjeta": p.tarjeta.nombre if p.tarjeta else "",
-            "Monto": float(p.monto),
-            "Cuenta Origen": p.cuenta_origen,
-            "Concepto": p.concepto,
-            "Estado": p.estado
-        })
-        
-    df = pd.DataFrame(data)
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df.to_excel(writer, index=False, sheet_name="Historial")
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Historial"
     
+    headers = ["Fecha", "Tarjeta", "Monto", "Cuenta Origen", "Concepto", "Estado"]
+    ws.append(headers)
+    
+    for p in historial:
+        ws.append([
+            p.fecha_programada.strftime('%d/%m/%Y'),
+            p.tarjeta.nombre if p.tarjeta else "",
+            float(p.monto),
+            p.cuenta_origen,
+            p.concepto,
+            p.estado
+        ])
+        
+    output = io.BytesIO()
+    wb.save(output)
     output.seek(0)
     return send_file(
         output,
