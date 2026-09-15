@@ -109,6 +109,22 @@ def editar_tarjeta():
         
     return redirect(url_for("trabajadores.tarjetas"))
 
+@trabajadores_bp.route("/oficina/trabajadores/tarjetas/eliminar/<int:id>", methods=["POST"])
+@login_required
+@admin_oficina_required
+def eliminar_tarjeta(id):
+    try:
+        tarjeta = Tarjeta.query.get_or_404(id)
+        ProgramacionPagoTarjeta.query.filter_by(tarjeta_id=id).delete()
+        db.session.delete(tarjeta)
+        db.session.commit()
+        flash("Tarjeta eliminada correctamente.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al eliminar la tarjeta: {str(e)}", "danger")
+        
+    return redirect(url_for("trabajadores.tarjetas"))
+
 @trabajadores_bp.route("/oficina/trabajadores/tarjetas/programar-pago", methods=["POST"])
 @login_required
 @admin_oficina_required

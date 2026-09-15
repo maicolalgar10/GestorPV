@@ -190,6 +190,15 @@
                   <button type="button" class="btn btn-sm btn-warning mb-1" data-bs-toggle="modal" data-bs-target="#modalProgramarPago" onclick="prepararModalPago({{ t.id_tarjeta }}, '{{ t.nombre|e }}')">
                     <i class="bi bi-calendar-event"></i> Programar Pago
                   </button>
+                  <form action="{{ url_for('trabajadores.eliminar_tarjeta', id=t.id_tarjeta) }}" 
+                        method="POST" 
+                        class="d-inline" 
+                        onsubmit="return confirm('¿Estás seguro de que deseas eliminar esta tarjeta? Se eliminarán o desvincularán sus pagos programados asociados.');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-outline-danger mb-1" title="Eliminar Tarjeta">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
                 </td>
               </tr>
               {% else %}
