@@ -411,12 +411,12 @@
             <td class="text-center">
               {% if deuda > 0 %}
                 <button type="button" 
-                        class="btn btn-outline-primary btn-sm rounded-circle p-1 btn-programar-pago" 
+                        class="btn btn-outline-primary btn-sm rounded-circle p-1 btn-programar-modal" 
                         data-bs-toggle="modal" 
                         data-bs-target="#modalProgramarPago" 
                         data-id="{{ p.id }}" 
-                        data-nombre="{{ p.nombre }}"
-                        data-deuda="{{ deuda or 0 }}">
+                        data-nombre="{{ p.nombre }}" 
+                        data-deuda="{{ deuda if deuda else 0 }}">
                   <i class="bi bi-calendar-plus fs-5"></i>
                 </button>
               {% else %}
@@ -707,7 +707,7 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title"><i class="bi bi-calendar-plus me-2"></i>Programar Pago a <span id="lblProveedorNombre"></span></h5>
+        <h5 class="modal-title" id="modal_proveedor_titulo">Programar Pago</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
@@ -1713,38 +1713,30 @@ document.getElementById('formEditarFactura').addEventListener('submit', (e) => p
 document.getElementById('formNuevoProveedor').addEventListener('submit', (e) => procesarFormulario(e, 'button[form="formNuevoProveedor"]'));
 
 document.addEventListener('DOMContentLoaded', function () {
-  const modalProgramar = document.getElementById('modalProgramarPago');
-  if (modalProgramar) {
-    modalProgramar.addEventListener('show.bs.modal', function (event) {
-      // Botón que disparó el modal
+  const modalElement = document.getElementById('modalProgramarPago');
+  if (modalElement) {
+    modalElement.addEventListener('show.bs.modal', function (event) {
       const button = event.relatedTarget;
       if (!button) return;
 
-      // Extraer información de los atributos data-*
+      // Obtener atributos data-* del botón presionado
       const id = button.getAttribute('data-id');
       const nombre = button.getAttribute('data-nombre');
-      const deudaRaw = button.getAttribute('data-deuda');
+      const deuda = parseFloat(button.getAttribute('data-deuda')) || 0;
 
-      // 1. Asignar ID en el input oculto
-      const inputId = modalProgramar.querySelector('input[name="proveedor_id"]');
+      // Inyectar en los elementos HTML del modal
+      const inputId = document.getElementById('modal_proveedor_id');
+      const elTitulo = document.getElementById('modal_proveedor_titulo');
+      const elDeuda = document.getElementById('modal_deuda_estimada');
+
       if (inputId) inputId.value = id;
-
-      // 2. Actualizar el título del modal
-      const titulo = modalProgramar.querySelector('.modal-title');
-      if (titulo) titulo.textContent = `Programar Pago a ${nombre}`;
-
-      // 3. Formatear la deuda y actualizar el contenedor/badge
-      const deudaNum = parseFloat(deudaRaw) || 0;
-      const deudaFormateada = new Intl.NumberFormat('es-CO', { 
-        style: 'currency', 
-        currency: 'COP',
-        minimumFractionDigits: 0 
-      }).format(deudaNum);
-
-      // Buscar por clase o id la etiqueta de la deuda
-      const badgeDeuda = modalProgramar.querySelector('#modal_deuda_estimada, .deuda-monto, .fw-bold.text-warning');
-      if (badgeDeuda) {
-        badgeDeuda.textContent = deudaFormateada;
+      if (elTitulo) elTitulo.textContent = `Programar Pago a ${nombre}`;
+      if (elDeuda) {
+        elDeuda.textContent = new Intl.NumberFormat('es-CO', { 
+          style: 'currency', 
+          currency: 'COP', 
+          minimumFractionDigits: 0 
+        }).format(deuda);
       }
     });
   }
