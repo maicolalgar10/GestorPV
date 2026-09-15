@@ -5,7 +5,10 @@ from models import db, Usuarios, Tarjeta, ProgramacionPagoTarjeta
 from datetime import datetime
 from decorators import login_required, admin_oficina_required
 from openpyxl import Workbook
-
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
 trabajadores_bp = Blueprint("trabajadores", __name__)
 
 @trabajadores_bp.route("/oficina/trabajadores")
@@ -31,6 +34,13 @@ def tarjetas():
     tarjetas_lista = Tarjeta.query.all()
     pagos_programados = ProgramacionPagoTarjeta.query.filter(ProgramacionPagoTarjeta.estado != 'REALIZADO').order_by(ProgramacionPagoTarjeta.fecha_programada.asc()).all()
     
+    return render_template("trabajadores/tarjetas.html", usuario=usuario, tarjetas=tarjetas_lista, pagos_programados=pagos_programados)
+
+@trabajadores_bp.route("/oficina/trabajadores/tarjetas/historial")
+@login_required
+@admin_oficina_required
+def historial_tarjetas():
+    usuario = Usuarios.query.get(session["user_id"])
     fecha_inicio = request.args.get("fecha_inicio")
     fecha_fin = request.args.get("fecha_fin")
     
@@ -50,7 +60,7 @@ def tarjetas():
             
     historial_pagos = query.order_by(ProgramacionPagoTarjeta.fecha_programada.desc()).all()
     
-    return render_template("trabajadores/tarjetas.html", usuario=usuario, tarjetas=tarjetas_lista, pagos_programados=pagos_programados, historial_pagos=historial_pagos, filtro_inicio=fecha_inicio, filtro_fin=fecha_fin)
+    return render_template("trabajadores/historial_tarjetas.html", usuario=usuario, historial_pagos=historial_pagos, filtro_inicio=fecha_inicio, filtro_fin=fecha_fin)
 
 @trabajadores_bp.route("/oficina/trabajadores/tarjetas/crear", methods=["POST"])
 @login_required
@@ -245,10 +255,10 @@ def exportar_pdf_tarjetas():
         mimetype="application/pdf"
     )
 
-@trabajadores_bp.route("/oficina/trabajadores/tarjetas/exportar-excel-historial")
+@trabajadores_bp.route("/oficina/trabajadores/tarjetas/exportar-pdf-historial")
 @login_required
 @admin_oficina_required
-def exportar_excel_historial_tarjetas():
+def exportar_pdf_historial():
     fecha_inicio = request.args.get("fecha_inicio")
     fecha_fin = request.args.get("fecha_fin")
     
@@ -268,29 +278,43 @@ def exportar_excel_historial_tarjetas():
             
     historial = query.order_by(ProgramacionPagoTarjeta.fecha_programada.desc()).all()
     
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Historial"
+    output = io.BytesIO()
+    doc = SimpleDocTemplate(output, pagesize=landscape(A4), rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+    elements = []
+    styles = getSampleStyleSheet()
+    elements.append(Paragraph("Historial de Pagos Realizados (Tarjetas)", styles['Title']))
+    elements.append(Spacer(1, 20))
     
-    headers = ["Fecha", "Tarjeta", "Monto", "Cuenta Origen", "Concepto", "Estado"]
-    ws.append(headers)
-    
+    data = [["FECHA", "TARJETA", "MONTO", "CUENTA ORIGEN", "CONCEPTO", "ESTADO"]]
     for p in historial:
-        ws.append([
+        tarjeta_nombre = p.tarjeta.nombre if p.tarjeta and p.tarjeta.nombre else 'Desconocida'
+        data.append([
             p.fecha_programada.strftime('%d/%m/%Y'),
-            p.tarjeta.nombre if p.tarjeta else "",
-            float(p.monto),
-            p.cuenta_origen,
-            p.concepto,
-            p.estado
+            tarjeta_nombre[:20] + '..' if len(tarjeta_nombre) > 20 else tarjeta_nombre,
+            f"$ {p.monto:,.2f}",
+            (p.cuenta_origen[:20] + '..') if p.cuenta_origen and len(p.cuenta_origen) > 20 else (p.cuenta_origen or '-'),
+            (p.concepto[:35] + '..') if p.concepto and len(p.concepto) > 35 else (p.concepto or '-'),
+            str(p.estado)
         ])
         
-    output = io.BytesIO()
-    wb.save(output)
+    t = Table(data, repeatRows=1)
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.whitesmoke),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    
+    elements.append(t)
+    doc.build(elements)
+    
     output.seek(0)
     return send_file(
         output,
-        download_name="Historial_Pagos_Tarjetas.xlsx",
-        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        download_name="Historial_Pagos_Tarjetas.pdf",
+        mimetype="application/pdf",
         as_attachment=True
     )
