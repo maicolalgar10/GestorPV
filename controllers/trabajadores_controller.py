@@ -114,6 +114,38 @@ def programar_pago_tarjeta():
         
     return redirect(url_for("trabajadores.tarjetas"))
 
+@trabajadores_bp.route("/oficina/trabajadores/tarjetas/editar-pago", methods=["POST"])
+@login_required
+@admin_oficina_required
+def editar_pago_programado():
+    try:
+        pago_id = request.form.get("pago_id")
+        fecha_str = request.form.get("fecha_programada")
+        monto = request.form.get("monto")
+        cuenta_origen = request.form.get("cuenta_origen")
+        concepto = request.form.get("concepto")
+        
+        if not (pago_id and fecha_str and monto):
+            flash("Faltan campos obligatorios.", "warning")
+            return redirect(url_for("trabajadores.tarjetas"))
+            
+        pago = ProgramacionPagoTarjeta.query.get_or_404(pago_id)
+        
+        fecha_prog = datetime.strptime(fecha_str, "%Y-%m-%d").date()
+        
+        pago.fecha_programada = fecha_prog
+        pago.monto = float(monto)
+        pago.cuenta_origen = cuenta_origen
+        pago.concepto = concepto
+        
+        db.session.commit()
+        flash("Pago programado actualizado correctamente.", "success")
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al actualizar el pago programado: {str(e)}", "danger")
+        
+    return redirect(url_for("trabajadores.tarjetas"))
 @trabajadores_bp.route("/oficina/trabajadores/tarjetas/eliminar-pago/<int:id>", methods=["POST"])
 @login_required
 @admin_oficina_required

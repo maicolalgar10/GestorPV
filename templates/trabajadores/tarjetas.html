@@ -113,6 +113,15 @@
                         <i class="bi bi-check-lg"></i>
                       </button>
                     </form>
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-primary rounded-circle" 
+                            style="width: 32px; height: 32px; padding: 0;"
+                            title="Editar pago"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#modalEditarPagoProgramado" 
+                            onclick="prepararModalEditarPago({{ pago.id }}, '{{ pago.fecha_programada.strftime('%Y-%m-%d') }}', {{ pago.monto }}, '{{ pago.cuenta_origen|e if pago.cuenta_origen else '' }}', '{{ pago.concepto|e if pago.concepto else '' }}')">
+                      <i class="bi bi-pencil"></i>
+                    </button>
                     <form action="{{ url_for('trabajadores.eliminar_pago_tarjeta', id=pago.id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de eliminar este pago programado?');">
                       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                       <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle" title="Eliminar Pago">
@@ -295,6 +304,44 @@
     </div>
   </div>
 
+  <!-- Modal Editar Pago Programado -->
+  <div class="modal fade" id="modalEditarPagoProgramado" tabindex="-1" aria-labelledby="modalEditarPagoProgramadoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 16px;">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold" id="modalEditarPagoProgramadoLabel"><i class="bi bi-pencil-square text-primary"></i> Editar Pago Programado</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <form action="{{ url_for('trabajadores.editar_pago_programado') }}" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="pago_id" id="inputEditarPagoId">
+          <div class="modal-body pt-3">
+            <div class="mb-3">
+              <label class="form-label fw-semibold text-secondary small">Fecha Programada</label>
+              <input type="date" name="fecha_programada" id="inputEditarPagoFecha" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold text-secondary small">Monto</label>
+              <input type="number" step="any" name="monto" id="inputEditarPagoMonto" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold text-secondary small">Cuenta de Origen</label>
+              <input type="text" name="cuenta_origen" id="inputEditarPagoCuenta" class="form-control">
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold text-secondary small">Concepto</label>
+              <input type="text" name="concepto" id="inputEditarPagoConcepto" class="form-control">
+            </div>
+          </div>
+          <div class="modal-footer border-0 pt-0">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 8px;">Cancelar</button>
+            <button type="submit" class="btn btn-primary" style="border-radius: 8px;">Guardar Cambios</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     function prepararModalPago(id, nombre) {
@@ -306,6 +353,14 @@
       document.getElementById("inputEditarTarjetaId").value = id;
       document.getElementById("inputEditarTarjetaNombre").value = nombre;
       document.getElementById("inputEditarTarjetaNumero").value = numero;
+    }
+
+    function prepararModalEditarPago(id, fecha, monto, cuenta, concepto) {
+      document.getElementById("inputEditarPagoId").value = id;
+      document.getElementById("inputEditarPagoFecha").value = fecha;
+      document.getElementById("inputEditarPagoMonto").value = monto;
+      document.getElementById("inputEditarPagoCuenta").value = cuenta;
+      document.getElementById("inputEditarPagoConcepto").value = concepto;
     }
 
     function filtrarTabla() {
