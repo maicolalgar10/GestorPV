@@ -411,10 +411,12 @@
             <td class="text-center">
               {% if deuda > 0 %}
                 <button type="button" 
-                        class="btn btn-outline-primary btn-sm rounded-circle p-1" 
+                        class="btn btn-outline-primary btn-sm rounded-circle p-1 btn-programar-pago" 
                         data-bs-toggle="modal" 
                         data-bs-target="#modalProgramarPago" 
-                        onclick="abrirModalProgramarPago('{{ p.id }}', '{{ p.nombre | replace("'","\\'") | replace('"', '\\"') }}', '{{ deuda or 0 }}')">
+                        data-id="{{ p.id }}" 
+                        data-nombre="{{ p.nombre }}"
+                        data-deuda="{{ deuda or 0 }}">
                   <i class="bi bi-calendar-plus fs-5"></i>
                 </button>
               {% else %}
@@ -1710,24 +1712,43 @@ document.getElementById('formNuevaFactura').addEventListener('submit', (e) => pr
 document.getElementById('formEditarFactura').addEventListener('submit', (e) => procesarFormulario(e, 'button[form="formEditarFactura"]'));
 document.getElementById('formNuevoProveedor').addEventListener('submit', (e) => procesarFormulario(e, 'button[form="formNuevoProveedor"]'));
 
-function abrirModalProgramarPago(id, nombre, deuda) {
-  // 1. Asignar ID en el input hidden
-  const inputId = document.getElementById('modal_proveedor_id') || document.querySelector('#modalProgramarPago input[name="proveedor_id"]');
-  if (inputId) inputId.value = id;
+document.addEventListener('DOMContentLoaded', function () {
+  const modalProgramar = document.getElementById('modalProgramarPago');
+  if (modalProgramar) {
+    modalProgramar.addEventListener('show.bs.modal', function (event) {
+      // Botón que disparó el modal
+      const button = event.relatedTarget;
+      if (!button) return;
 
-  // 2. Formatear y mostrar el título del proveedor en el modal
-  const tituloModal = document.querySelector('#modalProgramarPago .modal-title') || document.getElementById('modal_proveedor_nombre');
-  if (tituloModal) {
-    tituloModal.textContent = `Programar Pago a ${nombre}`;
-  }
+      // Extraer información de los atributos data-*
+      const id = button.getAttribute('data-id');
+      const nombre = button.getAttribute('data-nombre');
+      const deudaRaw = button.getAttribute('data-deuda');
 
-  // 3. Formatear y mostrar la Deuda Actual Estimada en el badge/contenedor
-  const elementoDeuda = document.getElementById('modal_deuda_estimada') || document.querySelector('#modalProgramarPago .deuda-monto');
-  if (elementoDeuda) {
-    const deudaNum = parseFloat(deuda) || 0;
-    elementoDeuda.textContent = `$${deudaNum.toLocaleString('es-CO')}`;
+      // 1. Asignar ID en el input oculto
+      const inputId = modalProgramar.querySelector('input[name="proveedor_id"]');
+      if (inputId) inputId.value = id;
+
+      // 2. Actualizar el título del modal
+      const titulo = modalProgramar.querySelector('.modal-title');
+      if (titulo) titulo.textContent = `Programar Pago a ${nombre}`;
+
+      // 3. Formatear la deuda y actualizar el contenedor/badge
+      const deudaNum = parseFloat(deudaRaw) || 0;
+      const deudaFormateada = new Intl.NumberFormat('es-CO', { 
+        style: 'currency', 
+        currency: 'COP',
+        minimumFractionDigits: 0 
+      }).format(deudaNum);
+
+      // Buscar por clase o id la etiqueta de la deuda
+      const badgeDeuda = modalProgramar.querySelector('#modal_deuda_estimada, .deuda-monto, .fw-bold.text-warning');
+      if (badgeDeuda) {
+        badgeDeuda.textContent = deudaFormateada;
+      }
+    });
   }
-}
+});
 
 function abrirModalEditarPagoProgramado(id, fecha, proveedor_nombre, monto, observacion) {
   document.getElementById('lblEditProveedorNombre').innerText = proveedor_nombre;
