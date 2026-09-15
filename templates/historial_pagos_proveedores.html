@@ -38,14 +38,25 @@
           Total Pagado: ${{ "{:,.0f}".format(total_pagado) | replace(",", ".") }}
         </h5>
       </div>
+      <div class="col-md-6 text-end">
+        <a href="{{ url_for('proveedores.exportar_pdf_historial', fecha_inicio=request.args.get('fecha_inicio', ''), fecha_fin=request.args.get('fecha_fin', '')) }}" 
+           target="_blank" 
+           class="btn btn-danger btn-sm shadow-sm fw-bold">
+          <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
+        </a>
+      </div>
     </div>
 
     <!-- Filtro -->
     <div class="filter-box">
       <form method="GET" action="{{ url_for('proveedores.historial_pagos') }}" class="row g-2 align-items-end">
-        <div class="col-md-4">
-          <label class="form-label small fw-semibold">Buscar por Fecha</label>
-          <input type="date" name="fecha" class="form-control" value="{{ fecha_busqueda or '' }}">
+        <div class="col-md-3">
+          <label class="form-label small fw-semibold">Fecha Inicio</label>
+          <input type="date" name="fecha_inicio" class="form-control" value="{{ request.args.get('fecha_inicio', '') }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small fw-semibold">Fecha Fin</label>
+          <input type="date" name="fecha_fin" class="form-control" value="{{ request.args.get('fecha_fin', '') }}">
         </div>
         <div class="col-md-4">
           <button type="submit" class="btn btn-primary"><i class="bi bi-search me-1"></i> Filtrar</button>
