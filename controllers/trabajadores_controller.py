@@ -4,6 +4,7 @@ from flask import send_file, Blueprint, render_template, session, redirect, url_
 from models import db, Usuarios, Tarjeta, ProgramacionPagoTarjeta
 from datetime import datetime
 from decorators import login_required, admin_oficina_required
+import pandas as pd
 
 trabajadores_bp = Blueprint("trabajadores", __name__)
 
@@ -29,8 +30,27 @@ def tarjetas():
     usuario = Usuarios.query.get(session["user_id"])
     tarjetas_lista = Tarjeta.query.all()
     pagos_programados = ProgramacionPagoTarjeta.query.filter(ProgramacionPagoTarjeta.estado != 'REALIZADO').order_by(ProgramacionPagoTarjeta.fecha_programada.asc()).all()
-    historial_pagos = ProgramacionPagoTarjeta.query.filter_by(estado='REALIZADO').order_by(ProgramacionPagoTarjeta.fecha_programada.desc()).all()
-    return render_template("trabajadores/tarjetas.html", usuario=usuario, tarjetas=tarjetas_lista, pagos_programados=pagos_programados, historial_pagos=historial_pagos)
+    
+    fecha_inicio = request.args.get("fecha_inicio")
+    fecha_fin = request.args.get("fecha_fin")
+    
+    query = ProgramacionPagoTarjeta.query.filter_by(estado='REALIZADO')
+    if fecha_inicio:
+        try:
+            fecha_ini_date = datetime.strptime(fecha_inicio, "%Y-%m-%d").date()
+            query = query.filter(ProgramacionPagoTarjeta.fecha_programada >= fecha_ini_date)
+        except ValueError:
+            pass
+    if fecha_fin:
+        try:
+            fecha_fin_date = datetime.strptime(fecha_fin, "%Y-%m-%d").date()
+            query = query.filter(ProgramacionPagoTarjeta.fecha_programada <= fecha_fin_date)
+        except ValueError:
+            pass
+            
+    historial_pagos = query.order_by(ProgramacionPagoTarjeta.fecha_programada.desc()).all()
+    
+    return render_template("trabajadores/tarjetas.html", usuario=usuario, tarjetas=tarjetas_lista, pagos_programados=pagos_programados, historial_pagos=historial_pagos, filtro_inicio=fecha_inicio, filtro_fin=fecha_fin)
 
 @trabajadores_bp.route("/oficina/trabajadores/tarjetas/crear", methods=["POST"])
 @login_required
@@ -223,4 +243,51 @@ def exportar_pdf_tarjetas():
         io.BytesIO(byte_string),
         download_name="Reporte_Pagos_Tarjetas.pdf",
         mimetype="application/pdf"
+    )
+
+@trabajadores_bp.route("/oficina/trabajadores/tarjetas/exportar-excel-historial")
+@login_required
+@admin_oficina_required
+def exportar_excel_historial_tarjetas():
+    fecha_inicio = request.args.get("fecha_inicio")
+    fecha_fin = request.args.get("fecha_fin")
+    
+    query = ProgramacionPagoTarjeta.query.filter_by(estado='REALIZADO')
+    if fecha_inicio:
+        try:
+            fecha_ini_date = datetime.strptime(fecha_inicio, "%Y-%m-%d").date()
+            query = query.filter(ProgramacionPagoTarjeta.fecha_programada >= fecha_ini_date)
+        except ValueError:
+            pass
+    if fecha_fin:
+        try:
+            fecha_fin_date = datetime.strptime(fecha_fin, "%Y-%m-%d").date()
+            query = query.filter(ProgramacionPagoTarjeta.fecha_programada <= fecha_fin_date)
+        except ValueError:
+            pass
+            
+    historial = query.order_by(ProgramacionPagoTarjeta.fecha_programada.desc()).all()
+    
+    data = []
+    for p in historial:
+        data.append({
+            "Fecha": p.fecha_programada.strftime('%d/%m/%Y'),
+            "Tarjeta": p.tarjeta.nombre if p.tarjeta else "",
+            "Monto": float(p.monto),
+            "Cuenta Origen": p.cuenta_origen,
+            "Concepto": p.concepto,
+            "Estado": p.estado
+        })
+        
+    df = pd.DataFrame(data)
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name="Historial")
+    
+    output.seek(0)
+    return send_file(
+        output,
+        download_name="Historial_Pagos_Tarjetas.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True
     )
