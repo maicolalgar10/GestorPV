@@ -24,7 +24,6 @@ def programar_pago():
         monto = request.form.get('monto')
         fecha_programada = request.form.get('fecha_programada')
         observacion = request.form.get('observacion', '')
-        subproyecto_id = request.form.get('subproyecto_id') or None
 
         if not proveedor_id or not monto or not fecha_programada:
             flash("Por favor complete todos los campos obligatorios (Proveedor, Monto y Fecha).", "warning")
@@ -35,8 +34,7 @@ def programar_pago():
             monto=float(monto),
             fecha_programada=dt.strptime(fecha_programada, '%Y-%m-%d').date(),
             observacion=observacion,
-            estado='Programado',
-            subproyecto_id=int(subproyecto_id) if subproyecto_id else None
+            estado='Programado'
         )
         
         db.session.add(nuevo_pago)
