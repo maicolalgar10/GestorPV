@@ -213,7 +213,10 @@ def eliminar_pago_tarjeta(id):
 def marcar_pagado_tarjeta(id):
     try:
         pago = ProgramacionPagoTarjeta.query.get_or_404(id)
+        forma_pago = request.form.get("forma_pago")
         pago.estado = 'REALIZADO'
+        if forma_pago:
+            pago.forma_pago = forma_pago
         db.session.commit()
         flash("Pago marcado como REALIZADO correctamente", "success")
     except Exception as e:

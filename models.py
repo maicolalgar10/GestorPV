@@ -1226,6 +1226,7 @@ class ProgramacionPagoProveedor(db.Model):
     proveedor_id = db.Column(db.Integer, db.ForeignKey('proveedores.id', ondelete='CASCADE'), nullable=False)
     fecha_programada = db.Column(db.Date, nullable=False)
     monto = db.Column(db.Numeric(15, 2), nullable=False)
+    forma_pago = db.Column(db.String(100), nullable=True)
     estado = db.Column(db.String(50), nullable=False, default='Programado') # 'Programado', 'Realizado', 'Cancelado'
     observacion = db.Column(db.Text, nullable=True)
     creado_en = db.Column(db.DateTime, default=datetime.utcnow)
@@ -1257,5 +1258,6 @@ class ProgramacionPagoTarjeta(db.Model):
     fecha_programada = db.Column(db.Date, nullable=False)
     concepto = db.Column(db.Text)
     cuenta_origen = db.Column(db.String(100))
+    forma_pago = db.Column(db.String(100), nullable=True)
     estado = db.Column(db.String(20), default='PENDIENTE')
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)

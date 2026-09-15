@@ -4,7 +4,9 @@ from reportlab.lib.pagesizes import letter, landscape
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
-from models import db, ProgramacionPagoProveedor
+from models import db, ProgramacionPagoProveedor, ProgramacionPagoTarjeta
+import os
+from reportlab.platypus import Image
 from decorators import login_required, admin_oficina_required
 from datetime import datetime as dt
 
@@ -60,8 +62,11 @@ def cambiar_estado(id):
     pago = ProgramacionPagoProveedor.query.get_or_404(id)
     try:
         nuevo_estado = request.form.get("estado")
+        forma_pago = request.form.get("forma_pago")
         if nuevo_estado in ['Programado', 'Realizado', 'Cancelado']:
             pago.estado = nuevo_estado
+            if nuevo_estado == 'Realizado' and forma_pago:
+                pago.forma_pago = forma_pago
             db.session.commit()
             flash(f"Estado del pago actualizado a {nuevo_estado}.", "success")
         else:
@@ -199,32 +204,88 @@ def historial_pagos():
 def exportar_pdf_historial():
     fecha_inicio = request.args.get("fecha_inicio")
     fecha_fin = request.args.get("fecha_fin")
+    saldo_inicial_str = request.args.get("saldo_inicial", "0")
+    
+    try:
+        saldo_inicial = float(saldo_inicial_str)
+    except ValueError:
+        saldo_inicial = 0.0
 
-    query = ProgramacionPagoProveedor.query.filter(ProgramacionPagoProveedor.estado.ilike('Realizado'))
+    # Query Proveedores
+    query_prov = ProgramacionPagoProveedor.query.filter(ProgramacionPagoProveedor.estado.ilike('Realizado'))
+    # Query Tarjetas
+    query_tarj = ProgramacionPagoTarjeta.query.filter(ProgramacionPagoTarjeta.estado.ilike('REALIZADO'))
 
     if fecha_inicio:
         try:
             f_inicio = dt.strptime(fecha_inicio, "%Y-%m-%d").date()
-            query = query.filter(ProgramacionPagoProveedor.fecha_programada >= f_inicio)
+            query_prov = query_prov.filter(ProgramacionPagoProveedor.fecha_programada >= f_inicio)
+            query_tarj = query_tarj.filter(ProgramacionPagoTarjeta.fecha_programada >= f_inicio)
         except ValueError:
             pass
 
     if fecha_fin:
         try:
             f_fin = dt.strptime(fecha_fin, "%Y-%m-%d").date()
-            query = query.filter(ProgramacionPagoProveedor.fecha_programada <= f_fin)
+            query_prov = query_prov.filter(ProgramacionPagoProveedor.fecha_programada <= f_fin)
+            query_tarj = query_tarj.filter(ProgramacionPagoTarjeta.fecha_programada <= f_fin)
         except ValueError:
             pass
 
-    pagos = query.order_by(ProgramacionPagoProveedor.fecha_programada.desc()).all()
+    pagos_prov = query_prov.all()
+    pagos_tarj = query_tarj.all()
+    
+    unificados = []
+    
+    for p in pagos_prov:
+        prov_nombre = p.proveedor.nombre if (hasattr(p, 'proveedor') and p.proveedor) else 'N/A'
+        unificados.append({
+            'fecha': p.fecha_programada,
+            'tipo': 'Proveedor',
+            'entidad': prov_nombre,
+            'monto': float(p.monto or 0),
+            'forma_pago': p.forma_pago or 'N/A',
+            'concepto': p.observacion or '',
+            'estado': 'Realizado'
+        })
+        
+    for t in pagos_tarj:
+        tarj_nombre = t.tarjeta.nombre if (hasattr(t, 'tarjeta') and t.tarjeta) else 'N/A'
+        unificados.append({
+            'fecha': t.fecha_programada,
+            'tipo': 'Tarjeta',
+            'entidad': tarj_nombre,
+            'monto': float(t.monto or 0),
+            'forma_pago': t.forma_pago or t.cuenta_origen or 'N/A',
+            'concepto': t.concepto or '',
+            'estado': 'Realizado'
+        })
+        
+    # Sort by fecha desc
+    unificados.sort(key=lambda x: x['fecha'], reverse=True)
 
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=landscape(letter), rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
     elements = []
     styles = getSampleStyleSheet()
 
-    # Título
-    title = Paragraph("Historial de Pagos a Proveedores", styles['Title'])
+    # Logo
+    logo_path = os.path.join(os.path.dirname(__file__), '..', 'static', 'img', 'logo.png')
+    if os.path.exists(logo_path):
+        try:
+            img = Image(logo_path, width=120, height=50)
+            img.hAlign = 'LEFT'
+            elements.append(img)
+            elements.append(Spacer(1, 12))
+        except Exception:
+            pass
+            
+    # Título y fecha de generacion
+    fecha_gen = dt.now().strftime("%d/%m/%Y %H:%M")
+    elements.append(Paragraph(f"Fecha de Generación: {fecha_gen}", styles['Normal']))
+    elements.append(Spacer(1, 12))
+    
+    title = Paragraph("REPORTE UNIFICADO DE PAGOS REALIZADOS", styles['Title'])
     elements.append(title)
     
     subtitle_text = "Filtro: "
@@ -241,18 +302,18 @@ def exportar_pdf_historial():
     elements.append(Spacer(1, 12))
 
     # Tabla
-    data = [['Fecha', 'Proveedor', 'Monto Pagado', 'Observación', 'Estado']]
+    data = [['FECHA', 'TIPO', 'ENTIDAD', 'MONTO', 'FORMA PAGO / ORIGEN', 'CONCEPTO', 'ESTADO']]
     
     total = 0
-    for p in pagos:
-        prov_nombre = p.proveedor.nombre if (hasattr(p, 'proveedor') and p.proveedor) else 'N/A'
-        fecha_str = p.fecha_programada.strftime('%d/%m/%Y') if p.fecha_programada else ''
-        monto = float(p.monto or 0)
-        total += monto
-        monto_str = f"${monto:,.0f}".replace(",", ".")
-        data.append([fecha_str, prov_nombre, monto_str, p.observacion or '', 'Realizado'])
+    for u in unificados:
+        fecha_str = u['fecha'].strftime('%d/%m/%Y') if u['fecha'] else ''
+        monto_str = f"${u['monto']:,.0f}".replace(",", ".")
+        total += u['monto']
+        data.append([fecha_str, u['tipo'], u['entidad'], monto_str, u['forma_pago'], u['concepto'], u['estado']])
 
-    table = Table(data, colWidths=[80, 200, 100, 250, 70])
+    # Adjust widths for 7 columns to fit in landscape (approx 720 total width)
+    # 70, 70, 140, 80, 130, 160, 60
+    table = Table(data, colWidths=[70, 70, 130, 80, 130, 180, 60])
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#10b981")),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
@@ -266,8 +327,15 @@ def exportar_pdf_historial():
     elements.append(table)
     elements.append(Spacer(1, 20))
     
+    saldo_inicial_str_fmt = f"${saldo_inicial:,.0f}".replace(",", ".")
     total_str = f"${total:,.0f}".replace(",", ".")
+    saldo_final = saldo_inicial - total
+    saldo_final_str = f"${saldo_final:,.0f}".replace(",", ".")
+    
+    # Pie de pagina
+    elements.append(Paragraph(f"<b>Saldo Inicial:</b> {saldo_inicial_str_fmt}", styles['Normal']))
     elements.append(Paragraph(f"<b>Total Pagado:</b> {total_str}", styles['Normal']))
+    elements.append(Paragraph(f"<b>Saldo Final / Restante:</b> {saldo_final_str}", styles['Normal']))
 
     doc.build(elements)
     buffer.seek(0)
@@ -275,6 +343,6 @@ def exportar_pdf_historial():
     return send_file(
         buffer,
         as_attachment=True,
-        download_name="Historial_Pagos_Proveedores.pdf",
+        download_name="Reporte_Unificado_Pagos.pdf",
         mimetype="application/pdf"
     )

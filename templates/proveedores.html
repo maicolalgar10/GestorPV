@@ -492,11 +492,9 @@
                 <button class="btn btn-sm btn-outline-primary rounded-pill me-1" title="Editar Programación" onclick="abrirModalEditarPagoProgramado({{ pago.id }}, '{{ pago.fecha_programada.strftime('%Y-%m-%d') }}', '{{ pago.proveedor.nombre | replace("'", "\\'") | replace('"', '\\"') }}', {{ pago.monto }}, '{{ pago.observacion or '' }}')">
                   <i class="bi bi-pencil-square"></i>
                 </button>
-                <form method="POST" action="{{ url_for('proveedores.cambiar_estado', id=pago.id) }}" class="d-inline">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <input type="hidden" name="estado" value="Realizado">
-                  <button type="submit" class="btn btn-sm btn-outline-success rounded-pill" title="Marcar como Realizado"><i class="bi bi-check-circle"></i></button>
-                </form>
+                <button type="button" class="btn btn-sm btn-outline-success rounded-pill" title="Marcar como Realizado" onclick="abrirModalConfirmarPago({{ pago.id }})">
+                  <i class="bi bi-check-circle"></i>
+                </button>
                 {% endif %}
                 <form method="POST" action="{{ url_for('proveedores.eliminar_programacion', id=pago.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar esta programación?');">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -1739,6 +1737,42 @@ function abrirModalEditarPagoProgramado(id, fecha, proveedor_nombre, monto, obse
   
   var modal = new bootstrap.Modal(document.getElementById('modalEditarPagoProgramado'));
   modal.show();
+}
+
+
+<!-- Modal Confirmar Pago Proveedor -->
+<div class="modal fade" id="modalConfirmarPagoProveedor" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirmar Pago Realizado</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="formConfirmarPagoProveedor" method="POST" action="">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="estado" value="Realizado">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Forma de Pago / Cuenta Origen</label>
+            <input type="text" name="forma_pago" class="form-control" placeholder="Ej. Transferencia Bancolombia, Efectivo..." required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success"><i class="bi bi-check-circle"></i> Confirmar Pago</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function abrirModalConfirmarPago(id) {
+    var form = document.getElementById('formConfirmarPagoProveedor');
+    // Asumiendo que url_for('proveedores.cambiar_estado', id=0) es /proveedores/cambiar_estado/0
+    form.action = "/proveedores/programacion_pago/cambiar_estado/" + id;
+    var modal = new bootstrap.Modal(document.getElementById('modalConfirmarPagoProveedor'));
+    modal.show();
 }
 
 </script>

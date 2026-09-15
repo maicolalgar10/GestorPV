@@ -105,12 +105,9 @@
                     {% endif %}
                   </td>
                   <td class="text-end">
-                    <form action="{{ url_for('trabajadores.marcar_pagado_tarjeta', id=pago.id) }}" method="POST" class="d-inline">
-                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                      <button type="submit" class="btn btn-sm btn-success rounded-circle me-1" title="Marcar como Pagado">
+                    <button type="button" class="btn btn-sm btn-success rounded-circle me-1" title="Marcar como Pagado" onclick="abrirModalConfirmarPagoTarjeta({{ pago.id }})">
                         <i class="bi bi-check-lg"></i>
                       </button>
-                    </form>
                     <button type="button" 
                             class="btn btn-sm btn-outline-primary rounded-circle" 
                             style="width: 32px; height: 32px; padding: 0;"
@@ -369,6 +366,13 @@
       document.getElementById("inputEditarPagoConcepto").value = concepto;
     }
 
+    function abrirModalConfirmarPagoTarjeta(id) {
+      var form = document.getElementById('formConfirmarPagoTarjeta');
+      form.action = "/oficina/trabajadores/tarjetas/marcar-pagado/" + id;
+      var modal = new bootstrap.Modal(document.getElementById('modalConfirmarPagoTarjeta'));
+      modal.show();
+    }
+
     function filtrarTabla() {
       const input = document.getElementById("buscadorTarjetas");
       const filter = input.value.toLowerCase();
@@ -385,5 +389,30 @@
       }
     }
   </script>
+<!-- Modal Confirmar Pago Tarjeta -->
+<div class="modal fade" id="modalConfirmarPagoTarjeta" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirmar Pago de Tarjeta</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="formConfirmarPagoTarjeta" method="POST" action="">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Forma de Pago / Cuenta Origen</label>
+            <input type="text" name="forma_pago" class="form-control" placeholder="Ej. Transferencia Bancolombia, Efectivo..." required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success"><i class="bi bi-check-circle"></i> Confirmar Pago</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 </body>
 </html>
+
