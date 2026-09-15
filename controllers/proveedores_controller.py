@@ -19,43 +19,34 @@ proveedores_bp = Blueprint("proveedores", __name__, url_prefix="/proveedores")
 @admin_oficina_required
 def programar_pago():
     try:
-        proveedor_id = request.form.get("proveedor_id")
-        fecha_raw = request.form.get("fecha_programada")
-        monto_raw = request.form.get("monto", "0")
-        observacion = request.form.get("observacion", "").strip()
+        proveedor_id = request.form.get('proveedor_id')
+        monto = request.form.get('monto')
+        fecha_programada = request.form.get('fecha_programada')
+        observacion = request.form.get('observacion', '')
+        subproyecto_id = request.form.get('subproyecto_id') or None
 
-        fecha_programada = dt.strptime(fecha_raw, "%Y-%m-%d").date() if fecha_raw else None
-        
-        monto_limpio = str(monto_raw).replace('$', '').replace(' ', '')
-        if ',' in monto_limpio and '.' in monto_limpio:
-            monto_limpio = monto_limpio.replace('.', '').replace(',', '.')
-        elif ',' in monto_limpio:
-            monto_limpio = monto_limpio.replace(',', '.')
-        elif '.' in monto_limpio:
-            partes = monto_limpio.split('.')
-            if len(partes[-1]) == 3:
-                monto_limpio = monto_limpio.replace('.', '')
-        monto = float(monto_limpio) if monto_limpio else 0.0
-
-        if not proveedor_id or not fecha_programada or monto <= 0:
-            flash("Datos inválidos para programar el pago.", "danger")
-            return redirect(url_for("dashboard.proveedores"))
+        if not proveedor_id or not monto or not fecha_programada:
+            flash("Por favor complete todos los campos obligatorios (Proveedor, Monto y Fecha).", "warning")
+            return redirect(url_for('dashboard.proveedores'))
 
         nuevo_pago = ProgramacionPagoProveedor(
-            proveedor_id=proveedor_id,
-            fecha_programada=fecha_programada,
-            monto=monto,
+            proveedor_id=int(proveedor_id),
+            monto=float(monto),
+            fecha_programada=dt.strptime(fecha_programada, '%Y-%m-%d').date(),
             observacion=observacion,
-            estado='Programado'
+            estado='Programado',
+            subproyecto_id=int(subproyecto_id) if subproyecto_id else None
         )
+        
         db.session.add(nuevo_pago)
         db.session.commit()
-        flash("Pago programado correctamente.", "success")
+        flash("Pago programado exitosamente.", "success")
+
     except Exception as e:
         db.session.rollback()
-        flash(f"Error al programar pago: {e}", "danger")
+        flash(f"Error al programar pago: {str(e)}", "danger")
 
-    return redirect(url_for("dashboard.proveedores"))
+    return redirect(url_for('dashboard.proveedores'))
 
 @proveedores_bp.route("/programacion/cambiar_estado/<int:id>", methods=["POST"])
 @login_required
