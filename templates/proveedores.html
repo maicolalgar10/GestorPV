@@ -410,8 +410,14 @@
             </td>
             <td class="text-center">
               {% if deuda > 0 %}
-                <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="abrirModalProgramarPago({{ p.id }}, '{{ p.nombre | replace("'","\\'") | replace('"', '\\"') }}', {{ deuda }})">
-                  <i class="bi bi-calendar-plus"></i>
+                <button type="button" 
+                        class="btn btn-outline-primary btn-sm rounded-circle p-1" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#modalProgramarPago" 
+                        data-proveedor-id="{{ p.id }}" 
+                        data-proveedor-nombre="{{ p.nombre }}"
+                        onclick="prepararModalPago('{{ p.id }}', '{{ p.nombre | replace("'","\\'") | replace('"', '\\"') }}', {{ deuda }})">
+                  <i class="bi bi-calendar-plus fs-5"></i>
                 </button>
               {% else %}
                 <button class="btn btn-sm btn-outline-secondary rounded-pill" disabled>
@@ -1706,20 +1712,17 @@ document.getElementById('formNuevaFactura').addEventListener('submit', (e) => pr
 document.getElementById('formEditarFactura').addEventListener('submit', (e) => procesarFormulario(e, 'button[form="formEditarFactura"]'));
 document.getElementById('formNuevoProveedor').addEventListener('submit', (e) => procesarFormulario(e, 'button[form="formNuevoProveedor"]'));
 
-function abrirModalProgramarPago(proveedor_id, proveedor_nombre, deuda_actual) {
-  document.getElementById('prog_proveedor_id').value = proveedor_id;
-  document.getElementById('lblProveedorNombre').innerText = proveedor_nombre;
-  
-  // Formatear deuda
-  let deudaStr = new Intl.NumberFormat('es-CO').format(deuda_actual);
-  document.getElementById('prog_deuda_actual').innerText = '$' + deudaStr;
-  
-  // Autocompletar el monto con la deuda total
-  let montoInput = document.getElementById('prog_monto');
-  montoInput.value = deudaStr;
-  
-  var modal = new bootstrap.Modal(document.getElementById('modalProgramarPago'));
-  modal.show();
+function prepararModalPago(id, nombre, deuda) {
+    if (document.getElementById('modal_proveedor_id')) document.getElementById('modal_proveedor_id').value = id;
+    if (document.getElementById('prog_proveedor_id')) document.getElementById('prog_proveedor_id').value = id;
+    
+    if (document.getElementById('modal_proveedor_nombre')) document.getElementById('modal_proveedor_nombre').value = nombre;
+    if (document.getElementById('lblProveedorNombre')) document.getElementById('lblProveedorNombre').innerText = nombre;
+
+    if (deuda !== undefined && document.getElementById('prog_deuda_actual')) {
+        let formatter = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
+        document.getElementById('prog_deuda_actual').innerText = formatter.format(deuda);
+    }
 }
 
 function abrirModalEditarPagoProgramado(id, fecha, proveedor_nombre, monto, observacion) {
