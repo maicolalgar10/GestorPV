@@ -199,6 +199,25 @@ def dashboard_trabajador():
         if p.visible == True
     ]
 
+    # Agrupar actividades por subproyecto para la vista
+    for p in proyectos_activos:
+        p.actividades_independientes = [a for a in p.actividades if a.sub_proyecto_id is None]
+        p.subproyectos_con_actividades = []
+        
+        # Agrupar las que tienen subproyecto
+        sub_dict = {}
+        for a in p.actividades:
+            if a.sub_proyecto_id is not None:
+                if a.sub_proyecto not in sub_dict:
+                    sub_dict[a.sub_proyecto] = []
+                sub_dict[a.sub_proyecto].append(a)
+                
+        for sp, acts in sub_dict.items():
+            p.subproyectos_con_actividades.append({
+                'subproyecto': sp,
+                'actividades': acts
+            })
+
     es_responsable=any(p.responsable_id == personal_id for p in proyectos_activos)
 
     # --- 2. SOLICITUDES DE MATERIAL  ---
