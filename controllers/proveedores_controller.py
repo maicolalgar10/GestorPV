@@ -7,6 +7,8 @@ from reportlab.lib.styles import getSampleStyleSheet
 from models import db, ProgramacionPagoProveedor, ProgramacionPagoTarjeta
 import os
 from reportlab.platypus import Image
+from reportlab.lib.units import inch
+from reportlab.lib.styles import ParagraphStyle
 from decorators import login_required, admin_oficina_required
 from datetime import datetime as dt
 
@@ -271,9 +273,12 @@ def exportar_pdf_historial():
 
     # Logo
     logo_path = os.path.join(os.path.dirname(__file__), '..', 'static', 'img', 'logo.png')
+    if not os.path.exists(logo_path):
+        logo_path = os.path.join(os.path.dirname(__file__), '..', 'static', 'img', 'corseing_logo.png')
+        
     if os.path.exists(logo_path):
         try:
-            img = Image(logo_path, width=120, height=50)
+            img = Image(logo_path, width=1.8*inch, height=0.6*inch)
             img.hAlign = 'LEFT'
             elements.append(img)
             elements.append(Spacer(1, 12))
@@ -301,26 +306,60 @@ def exportar_pdf_historial():
     elements.append(Paragraph(subtitle_text, styles['Normal']))
     elements.append(Spacer(1, 12))
 
+    # Cell Style
+    cell_style = ParagraphStyle(
+        'GridCell',
+        fontName='Helvetica',
+        fontSize=8,
+        leading=10,
+        alignment=0 # Left
+    )
+    
+    header_style = ParagraphStyle(
+        'HeaderCell',
+        fontName='Helvetica-Bold',
+        fontSize=9,
+        leading=11,
+        alignment=1, # Center
+        textColor=colors.whitesmoke
+    )
+
     # Tabla
-    data = [['FECHA', 'TIPO', 'ENTIDAD', 'MONTO', 'FORMA PAGO / ORIGEN', 'CONCEPTO', 'ESTADO']]
+    data = [[
+        Paragraph('FECHA', header_style),
+        Paragraph('TIPO', header_style),
+        Paragraph('ENTIDAD', header_style),
+        Paragraph('MONTO', header_style),
+        Paragraph('FORMA PAGO / ORIGEN', header_style),
+        Paragraph('CONCEPTO', header_style),
+        Paragraph('ESTADO', header_style)
+    ]]
     
     total = 0
     for u in unificados:
         fecha_str = u['fecha'].strftime('%d/%m/%Y') if u['fecha'] else ''
         monto_str = f"${u['monto']:,.0f}".replace(",", ".")
         total += u['monto']
-        data.append([fecha_str, u['tipo'], u['entidad'], monto_str, u['forma_pago'], u['concepto'], u['estado']])
+        
+        data.append([
+            Paragraph(fecha_str, cell_style),
+            Paragraph(str(u['tipo']), cell_style),
+            Paragraph(str(u['entidad']), cell_style),
+            Paragraph(monto_str, cell_style),
+            Paragraph(str(u['forma_pago']), cell_style),
+            Paragraph(str(u['concepto']), cell_style),
+            Paragraph(str(u['estado']), cell_style)
+        ])
 
-    # Adjust widths for 7 columns to fit in landscape (approx 720 total width)
-    # 70, 70, 140, 80, 130, 160, 60
-    table = Table(data, colWidths=[70, 70, 130, 80, 130, 180, 60])
+    colWidths = [1.0*inch, 0.9*inch, 2.2*inch, 1.2*inch, 1.3*inch, 1.5*inch, 0.9*inch]
+    table = Table(data, colWidths=colWidths)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#10b981")),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+        ('TOPPADDING', (0, 0), (-1, 0), 8),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
     ]))
     
@@ -336,6 +375,22 @@ def exportar_pdf_historial():
     elements.append(Paragraph(f"<b>Saldo Inicial:</b> {saldo_inicial_str_fmt}", styles['Normal']))
     elements.append(Paragraph(f"<b>Total Pagado:</b> {total_str}", styles['Normal']))
     elements.append(Paragraph(f"<b>Saldo Final / Restante:</b> {saldo_final_str}", styles['Normal']))
+    
+    elements.append(Spacer(1, 40))
+    
+    # Firmas
+    firmas_data = [
+        ["_______________________", "_______________________", "_______________________"],
+        ["ELABORÓ", "REVISÓ", "APROBÓ"]
+    ]
+    tabla_firmas = Table(firmas_data, colWidths=[2.5*inch, 2.5*inch, 2.5*inch])
+    tabla_firmas.setStyle(TableStyle([
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('FONTNAME', (0,1), (-1,1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,1), (-1,1), 9),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+    ]))
+    elements.append(tabla_firmas)
 
     doc.build(elements)
     buffer.seek(0)
