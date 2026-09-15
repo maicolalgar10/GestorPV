@@ -414,9 +414,7 @@
                         class="btn btn-outline-primary btn-sm rounded-circle p-1" 
                         data-bs-toggle="modal" 
                         data-bs-target="#modalProgramarPago" 
-                        data-proveedor-id="{{ p.id }}" 
-                        data-proveedor-nombre="{{ p.nombre }}"
-                        onclick="prepararModalPago('{{ p.id }}', '{{ p.nombre | replace("'","\\'") | replace('"', '\\"') }}', {{ deuda }})">
+                        onclick="abrirModalProgramarPago('{{ p.id }}', '{{ p.nombre | replace("'","\\'") | replace('"', '\\"') }}', '{{ deuda or 0 }}')">
                   <i class="bi bi-calendar-plus fs-5"></i>
                 </button>
               {% else %}
@@ -717,7 +715,7 @@
           
           <div class="alert alert-info py-2 mb-3" style="background-color: #2d2d3f; border-color: #3f3f5c; color: #a5b4fc;">
             <small class="fw-bold text-light">Deuda Actual Estimada:</small> 
-            <span class="fs-5 fw-bold ms-2 text-warning" id="prog_deuda_actual">$0</span>
+            <span id="modal_deuda_estimada" class="fw-bold text-warning fs-5 ms-2">$0</span>
           </div>
 
           <div class="row g-3">
@@ -1712,17 +1710,23 @@ document.getElementById('formNuevaFactura').addEventListener('submit', (e) => pr
 document.getElementById('formEditarFactura').addEventListener('submit', (e) => procesarFormulario(e, 'button[form="formEditarFactura"]'));
 document.getElementById('formNuevoProveedor').addEventListener('submit', (e) => procesarFormulario(e, 'button[form="formNuevoProveedor"]'));
 
-function prepararModalPago(id, nombre, deuda) {
-    if (document.getElementById('modal_proveedor_id')) document.getElementById('modal_proveedor_id').value = id;
-    if (document.getElementById('prog_proveedor_id')) document.getElementById('prog_proveedor_id').value = id;
-    
-    if (document.getElementById('modal_proveedor_nombre')) document.getElementById('modal_proveedor_nombre').value = nombre;
-    if (document.getElementById('lblProveedorNombre')) document.getElementById('lblProveedorNombre').innerText = nombre;
+function abrirModalProgramarPago(id, nombre, deuda) {
+  // 1. Asignar ID en el input hidden
+  const inputId = document.getElementById('modal_proveedor_id') || document.querySelector('#modalProgramarPago input[name="proveedor_id"]');
+  if (inputId) inputId.value = id;
 
-    if (deuda !== undefined && document.getElementById('prog_deuda_actual')) {
-        let formatter = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
-        document.getElementById('prog_deuda_actual').innerText = formatter.format(deuda);
-    }
+  // 2. Formatear y mostrar el título del proveedor en el modal
+  const tituloModal = document.querySelector('#modalProgramarPago .modal-title') || document.getElementById('modal_proveedor_nombre');
+  if (tituloModal) {
+    tituloModal.textContent = `Programar Pago a ${nombre}`;
+  }
+
+  // 3. Formatear y mostrar la Deuda Actual Estimada en el badge/contenedor
+  const elementoDeuda = document.getElementById('modal_deuda_estimada') || document.querySelector('#modalProgramarPago .deuda-monto');
+  if (elementoDeuda) {
+    const deudaNum = parseFloat(deuda) || 0;
+    elementoDeuda.textContent = `$${deudaNum.toLocaleString('es-CO')}`;
+  }
 }
 
 function abrirModalEditarPagoProgramado(id, fecha, proveedor_nombre, monto, observacion) {
