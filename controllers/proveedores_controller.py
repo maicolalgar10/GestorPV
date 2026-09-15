@@ -18,6 +18,7 @@ proveedores_bp = Blueprint("proveedores", __name__, url_prefix="/proveedores")
 @login_required
 @admin_oficina_required
 def programar_pago():
+    print("FORM DATA:", request.form)
     try:
         proveedor_id = request.form.get('proveedor_id')
         monto = request.form.get('monto')
