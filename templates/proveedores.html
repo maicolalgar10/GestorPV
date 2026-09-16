@@ -1792,55 +1792,58 @@ function abrirModalConfirmarPago(id) {
     modal.show();
 }
 
-function recalcularFactura() {
-  // 1. Fecha de Vencimiento
-  const inputFecha = document.getElementById('factura_fecha');
-  const inputPlazo = document.getElementById('factura_plazo');
-  const inputVenc = document.getElementById('factura_vencimiento');
+window.recalcularFactura = function() {
+       // 1. Vencimiento
+       const elFecha = document.getElementById('factura_fecha');
+       const elPlazo = document.getElementById('factura_plazo');
+       const elVenc = document.getElementById('factura_vencimiento');
 
-  if (inputFecha && inputFecha.value && inputPlazo && inputVenc) {
-    const f = new Date(inputFecha.value + 'T00:00:00');
-    const plazo = parseInt(inputPlazo.value) || 0;
-    f.setDate(f.getDate() + plazo);
-    
-    const yyyy = f.getFullYear();
-    const mm = String(f.getMonth() + 1).padStart(2, '0');
-    const dd = String(f.getDate()).padStart(2, '0');
-    inputVenc.value = `${yyyy}-${mm}-${dd}`;
-  }
+       if (elFecha && elFecha.value && elPlazo && elVenc) {
+           const partes = elFecha.value.split('-');
+           if (partes.length === 3) {
+               const d = new Date(partes[0], partes[1] - 1, partes[2]);
+               const plazo = parseInt(elPlazo.value) || 0;
+               d.setDate(d.getDate() + plazo);
+               
+               const yyyy = d.getFullYear();
+               const mm = String(d.getMonth() + 1).padStart(2, '0');
+               const dd = String(d.getDate()).padStart(2, '0');
+               elVenc.value = `${yyyy}-${mm}-${dd}`;
+           }
+       }
 
-  // 2. Formateo en vivo de Valor Neto
-  const inputNeto = document.getElementById('factura_valor_neto');
-  if (!inputNeto) return;
+       // 2. Valores monetarios
+       const inputNeto = document.getElementById('factura_valor_neto');
+       if (!inputNeto) return;
 
-  let rawNeto = inputNeto.value.replace(/\D/g, '');
-  let valorNeto = parseFloat(rawNeto) || 0;
+       let rawNeto = inputNeto.value.replace(/\D/g, '');
+       let valorNeto = parseFloat(rawNeto) || 0;
 
-  if (rawNeto) {
-    inputNeto.value = new Intl.NumberFormat('es-CO').format(valorNeto);
-  } else {
-    inputNeto.value = '';
-  }
+       if (rawNeto) {
+           inputNeto.value = new Intl.NumberFormat('es-CO').format(valorNeto);
+       }
 
-  // 3. IVA, Total y Adeudado
-  const ivaPct = parseFloat(document.getElementById('factura_iva_pct')?.value) || 0;
-  const retePct = parseFloat(document.getElementById('factura_rete_pct')?.value) || 0;
+       const elIvaPct = document.getElementById('factura_iva_pct');
+       const elRetePct = document.getElementById('factura_rete_pct');
 
-  const valorIva = valorNeto * (ivaPct / 100);
-  const valorTotal = valorNeto + valorIva;
-  const valorRete = valorNeto * (retePct / 100);
-  const totalAdeudado = valorTotal - valorRete;
+       const ivaPct = elIvaPct ? (parseFloat(elIvaPct.value) || 0) : 0;
+       const retePct = elRetePct ? (parseFloat(elRetePct.value) || 0) : 0;
 
-  const fmt = (num) => '$ ' + new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(num);
+       const valorIva = valorNeto * (ivaPct / 100);
+       const valorTotal = valorNeto + valorIva;
+       const valorRete = valorNeto * (retePct / 100);
+       const totalAdeudado = valorTotal - valorRete;
 
-  const elIva = document.getElementById('factura_val_iva');
-  const elTotal = document.getElementById('factura_val_total');
-  const elAdeudado = document.getElementById('factura_total_adeudado');
+       const fmt = (num) => '$ ' + new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(num);
 
-  if (elIva) elIva.textContent = fmt(valorIva);
-  if (elTotal) elTotal.textContent = fmt(valorTotal);
-  if (elAdeudado) elAdeudado.textContent = fmt(totalAdeudado);
-}
+       const elIva = document.getElementById('factura_val_iva');
+       const elTotal = document.getElementById('factura_val_total');
+       const elAdeudado = document.getElementById('factura_total_adeudado');
+
+       if (elIva) elIva.textContent = fmt(valorIva);
+       if (elTotal) elTotal.textContent = fmt(valorTotal);
+       if (elAdeudado) elAdeudado.textContent = fmt(totalAdeudado);
+   };
 
 document.addEventListener('DOMContentLoaded', function() {
     const modalNueva = document.getElementById('modalNuevaFactura');
