@@ -518,7 +518,8 @@ def nueva_factura_proveedor():
         def parse_float_safe(value, default=0.0):
             try:
                 if value is None or str(value).strip() == "": return default
-                return float(value)
+                clean_value = str(value).replace('.', '').replace(',', '.').strip()
+                return float(clean_value)
             except (ValueError, TypeError):
                 return default
 
@@ -592,7 +593,8 @@ def editar_factura_proveedor(id):
         def parse_float_safe(value, default=0.0):
             try:
                 if value is None or str(value).strip() == "": return default
-                return float(value)
+                clean_value = str(value).replace('.', '').replace(',', '.').strip()
+                return float(clean_value)
             except (ValueError, TypeError):
                 return default
 
