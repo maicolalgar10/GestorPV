@@ -498,8 +498,20 @@ def nueva_factura_proveedor():
             return None
 
     try:
-        fecha_factura     = dt.strptime(request.form["fecha_factura"], "%Y-%m-%d").date()
-        fecha_vencimiento = dt.strptime(request.form["fecha_vencimiento"], "%Y-%m-%d").date()
+        fecha_factura_raw = request.form.get("fecha_factura", "").strip()
+        if not fecha_factura_raw:
+            flash("La fecha de la factura es obligatoria.", "warning")
+            return redirect(url_for("dashboard.proveedores"))
+        fecha_factura = dt.strptime(fecha_factura_raw, "%Y-%m-%d").date()
+
+        fecha_vencimiento_raw = request.form.get("fecha_vencimiento", "").strip()
+        if fecha_vencimiento_raw:
+            fecha_vencimiento = dt.strptime(fecha_vencimiento_raw, "%Y-%m-%d").date()
+        else:
+            from datetime import timedelta
+            plazo = int(request.form.get("plazo_dias") or 0)
+            fecha_vencimiento = fecha_factura + timedelta(days=plazo)
+
         fecha_pago_raw    = request.form.get("fecha_pago", "").strip()
         fecha_pago        = dt.strptime(fecha_pago_raw, "%Y-%m-%d").date() if fecha_pago_raw else None
 
@@ -593,9 +605,21 @@ def editar_factura_proveedor(id):
 
         fecha_pago_raw = request.form.get("fecha_pago", "").strip()
         factura.nombre_proveedor       = request.form["nombre_proveedor"].strip()
-        factura.fecha_factura          = dt.strptime(request.form["fecha_factura"], "%Y-%m-%d").date()
+        
+        fecha_factura_raw = request.form.get("fecha_factura", "").strip()
+        if not fecha_factura_raw:
+            flash("La fecha de la factura es obligatoria.", "warning")
+            return redirect(url_for("dashboard.proveedores"))
+        factura.fecha_factura = dt.strptime(fecha_factura_raw, "%Y-%m-%d").date()
+        
         factura.plazo_dias             = int(request.form.get("plazo_dias") or 0)
-        factura.fecha_vencimiento      = dt.strptime(request.form["fecha_vencimiento"], "%Y-%m-%d").date()
+        
+        fecha_vencimiento_raw = request.form.get("fecha_vencimiento", "").strip()
+        if fecha_vencimiento_raw:
+            factura.fecha_vencimiento = dt.strptime(fecha_vencimiento_raw, "%Y-%m-%d").date()
+        else:
+            from datetime import timedelta
+            factura.fecha_vencimiento = factura.fecha_factura + timedelta(days=factura.plazo_dias)
         factura.valor_neto             = parse_float_safe(request.form.get("valor_neto"))
         factura.porcentaje_iva         = parse_pct(request.form.get("porcentaje_iva"), 19.0)
         factura.valor_cancelado        = parse_float_safe(request.form.get("valor_cancelado"))
