@@ -1798,6 +1798,9 @@ window.recalcularFactura = function() {
        const elPlazo = document.getElementById('factura_plazo');
        const elVenc = document.getElementById('factura_vencimiento');
 
+       const inputNetoForLog = document.getElementById('factura_valor_neto');
+       console.log('Recalculando factura...', { neto: inputNetoForLog?.value });
+
        if (elFecha && elFecha.value && elPlazo && elVenc) {
            const partes = elFecha.value.split('-');
            if (partes.length === 3) {
@@ -1848,8 +1851,9 @@ window.recalcularFactura = function() {
 document.addEventListener('DOMContentLoaded', function() {
     const modalNueva = document.getElementById('modalNuevaFactura');
     if(modalNueva) {
-        modalNueva.addEventListener('show.bs.modal', function() {
-            recalcularFactura();
+        modalNueva.addEventListener('shown.bs.modal', function() {
+            console.log('Modal abierto, ejecutando recalcularFactura');
+            window.recalcularFactura();
         });
     }
 });
