@@ -1399,6 +1399,41 @@ calcularIVA = function(prefix) {
 };
 
 /* ══════════════════════════════════════════════════════════
+   INICIALIZACIÓN DE EVENT LISTENERS (INPUT & CHANGE)
+══════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Fechas y Plazos
+    const fechaInputs = ['n_fecha_factura', 'n_plazo_dias', 'e_fecha_factura', 'e_plazo_dias'];
+    fechaInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            const func = id.startsWith('n_') ? calcularVencimiento : calcularVencimientoE;
+            el.addEventListener('input', func);
+            el.addEventListener('change', func);
+        }
+    });
+
+    // 2. Valores Monetarios e Impuestos
+    const moneyInputs = [
+        'n_valor_neto', 'n_porcentaje_iva', 'n_retencion', 'n_cancelado',
+        'e_valor_neto', 'e_porcentaje_iva', 'e_retencion', 'e_cancelado'
+    ];
+    moneyInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            const prefix = id.split('_')[0]; // 'n' o 'e'
+            const handler = () => {
+                if (el.classList.contains('currency-input')) formatCurrencyInput(el);
+                if (el.classList.contains('pct-input')) formatPercentageInput(el);
+                calcularIVA(prefix);
+            };
+            el.addEventListener('input', handler);
+            el.addEventListener('change', handler);
+        }
+    });
+});
+
+/* ══════════════════════════════════════════════════════════
    MODAL SUB-FACTURAS
 ══════════════════════════════════════════════════════════ */
 function formatCurrencyInput(input) {
