@@ -911,15 +911,14 @@
                 <input type="number" id="factura_iva_pct" name="porcentaje_iva" class="form-control" value="19" oninput="recalcularFactura()">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
               </div>
-              <div class="calc-box d-flex justify-content-between align-items-center py-1 px-2">
-                <div>
-                  <div class="calc-label">Valor IVA ($)</div>
-                  <div class="calc-val fs-6" id="factura_val_iva">$0</div>
+              <div class="row mt-2">
+                <div class="col-6">
+                  <small class="text-muted d-block">VALOR IVA ($)</small>
+                  <span id="factura_val_iva" class="fw-bold text-info fs-6">$0</span>
                 </div>
-                <i class="bi bi-plus-circle text-muted mx-1"></i>
-                <div>
-                  <div class="calc-label">Valor Total</div>
-                  <div class="calc-val calc-total fs-6" id="factura_val_total">$0</div>
+                <div class="col-6">
+                  <small class="text-muted d-block">VALOR TOTAL ($)</small>
+                  <span id="factura_val_total" class="fw-bold text-success fs-6">$0</span>
                 </div>
               </div>
             </div>
@@ -939,7 +938,7 @@
                   <div class="calc-label">Total Adeudado Estimado</div>
                   <div id="n_estado_badge"></div>
                 </div>
-                <div class="calc-val" id="factura_total_adeudado">$0</div>
+                <div id="factura_total_adeudado" class="fs-4 fw-bold text-success">$0</div>
               </div>
             </div>
 
@@ -1794,52 +1793,53 @@ function abrirModalConfirmarPago(id) {
 }
 
 function recalcularFactura() {
-    // 1. Vencimiento
-    const fFecha = document.getElementById('factura_fecha')?.value;
-    const plazo = parseInt(document.getElementById('factura_plazo')?.value) || 0;
-    if (fFecha) {
-        const partes = fFecha.split('-');
-        if (partes.length === 3) {
-            const d = new Date(partes[0], partes[1] - 1, partes[2]);
-            d.setDate(d.getDate() + plazo);
-            const yyyy = d.getFullYear();
-            const mm = String(d.getMonth() + 1).padStart(2, '0');
-            const dd = String(d.getDate()).padStart(2, '0');
-            const elVenc = document.getElementById('factura_vencimiento');
-            if (elVenc) elVenc.value = `${yyyy}-${mm}-${dd}`;
-        }
-    }
+  // 1. Fecha de Vencimiento
+  const inputFecha = document.getElementById('factura_fecha');
+  const inputPlazo = document.getElementById('factura_plazo');
+  const inputVenc = document.getElementById('factura_vencimiento');
 
-    // 2. Valores monetarios e IVA
-    const inputNeto = document.getElementById('factura_valor_neto');
-    if (!inputNeto) return;
+  if (inputFecha && inputFecha.value && inputPlazo && inputVenc) {
+    const f = new Date(inputFecha.value + 'T00:00:00');
+    const plazo = parseInt(inputPlazo.value) || 0;
+    f.setDate(f.getDate() + plazo);
+    
+    const yyyy = f.getFullYear();
+    const mm = String(f.getMonth() + 1).padStart(2, '0');
+    const dd = String(f.getDate()).padStart(2, '0');
+    inputVenc.value = `${yyyy}-${mm}-${dd}`;
+  }
 
-    // Extraer solo números del valor ingresado
-    let rawNeto = inputNeto.value.replace(/\D/g, '');
-    let valorNeto = parseFloat(rawNeto) || 0;
+  // 2. Formateo en vivo de Valor Neto
+  const inputNeto = document.getElementById('factura_valor_neto');
+  if (!inputNeto) return;
 
-    // Auto-formatear el input con puntos de miles mientras escribe
-    if (rawNeto) {
-        inputNeto.value = new Intl.NumberFormat('es-CO').format(valorNeto);
-    }
+  let rawNeto = inputNeto.value.replace(/\D/g, '');
+  let valorNeto = parseFloat(rawNeto) || 0;
 
-    const ivaPct = parseFloat(document.getElementById('factura_iva_pct')?.value) || 0;
-    const retePct = parseFloat(document.getElementById('factura_rete_pct')?.value) || 0;
+  if (rawNeto) {
+    inputNeto.value = new Intl.NumberFormat('es-CO').format(valorNeto);
+  } else {
+    inputNeto.value = '';
+  }
 
-    const valorIva = valorNeto * (ivaPct / 100);
-    const valorTotal = valorNeto + valorIva;
-    const valorRete = valorNeto * (retePct / 100);
-    const totalAdeudado = valorTotal - valorRete;
+  // 3. IVA, Total y Adeudado
+  const ivaPct = parseFloat(document.getElementById('factura_iva_pct')?.value) || 0;
+  const retePct = parseFloat(document.getElementById('factura_rete_pct')?.value) || 0;
 
-    const fmt = (num) => '$ ' + new Intl.NumberFormat('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num);
+  const valorIva = valorNeto * (ivaPct / 100);
+  const valorTotal = valorNeto + valorIva;
+  const valorRete = valorNeto * (retePct / 100);
+  const totalAdeudado = valorTotal - valorRete;
 
-    const elIva = document.getElementById('factura_val_iva');
-    const elTotal = document.getElementById('factura_val_total');
-    const elAdeudado = document.getElementById('factura_total_adeudado');
+  const fmt = (num) => '$ ' + new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(num);
 
-    if (elIva) elIva.textContent = fmt(valorIva);
-    if (elTotal) elTotal.textContent = fmt(valorTotal);
-    if (elAdeudado) elAdeudado.textContent = fmt(totalAdeudado);
+  const elIva = document.getElementById('factura_val_iva');
+  const elTotal = document.getElementById('factura_val_total');
+  const elAdeudado = document.getElementById('factura_total_adeudado');
+
+  if (elIva) elIva.textContent = fmt(valorIva);
+  if (elTotal) elTotal.textContent = fmt(valorTotal);
+  if (elAdeudado) elAdeudado.textContent = fmt(totalAdeudado);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
