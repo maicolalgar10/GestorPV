@@ -908,7 +908,7 @@
             <div class="col-md-3">
               <label>IVA (%)</label>
               <div class="input-group mb-2">
-                <input type="number" id="factura_iva_pct" name="porcentaje_iva" class="form-control" value="19" oninput="recalcularFactura()">
+                <input type="text" inputmode="decimal" id="factura_iva_pct" name="porcentaje_iva" class="form-control" value="19" oninput="recalcularFactura()">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
               </div>
               <div class="row mt-2">
@@ -926,7 +926,7 @@
             <div class="col-md-3">
               <label>Retención (%)</label>
               <div class="input-group">
-                <input type="number" id="factura_rete_pct" name="retencion" class="form-control" value="0" oninput="recalcularFactura()">
+                <input type="text" inputmode="decimal" id="factura_rete_pct" name="retencion" class="form-control" value="0" oninput="recalcularFactura()">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
               </div>
             </div>
@@ -1821,11 +1821,13 @@ window.recalcularFactura = function() {
 
   inputNeto.value = rawNeto ? new Intl.NumberFormat('es-CO').format(valorNeto) : '';
 
-  const elIvaPct = document.getElementById('factura_iva_pct');
-  const elRetePct = document.getElementById('factura_rete_pct');
+  const parseLocalFloat = (val) => {
+      if (!val) return 0;
+      return parseFloat(String(val).replace(',', '.')) || 0;
+  };
 
-  const ivaPct = elIvaPct ? (parseFloat(elIvaPct.value) || 0) : 0;
-  const retePct = elRetePct ? (parseFloat(elRetePct.value) || 0) : 0;
+  const ivaPct = parseLocalFloat(document.getElementById('factura_iva_pct')?.value);
+  const retePct = parseLocalFloat(document.getElementById('factura_rete_pct')?.value);
 
   const valorIva = valorNeto * (ivaPct / 100);
   const valorTotal = valorNeto + valorIva;
