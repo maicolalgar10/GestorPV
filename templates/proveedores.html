@@ -929,6 +929,10 @@
                 <input type="text" inputmode="decimal" id="factura_rete_pct" name="retencion" class="form-control" value="0" oninput="recalcularFactura()">
                 <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
               </div>
+              <div class="mt-1">
+                <small class="text-muted d-block">VALOR RETENIDO ($)</small>
+                <span id="factura_val_rete" class="fw-bold text-warning fs-6">$0</span>
+              </div>
             </div>
 
             <div class="col-md-3">
@@ -1838,10 +1842,12 @@ window.recalcularFactura = function() {
 
   const elIva = document.getElementById('factura_val_iva');
   const elTotal = document.getElementById('factura_val_total');
+  const elRete = document.getElementById('factura_val_rete');
   const elAdeudado = document.getElementById('factura_total_adeudado');
 
   if (elIva) elIva.textContent = fmt(valorIva);
   if (elTotal) elTotal.textContent = fmt(valorTotal);
+  if (elRete) elRete.textContent = fmt(valorRete);
   if (elAdeudado) elAdeudado.textContent = fmt(totalAdeudado);
 };
 
