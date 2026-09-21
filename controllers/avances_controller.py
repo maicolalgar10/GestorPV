@@ -9,9 +9,11 @@ from supabase_client import supabase
 from frases import obtener_frase
 from decorators import login_required, admin_required, admin_encargado_required
 from flask import send_file
-from openpyxl import load_workbook
+from openpyxl import load_workbook, Workbook
 from io import BytesIO
 from openpyxl.drawing.image import Image as ExcelImage
+from openpyxl.styles import Font, Alignment, PatternFill
+from openpyxl.utils import get_column_letter
 
 
 # Carpeta donde se guardarán las imágenes
@@ -318,70 +320,145 @@ def exportar_informe_excel(id_proyecto):
     avances = (
         db.session.query(Avances, Actividades, Usuarios)
         .join(Actividades, Actividades.id_actividad == Avances.id_actividad)
-        .join(Usuarios, Usuarios.id_usuario == Avances.id_usuario)
+        .outerjoin(Usuarios, Usuarios.id_usuario == Avances.id_usuario)
         .filter(Actividades.id_proyecto == id_proyecto)
         .order_by(Avances.fecha)
         .all()
     )
 
-    # 📄 Abrir plantilla
-    ruta_plantilla = os.path.join(
-        "static", "templates_excel", "informe_avance.xlsx"
-        )
-    wb = load_workbook(ruta_plantilla)
-    ws = wb.active
+    wb = Workbook()
+    
+    # Eliminar hoja por defecto si creamos nuevas
+    sheet_global = wb.active
+    sheet_global.title = "Resumen Global"
+    
+    # Estilos
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill("solid", fgColor="4F81BD")
+    align_center = Alignment(horizontal="center", vertical="center", wrap_text=True)
 
-    # 🧾 Datos generales (ejemplo)
-    ws["B2"] = proyecto.nombre
-    ws["B3"] = proyecto.descripcion or ""
+    def style_header(ws, row):
+        for cell in ws[row]:
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = align_center
 
-    fila = 3  # 👈 empieza debajo del encabezado
+    # Configurar Global
+    headers_global = ["Actividad", "Tipo Unidad", "Fecha", "Usuario", "Comentario", "Total Unidades", "Evidencia"]
+    sheet_global.append(["Proyecto:", proyecto.nombre])
+    sheet_global.append(["Descripción:", proyecto.descripcion or ""])
+    sheet_global.append([])
+    sheet_global.append(headers_global)
+    style_header(sheet_global, 4)
 
-    for avance, actividad, usuario in avances:
-        ws[f"A{fila}"] = avance.fecha.strftime("%d/%m/%Y") if avance.fecha else ""
-        ws[f"B{fila}"] = avance.trayecto or ""
-        ws[f"C{fila}"] = avance.calzada or ""
-        ws[f"D{fila}"] = avance.carril or ""
-        ws[f"E{fila}"] = avance.ubicacion_pr or ""
-        ws[f"F{fila}"] = avance.tipo or ""
-        ws[f"G{fila}"] = avance.elemento or ""
-        ws[f"H{fila}"] = avance.unidades_avanzadas or ""
-        ws[f"I{fila}"] = avance.area_elemento or ""
-        ws[f"J{fila}"] = avance.area_total or ""
-        
-        # 📷 INSERTAR IMÁGENES (columna K)
+    def get_columns_by_tipo(tipo_unidad):
+        base = ["Fecha", "Actividad", "Usuario", "Comentario", "Total Unidades"]
+        tipo = (tipo_unidad or "").lower()
+        if "metro lineal" in tipo:
+            return base + ["Trayecto", "Calzada", "Carril", "Ubicación PR", "PR Inicio", "PR Fin", "Longitud Lineal", "Color Lineal", "Evidencia"]
+        elif "metro cuadrado" in tipo:
+            return base + ["Trayecto", "Calzada", "Carril", "Ubicación PR", "Ancho", "Largo", "Área Total", "Evidencia"]
+        elif "señalización vertical" in tipo or "senalizacion" in tipo:
+            return base + ["Tipo", "Elemento", "Trayecto", "Calzada", "Carril", "Ubicación PR", "Margen", "Evidencia"]
+        elif "tacha" in tipo or "captafaro" in tipo or "hito" in tipo:
+            return base + ["Tipo", "Elemento", "Tamaño", "Color", "Cantidad", "Trayecto", "Calzada", "Carril", "Ubicación PR", "Evidencia"]
+        elif "defensa" in tipo:
+            return base + ["Tipo", "Elemento", "Trayecto", "Calzada", "Carril", "Ubicación PR", "Evidencia"]
+        else:
+            return base + ["Trayecto", "Calzada", "Carril", "Ubicación PR", "Tipo", "Elemento", "Evidencia"]
+
+    def insertar_imagen(ws, avance, fila, col_letra):
         if avance.evidencias:
             for evidencia in avance.evidencias:
                 if evidencia.ruta_archivo.startswith('http'):
-                    # Es URL de Supabase, descargar en memoria
                     try:
                         response = requests.get(evidencia.ruta_archivo)
                         if response.status_code == 200:
                             img_stream = BytesIO(response.content)
                             img = ExcelImage(img_stream)
-                            
                             img.width = 120
                             img.height = 90
-                            celda_img = f"K{fila}"
-                            ws.add_image(img, celda_img)
+                            ws.add_image(img, f"{col_letra}{fila}")
                             ws.row_dimensions[fila].height = 75
                             break
                     except Exception as e:
                         print("Error descargando imagen de Supabase para Excel:", e)
                 else:
-                    # Archivo local por retrocompatibilidad
                     ruta_imagen = os.path.join("static", evidencia.ruta_archivo)
                     if os.path.exists(ruta_imagen):
                         img = ExcelImage(ruta_imagen)
                         img.width = 120
                         img.height = 90
-                        celda_img = f"K{fila}"
-                        ws.add_image(img, celda_img)
+                        ws.add_image(img, f"{col_letra}{fila}")
                         ws.row_dimensions[fila].height = 75
                         break
 
-        fila += 1
+    hojas_por_tipo = {}
+    row_global = 5
 
+    for avance, actividad, usuario in avances:
+        fecha_str = avance.fecha.strftime("%d/%m/%Y") if avance.fecha else ""
+        nombre_actividad = actividad.nombre
+        tipo_unidad = actividad.tipo_unidad or "Otro"
+        nombre_usuario = f"{usuario.nombre} {usuario.apellido}" if usuario else "N/A"
+        comentario = avance.mensaje or ""
+        unidades = avance.unidades_avanzadas or 0
+
+        # Llenar hoja Global
+        sheet_global.append([
+            nombre_actividad, tipo_unidad, fecha_str, nombre_usuario, comentario, unidades, ""
+        ])
+        insertar_imagen(sheet_global, avance, row_global, col_letra="G")
+        row_global += 1
+
+        # Hoja específica
+        if tipo_unidad not in hojas_por_tipo:
+            cols = get_columns_by_tipo(tipo_unidad)
+            ws_tipo = wb.create_sheet(title=str(tipo_unidad)[:31])
+            ws_tipo.append([f"Detalle de Avances - {tipo_unidad}"])
+            ws_tipo.append(cols)
+            style_header(ws_tipo, 2)
+            hojas_por_tipo[tipo_unidad] = {"ws": ws_tipo, "cols": cols, "row_idx": 3}
+
+        info_hoja = hojas_por_tipo[tipo_unidad]
+        ws_tipo = info_hoja["ws"]
+        cols = info_hoja["cols"]
+        row_idx = info_hoja["row_idx"]
+
+        fila_datos = []
+        for c in cols:
+            if c == "Fecha": fila_datos.append(fecha_str)
+            elif c == "Actividad": fila_datos.append(nombre_actividad)
+            elif c == "Usuario": fila_datos.append(nombre_usuario)
+            elif c == "Comentario": fila_datos.append(comentario)
+            elif c == "Total Unidades": fila_datos.append(unidades)
+            elif c == "Trayecto": fila_datos.append(avance.trayecto or "-")
+            elif c == "Calzada": fila_datos.append(avance.calzada or "-")
+            elif c == "Carril": fila_datos.append(avance.carril or "-")
+            elif c == "Ubicación PR": fila_datos.append(avance.ubicacion_pr or "-")
+            elif c == "PR Inicio": fila_datos.append(avance.pr_inicio or "-")
+            elif c == "PR Fin": fila_datos.append(avance.pr_fin or "-")
+            elif c == "Longitud Lineal": fila_datos.append(avance.longitud_lineal or "-")
+            elif c == "Color Lineal": fila_datos.append(avance.color_lineal or "-")
+            elif c == "Ancho": fila_datos.append(avance.ancho or "-")
+            elif c == "Largo": fila_datos.append(avance.largo or "-")
+            elif c == "Área Total": fila_datos.append(avance.area_total or avance.area_elemento or "-")
+            elif c == "Margen": fila_datos.append(avance.margen or "-")
+            elif c == "Tipo": fila_datos.append(avance.tipo or "-")
+            elif c == "Elemento": fila_datos.append(avance.elemento or "-")
+            elif c == "Tamaño": fila_datos.append(avance.tamano or "-")
+            elif c == "Color": fila_datos.append(avance.color or "-")
+            elif c == "Cantidad": fila_datos.append(avance.cantidad or "-")
+            elif c == "Evidencia": fila_datos.append("")
+            else: fila_datos.append("-")
+            
+        ws_tipo.append(fila_datos)
+
+        col_evidencia_idx = cols.index("Evidencia") + 1
+        col_letra = get_column_letter(col_evidencia_idx)
+        insertar_imagen(ws_tipo, avance, row_idx, col_letra)
+        
+        info_hoja["row_idx"] += 1
 
     # 💾 Guardar en memoria
     output = BytesIO()
