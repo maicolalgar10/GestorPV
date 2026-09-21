@@ -400,7 +400,7 @@ def exportar_informe_excel(id_proyecto):
         fecha_str = avance.fecha.strftime("%d/%m/%Y") if avance.fecha else ""
         nombre_actividad = actividad.nombre
         tipo_unidad = actividad.tipo_unidad or "Otro"
-        nombre_usuario = f"{usuario.nombre} {usuario.apellido}" if usuario else "N/A"
+        nombre_usuario = getattr(usuario, 'nombre', getattr(usuario, 'username', 'N/A')) if usuario else "N/A"
         comentario = avance.mensaje or ""
         unidades = avance.unidades_avanzadas or 0
 
