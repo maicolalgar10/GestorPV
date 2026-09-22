@@ -1002,7 +1002,32 @@ def editar_proveedor_subfactura(id):
         print(f"Error al editar subfactura de proveedor: {e}")
         return {"success": False, "message": f"Error al actualizar subfactura: {str(e)}"}, 500
 
-
+@dashboard_bp.route('/proveedores/programacion_pago/cambiar_estado/<int:id>', methods=['POST'])
+@login_required
+@admin_oficina_required
+def cambiar_estado_programacion_pago(id):
+    from models import ProgramacionPagoProveedor, db
+    pago = ProgramacionPagoProveedor.query.get_or_404(id)
+    try:
+        nuevo_estado = request.form.get("estado")
+        forma_pago = request.form.get("forma_pago")
+        if nuevo_estado in ['Programado', 'Realizado', 'Cancelado']:
+            pago.estado = nuevo_estado
+            if nuevo_estado == 'Realizado' and forma_pago:
+                pago.forma_pago = forma_pago
+            db.session.commit()
+            flash(f"Estado del pago actualizado a {nuevo_estado}.", "success")
+        else:
+            flash("Estado inválido.", "danger")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al actualizar estado: {e}", "danger")
+    
+    redirect_to = request.form.get("redirect_to")
+    if redirect_to == "facturas_proveedor" and pago.proveedor:
+        return redirect(url_for("dashboard.facturas_proveedor", nombre_proveedor=pago.proveedor.nombre))
+        
+    return redirect(url_for("dashboard.proveedores"))
 @dashboard_bp.route("/oficina/pagos-programados/exportar-pdf")
 @login_required
 @admin_oficina_required

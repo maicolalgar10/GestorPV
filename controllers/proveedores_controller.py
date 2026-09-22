@@ -47,26 +47,7 @@ def programar_pago():
 
     return redirect(url_for('dashboard.proveedores'))
 
-@proveedores_bp.route("/programacion/cambiar_estado/<int:id>", methods=["POST"])
-@login_required
-@admin_oficina_required
-def cambiar_estado(id):
-    pago = ProgramacionPagoProveedor.query.get_or_404(id)
-    try:
-        nuevo_estado = request.form.get("estado")
-        forma_pago = request.form.get("forma_pago")
-        if nuevo_estado in ['Programado', 'Realizado', 'Cancelado']:
-            pago.estado = nuevo_estado
-            if nuevo_estado == 'Realizado' and forma_pago:
-                pago.forma_pago = forma_pago
-            db.session.commit()
-            flash(f"Estado del pago actualizado a {nuevo_estado}.", "success")
-        else:
-            flash("Estado inválido.", "danger")
-    except Exception as e:
-        db.session.rollback()
-        flash(f"Error al actualizar estado: {e}", "danger")
-    return redirect(url_for("dashboard.proveedores"))
+# Route /programacion/cambiar_estado moved to dashboard_controller.py
 
 @proveedores_bp.route("/programacion_pago/editar/<int:id>", methods=["POST"])
 @login_required
