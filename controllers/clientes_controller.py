@@ -14,27 +14,27 @@ clientes_bp = Blueprint('clientes', __name__, url_prefix='/clientes')
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'pdf', 'png', 'jpg', 'jpeg', 'webp'}
 
-def limpiar_monto(val):
+def parse_float_safe(val):
     if not val:
         return 0.0
     if isinstance(val, (int, float)):
         return float(val)
-
-    texto = str(val).strip().replace('$', '').replace(' ', '')
-
-    # Formato CO: 1.641.589,48
-    if '.' in texto and ',' in texto:
-        texto = texto.replace('.', '').replace(',', '.')
-    elif ',' in texto:
-        texto = texto.replace(',', '.')
-    elif '.' in texto:
-        # Si tiene puntos de miles (ej: 1.641.589)
-        partes = texto.split('.')
-        if len(partes) > 2 or (len(partes) == 2 and len(partes[1]) == 3):
-            texto = texto.replace('.', '')
-
+    # Eliminar el signo $ y espacios
+    s = str(val).replace('$', '').strip()
+    # Si contiene puntos de miles, quitarlos y convertir coma a punto
+    if '.' in s and ',' in s:
+        s = s.replace('.', '').replace(',', '.')
+    elif '.' in s and not ',' in s:
+        # Si tiene puntos como separadores de miles (ej: 211.975.886)
+        parts = s.split('.')
+        if len(parts) > 2 or (len(parts) == 2 and len(parts[1]) != 2):
+            s = s.replace('.', '')
+        else:
+            s = s.replace(',', '.')
+    elif ',' in s:
+        s = s.replace(',', '.')
     try:
-        return float(texto)
+        return float(s)
     except ValueError:
         return 0.0
 
@@ -119,11 +119,11 @@ def index():
 def crear_reporte():
     try:
         contrato_cliente_id = request.form.get('contrato_cliente_id')
-        valor_factura = limpiar_monto(request.form.get('valor_factura'))
-        amortizacion = limpiar_monto(request.form.get('amortizacion'))
+        valor_factura = parse_float_safe(request.form.get('valor_factura'))
+        amortizacion = parse_float_safe(request.form.get('amortizacion'))
         porcentaje_rete_garantia = limpiar_porcentaje(request.form.get('porcentaje_rete_garantia'))
-        retencion_ley = limpiar_monto(request.form.get('retencion_ley'))
-        pago_realizado = limpiar_monto(request.form.get('pago_realizado'))
+        retencion_ley = parse_float_safe(request.form.get('retencion_ley'))
+        pago_realizado = parse_float_safe(request.form.get('pago_realizado'))
         valor_bruto = parse_float(request.form.get('valor_bruto'))
         valor_factura = parse_float(request.form.get('valor_factura'))
         porcentaje_iva = parse_float(request.form.get('porcentaje_iva'))
@@ -188,10 +188,10 @@ def editar_reporte(reporte_id):
 
         reporte.valor_bruto = parse_float(request.form.get('valor_bruto'))
         reporte.valor_factura = parse_float(request.form.get('valor_factura'))
-        reporte.amortizacion = limpiar_monto(request.form.get('amortizacion'))
+        reporte.amortizacion = parse_float_safe(request.form.get('amortizacion'))
         reporte.porcentaje_rete_garantia = limpiar_porcentaje(request.form.get('porcentaje_rete_garantia'))
-        reporte.retencion_ley = limpiar_monto(request.form.get('retencion_ley'))
-        reporte.pago_realizado = limpiar_monto(request.form.get('pago_realizado'))
+        reporte.retencion_ley = parse_float_safe(request.form.get('retencion_ley'))
+        reporte.pago_realizado = parse_float_safe(request.form.get('pago_realizado'))
         reporte.porcentaje_iva = parse_float(request.form.get('porcentaje_iva'))
         reporte.valor_iva = parse_float(request.form.get('valor_iva'))
         
@@ -289,8 +289,8 @@ def crear_contrato_cliente():
     try:
         cliente_id = request.form.get('cliente_id')
         proyecto_nombre = request.form.get('nombre_proyecto')
-        valor_total = limpiar_monto(request.form.get('valor_total'))
-        porcentaje_retegarantia = limpiar_monto(request.form.get('porcentaje_retegarantia'))
+        valor_total = parse_float_safe(request.form.get('valor_total'))
+        porcentaje_retegarantia = parse_float_safe(request.form.get('porcentaje_retegarantia'))
         
         # Archivo PDF del contrato (si lo hay)
         contrato_pdf = request.files.get('contrato_pdf')
@@ -353,8 +353,8 @@ def editar_contrato_cliente(contrato_id):
             return redirect(url_for('clientes.index'))
 
         contrato.nombre_proyecto = request.form.get('nombre_proyecto')
-        contrato.valor_total = limpiar_monto(request.form.get('valor_total'))
-        contrato.porcentaje_retegarantia = limpiar_monto(request.form.get('porcentaje_retegarantia'))
+        contrato.valor_total = parse_float_safe(request.form.get('valor_total'))
+        contrato.porcentaje_retegarantia = parse_float_safe(request.form.get('porcentaje_retegarantia'))
         
         # Archivo PDF del contrato (si lo hay)
         nuevo_contrato_pdf = request.files.get('contrato_pdf')
@@ -388,7 +388,7 @@ def crear_subfactura():
         fecha_str = request.form.get('fecha_subfactura', '')
         fecha = datetime.strptime(fecha_str, "%Y-%m-%d").date() if fecha_str else None
         concepto = request.form.get('concepto', '')
-        valor = limpiar_monto(request.form.get('valor', 0))
+        valor = parse_float_safe(request.form.get('valor', 0))
 
         pdf = request.files.get('pdf_subfactura')
         url_pdf = None
