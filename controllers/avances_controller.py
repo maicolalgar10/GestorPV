@@ -354,13 +354,15 @@ def exportar_informe_excel(id_proyecto):
     def get_columns_by_tipo(tipo_unidad):
         tipo = (tipo_unidad or "").lower()
         if "metro lineal" in tipo:
-            return ['Actividad', 'Fecha', 'Tramo/Ubicación', 'Cantidad/Longitud (m)', 'Color/Especificación', 'Comentario', 'Usuario', 'Evidencia']
+            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'PR Inicio', 'PR Fin', 'Longitud Lineal (m)', 'Color Lineal', 'Unidades Avanzadas', 'Comentario', 'Usuario', 'Evidencia']
         elif "metro cuadrado" in tipo:
-            return ['Actividad', 'Fecha', 'Tramo/Ubicación', 'Cantidad', 'Ancho (m)', 'Largo (m)', 'Área Total (m²)', 'Comentario', 'Usuario', 'Evidencia']
-        elif "señalización vertical" in tipo or "senalizacion" in tipo or "defensa" in tipo or "tacha" in tipo or "captafaro" in tipo or "hito" in tipo:
-            return ['Actividad', 'Fecha', 'Cantidad (Unidades)', 'Tipo de Elemento', 'Ubicación/Lado', 'Comentario', 'Usuario', 'Evidencia']
+            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'Ubicación PR', 'Cantidad', 'Ancho (m)', 'Largo (m)', 'Área Elemento (m²)', 'Área Total (m²)', 'Comentario', 'Usuario', 'Evidencia']
+        elif "señalización vertical" in tipo or "senalizacion" in tipo:
+            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'Margen', 'Ubicación PR', 'Tipo', 'Elemento', 'Cantidad', 'Comentario', 'Usuario', 'Evidencia']
+        elif "tacha" in tipo or "captafaro" in tipo or "hito" in tipo or "defensa" in tipo:
+            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'Ubicación PR', 'Tipo', 'Elemento', 'Tamaño', 'Color', 'Cantidad', 'Comentario', 'Usuario', 'Evidencia']
         else:
-            return ['Actividad', 'Fecha', 'Tramo/Ubicación', 'Cantidad', 'Comentario', 'Usuario', 'Evidencia']
+            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'Ubicación PR', 'Unidades Avanzadas', 'Comentario', 'Usuario', 'Evidencia']
 
     def insertar_imagen(ws, avance, fila, col_letra):
         if avance.evidencias:
@@ -422,41 +424,29 @@ def exportar_informe_excel(id_proyecto):
 
         fila_datos = []
         for c in cols:
-            if c == "Fecha": fila_datos.append(fecha_str)
-            elif c == "Actividad": fila_datos.append(nombre_actividad)
+            if c == "Actividad": fila_datos.append(nombre_actividad)
+            elif c == "Fecha": fila_datos.append(fecha_str)
+            elif c == "Trayecto": fila_datos.append(avance.trayecto if avance.trayecto else "-")
+            elif c == "Calzada": fila_datos.append(avance.calzada if avance.calzada else "-")
+            elif c == "Carril": fila_datos.append(avance.carril if avance.carril else "-")
+            elif c == "Ubicación PR": fila_datos.append(avance.ubicacion_pr if avance.ubicacion_pr else "-")
+            elif c == "PR Inicio": fila_datos.append(avance.pr_inicio if avance.pr_inicio else "-")
+            elif c == "PR Fin": fila_datos.append(avance.pr_fin if avance.pr_fin else "-")
+            elif c == "Margen": fila_datos.append(avance.margen if avance.margen else "-")
+            elif c == "Tipo": fila_datos.append(avance.tipo if avance.tipo else "-")
+            elif c == "Elemento": fila_datos.append(avance.elemento if avance.elemento else "-")
+            elif c == "Tamaño": fila_datos.append(avance.tamano if avance.tamano else "-")
+            elif c == "Color": fila_datos.append(avance.color if avance.color else "-")
+            elif c == "Color Lineal": fila_datos.append(avance.color_lineal if avance.color_lineal else "-")
+            elif c == "Ancho (m)": fila_datos.append(avance.ancho if avance.ancho is not None else "-")
+            elif c == "Largo (m)": fila_datos.append(avance.largo if avance.largo is not None else "-")
+            elif c == "Longitud Lineal (m)": fila_datos.append(avance.longitud_lineal if avance.longitud_lineal is not None else "-")
+            elif c == "Área Elemento (m²)": fila_datos.append(avance.area_elemento if avance.area_elemento is not None else "-")
+            elif c == "Área Total (m²)": fila_datos.append(avance.area_total if avance.area_total is not None else "-")
+            elif c == "Cantidad": fila_datos.append(avance.cantidad if avance.cantidad is not None else "-")
+            elif c == "Unidades Avanzadas": fila_datos.append(avance.unidades_avanzadas if avance.unidades_avanzadas is not None else "-")
+            elif c == "Comentario": fila_datos.append(comentario if comentario else "-")
             elif c == "Usuario": fila_datos.append(nombre_usuario)
-            elif c == "Comentario": fila_datos.append(comentario)
-            elif c == "Tramo/Ubicación":
-                partes = []
-                if avance.trayecto: partes.append(avance.trayecto)
-                if avance.ubicacion_pr: partes.append(avance.ubicacion_pr)
-                if avance.pr_inicio and avance.pr_fin: partes.append(f"PR {avance.pr_inicio} al {avance.pr_fin}")
-                elif avance.pr_inicio: partes.append(f"PR {avance.pr_inicio}")
-                tramo = " - ".join(partes)
-                fila_datos.append(tramo if tramo else "-")
-            elif c == "Cantidad": fila_datos.append(avance.cantidad or unidades)
-            elif c == "Ancho (m)": fila_datos.append(avance.ancho or "-")
-            elif c == "Largo (m)": fila_datos.append(avance.largo or "-")
-            elif c == "Área Total (m²)": fila_datos.append(avance.area_total or avance.area_elemento or "-")
-            elif c == "Cantidad/Longitud (m)": fila_datos.append(avance.longitud_lineal or avance.cantidad or unidades)
-            elif c == "Color/Especificación": fila_datos.append(avance.color_lineal or avance.color or "-")
-            elif c == "Cantidad (Unidades)": fila_datos.append(avance.cantidad or unidades)
-            elif c == "Tipo de Elemento":
-                partes = []
-                if avance.tipo: partes.append(avance.tipo)
-                if avance.elemento: partes.append(avance.elemento)
-                if avance.tamano: partes.append(avance.tamano)
-                if avance.color: partes.append(avance.color)
-                elem = " - ".join(partes)
-                fila_datos.append(elem if elem else "-")
-            elif c == "Ubicación/Lado":
-                partes = []
-                if avance.calzada: partes.append(f"Calzada: {avance.calzada}")
-                if avance.carril: partes.append(f"Carril: {avance.carril}")
-                if avance.margen: partes.append(f"Margen: {avance.margen}")
-                if avance.ubicacion_pr: partes.append(f"PR: {avance.ubicacion_pr}")
-                ubic = " - ".join(partes)
-                fila_datos.append(ubic if ubic else "-")
             elif c == "Evidencia": fila_datos.append("")
             else: fila_datos.append("-")
             
