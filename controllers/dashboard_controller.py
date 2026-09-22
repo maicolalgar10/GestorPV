@@ -937,6 +937,72 @@ def eliminar_proveedor_subfactura(id):
         return redirect(url_for("dashboard.facturas_proveedor", nombre_proveedor=factura_padre.nombre_proveedor))
     return redirect(url_for("dashboard.proveedores"))
 
+# ─── POST /dashboard/proveedores/subfactura/editar/<id> ─────────
+@dashboard_bp.route("/dashboard/proveedores/subfactura/editar/<int:id>", methods=["POST"])
+@login_required
+@admin_oficina_required
+def editar_proveedor_subfactura(id):
+    from models import ProveedorSubFactura
+    from datetime import datetime
+    
+    def parse_float_safe(val):
+        if not val:
+            return 0.0
+        if isinstance(val, (int, float)):
+            return float(val)
+        s = str(val).replace('$', '').strip()
+        if '.' in s and ',' in s:
+            s = s.replace('.', '').replace(',', '.')
+        elif '.' in s and not ',' in s:
+            parts = s.split('.')
+            if len(parts) > 2 or (len(parts) == 2 and len(parts[1]) != 2):
+                s = s.replace('.', '')
+            else:
+                s = s.replace(',', '.')
+        elif ',' in s:
+            s = s.replace(',', '.')
+        try:
+            return float(s)
+        except ValueError:
+            return 0.0
+
+    try:
+        sub = ProveedorSubFactura.query.get(id)
+        if not sub:
+            return {"success": False, "message": "Sub-factura no encontrada"}, 404
+
+        numero = request.form.get("numero_subfactura", "").strip()
+        fecha_str = request.form.get("fecha_subfactura")
+        concepto = request.form.get("concepto", "").strip()
+        
+        if fecha_str:
+            sub.fecha = datetime.strptime(fecha_str, "%Y-%m-%d").date()
+            
+        sub.numero_subfactura = numero
+        sub.concepto = concepto
+        sub.valor = parse_float_safe(request.form.get("valor", 0))
+
+        pdf_subfactura = request.files.get("pdf_subfactura")
+        if pdf_subfactura and pdf_subfactura.filename:
+            pdf_url = subir_archivo_supabase(pdf_subfactura)
+            if pdf_url:
+                sub.archivo_pdf_url = pdf_url
+
+        db.session.commit()
+
+        # Recalcular valor_cancelado en la factura padre
+        factura_padre = sub.factura_padre
+        total_sub = db.session.query(db.func.sum(ProveedorSubFactura.valor)).filter_by(factura_id=factura_padre.id).scalar() or 0.0
+        factura_padre.valor_cancelado = total_sub
+        db.session.commit()
+
+        return {"success": True, "message": "Subfactura actualizada correctamente"}
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al editar subfactura de proveedor: {e}")
+        return {"success": False, "message": f"Error al actualizar subfactura: {str(e)}"}, 500
+
+
 @dashboard_bp.route("/oficina/pagos-programados/exportar-pdf")
 @login_required
 @admin_oficina_required

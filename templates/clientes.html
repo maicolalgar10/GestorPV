@@ -1036,6 +1036,48 @@
             </table>
           </div>
 
+          <!-- Modal Edit Sub-factura Cliente -->
+          <div class="modal fade modal-dark" id="modalEditarSubfacturaCliente" tabindex="-1" style="z-index: 1060;">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header border-bottom border-secondary">
+                  <h5 class="modal-title"><i class="bi bi-pencil me-2"></i>Editar Sub-factura</h5>
+                  <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="formEditarSubfacturaCliente" onsubmit="guardarEdicionSubfacturaCliente(event)" enctype="multipart/form-data">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" id="edit_subf_id" name="id">
+                  <div class="modal-body p-4">
+                    <div class="mb-3">
+                      <label>No. Subfactura</label>
+                      <input type="text" class="form-control" name="numero_subfactura" id="edit_subf_numero">
+                    </div>
+                    <div class="mb-3">
+                      <label>Fecha</label>
+                      <input type="date" class="form-control" name="fecha_subfactura" id="edit_subf_fecha">
+                    </div>
+                    <div class="mb-3">
+                      <label>Concepto / Descripción</label>
+                      <input type="text" class="form-control" name="concepto" id="edit_subf_concepto">
+                    </div>
+                    <div class="mb-3">
+                      <label>Valor Abonado</label>
+                      <input type="text" inputmode="decimal" class="form-control money-input" name="valor" id="edit_subf_valor" oninput="formatMoneyField(this)">
+                    </div>
+                    <div class="mb-3">
+                      <label>Nuevo Comprobante PDF (opcional)</label>
+                      <input type="file" class="form-control" name="pdf_subfactura" accept=".pdf,.png,.jpg,.jpeg">
+                    </div>
+                  </div>
+                  <div class="modal-footer border-top border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning text-dark"><i class="bi bi-save me-1"></i>Guardar</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
           <h6 class="border-bottom border-secondary pb-2 mb-3 text-primary"><i class="bi bi-plus-circle me-1"></i>Agregar Nueva Sub-factura</h6>
           <form method="POST" id="formCrearSubfactura" action="{{ url_for('clientes.crear_subfactura') }}" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -1111,6 +1153,9 @@
               <td class="text-success fw-bold">${valorFmt}</td>
               <td class="text-center">${pdfHtml}</td>
               <td class="text-center">
+                <button type="button" class="btn btn-sm btn-outline-warning rounded-pill me-1" onclick="abrirModalEditarSubfacturaCliente('${sub.id}', '${sub.numero}', '${sub.fecha || ''}', '${sub.concepto}', '${sub.valor}')">
+                  <i class="bi bi-pencil"></i>
+                </button>
                 <form action="/clientes/subfactura/eliminar/${sub.id}" method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar esta sub-factura?');">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill"><i class="bi bi-trash"></i></button>
@@ -1142,6 +1187,45 @@
       
       const modal = new bootstrap.Modal(document.getElementById('modalSubFacturas'));
       modal.show();
+    }
+    
+    function abrirModalEditarSubfacturaCliente(id, numero, fecha, concepto, valor) {
+      document.getElementById('edit_subf_id').value = id;
+      document.getElementById('edit_subf_numero').value = numero;
+      document.getElementById('edit_subf_fecha').value = fecha !== '---' ? fecha : '';
+      document.getElementById('edit_subf_concepto').value = concepto;
+      document.getElementById('edit_subf_valor').value = fmtPeso(valor);
+      document.getElementById('edit_subf_valor').setAttribute('data-raw-value', valor);
+      
+      const modal = new bootstrap.Modal(document.getElementById('modalEditarSubfacturaCliente'));
+      modal.show();
+    }
+
+    async function guardarEdicionSubfacturaCliente(event) {
+      event.preventDefault();
+      const form = document.getElementById('formEditarSubfacturaCliente');
+      const formData = new FormData(form);
+      const subfId = document.getElementById('edit_subf_id').value;
+      
+      try {
+        const response = await fetch(`/clientes/subfactura/editar/${subfId}`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          // Mostrar confirmación
+          alert(data.message || 'Sub-factura actualizada');
+          // Recargar para ver los cambios
+          window.location.reload();
+        } else {
+          alert(data.message || 'Error al actualizar');
+        }
+      } catch (e) {
+        alert('Error en la conexión');
+        console.error(e);
+      }
     }
     function fmtPeso(num) {
       if (isNaN(num)) num = 0;

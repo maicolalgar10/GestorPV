@@ -446,3 +446,43 @@ def eliminar_subfactura(id):
         flash('Error al eliminar sub-factura.', 'danger')
 
     return redirect(url_for('clientes.index'))
+
+@clientes_bp.route('/subfactura/editar/<int:id_subfactura>', methods=['POST'])
+@login_required
+@admin_oficina_required
+def editar_subfactura(id_subfactura):
+    try:
+        subfactura = ClienteSubFactura.query.get(id_subfactura)
+        if not subfactura:
+            return {"success": False, "message": "Sub-factura no encontrada"}, 404
+
+        numero = request.form.get('numero_subfactura', '')
+        fecha_str = request.form.get('fecha_subfactura', '')
+        fecha = datetime.strptime(fecha_str, "%Y-%m-%d").date() if fecha_str else None
+        concepto = request.form.get('concepto', '')
+        valor = parse_float_safe(request.form.get('valor', 0))
+
+        pdf = request.files.get('pdf_subfactura')
+        if pdf and pdf.filename:
+            url_pdf = subir_archivo_supabase(pdf)
+            if url_pdf:
+                subfactura.archivo_pdf_url = url_pdf
+
+        subfactura.numero_subfactura = numero
+        subfactura.fecha = fecha
+        subfactura.concepto = concepto
+        subfactura.valor = valor
+
+        db.session.commit()
+        
+        # Recalcular la suma total de subfacturas
+        factura_padre = subfactura.factura_padre
+        total_subfacturas = db.session.query(db.func.sum(ClienteSubFactura.valor)).filter_by(factura_id=factura_padre.id).scalar() or 0.0
+        factura_padre.pago_realizado = total_subfacturas
+        db.session.commit()
+
+        return {"success": True, "message": "Subfactura actualizada correctamente"}
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al editar subfactura: {e}")
+        return {"success": False, "message": f"Error al actualizar subfactura: {str(e)}"}, 500
