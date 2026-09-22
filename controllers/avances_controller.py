@@ -356,7 +356,7 @@ def exportar_informe_excel(id_proyecto):
         if "metro lineal" in tipo:
             return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'PR Inicio', 'PR Fin', 'Longitud Lineal (m)', 'Color Lineal', 'Unidades Avanzadas', 'Comentario', 'Usuario', 'Evidencia']
         elif "metro cuadrado" in tipo:
-            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'Ubicación PR', 'Cantidad', 'Ancho (m)', 'Largo (m)', 'Área Elemento (m²)', 'Área Total (m²)', 'Comentario', 'Usuario', 'Evidencia']
+            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'Margen', 'Ubicación PR', 'Tipo', 'Elemento', 'Ancho (m)', 'Largo (m)', 'Cantidad', 'Área Total (m²)', 'Comentario', 'Usuario', 'Evidencia']
         elif "señalización vertical" in tipo or "senalizacion" in tipo:
             return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'Margen', 'Ubicación PR', 'Tipo', 'Elemento', 'Cantidad', 'Comentario', 'Usuario', 'Evidencia']
         elif "tacha" in tipo or "captafaro" in tipo or "hito" in tipo or "defensa" in tipo:
