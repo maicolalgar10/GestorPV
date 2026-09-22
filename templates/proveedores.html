@@ -1877,7 +1877,7 @@ function abrirModalEditarPagoProgramado(id, fecha, proveedor_nombre, monto, obse
 function abrirModalConfirmarPago(id) {
     var form = document.getElementById('formConfirmarPagoProveedor');
     // Asumiendo que url_for('proveedores.cambiar_estado', id=0) es /proveedores/cambiar_estado/0
-    form.action = "/proveedores/programacion_pago/cambiar_estado/" + id;
+    form.action = "/dashboard/proveedores/programacion_pago/cambiar_estado/" + id;
     var modal = new bootstrap.Modal(document.getElementById('modalConfirmarPagoProveedor'));
     modal.show();
 }
