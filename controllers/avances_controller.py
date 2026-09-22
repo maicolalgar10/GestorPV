@@ -352,20 +352,15 @@ def exportar_informe_excel(id_proyecto):
     style_header(sheet_global, 4)
 
     def get_columns_by_tipo(tipo_unidad):
-        base = ["Fecha", "Actividad", "Usuario", "Comentario", "Total Unidades"]
         tipo = (tipo_unidad or "").lower()
         if "metro lineal" in tipo:
-            return base + ["Trayecto", "Calzada", "Carril", "Ubicación PR", "PR Inicio", "PR Fin", "Longitud Lineal", "Color Lineal", "Evidencia"]
+            return ['Actividad', 'Fecha', 'Tramo/Ubicación', 'Cantidad/Longitud (m)', 'Color/Especificación', 'Comentario', 'Usuario', 'Evidencia']
         elif "metro cuadrado" in tipo:
-            return base + ["Trayecto", "Calzada", "Carril", "Ubicación PR", "Ancho", "Largo", "Área Total", "Evidencia"]
-        elif "señalización vertical" in tipo or "senalizacion" in tipo:
-            return base + ["Tipo", "Elemento", "Trayecto", "Calzada", "Carril", "Ubicación PR", "Margen", "Evidencia"]
-        elif "tacha" in tipo or "captafaro" in tipo or "hito" in tipo:
-            return base + ["Tipo", "Elemento", "Tamaño", "Color", "Cantidad", "Trayecto", "Calzada", "Carril", "Ubicación PR", "Evidencia"]
-        elif "defensa" in tipo:
-            return base + ["Tipo", "Elemento", "Trayecto", "Calzada", "Carril", "Ubicación PR", "Evidencia"]
+            return ['Actividad', 'Fecha', 'Tramo/Ubicación', 'Cantidad', 'Ancho (m)', 'Largo (m)', 'Área Total (m²)', 'Comentario', 'Usuario', 'Evidencia']
+        elif "señalización vertical" in tipo or "senalizacion" in tipo or "defensa" in tipo or "tacha" in tipo or "captafaro" in tipo or "hito" in tipo:
+            return ['Actividad', 'Fecha', 'Cantidad (Unidades)', 'Tipo de Elemento', 'Ubicación/Lado', 'Comentario', 'Usuario', 'Evidencia']
         else:
-            return base + ["Trayecto", "Calzada", "Carril", "Ubicación PR", "Tipo", "Elemento", "Evidencia"]
+            return ['Actividad', 'Fecha', 'Tramo/Ubicación', 'Cantidad', 'Comentario', 'Usuario', 'Evidencia']
 
     def insertar_imagen(ws, avance, fila, col_letra):
         if avance.evidencias:
@@ -431,24 +426,37 @@ def exportar_informe_excel(id_proyecto):
             elif c == "Actividad": fila_datos.append(nombre_actividad)
             elif c == "Usuario": fila_datos.append(nombre_usuario)
             elif c == "Comentario": fila_datos.append(comentario)
-            elif c == "Total Unidades": fila_datos.append(unidades)
-            elif c == "Trayecto": fila_datos.append(avance.trayecto or "-")
-            elif c == "Calzada": fila_datos.append(avance.calzada or "-")
-            elif c == "Carril": fila_datos.append(avance.carril or "-")
-            elif c == "Ubicación PR": fila_datos.append(avance.ubicacion_pr or "-")
-            elif c == "PR Inicio": fila_datos.append(avance.pr_inicio or "-")
-            elif c == "PR Fin": fila_datos.append(avance.pr_fin or "-")
-            elif c == "Longitud Lineal": fila_datos.append(avance.longitud_lineal or "-")
-            elif c == "Color Lineal": fila_datos.append(avance.color_lineal or "-")
-            elif c == "Ancho": fila_datos.append(avance.ancho or "-")
-            elif c == "Largo": fila_datos.append(avance.largo or "-")
-            elif c == "Área Total": fila_datos.append(avance.area_total or avance.area_elemento or "-")
-            elif c == "Margen": fila_datos.append(avance.margen or "-")
-            elif c == "Tipo": fila_datos.append(avance.tipo or "-")
-            elif c == "Elemento": fila_datos.append(avance.elemento or "-")
-            elif c == "Tamaño": fila_datos.append(avance.tamano or "-")
-            elif c == "Color": fila_datos.append(avance.color or "-")
-            elif c == "Cantidad": fila_datos.append(avance.cantidad or "-")
+            elif c == "Tramo/Ubicación":
+                partes = []
+                if avance.trayecto: partes.append(avance.trayecto)
+                if avance.ubicacion_pr: partes.append(avance.ubicacion_pr)
+                if avance.pr_inicio and avance.pr_fin: partes.append(f"PR {avance.pr_inicio} al {avance.pr_fin}")
+                elif avance.pr_inicio: partes.append(f"PR {avance.pr_inicio}")
+                tramo = " - ".join(partes)
+                fila_datos.append(tramo if tramo else "-")
+            elif c == "Cantidad": fila_datos.append(avance.cantidad or unidades)
+            elif c == "Ancho (m)": fila_datos.append(avance.ancho or "-")
+            elif c == "Largo (m)": fila_datos.append(avance.largo or "-")
+            elif c == "Área Total (m²)": fila_datos.append(avance.area_total or avance.area_elemento or "-")
+            elif c == "Cantidad/Longitud (m)": fila_datos.append(avance.longitud_lineal or avance.cantidad or unidades)
+            elif c == "Color/Especificación": fila_datos.append(avance.color_lineal or avance.color or "-")
+            elif c == "Cantidad (Unidades)": fila_datos.append(avance.cantidad or unidades)
+            elif c == "Tipo de Elemento":
+                partes = []
+                if avance.tipo: partes.append(avance.tipo)
+                if avance.elemento: partes.append(avance.elemento)
+                if avance.tamano: partes.append(avance.tamano)
+                if avance.color: partes.append(avance.color)
+                elem = " - ".join(partes)
+                fila_datos.append(elem if elem else "-")
+            elif c == "Ubicación/Lado":
+                partes = []
+                if avance.calzada: partes.append(f"Calzada: {avance.calzada}")
+                if avance.carril: partes.append(f"Carril: {avance.carril}")
+                if avance.margen: partes.append(f"Margen: {avance.margen}")
+                if avance.ubicacion_pr: partes.append(f"PR: {avance.ubicacion_pr}")
+                ubic = " - ".join(partes)
+                fila_datos.append(ubic if ubic else "-")
             elif c == "Evidencia": fila_datos.append("")
             else: fila_datos.append("-")
             
