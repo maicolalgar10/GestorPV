@@ -1002,7 +1002,7 @@ def editar_proveedor_subfactura(id):
         print(f"Error al editar subfactura de proveedor: {e}")
         return {"success": False, "message": f"Error al actualizar subfactura: {str(e)}"}, 500
 
-@dashboard_bp.route('/proveedores/programacion_pago/cambiar_estado/<int:id>', methods=['POST'])
+@dashboard_bp.route('/dashboard/proveedores/programacion_pago/cambiar_estado/<int:id>', methods=['POST'])
 @login_required
 @admin_oficina_required
 def cambiar_estado_programacion_pago(id):
