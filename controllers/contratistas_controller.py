@@ -57,12 +57,11 @@ def subir_archivo_supabase(file_obj, carpeta="contratistas"):
         file_obj.save(temp_path)
         
         try:
-            with open(temp_path, "rb") as f:
-                supabase.storage.from_("tesoreria").upload(
-                    path,
-                    temp_path, # Pasamos la ruta del archivo, supabase-py la lee
-                    {"content-type": file_obj.content_type}
-                )
+            supabase.storage.from_("tesoreria").upload(
+                path,
+                temp_path,
+                {"content-type": file_obj.content_type}
+            )
             return supabase.storage.from_("tesoreria").get_public_url(path)
         except Exception as e:
             print(f"!!! ERROR CRÍTICO EN SUPABASE STORAGE: {str(e)}")
