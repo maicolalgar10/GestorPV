@@ -190,6 +190,12 @@ def exportar_pdf_historial():
     query_tarj = ProgramacionPagoTarjeta.query.filter(ProgramacionPagoTarjeta.estado.ilike('REALIZADO'))
     # Query Contratistas
     query_cont = ProgramacionPagoContratista.query.filter(ProgramacionPagoContratista.estado.ilike('Realizado'))
+    
+    from models import DianFactura
+    from sqlalchemy import not_, or_
+    query_dian = DianFactura.query.filter(
+        not_(or_(DianFactura.pago == None, DianFactura.pago == '', DianFactura.pago.ilike('pendiente')))
+    )
 
     if fecha_inicio:
         try:
@@ -197,6 +203,7 @@ def exportar_pdf_historial():
             query_prov = query_prov.filter(ProgramacionPagoProveedor.fecha_programada >= f_inicio)
             query_tarj = query_tarj.filter(ProgramacionPagoTarjeta.fecha_programada >= f_inicio)
             query_cont = query_cont.filter(ProgramacionPagoContratista.fecha_programada >= f_inicio)
+            query_dian = query_dian.filter(DianFactura.fecha_pago >= f_inicio)
         except ValueError:
             pass
 
@@ -206,12 +213,14 @@ def exportar_pdf_historial():
             query_prov = query_prov.filter(ProgramacionPagoProveedor.fecha_programada <= f_fin)
             query_tarj = query_tarj.filter(ProgramacionPagoTarjeta.fecha_programada <= f_fin)
             query_cont = query_cont.filter(ProgramacionPagoContratista.fecha_programada <= f_fin)
+            query_dian = query_dian.filter(DianFactura.fecha_pago <= f_fin)
         except ValueError:
             pass
 
     pagos_prov = query_prov.all()
     pagos_tarj = query_tarj.all()
     pagos_cont = query_cont.all()
+    pagos_dian = query_dian.all()
     
     unificados = []
     
@@ -251,6 +260,22 @@ def exportar_pdf_historial():
             'estado': 'Realizado'
         })
         
+    for d in pagos_dian:
+        concepto_dian = d.concepto or ""
+        tipo_impuesto = d.tipo_impuesto or ""
+        if tipo_impuesto:
+            concepto_dian = f"{tipo_impuesto} - {concepto_dian}"
+            
+        unificados.append({
+            'fecha': d.fecha_pago,
+            'tipo': 'DIAN / Impuestos',
+            'entidad': 'DIAN',
+            'monto': float(d.valor or 0),
+            'forma_pago': d.pago or 'Realizado',
+            'concepto': concepto_dian,
+            'estado': 'Realizado'
+        })
+
     # Sort by fecha desc
     unificados.sort(key=lambda x: x['fecha'], reverse=True)
 

@@ -1033,11 +1033,12 @@ def cambiar_estado_programacion_pago(id):
 @admin_oficina_required
 def exportar_pdf_pagos_consolidados():
     try:
-        from models import ProgramacionPagoProveedor, ProgramacionPagoTarjeta, ProgramacionPagoContratista
+        from models import ProgramacionPagoProveedor, ProgramacionPagoTarjeta, ProgramacionPagoContratista, DianFactura
         
         pagos_prov = ProgramacionPagoProveedor.query.all()
         pagos_tar = ProgramacionPagoTarjeta.query.all()
         pagos_cont = ProgramacionPagoContratista.query.all()
+        pagos_dian = DianFactura.query.all()
         
         consolidados = []
         
@@ -1094,6 +1095,31 @@ def exportar_pdf_pagos_consolidados():
                 'estado': clean_text(p.estado)
             })
             
+        for d in pagos_dian:
+            estado_pago = (d.pago or "").strip().lower()
+            
+            concepto_dian = d.concepto or ""
+            tipo_impuesto = d.tipo_impuesto or ""
+            if tipo_impuesto:
+                concepto_dian = f"{tipo_impuesto} - {concepto_dian}"
+            
+            if estado_pago in ['', 'pendiente']:
+                fecha_usar = d.fecha_vencimiento
+                estado_texto = "Pendiente"
+            else:
+                fecha_usar = d.fecha_pago
+                estado_texto = "Realizado"
+                
+            consolidados.append({
+                'fecha_programada': fecha_usar,
+                'tipo': 'DIAN / Impuestos',
+                'entidad': 'DIAN',
+                'monto': float(d.valor or 0),
+                'cuenta_origen': 'N/A',
+                'concepto': clean_text(concepto_dian),
+                'estado': estado_texto
+            })
+
         # Separar en Pendientes y Realizados
         pendientes = [c for c in consolidados if c['estado'].upper() != 'REALIZADO']
         realizados = [c for c in consolidados if c['estado'].upper() == 'REALIZADO']
