@@ -226,6 +226,10 @@
     .modal-backdrop:nth-of-type(even) {
       z-index: 1055 !important;
     }
+
+    /* Modal Backdrop Fixes */
+    .modal { z-index: 1060 !important; }
+    .modal-backdrop { z-index: 1050 !important; }
   </style>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-' + cliente + '.css') }}">
 </head>
@@ -1588,7 +1592,7 @@
       document.getElementById('edit_fecha_pago').value = f_pago;
       
       calcularFacturaEdit();
-      new bootstrap.Modal(document.getElementById('modalEditarFactura')).show();
+      const modalEl_modalEditarFactura = document.getElementById('modalEditarFactura');(bootstrap.Modal.getInstance(modalEl_modalEditarFactura) || new bootstrap.Modal(modalEl_modalEditarFactura)).show();
     }
   
 function limpiarMontoSubFacturaContratista(event) {
@@ -1616,7 +1620,7 @@ function abrirModalEditarSubfactura(id, numero, fecha, concepto, valor) {
     valInput.value = new Intl.NumberFormat('es-CO').format(valor);
   }
   
-  new bootstrap.Modal(document.getElementById('modalEditarSubfactura')).show();
+  const modalEl_modalEditarSubfactura = document.getElementById('modalEditarSubfactura');(bootstrap.Modal.getInstance(modalEl_modalEditarSubfactura) || new bootstrap.Modal(modalEl_modalEditarSubfactura)).show();
 }
 
 function abrirModalContratistaSubFacturas(facturaId, nombreContratista, valorNeto, valorCancelado, totalAdeudado, subfacturas) {
@@ -1665,14 +1669,15 @@ function abrirModalContratistaSubFacturas(facturaId, nombreContratista, valorNet
   }
 
   document.getElementById('inputValorSubFacturaContratista').value = '';
-  new bootstrap.Modal(document.getElementById('modalContratistaSubFacturas')).show();
+  const modalEl_modalContratistaSubFacturas = document.getElementById('modalContratistaSubFacturas');(bootstrap.Modal.getInstance(modalEl_modalContratistaSubFacturas) || new bootstrap.Modal(modalEl_modalContratistaSubFacturas)).show();
 }
 
 function abrirModalConfirmarPagoContratista(id) {
   var form = document.getElementById('formConfirmarPagoContratista');
   var baseUrl = "{{ url_for('contratistas.cambiar_estado', id=0) }}";
   form.action = baseUrl.replace("0", id);
-  var modal = new bootstrap.Modal(document.getElementById('modalConfirmarPagoContratista'));
+  const mEl_modalConfirmarPagoContratista = document.getElementById('modalConfirmarPagoContratista');
+  var modal = bootstrap.Modal.getInstance(mEl_modalConfirmarPagoContratista) || new bootstrap.Modal(mEl_modalConfirmarPagoContratista);
   modal.show();
 }
 
@@ -1685,7 +1690,8 @@ function abrirModalProgramarPagoContratista(id, nombre, deuda) {
   if (montoInput) {
     montoInput.value = deudaStr;
   }
-  var modal = new bootstrap.Modal(document.getElementById('modalProgramarPagoContratista'));
+  const mEl_modalProgramarPagoContratista = document.getElementById('modalProgramarPagoContratista');
+  var modal = bootstrap.Modal.getInstance(mEl_modalProgramarPagoContratista) || new bootstrap.Modal(mEl_modalProgramarPagoContratista);
   modal.show();
 }
 
@@ -1695,7 +1701,8 @@ function abrirModalEditarPagoProgramadoContratista(id, fecha, nombre, monto, obs
   document.getElementById('edit_prog_monto').value = new Intl.NumberFormat('es-CO').format(monto);
   document.getElementById('edit_prog_observacion').value = observacion;
   document.getElementById('formEditarPagoProgramadoContratista').action = `/contratistas/programacion_pago/editar/${id}`;
-  var modal = new bootstrap.Modal(document.getElementById('modalEditarPagoProgramadoContratista'));
+  const mEl_modalEditarPagoProgramadoContratista = document.getElementById('modalEditarPagoProgramadoContratista');
+  var modal = bootstrap.Modal.getInstance(mEl_modalEditarPagoProgramadoContratista) || new bootstrap.Modal(mEl_modalEditarPagoProgramadoContratista);
   modal.show();
 }
 
@@ -1727,3 +1734,4 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
+

@@ -230,6 +230,10 @@
       .kpi-value { font-size: 1.15rem; }
       .table-responsive { font-size: .78rem; }
     }
+
+    /* Modal Backdrop Fixes */
+    .modal { z-index: 1060 !important; }
+    .modal-backdrop { z-index: 1050 !important; }
   </style>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-' + cliente + '.css') }}">
 </head>
@@ -1558,7 +1562,8 @@ function abrirModalProveedorSubFacturas(facturaId, nombreProveedor, valorNeto, v
   }
 
   document.getElementById('inputValorSubFactura').value = '';
-  new bootstrap.Modal(document.getElementById('modalProveedorSubFacturas')).show();
+  const mEl_modalProveedorSubFacturas = document.getElementById('modalProveedorSubFacturas');
+  (bootstrap.Modal.getInstance(mEl_modalProveedorSubFacturas) || new bootstrap.Modal(mEl_modalProveedorSubFacturas)).show();
 }
 
 function abrirModalEditarSubfacturaProveedor(id, numero, fecha, concepto, valor) {
@@ -1653,7 +1658,8 @@ function abrirModalEditar(id, nombre, fecha_factura, plazo, fecha_venc, valor_ne
   });
 
   calcularIVA('e');
-  new bootstrap.Modal(document.getElementById('modalEditarFactura')).show();
+  const mEl_modalEditarFactura = document.getElementById('modalEditarFactura');
+  (bootstrap.Modal.getInstance(mEl_modalEditarFactura) || new bootstrap.Modal(mEl_modalEditarFactura)).show();
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -1842,7 +1848,8 @@ function abrirModalEditarPagoProgramado(id, fecha, proveedor_nombre, monto, obse
   // Configurar la acción del formulario
   document.getElementById('formEditarPagoProgramado').action = `/proveedores/programacion_pago/editar/${id}`;
   
-  var modal = new bootstrap.Modal(document.getElementById('modalEditarPagoProgramado'));
+  const mEl_modalEditarPagoProgramado = document.getElementById('modalEditarPagoProgramado');
+  var modal = bootstrap.Modal.getInstance(mEl_modalEditarPagoProgramado) || new bootstrap.Modal(mEl_modalEditarPagoProgramado);
   modal.show();
 }
 </script>
@@ -1879,8 +1886,9 @@ function abrirModalConfirmarPago(id) {
     // Generar la URL base usando Jinja y reemplazar el ID dinámicamente
     var baseUrl = "{{ url_for('dashboard.cambiar_estado_programacion_pago', id=0) }}";
     form.action = baseUrl.replace("0", id);
-    var modal = new bootstrap.Modal(document.getElementById('modalConfirmarPagoProveedor'));
-    modal.show();
+    const mEl_modalConfirmarPagoProveedor = document.getElementById('modalConfirmarPagoProveedor');
+  var modal = bootstrap.Modal.getInstance(mEl_modalConfirmarPagoProveedor) || new bootstrap.Modal(mEl_modalConfirmarPagoProveedor);
+  modal.show();
 }
 
 window.recalcularFactura = function() {
