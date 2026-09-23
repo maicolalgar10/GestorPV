@@ -390,7 +390,7 @@
             <th>NIT</th>
             <th>Teléfono</th>
             <th class="text-end">Deuda Total</th>
-            <th class="text-center">Programar</th>
+            <th class="text-center">Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -413,6 +413,11 @@
               {% endif %}
             </td>
             <td class="text-center">
+              <form method="POST" action="{{ url_for('proveedores.eliminar_proveedor', proveedor_id=p.id) }}" class="d-inline me-1" onsubmit="return confirm('¿Estás seguro de eliminar este proveedor? Se eliminarán también sus datos asociados.');">
+                <button type="submit" class="btn btn-outline-danger btn-sm rounded-circle p-1" title="Eliminar Proveedor">
+                  <i class="bi bi-trash fs-5"></i>
+                </button>
+              </form>
               {% if deuda > 0 %}
                 <button type="button" 
                         class="btn btn-outline-primary btn-sm rounded-circle p-1" 

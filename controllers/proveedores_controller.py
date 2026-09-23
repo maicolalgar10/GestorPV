@@ -387,3 +387,19 @@ def exportar_pdf_historial():
         download_name="Reporte_Unificado_Pagos.pdf",
         mimetype="application/pdf"
     )
+
+@proveedores_bp.route('/proveedor/eliminar/<int:proveedor_id>', methods=['POST'])
+@login_required
+@admin_oficina_required
+def eliminar_proveedor(proveedor_id):
+    from models import Proveedor
+    proveedor = Proveedor.query.get_or_404(proveedor_id)
+    try:
+        db.session.delete(proveedor)
+        db.session.commit()
+        flash("Proveedor eliminado correctamente.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al eliminar proveedor: {e}", "danger")
+    
+    return redirect(url_for('dashboard.proveedores'))
