@@ -531,19 +531,19 @@
                           <i class="bi bi-pencil-square"></i>
                         </button>
                         {% if r.comprobante_compra_url %}
-                        <a href="{{ r.comprobante_compra_url }}" target="_blank"
+                        <a href="{{ r.comprobante_compra_url }}?v={{ cache_buster }}" target="_blank"
                           class="btn btn-sm btn-outline-danger rounded-pill px-2 py-0 ms-1" title="Ver Factura">
                           <i class="bi bi-file-earmark-text"></i>
                         </a>
                         {% endif %}
                         {% if r.orden_compra_url %}
-                        <a href="{{ r.orden_compra_url }}" target="_blank"
+                        <a href="{{ r.orden_compra_url }}?v={{ cache_buster }}" target="_blank"
                           class="btn btn-sm btn-outline-info rounded-pill px-2 py-0 ms-1" title="Ver Orden de Compra">
                           <i class="bi bi-file-earmark-check"></i>
                         </a>
                         {% endif %}
                         {% if r.banco_pago_url %}
-                        <a href="{{ r.banco_pago_url }}" target="_blank"
+                        <a href="{{ r.banco_pago_url }}?v={{ cache_buster }}" target="_blank"
                           class="btn btn-sm btn-outline-warning rounded-pill px-2 py-0 ms-1"
                           title="Ver Soporte de Pago">
                           <i class="bi bi-cash-coin"></i>
@@ -1645,7 +1645,7 @@ function abrirModalContratistaSubFacturas(facturaId, nombreContratista, valorNet
     subfacturas.forEach(sf => {
       let tr = document.createElement('tr');
       
-      let pdfBtn = sf.pdf_url ? `<a href="${sf.pdf_url}" target="_blank" class="btn btn-sm btn-outline-info rounded-pill px-2 me-1" title="Ver PDF"><i class="bi bi-file-earmark-pdf"></i></a>` : '';
+      let pdfBtn = sf.pdf_url ? `<a href="${sf.pdf_url}?v={{ cache_buster }}" target="_blank" class="btn btn-sm btn-outline-info rounded-pill px-2 me-1" title="Ver PDF"><i class="bi bi-file-earmark-pdf"></i></a>` : '';
       let editBtn = `
         <button class="btn btn-sm btn-outline-primary rounded-pill px-2 me-1" title="Editar"
                 onclick="abrirModalEditarSubfactura(${sf.id}, '${sf.numero.replace(/'/g, "\\'")}', '${sf.fecha}', '${sf.concepto.replace(/'/g, "\\'")}', ${sf.valor})">

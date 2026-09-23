@@ -1,6 +1,7 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, session
+from flask import make_response, Blueprint, render_template, request, redirect, url_for, flash, current_app, session
 from datetime import datetime as dt
 import os
+import time
 import uuid
 import re
 from werkzeug.utils import secure_filename
@@ -136,7 +137,7 @@ def index():
         pagos_programados = []
         print(f"Error cargando pagos programados: {e}")
 
-    return render_template(
+    response = make_response(render_template(
         "contratistas.html",
         usuario=usuario,
         notificaciones=notificaciones,
@@ -147,7 +148,12 @@ def index():
         totales_contratos=totales_contratos,
         deuda_por_contratista=deuda_por_contratista,
         pagos_programados=pagos_programados,
-    )
+        cache_buster=int(time.time())
+    ))
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 @contratistas_bp.route("/historial_pagos", methods=["GET"])
 @login_required
@@ -176,11 +182,16 @@ def historial_pagos():
     
     total_pagado = sum(float(pago.monto or 0.0) for pago in pagos_realizados)
     
-    return render_template(
+    response = make_response(render_template(
         "historial_pagos_contratistas.html",
         pagos=pagos_realizados,
-        total_pagado=total_pagado
-    )
+        total_pagado=total_pagado,
+        cache_buster=int(time.time())
+    ))
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 @contratistas_bp.route("/programar_pago", methods=["POST"])
 @login_required
