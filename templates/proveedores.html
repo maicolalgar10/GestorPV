@@ -1876,8 +1876,9 @@ function abrirModalEditarPagoProgramado(id, fecha, proveedor_nombre, monto, obse
 <script>
 function abrirModalConfirmarPago(id) {
     var form = document.getElementById('formConfirmarPagoProveedor');
-    // Asumiendo que url_for('proveedores.cambiar_estado', id=0) es /proveedores/cambiar_estado/0
-    form.action = "/dashboard/proveedores/programacion_pago/cambiar_estado/" + id;
+    // Generar la URL base usando Jinja y reemplazar el ID dinámicamente
+    var baseUrl = "{{ url_for('dashboard.cambiar_estado_programacion_pago', id=0) }}";
+    form.action = baseUrl.replace("0", id);
     var modal = new bootstrap.Modal(document.getElementById('modalConfirmarPagoProveedor'));
     modal.show();
 }
