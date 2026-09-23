@@ -1734,10 +1734,10 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-  // Validacion de tamaño de archivo (Max 10MB) para inputs file
+  // Validacion de tamaño de archivo (Max 100MB) para inputs file
   document.querySelectorAll('input[type="file"]').forEach(function(input) {
     input.addEventListener('change', function() {
-      const maxMB = 10;
+      const maxMB = 100;
       const maxSize = maxMB * 1024 * 1024;
       if (this.files && this.files[0]) {
         if (this.files[0].size > maxSize) {
