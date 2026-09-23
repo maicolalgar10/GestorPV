@@ -339,9 +339,9 @@
       <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center gap-2">
           <h5 class="mb-0 fw-bold"><i class="bi bi-calendar-event me-2 text-warning"></i>Próximos Pagos Programados</h5>
-          <button type="button" data-bs-toggle="modal" data-bs-target="#modalHistorialPagosContratista" class="btn btn-sm btn-outline-success ms-2" title="Historial">
+          <a href="{{ url_for('contratistas.historial_pagos') }}" class="btn btn-sm btn-outline-success ms-2" title="Historial">
             <i class="bi bi-clock-history"></i> Historial de Pagos
-          </button>
+          </a>
           <a href="{{ url_for('dashboard.exportar_pdf_pagos_consolidados') }}" class="btn btn-sm btn-danger" title="Exportar PDF">
             <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
           </a>
@@ -1296,61 +1296,7 @@
   </div>
 </div>
 
-<!-- MODAL HISTORIAL DE PAGOS CONTRATISTAS -->
-<div class="modal fade modal-dark" id="modalHistorialPagosContratista" tabindex="-1">
-  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title fw-bold">
-          <i class="bi bi-clock-history me-2 text-success"></i>Historial de Pagos Realizados
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-4">
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead>
-              <tr>
-                <th>Fecha Pago</th>
-                <th>Contratista</th>
-                <th class="text-end">Monto Pagado</th>
-                <th>Forma de Pago / Comprobante</th>
-                <th>Observación</th>
-              </tr>
-            </thead>
-            <tbody class="border-top-0">
-              {% set realizados = pagos_programados | selectattr("estado", "equalto", "Realizado") | list %}
-              {% if realizados %}
-                {% for pago in realizados %}
-                <tr>
-                  <td class="fw-semibold text-white">{{ pago.fecha_programada.strftime('%d/%m/%Y') if pago.fecha_programada else '—' }}</td>
-                  <td class="text-white">{{ pago.contratista.nombre if pago.contratista else 'Desconocido' }}</td>
-                  <td class="text-end fw-bold text-success">${{ "{:,.0f}".format(pago.monto) | replace(",",".") }}</td>
-                  <td class="text-white">
-                    {% if pago.forma_pago %}
-                      <span class="badge bg-info text-dark">{{ pago.forma_pago }}</span>
-                    {% else %}
-                      <span class="text-muted small">—</span>
-                    {% endif %}
-                  </td>
-                  <td class="text-white small">{{ pago.observacion or '—' }}</td>
-                </tr>
-                {% endfor %}
-              {% else %}
-                <tr>
-                  <td colspan="5" class="text-center text-muted py-4">No hay pagos realizados registrados.</td>
-                </tr>
-              {% endif %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <div class="modal-footer border-top-0 pt-0">
-        <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Cerrar</button>
-      </div>
-    </div>
-  </div>
-</div>
+
 
 <!-- Modal Contratista Sub-facturas -->
 <div class="modal fade modal-dark" id="modalContratistaSubFacturas" tabindex="-1">

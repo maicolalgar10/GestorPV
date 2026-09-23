@@ -142,6 +142,39 @@ def index():
         pagos_programados=pagos_programados,
     )
 
+@contratistas_bp.route("/historial_pagos", methods=["GET"])
+@login_required
+@admin_oficina_required
+def historial_pagos():
+    fecha_inicio = request.args.get("fecha_inicio")
+    fecha_fin = request.args.get("fecha_fin")
+    
+    query = ProgramacionPagoContratista.query.filter(ProgramacionPagoContratista.estado.ilike('Realizado'))
+    
+    if fecha_inicio:
+        try:
+            f_inicio = dt.strptime(fecha_inicio, "%Y-%m-%d").date()
+            query = query.filter(ProgramacionPagoContratista.fecha_programada >= f_inicio)
+        except ValueError:
+            pass
+            
+    if fecha_fin:
+        try:
+            f_fin = dt.strptime(fecha_fin, "%Y-%m-%d").date()
+            query = query.filter(ProgramacionPagoContratista.fecha_programada <= f_fin)
+        except ValueError:
+            pass
+            
+    pagos_realizados = query.order_by(ProgramacionPagoContratista.fecha_programada.desc()).all()
+    
+    total_pagado = sum(float(pago.monto or 0.0) for pago in pagos_realizados)
+    
+    return render_template(
+        "historial_pagos_contratistas.html",
+        pagos=pagos_realizados,
+        total_pagado=total_pagado
+    )
+
 @contratistas_bp.route("/programar_pago", methods=["POST"])
 @login_required
 @admin_oficina_required
