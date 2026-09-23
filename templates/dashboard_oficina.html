@@ -142,6 +142,10 @@
             <span class="card-title">Trabajadores</span>
             <span class="card-sub">Nómina y asistencia</span>
           </a>
+          <a href="{{ url_for('egreso_caja.index') }}" class="card-link-compact border-secondary">
+            <span class="card-title">Egreso de Caja</span>
+            <span class="card-sub">Salidas y gastos</span>
+          </a>
           <a href="{{ url_for('dashboard.gestion_materiales_oficina') }}" class="card-link-compact border-danger">
             <span class="card-title">Materiales</span>
             <span class="card-sub">Inventario</span>
@@ -233,13 +237,6 @@
       </div>
 
       <div class="col-lg-4">
-        <div class="module-card p-4 mb-4" style="border-top: 4px solid #f59e0b;">
-          <h5 class="section-title"><i class="bi bi-cash-stack text-warning"></i> Egreso de Caja</h5>
-          <p class="text-muted small">Gestión de gastos y salidas de caja.</p>
-          <a href="{{ url_for('egreso_caja.index') }}" class="btn btn-warning text-dark fw-semibold btn-sm w-100">
-            <i class="bi bi-box-arrow-in-right me-1"></i> Abrir Módulo
-          </a>
-        </div>
 
         <div class="module-card p-4 mb-4" style="border-top: 4px solid #4f46e5;">
           <h5 class="section-title"><i class="bi bi-calculator text-primary"></i> Cotizador</h5>
@@ -453,6 +450,15 @@
               </div>
             </div>
           </a>
+          <a href="{{ url_for('egreso_caja.index') }}" class="text-decoration-none">
+            <div class="card stat-card p-3" style="cursor:pointer; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+              <div class="card-body text-center">
+                <h2 class="fw-bold m-0 text-white"><i class="bi bi-cash-stack"></i></h2>
+                <p class="mb-0 opacity-75 small fw-bold text-uppercase text-white mt-1">Egreso de Caja</p>
+                <div class="mt-2 opacity-50 text-white" style="font-size:0.75rem;"><i class="bi bi-arrow-right-circle"></i> Ir al módulo</div>
+              </div>
+            </div>
+          </a>
         </div>
       </div>
     </div>
@@ -530,13 +536,6 @@
       </div>
 
       <div class="col-lg-4">
-        <div class="module-card p-4 mb-4" style="border-top: 4px solid #f59e0b;">
-          <h5 class="section-title"><i class="bi bi-cash-stack text-warning"></i> Egreso de Caja</h5>
-          <p class="text-muted small">Gestión de gastos y salidas de caja.</p>
-          <a href="{{ url_for('egreso_caja.index') }}" class="btn btn-warning text-dark fw-semibold btn-sm w-100">
-            <i class="bi bi-box-arrow-in-right me-1"></i> Abrir Módulo
-          </a>
-        </div>
 
         <div class="module-card p-4 mb-4" style="border-top: 4px solid #4f46e5;">
           <h5 class="section-title"><i class="bi bi-calculator text-primary"></i> Cotizador</h5>
