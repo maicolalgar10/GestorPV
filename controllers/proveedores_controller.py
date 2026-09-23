@@ -4,7 +4,7 @@ from reportlab.lib.pagesizes import letter, landscape
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
-from models import db, ProgramacionPagoProveedor, ProgramacionPagoTarjeta
+from models import db, ProgramacionPagoProveedor, ProgramacionPagoTarjeta, ProgramacionPagoContratista
 import os
 from reportlab.platypus import Image
 from reportlab.lib.units import inch
@@ -188,12 +188,15 @@ def exportar_pdf_historial():
     query_prov = ProgramacionPagoProveedor.query.filter(ProgramacionPagoProveedor.estado.ilike('Realizado'))
     # Query Tarjetas
     query_tarj = ProgramacionPagoTarjeta.query.filter(ProgramacionPagoTarjeta.estado.ilike('REALIZADO'))
+    # Query Contratistas
+    query_cont = ProgramacionPagoContratista.query.filter(ProgramacionPagoContratista.estado.ilike('Realizado'))
 
     if fecha_inicio:
         try:
             f_inicio = dt.strptime(fecha_inicio, "%Y-%m-%d").date()
             query_prov = query_prov.filter(ProgramacionPagoProveedor.fecha_programada >= f_inicio)
             query_tarj = query_tarj.filter(ProgramacionPagoTarjeta.fecha_programada >= f_inicio)
+            query_cont = query_cont.filter(ProgramacionPagoContratista.fecha_programada >= f_inicio)
         except ValueError:
             pass
 
@@ -202,11 +205,13 @@ def exportar_pdf_historial():
             f_fin = dt.strptime(fecha_fin, "%Y-%m-%d").date()
             query_prov = query_prov.filter(ProgramacionPagoProveedor.fecha_programada <= f_fin)
             query_tarj = query_tarj.filter(ProgramacionPagoTarjeta.fecha_programada <= f_fin)
+            query_cont = query_cont.filter(ProgramacionPagoContratista.fecha_programada <= f_fin)
         except ValueError:
             pass
 
     pagos_prov = query_prov.all()
     pagos_tarj = query_tarj.all()
+    pagos_cont = query_cont.all()
     
     unificados = []
     
@@ -231,6 +236,18 @@ def exportar_pdf_historial():
             'monto': float(t.monto or 0),
             'forma_pago': t.forma_pago or t.cuenta_origen or 'N/A',
             'concepto': t.concepto or '',
+            'estado': 'Realizado'
+        })
+        
+    for c in pagos_cont:
+        cont_nombre = c.contratista.nombre if (hasattr(c, 'contratista') and c.contratista) else 'N/A'
+        unificados.append({
+            'fecha': c.fecha_programada,
+            'tipo': 'Contratista',
+            'entidad': cont_nombre,
+            'monto': float(c.monto or 0),
+            'forma_pago': c.forma_pago or 'N/A',
+            'concepto': c.observacion or '',
             'estado': 'Realizado'
         })
         
