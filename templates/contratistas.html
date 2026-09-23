@@ -342,7 +342,7 @@
           <a href="#" onclick="alert('Historial en desarrollo'); return false;" class="btn btn-sm btn-outline-success ms-2" title="Historial">
             <i class="bi bi-clock-history"></i> Historial de Pagos
           </a>
-          <a href="#" onclick="alert('Exportación PDF en desarrollo'); return false;" class="btn btn-sm btn-danger" title="Exportar PDF">
+          <a href="{{ url_for('dashboard.exportar_pdf_pagos_consolidados') }}" class="btn btn-sm btn-danger" title="Exportar PDF">
             <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
           </a>
         </div>
