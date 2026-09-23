@@ -191,8 +191,11 @@ def cambiar_estado(id):
     pago = ProgramacionPagoContratista.query.get_or_404(id)
     try:
         nuevo_estado = request.form.get("estado")
+        forma_pago = request.form.get("forma_pago")
         if nuevo_estado in ['Programado', 'Realizado', 'Cancelado']:
             pago.estado = nuevo_estado
+            if nuevo_estado == 'Realizado' and forma_pago:
+                pago.forma_pago = forma_pago
             db.session.commit()
             flash("Estado del pago actualizado.", "success")
         else:

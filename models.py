@@ -1237,6 +1237,7 @@ class ProgramacionPagoContratista(db.Model):
     contratista_id = db.Column(db.Integer, db.ForeignKey('contratistas.id', ondelete='CASCADE'), nullable=False)
     fecha_programada = db.Column(db.Date, nullable=False)
     monto = db.Column(db.Numeric(15, 2), nullable=False)
+    forma_pago = db.Column(db.String(100), nullable=True)
     estado = db.Column(db.String(50), nullable=False, default='Programado') # 'Programado', 'Realizado', 'Cancelado'
     observacion = db.Column(db.Text, nullable=True)
     creado_en = db.Column(db.DateTime, default=datetime.utcnow)

@@ -391,11 +391,9 @@
                           onclick="abrirModalEditarPagoProgramadoContratista({{ pago.id }}, '{{ pago.fecha_programada.strftime('%Y-%m-%d') if pago.fecha_programada else '' }}', '{{ (pago.contratista.nombre if pago.contratista else 'Desconocido') | replace("'", "\\'") | replace('"', '\\"') }}', {{ pago.monto or 0 }}, '{{ pago.observacion or '' }}')">
                     <i class="bi bi-pencil-square"></i>
                   </button>
-                  <form method="POST" action="{{ url_for('contratistas.cambiar_estado', id=pago.id) }}" class="d-inline">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="estado" value="Realizado">
-                    <button type="submit" class="btn btn-sm btn-outline-success rounded-pill" title="Marcar como Realizado"><i class="bi bi-check-circle"></i></button>
-                  </form>
+                  <button type="button" class="btn btn-sm btn-outline-success rounded-pill" title="Marcar como Realizado" onclick="abrirModalConfirmarPagoContratista({{ pago.id }})">
+                    <i class="bi bi-check-circle"></i>
+                  </button>
                   <form method="POST" action="{{ url_for('contratistas.eliminar_programacion', id=pago.id) }}" class="d-inline ms-1" onsubmit="return confirm('¿Eliminar esta programación?');">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Eliminar"><i class="bi bi-trash"></i></button>
@@ -1213,6 +1211,36 @@
   </div>
 </div>
 
+<!-- Modal Confirmar Pago Contratista -->
+<div class="modal fade modal-dark" id="modalConfirmarPagoContratista" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-light border border-secondary border-opacity-25 shadow-lg">
+      <div class="modal-header border-bottom border-secondary border-opacity-25 bg-success bg-opacity-10">
+        <h5 class="modal-title text-success fw-bold"><i class="bi bi-check-circle me-2"></i>Confirmar Pago Realizado</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="formConfirmarPagoContratista" method="POST" action="">
+        <div class="modal-body">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="estado" value="Realizado">
+          
+          <div class="mb-3">
+            <label class="form-label text-light opacity-75">Forma de Pago / Comprobante</label>
+            <input type="text" class="form-control bg-dark text-light border-secondary" name="forma_pago" placeholder="Ej. Transferencia Bancolombia #12345" required>
+            <div class="form-text text-light opacity-50">Ingresa los detalles del pago realizado para llevar el registro.</div>
+          </div>
+          
+          <p class="mb-0 text-light opacity-75">¿Estás seguro de que deseas marcar este pago como <strong class="text-success">Realizado</strong>? Esta acción actualizará el historial.</p>
+        </div>
+        <div class="modal-footer border-top border-secondary border-opacity-25">
+          <button type="button" class="btn btn-outline-light rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success rounded-pill fw-bold">Confirmar Pago</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Editar Sub-factura -->
 <div class="modal fade modal-dark" id="modalEditarSubfactura" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
@@ -1638,6 +1666,14 @@ function abrirModalContratistaSubFacturas(facturaId, nombreContratista, valorNet
 
   document.getElementById('inputValorSubFacturaContratista').value = '';
   new bootstrap.Modal(document.getElementById('modalContratistaSubFacturas')).show();
+}
+
+function abrirModalConfirmarPagoContratista(id) {
+  var form = document.getElementById('formConfirmarPagoContratista');
+  var baseUrl = "{{ url_for('contratistas.cambiar_estado', id=0) }}";
+  form.action = baseUrl.replace("0", id);
+  var modal = new bootstrap.Modal(document.getElementById('modalConfirmarPagoContratista'));
+  modal.show();
 }
 
 function abrirModalProgramarPagoContratista(id, nombre, deuda) {
