@@ -24,5 +24,10 @@ def enviar_correo(to_email, subject, body_text):
         ]
     }
 
-    result = mailjet.send.create(data=data)
-    return result.status_code, result.json()
+    try:
+        # Wrap sending in a try...except in case of timeout or API failure
+        result = mailjet.send.create(data=data)
+        return result.status_code, result.json()
+    except Exception as e:
+        print(f"!!! Error al enviar correo por Mailjet: {str(e)}")
+        return 500, {"error": str(e)}

@@ -39,6 +39,7 @@ def limpiar_monto(val):
     except ValueError:
         return 0.0
 
+import tempfile
 def subir_archivo_supabase(file_obj, carpeta="contratistas"):
     """Sube un archivo a Supabase Storage y retorna la URL pública."""
     if not file_obj or file_obj.filename == '':
@@ -51,17 +52,24 @@ def subir_archivo_supabase(file_obj, carpeta="contratistas"):
         filename = f"{uuid.uuid4().hex}_{nombre_seguro}"
         path = f"{carpeta}/{filename}"
         
-        file_bytes = file_obj.read()
+        # Guardar en archivo temporal para evitar colapsar la RAM (SIGKILL) con archivos pesados
+        temp_path = os.path.join(tempfile.gettempdir(), filename)
+        file_obj.save(temp_path)
+        
         try:
-            supabase.storage.from_("tesoreria").upload(
-                path,
-                file_bytes,
-                {"content-type": file_obj.content_type}
-            )
+            with open(temp_path, "rb") as f:
+                supabase.storage.from_("tesoreria").upload(
+                    path,
+                    temp_path, # Pasamos la ruta del archivo, supabase-py la lee
+                    {"content-type": file_obj.content_type}
+                )
             return supabase.storage.from_("tesoreria").get_public_url(path)
         except Exception as e:
             print(f"!!! ERROR CRÍTICO EN SUPABASE STORAGE: {str(e)}")
             return None
+        finally:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
     return None
 
 # ─── GET /contratistas ───────────────────────────
