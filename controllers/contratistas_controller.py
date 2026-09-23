@@ -65,7 +65,10 @@ def subir_archivo_supabase(file_obj, carpeta="contratistas"):
             )
             return supabase.storage.from_("tesoreria").get_public_url(path)
         except Exception as e:
-            print(f"!!! ERROR CRÍTICO EN SUPABASE STORAGE: {str(e)}")
+            error_msg = str(e)
+            print(f"!!! ERROR CRÍTICO EN SUPABASE STORAGE: {error_msg}")
+            if "413" in error_msg or "Payload too large" in error_msg or "maximum allowed size" in error_msg:
+                flash('El archivo PDF supera el tamaño máximo permitido por el servidor. Por favor comprímelo e inténtalo de nuevo.', 'danger')
             return None
         finally:
             if os.path.exists(temp_path):
