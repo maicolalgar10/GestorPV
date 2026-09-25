@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Módulo Seguridad Social</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { background-color: #f3f4f6; font-family: 'Inter', sans-serif; }
+    .module-card { background: white; border-radius: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
+    .section-title { font-weight: 700; color: #374151; display: flex; align-items: center; gap: 10px; }
+    .table th { background-color: #f8f9fa; font-weight: 600; color: #4b5563; }
+  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-' + cliente + '.css') }}">
+</head>
+<body>
+  {% include 'mensajes.html' %}
+
+  <div class="container mt-4 pb-5">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <a href="{{ url_for('dashboard.dashboard_oficina') }}" class="btn btn-light btn-sm shadow-sm rounded-pill mb-2">
+          <i class="bi bi-arrow-left"></i> Volver al Dashboard
+        </a>
+        <h2 class="fw-bold m-0"><i class="bi bi-shield-check text-info"></i> Módulo Seguridad Social</h2>
+        <p class="text-secondary small">Gestión de Planillas EPS, ARL, Pensión | {{ usuario.nombre }}</p>
+      </div>
+      <button class="btn btn-info text-white rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#modalNuevaPlanilla">
+        <i class="bi bi-plus-lg"></i> Nueva Planilla
+      </button>
+    </div>
+
+    <!-- Tabla -->
+    <div class="module-card p-4">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead>
+            <tr>
+              <th>Concepto</th>
+              <th>Tipo de Planilla</th>
+              <th class="text-end">Valor</th>
+              <th>Estado de Pago</th>
+              <th>
+                Vencimiento
+                <a href="{{ url_for('seguridad_social.index', sort_by='vencimiento', order='asc' if (current_sort == 'vencimiento' and current_order == 'desc') else 'desc') }}" class="text-decoration-none ms-1 {% if current_sort == 'vencimiento' %}text-info{% else %}text-secondary{% endif %}" title="Ordenar por Vencimiento">
+                  <i class="bi bi-sort-numeric-{{ 'down' if (current_sort == 'vencimiento' and current_order == 'asc') else 'up' }}"></i>
+                </a>
+              </th>
+              <th>
+                Fecha Pago
+                <a href="{{ url_for('seguridad_social.index', sort_by='fecha_pago', order='asc' if (current_sort == 'fecha_pago' and current_order == 'desc') else 'desc') }}" class="text-decoration-none ms-1 {% if current_sort == 'fecha_pago' %}text-info{% else %}text-secondary{% endif %}" title="Ordenar por Fecha de Pago">
+                  <i class="bi bi-sort-numeric-{{ 'down' if (current_sort == 'fecha_pago' and current_order == 'asc') else 'up' }}"></i>
+                </a>
+              </th>
+              <th class="text-center">Soportes</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in planillas %}
+            <tr>
+              <td><strong>{{ p.concepto }}</strong></td>
+              <td><span class="badge bg-secondary">{{ p.tipo_planilla }}</span></td>
+              <td class="text-end">${{ "{:,.2f}".format(p.valor) }}</td>
+              <td>{{ p.estado_pago }}</td>
+              <td>{{ p.fecha_vencimiento.strftime('%d/%m/%Y') if p.fecha_vencimiento else '-' }}</td>
+              <td>{{ p.fecha_pago.strftime('%d/%m/%Y') if p.fecha_pago else '-' }}</td>
+              <td class="text-center">
+                {% if p.soporte_declaracion_url %}
+                <a href="{{ p.soporte_declaracion_url }}" target="_blank" class="btn btn-sm btn-outline-info rounded-pill mb-1" title="Ver Declaración">
+                  <i class="bi bi-file-earmark-text"></i> Dec.
+                </a>
+                {% endif %}
+                {% if p.soporte_pago_url %}
+                <a href="{{ p.soporte_pago_url }}" target="_blank" class="btn btn-sm btn-outline-success rounded-pill mb-1" title="Ver Soporte de Pago">
+                  <i class="bi bi-receipt"></i> Pago
+                </a>
+                {% endif %}
+                {% if not p.soporte_declaracion_url and not p.soporte_pago_url %}
+                <span class="text-muted small">Sin soportes</span>
+                {% endif %}
+              </td>
+              <td class="text-center text-nowrap">
+                <button type="button" class="btn btn-sm btn-outline-warning rounded-pill" title="Editar" 
+                  onclick="abrirModalEditar({{ p.id }}, '{{ p.concepto | replace("'", "\\'") }}', '{{ p.tipo_planilla }}', {{ p.valor }}, '{{ p.estado_pago }}', '{{ p.fecha_vencimiento or '' }}', '{{ p.fecha_pago or '' }}', '{{ p.soporte_declaracion_url or '' }}', '{{ p.soporte_pago_url or '' }}')">
+                  <i class="bi bi-pencil"></i>
+                </button>
+
+                <form method="POST" action="{{ url_for('seguridad_social.eliminar', id=p.id) }}" class="d-inline" onsubmit="return confirm('¿Seguro que deseas eliminar este registro?');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Eliminar">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" class="text-center text-muted">No hay planillas registradas.</td></tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr class="table-light fw-bold">
+              <td colspan="2" class="text-end text-uppercase">Suma Total:</td>
+              <td class="text-end text-info fs-5">${{ "{:,.2f}".format(total_valor|default(0)) }}</td>
+              <td colspan="5"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Nueva Planilla -->
+  <div class="modal fade" id="modalNuevaPlanilla" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+        <form method="POST" action="{{ url_for('seguridad_social.crear') }}" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          
+          <div class="modal-header border-0 bg-info text-white" style="border-radius: 20px 20px 0 0;">
+            <h5 class="modal-title fw-bold"><i class="bi bi-file-earmark-plus"></i> Registrar Planilla de Seguridad Social</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body p-4 bg-light">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Concepto / Descripción</label>
+                <input type="text" name="concepto" class="form-control" required placeholder="Ej: Planilla EPS - Mes X">
+              </div>
+              
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Tipo de Planilla</label>
+                <select name="tipo_planilla" class="form-select" required>
+                  <option value="" disabled selected>Seleccione...</option>
+                  <option value="PILA">PILA</option>
+                  <option value="EPS">EPS</option>
+                  <option value="ARL">ARL</option>
+                  <option value="Pensión">Pensión</option>
+                  <option value="Caja Comp.">Caja Comp.</option>
+                  <option value="Otra">Otra</option>
+                </select>
+              </div>
+              
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Valor</label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input type="hidden" name="valor" id="valor_hidden" required>
+                  <input type="text" id="valor_visual" class="form-control" required oninput="formatearMoneda(this, 'valor_hidden')">
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Estado de Pago (Opcional)</label>
+                <input type="text" name="estado_pago" class="form-control" placeholder="Ej: Pendiente, Pagado Bancolombia...">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Fecha de Vencimiento</label>
+                <input type="date" name="fecha_vencimiento" class="form-control">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Fecha de Pago (Opcional)</label>
+                <input type="date" name="fecha_pago" class="form-control">
+              </div>
+
+              <div class="col-md-6 mt-3">
+                <label class="form-label fw-semibold">Soporte Declaración/Planilla (PDF/Img)</label>
+                <input type="file" name="soporte_declaracion" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.webp">
+              </div>
+              <div class="col-md-6 mt-3">
+                <label class="form-label fw-semibold">Soporte de Pago (PDF/Img)</label>
+                <input type="file" name="soporte_pago" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.webp">
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer border-0">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-info text-white"><i class="bi bi-save"></i> Guardar Registro</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Editar Planilla -->
+  <div class="modal fade" id="modalEditarPlanilla" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+        <form method="POST" id="formEditarPlanilla" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          
+          <div class="modal-header border-0 bg-warning text-dark" style="border-radius: 20px 20px 0 0;">
+            <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square"></i> Editar Planilla</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body p-4 bg-light">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Concepto / Descripción</label>
+                <input type="text" name="concepto" id="e_concepto" class="form-control" required>
+              </div>
+              
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Tipo de Planilla</label>
+                <select name="tipo_planilla" id="e_tipo_planilla" class="form-select" required>
+                  <option value="" disabled>Seleccione...</option>
+                  <option value="PILA">PILA</option>
+                  <option value="EPS">EPS</option>
+                  <option value="ARL">ARL</option>
+                  <option value="Pensión">Pensión</option>
+                  <option value="Caja Comp.">Caja Comp.</option>
+                  <option value="Otra">Otra</option>
+                </select>
+              </div>
+              
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Valor</label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input type="hidden" name="valor" id="e_valor_hidden" required>
+                  <input type="text" id="e_valor_visual" class="form-control" required oninput="formatearMoneda(this, 'e_valor_hidden')">
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Estado de Pago (Opcional)</label>
+                <input type="text" name="estado_pago" id="e_estado_pago" class="form-control" placeholder="Ej: Pendiente, Pagado Bancolombia...">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Fecha de Vencimiento</label>
+                <input type="date" name="fecha_vencimiento" id="e_fecha_vencimiento" class="form-control">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Fecha de Pago (Opcional)</label>
+                <input type="date" name="fecha_pago" id="e_fecha_pago" class="form-control">
+              </div>
+
+              <div class="col-md-6 mt-3">
+                <label class="form-label fw-semibold">Soporte Declaración (PDF/Img)</label>
+                <input type="file" name="soporte_declaracion" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.webp">
+                <div class="form-check mt-1">
+                  <input class="form-check-input" type="checkbox" name="eliminar_soporte_declaracion" value="true" id="e_eliminar_soporte_declaracion">
+                  <label class="form-check-label text-danger small" for="e_eliminar_soporte_declaracion">Eliminar archivo actual</label>
+                </div>
+                <div id="e_archivo_actual" class="small mt-1 text-info"></div>
+              </div>
+              
+              <div class="col-md-6 mt-3">
+                <label class="form-label fw-semibold">Soporte de Pago (PDF/Img)</label>
+                <input type="file" name="soporte_pago" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.webp">
+                <div class="form-check mt-1">
+                  <input class="form-check-input" type="checkbox" name="eliminar_soporte_pago" value="true" id="e_eliminar_soporte_pago">
+                  <label class="form-check-label text-danger small" for="e_eliminar_soporte_pago">Eliminar recibo actual</label>
+                </div>
+                <div id="e_recibo_pago_actual" class="small mt-1 text-success"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer border-0">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-warning fw-bold"><i class="bi bi-pencil"></i> Guardar Cambios</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function formatearMoneda(inputVisual, idInputOculto) {
+      let valor = inputVisual.value.replace(/\D/g, "");
+      if(valor !== "") {
+        document.getElementById(idInputOculto).value = valor;
+        inputVisual.value = new Intl.NumberFormat('es-CO').format(parseInt(valor, 10));
+      } else {
+        document.getElementById(idInputOculto).value = "";
+        inputVisual.value = "";
+      }
+    }
+    
+    function abrirModalEditar(id, concepto, tipo_planilla, valor, estado_pago, fecha_vencimiento, fecha_pago, soporte_declaracion_url, soporte_pago_url) {
+      document.getElementById('formEditarPlanilla').action = `/seguridad_social/editar/${id}`;
+      document.getElementById('e_concepto').value = concepto;
+      document.getElementById('e_tipo_planilla').value = tipo_planilla;
+      document.getElementById('e_valor_hidden').value = valor;
+      
+      const vVisual = document.getElementById('e_valor_visual');
+      vVisual.value = valor;
+      formatearMoneda(vVisual, 'e_valor_hidden');
+      
+      document.getElementById('e_estado_pago').value = estado_pago !== 'None' ? estado_pago : '';
+      document.getElementById('e_fecha_vencimiento').value = fecha_vencimiento !== 'None' ? fecha_vencimiento : '';
+      document.getElementById('e_fecha_pago').value = fecha_pago !== 'None' ? fecha_pago : '';
+      
+      const lblArchivo = document.getElementById('e_archivo_actual');
+      if (soporte_declaracion_url && soporte_declaracion_url !== 'None' && soporte_declaracion_url.trim() !== '') {
+          lblArchivo.innerHTML = `<i class="bi bi-check-circle-fill"></i> Documento actual guardado`;
+      } else {
+          lblArchivo.innerHTML = ``;
+      }
+      
+      const lblRecibo = document.getElementById('e_recibo_pago_actual');
+      if (soporte_pago_url && soporte_pago_url !== 'None' && soporte_pago_url.trim() !== '') {
+          lblRecibo.innerHTML = `<i class="bi bi-check-circle-fill"></i> Recibo de pago guardado`;
+      } else {
+          lblRecibo.innerHTML = ``;
+      }
+      
+      document.getElementById('e_eliminar_soporte_declaracion').checked = false;
+      document.getElementById('e_eliminar_soporte_pago').checked = false;
+      
+      var modal = new bootstrap.Modal(document.getElementById('modalEditarPlanilla'));
+      modal.show();
+    }
+  </script>
+</body>
+</html>

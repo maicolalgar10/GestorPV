@@ -1262,3 +1262,19 @@ class ProgramacionPagoTarjeta(db.Model):
     forma_pago = db.Column(db.String(100), nullable=True)
     estado = db.Column(db.String(20), default='PENDIENTE')
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
+
+# ===========================================
+# 24. Planillas de Seguridad Social
+# ===========================================
+class PlanillaSeguridadSocial(db.Model):
+    __tablename__ = 'planillas_seguridad_social'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    concepto = db.Column(db.String(255), nullable=True)
+    tipo_planilla = db.Column(db.String(100), nullable=True)
+    valor = db.Column(db.Numeric(15, 2), default=0.0)
+    estado_pago = db.Column(db.String(255), nullable=True)
+    fecha_vencimiento = db.Column(db.Date, nullable=True)
+    fecha_pago = db.Column(db.Date, nullable=True)
+    soporte_declaracion_url = db.Column(db.String(500), nullable=True)
+    soporte_pago_url = db.Column(db.String(500), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)

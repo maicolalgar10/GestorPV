@@ -162,6 +162,10 @@
             <span class="card-title">DIAN</span>
             <span class="card-sub">Impuestos</span>
           </a>
+          <a href="{{ url_for('seguridad_social.index') }}" class="card-link-compact border-info">
+            <span class="card-title">Seguridad Social</span>
+            <span class="card-sub">Planillas EPS/ARL</span>
+          </a>
         </div>
       </div>
       <div class="col-12 col-md-8 col-lg-9">
@@ -447,6 +451,15 @@
               <div class="card-body text-center">
                 <h2 class="fw-bold m-0 text-white"><i class="bi bi-receipt-cutoff"></i></h2>
                 <p class="mb-0 opacity-75 small fw-bold text-uppercase text-white mt-1">DIAN (Impuestos)</p>
+              </div>
+            </div>
+          </a>
+          <a href="{{ url_for('seguridad_social.index') }}" class="text-decoration-none">
+            <div class="card stat-card p-3" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);">
+              <div class="card-body text-center">
+                <h2 class="fw-bold m-0 text-white"><i class="bi bi-shield-check"></i></h2>
+                <p class="mb-0 opacity-75 small fw-bold text-uppercase text-white mt-1">PLANILLAS SEGURIDAD SOCIAL</p>
+                <div class="mt-2 opacity-50 text-white" style="font-size:0.75rem;"><i class="bi bi-arrow-right-circle"></i> Ir al módulo</div>
               </div>
             </div>
           </a>

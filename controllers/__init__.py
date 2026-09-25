@@ -16,6 +16,7 @@ from .dian_controller import dian_bp
 from .proveedores_controller import proveedores_bp
 from .trabajadores_controller import trabajadores_bp
 from .egreso_caja_controller import egreso_caja_bp
+from .seguridad_social_controller import seguridad_social_bp
 
 def register_controllers(app):
     app.register_blueprint(dashboard_bp)
@@ -36,3 +37,4 @@ def register_controllers(app):
     app.register_blueprint(proveedores_bp)
     app.register_blueprint(trabajadores_bp)
     app.register_blueprint(egreso_caja_bp)
+    app.register_blueprint(seguridad_social_bp)
