@@ -37,10 +37,28 @@
       </div>
     </div>
 
-    <!-- Tabla -->
-    <div class="module-card p-4">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle">
+    <!-- Pestañas -->
+    <ul class="nav nav-pills mb-4" id="seguridadSocialTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active rounded-pill fw-semibold px-4" id="planillas-tab" data-bs-toggle="pill" data-bs-target="#planillas" type="button" role="tab">
+          <i class="bi bi-file-earmark-medical"></i> Registro de Planillas
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link rounded-pill fw-semibold px-4 ms-2" id="entidades-tab" data-bs-toggle="pill" data-bs-target="#entidades" type="button" role="tab">
+          <i class="bi bi-buildings"></i> Directorio de Entidades
+        </button>
+      </li>
+    </ul>
+
+    <!-- Contenido de las Pestañas -->
+    <div class="tab-content" id="seguridadSocialTabsContent">
+      
+      <!-- Pestaña Planillas -->
+      <div class="tab-pane fade show active" id="planillas" role="tabpanel">
+        <div class="module-card p-4">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
           <thead>
             <tr>
               <th>Concepto</th>
@@ -117,7 +135,50 @@
     </div>
   </div>
 
-  <!-- Modal Nueva Planilla -->
+  <!-- Pestaña Entidades -->
+  <div class="tab-pane fade" id="entidades" role="tabpanel">
+    <div class="module-card p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">Directorio de Entidades</h5>
+        <button class="btn btn-primary btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalEntidades">
+          <i class="bi bi-plus-lg"></i> Nueva Entidad
+        </button>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead>
+            <tr>
+              <th>Nombre de la Entidad</th>
+              <th class="text-center" style="width: 150px;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for entidad in entidades %}
+            <tr>
+              <td><strong>{{ entidad.nombre }}</strong></td>
+              <td class="text-center">
+                <form method="POST" action="{{ url_for('seguridad_social.eliminar_entidad', id=entidad.id) }}" class="m-0" onsubmit="return confirm('¿Seguro que deseas eliminar esta entidad?');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3" title="Eliminar entidad">
+                    <i class="bi bi-trash"></i> Eliminar
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="2" class="text-center text-muted">No hay entidades registradas en el directorio.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div> <!-- Cierre Tab Content -->
+
+<!-- Modal Nueva Planilla -->
   <div class="modal fade" id="modalNuevaPlanilla" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
