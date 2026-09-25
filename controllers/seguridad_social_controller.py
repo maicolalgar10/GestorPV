@@ -209,3 +209,25 @@ def eliminar(id):
         db.session.rollback()
         flash(f"Error al eliminar: {e}", "danger")
     return redirect(url_for("seguridad_social.index"))
+
+@seguridad_social_bp.route("/eliminar_entidad/<int:id>", methods=["POST"])
+@login_required
+@admin_oficina_required
+def eliminar_entidad(id):
+    entidad = TipoPlanillaSeguridadSocial.query.get_or_404(id)
+    
+    # Check if there are planillas associated with this entity
+    if entidad.planillas:
+        flash("No se puede eliminar la entidad porque tiene planillas asociadas. Elimine las planillas primero o asigne otra entidad.", "warning")
+        return redirect(url_for("seguridad_social.index"))
+        
+    try:
+        db.session.delete(entidad)
+        db.session.commit()
+        flash("Entidad eliminada correctamente.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al eliminar entidad: {e}", "danger")
+        
+    return redirect(url_for("seguridad_social.index"))
+

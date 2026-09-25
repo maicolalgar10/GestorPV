@@ -312,7 +312,13 @@
           <ul class="list-group">
             {% for entidad in entidades %}
             <li class="list-group-item d-flex justify-content-between align-items-center">
-              {{ entidad.nombre }}
+              <span>{{ entidad.nombre }}</span>
+              <form method="POST" action="{{ url_for('seguridad_social.eliminar_entidad', id=entidad.id) }}" class="m-0" onsubmit="return confirm('¿Seguro que deseas eliminar esta entidad?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Eliminar entidad">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
             </li>
             {% else %}
             <li class="list-group-item text-muted text-center">No hay entidades registradas.</li>
