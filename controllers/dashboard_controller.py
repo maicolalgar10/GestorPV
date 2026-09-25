@@ -1033,13 +1033,20 @@ def cambiar_estado_programacion_pago(id):
 @admin_oficina_required
 def exportar_pdf_pagos_consolidados():
     try:
-        from models import ProgramacionPagoProveedor, ProgramacionPagoTarjeta, ProgramacionPagoContratista, DianFactura
+        from models import (
+            ProgramacionPagoProveedor, 
+            ProgramacionPagoTarjeta, 
+            ProgramacionPagoContratista, 
+            DianFactura,
+            PlanillaSeguridadSocial
+        )
         from datetime import date
         
         pagos_prov = ProgramacionPagoProveedor.query.all()
         pagos_tar = ProgramacionPagoTarjeta.query.all()
         pagos_cont = ProgramacionPagoContratista.query.all()
         pagos_dian = DianFactura.query.all()
+        pagos_ss = PlanillaSeguridadSocial.query.all()
         
         consolidados = []
         
@@ -1137,6 +1144,33 @@ def exportar_pdf_pagos_consolidados():
                 'estado': estado_texto
             })
 
+        for ss in pagos_ss:
+            entidad_nombre = ss.entidad.nombre if (hasattr(ss, 'entidad') and ss.entidad and hasattr(ss.entidad, 'nombre') and ss.entidad.nombre) else "Seguridad Social"
+            estado_raw = (getattr(ss, 'estado_pago', '') or '').strip().lower()
+            if estado_raw in ['realizado', 'pagado']:
+                estado_texto = "Realizado"
+                fecha_usar = getattr(ss, 'fecha_pago', None) or getattr(ss, 'fecha_vencimiento', None)
+            else:
+                estado_texto = "Pendiente"
+                fecha_usar = getattr(ss, 'fecha_vencimiento', None) or getattr(ss, 'fecha_pago', None)
+                
+            obs = getattr(ss, 'concepto', None) or entidad_nombre
+            
+            try:
+                monto_val = float(getattr(ss, 'valor', 0) or 0)
+            except (ValueError, TypeError):
+                monto_val = 0.0
+
+            consolidados.append({
+                'fecha_programada': fecha_usar,
+                'tipo': 'Seguridad Social',
+                'entidad': clean_text(entidad_nombre),
+                'monto': monto_val,
+                'cuenta_origen': 'N/A',
+                'concepto': clean_text(obs if obs else ''),
+                'estado': estado_texto
+            })
+
         # Separar en Pendientes y Realizados
         pendientes = [c for c in consolidados if str(c['estado']).upper() != 'REALIZADO']
         realizados = [c for c in consolidados if str(c['estado']).upper() == 'REALIZADO']
@@ -1164,31 +1198,39 @@ def exportar_pdf_pagos_consolidados():
             pdf.set_font("Helvetica", style="B", size=9)
             pdf.set_fill_color(220, 220, 220)
             pdf.cell(25, 10, "FECHA", border=1, fill=True, align="C")
-            pdf.cell(25, 10, "TIPO", border=1, fill=True, align="C")
-            pdf.cell(50, 10, "ENTIDAD", border=1, fill=True, align="C")
+            pdf.cell(35, 10, "TIPO", border=1, fill=True, align="C")
+            pdf.cell(45, 10, "ENTIDAD", border=1, fill=True, align="C")
             pdf.cell(30, 10, "MONTO", border=1, fill=True, align="C")
-            pdf.cell(35, 10, "CTA ORIGEN", border=1, fill=True, align="C")
+            pdf.cell(30, 10, "CTA ORIGEN", border=1, fill=True, align="C")
             pdf.cell(85, 10, "CONCEPTO", border=1, fill=True, align="C")
             pdf.cell(27, 10, "ESTADO", border=1, fill=True, align="C")
             pdf.ln(10)
             
             pdf.set_font("Helvetica", size=8)
             for p in lista:
-                ent = (p['entidad'][:25] + '..') if len(p['entidad']) > 25 else p['entidad']
-                cta = (str(p['cuenta_origen'])[:15] + '..') if len(str(p['cuenta_origen'])) > 15 else str(p['cuenta_origen'])
+                ent = (p['entidad'][:22] + '..') if len(p['entidad']) > 22 else p['entidad']
+                cta = (str(p['cuenta_origen'])[:12] + '..') if len(str(p['cuenta_origen'])) > 12 else str(p['cuenta_origen'])
                 con = (str(p['concepto'])[:50] + '..') if len(str(p['concepto'])) > 50 else str(p['concepto'])
                 monto_str = f"$ {p['monto']:,.2f}"
                 f_prog = p['fecha_programada']
                 fecha_str = f_prog.strftime('%d/%m/%Y') if (f_prog and hasattr(f_prog, 'strftime')) else str(f_prog or '-')
                 
                 pdf.cell(25, 8, fecha_str, border=1, align="C")
-                pdf.cell(25, 8, p['tipo'], border=1, align="C")
-                pdf.cell(50, 8, ent, border=1)
+                pdf.cell(35, 8, p['tipo'], border=1, align="C")
+                pdf.cell(45, 8, ent, border=1)
                 pdf.cell(30, 8, monto_str, border=1, align="R")
-                pdf.cell(35, 8, cta, border=1)
+                pdf.cell(30, 8, cta, border=1)
                 pdf.cell(85, 8, con, border=1)
                 pdf.cell(27, 8, str(p['estado']), border=1, align="C")
                 pdf.ln(8)
+                
+            # Fila de suma total al final de la tabla
+            pdf.set_font("Helvetica", style="B", size=9)
+            pdf.set_fill_color(240, 240, 240)
+            pdf.cell(105, 8, "SUMA TOTAL GLOBAL " + ("PENDIENTE" if "PENDIENTES" in titulo else "REALIZADO"), border=1, fill=True, align="R")
+            pdf.cell(30, 8, f"$ {total:,.2f}", border=1, fill=True, align="R")
+            pdf.cell(142, 8, "", border=1, fill=True)
+            pdf.ln(10)
             pdf.ln(10)
             
         pdf.set_font("Helvetica", style="B", size=16)
