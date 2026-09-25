@@ -414,6 +414,7 @@
             </td>
             <td class="text-center">
               <form method="POST" action="{{ url_for('proveedores.eliminar_proveedor', proveedor_id=p.id) }}" class="d-inline me-1" onsubmit="return confirm('¿Estás seguro de eliminar este proveedor? Se eliminarán también sus datos asociados.');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <button type="submit" class="btn btn-outline-danger btn-sm rounded-circle p-1" title="Eliminar Proveedor">
                   <i class="bi bi-trash fs-5"></i>
                 </button>

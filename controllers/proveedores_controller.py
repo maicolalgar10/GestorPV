@@ -417,12 +417,17 @@ def exportar_pdf_historial():
 @login_required
 @admin_oficina_required
 def eliminar_proveedor(proveedor_id):
-    from models import Proveedor
+    from models import Proveedor, ProveedorFactura
     proveedor = Proveedor.query.get_or_404(proveedor_id)
     try:
-        db.session.delete(proveedor)
-        db.session.commit()
-        flash("Proveedor eliminado correctamente.", "success")
+        # Verificar si hay facturas asociadas
+        facturas_asociadas = ProveedorFactura.query.filter_by(nombre_proveedor=proveedor.nombre).first()
+        if facturas_asociadas:
+            flash(f"No se puede eliminar el proveedor '{proveedor.nombre}' porque tiene facturas asociadas.", "warning")
+        else:
+            db.session.delete(proveedor)
+            db.session.commit()
+            flash("Proveedor eliminado correctamente.", "success")
     except Exception as e:
         db.session.rollback()
         flash(f"Error al eliminar proveedor: {e}", "danger")
