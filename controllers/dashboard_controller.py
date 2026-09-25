@@ -1034,6 +1034,7 @@ def cambiar_estado_programacion_pago(id):
 def exportar_pdf_pagos_consolidados():
     try:
         from models import ProgramacionPagoProveedor, ProgramacionPagoTarjeta, ProgramacionPagoContratista, DianFactura
+        from datetime import date
         
         pagos_prov = ProgramacionPagoProveedor.query.all()
         pagos_tar = ProgramacionPagoTarjeta.query.all()
@@ -1048,84 +1049,100 @@ def exportar_pdf_pagos_consolidados():
             return unicodedata.normalize('NFKD', str(text)).encode('ASCII', 'ignore').decode('utf-8')
 
         for p in pagos_prov:
-            prov_nombre = p.proveedor.nombre if (hasattr(p, 'proveedor') and p.proveedor) else "Proveedor N/A"
+            prov_nombre = p.proveedor.nombre if (hasattr(p, 'proveedor') and p.proveedor and hasattr(p.proveedor, 'nombre')) else "Proveedor N/A"
             cuenta_or = getattr(p, 'cuenta_origen', None)
             cuenta_or_texto = clean_text(cuenta_or) if cuenta_or else 'N/A'
             obs = getattr(p, 'observacion', None)
+            try:
+                monto_val = float(getattr(p, 'monto', 0) or 0)
+            except (ValueError, TypeError):
+                monto_val = 0.0
             
             consolidados.append({
-                'fecha_programada': p.fecha_programada,
+                'fecha_programada': getattr(p, 'fecha_programada', None),
                 'tipo': 'Proveedor',
                 'entidad': clean_text(prov_nombre),
-                'monto': float(p.monto or 0),
+                'monto': monto_val,
                 'cuenta_origen': cuenta_or_texto,
                 'concepto': clean_text(obs if obs else ''),
-                'estado': clean_text(p.estado)
+                'estado': clean_text(getattr(p, 'estado', ''))
             })
             
         for p in pagos_tar:
-            tar_nombre = p.tarjeta.nombre if (hasattr(p, 'tarjeta') and p.tarjeta) else "Tarjeta N/A"
+            tar_nombre = p.tarjeta.nombre if (hasattr(p, 'tarjeta') and p.tarjeta and hasattr(p.tarjeta, 'nombre')) else "Tarjeta N/A"
             cuenta_or = getattr(p, 'cuenta_origen', None)
             cuenta_or_texto = clean_text(cuenta_or) if cuenta_or else 'N/A'
             obs = getattr(p, 'concepto', None)
+            try:
+                monto_val = float(getattr(p, 'monto', 0) or 0)
+            except (ValueError, TypeError):
+                monto_val = 0.0
             
             consolidados.append({
-                'fecha_programada': p.fecha_programada,
+                'fecha_programada': getattr(p, 'fecha_programada', None),
                 'tipo': 'Tarjeta',
                 'entidad': clean_text(tar_nombre),
-                'monto': float(p.monto or 0),
+                'monto': monto_val,
                 'cuenta_origen': cuenta_or_texto,
                 'concepto': clean_text(obs if obs else ''),
-                'estado': clean_text(p.estado)
+                'estado': clean_text(getattr(p, 'estado', ''))
             })
             
         for p in pagos_cont:
-            cont_nombre = p.contratista.nombre if (hasattr(p, 'contratista') and p.contratista) else "Contratista N/A"
-            # Contratistas usually don't have cuenta_origen on their programacion model, we'll put N/A
+            cont_nombre = p.contratista.nombre if (hasattr(p, 'contratista') and p.contratista and hasattr(p.contratista, 'nombre')) else "Contratista N/A"
             cuenta_or_texto = 'N/A'
             obs = getattr(p, 'observacion', None)
+            try:
+                monto_val = float(getattr(p, 'monto', 0) or 0)
+            except (ValueError, TypeError):
+                monto_val = 0.0
             
             consolidados.append({
-                'fecha_programada': p.fecha_programada,
+                'fecha_programada': getattr(p, 'fecha_programada', None),
                 'tipo': 'Contratista',
                 'entidad': clean_text(cont_nombre),
-                'monto': float(p.monto or 0),
+                'monto': monto_val,
                 'cuenta_origen': cuenta_or_texto,
                 'concepto': clean_text(obs if obs else ''),
-                'estado': clean_text(p.estado)
+                'estado': clean_text(getattr(p, 'estado', ''))
             })
             
         for d in pagos_dian:
-            estado_pago = (d.pago or "").strip().lower()
+            estado_pago = (getattr(d, 'pago', '') or "").strip().lower()
             
-            concepto_dian = d.concepto or ""
-            tipo_impuesto = d.tipo_impuesto or ""
+            concepto_dian = getattr(d, 'concepto', '') or ""
+            tipo_impuesto = getattr(d, 'tipo_impuesto', '') or ""
             if tipo_impuesto:
                 concepto_dian = f"{tipo_impuesto} - {concepto_dian}"
             
             if estado_pago in ['', 'pendiente']:
-                fecha_usar = d.fecha_vencimiento
+                fecha_usar = getattr(d, 'fecha_vencimiento', None)
                 estado_texto = "Pendiente"
             else:
-                fecha_usar = d.fecha_pago
+                fecha_usar = getattr(d, 'fecha_pago', None)
                 estado_texto = "Realizado"
                 
+            try:
+                monto_val = float(getattr(d, 'valor', 0) or 0)
+            except (ValueError, TypeError):
+                monto_val = 0.0
+
             consolidados.append({
                 'fecha_programada': fecha_usar,
                 'tipo': 'DIAN / Impuestos',
                 'entidad': 'DIAN',
-                'monto': float(d.valor or 0),
+                'monto': monto_val,
                 'cuenta_origen': 'N/A',
                 'concepto': clean_text(concepto_dian),
                 'estado': estado_texto
             })
 
         # Separar en Pendientes y Realizados
-        pendientes = [c for c in consolidados if c['estado'].upper() != 'REALIZADO']
-        realizados = [c for c in consolidados if c['estado'].upper() == 'REALIZADO']
+        pendientes = [c for c in consolidados if str(c['estado']).upper() != 'REALIZADO']
+        realizados = [c for c in consolidados if str(c['estado']).upper() == 'REALIZADO']
         
-        pendientes.sort(key=lambda x: x['fecha_programada'])
-        realizados.sort(key=lambda x: x['fecha_programada'])
+        pendientes.sort(key=lambda x: x['fecha_programada'] or date.min)
+        realizados.sort(key=lambda x: x['fecha_programada'] or date.min)
         
         total_pendiente = sum(c['monto'] for c in pendientes)
         total_realizado = sum(c['monto'] for c in realizados)
@@ -1161,7 +1178,8 @@ def exportar_pdf_pagos_consolidados():
                 cta = (str(p['cuenta_origen'])[:15] + '..') if len(str(p['cuenta_origen'])) > 15 else str(p['cuenta_origen'])
                 con = (str(p['concepto'])[:50] + '..') if len(str(p['concepto'])) > 50 else str(p['concepto'])
                 monto_str = f"$ {p['monto']:,.2f}"
-                fecha_str = p['fecha_programada'].strftime('%d/%m/%Y') if hasattr(p['fecha_programada'], 'strftime') else str(p['fecha_programada'])
+                f_prog = p['fecha_programada']
+                fecha_str = f_prog.strftime('%d/%m/%Y') if (f_prog and hasattr(f_prog, 'strftime')) else str(f_prog or '-')
                 
                 pdf.cell(25, 8, fecha_str, border=1, align="C")
                 pdf.cell(25, 8, p['tipo'], border=1, align="C")
@@ -1185,11 +1203,22 @@ def exportar_pdf_pagos_consolidados():
         pdf.cell(0, 5, "Documento generado automaticamente por el Sistema.", align="L")
         
         byte_string = pdf.output()
+        if isinstance(byte_string, str):
+            byte_string = byte_string.encode('latin1')
+        else:
+            byte_string = bytes(byte_string)
+
         return send_file(
             io.BytesIO(byte_string),
             download_name="Reporte_Unificado_Pagos.pdf",
             mimetype="application/pdf"
         )
+    except Exception as e:
+        import traceback
+        print(f"Error generando PDF: {str(e)}")
+        print(traceback.format_exc())
+        flash(f"Error generando PDF: {str(e)}", "danger")
+        return redirect(url_for("dashboard.dashboard_oficina"))
     except Exception as e:
         import traceback
         print(f"Error generando PDF: {str(e)}")

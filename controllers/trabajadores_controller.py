@@ -33,8 +33,9 @@ def tarjetas():
     usuario = Usuarios.query.get(session["user_id"])
     tarjetas_lista = Tarjeta.query.all()
     pagos_programados = ProgramacionPagoTarjeta.query.filter(ProgramacionPagoTarjeta.estado != 'REALIZADO').order_by(ProgramacionPagoTarjeta.fecha_programada.asc()).all()
+    total_programado = sum(float(p.monto or 0) for p in pagos_programados)
     
-    return render_template("trabajadores/tarjetas.html", usuario=usuario, tarjetas=tarjetas_lista, pagos_programados=pagos_programados)
+    return render_template("trabajadores/tarjetas.html", usuario=usuario, tarjetas=tarjetas_lista, pagos_programados=pagos_programados, total_programado=total_programado)
 
 @trabajadores_bp.route("/oficina/trabajadores/tarjetas/historial")
 @login_required
@@ -228,51 +229,90 @@ def marcar_pagado_tarjeta(id):
 @login_required
 @admin_oficina_required
 def exportar_pdf_tarjetas():
-    pagos = ProgramacionPagoTarjeta.query.order_by(ProgramacionPagoTarjeta.fecha_programada.asc()).all()
-    
-    pdf = FPDF(orientation='L', format="A4")
-    pdf.add_page()
-    pdf.set_margins(15, 15, 15)
-    pdf.set_font("Helvetica", style="B", size=16)
-    pdf.cell(0, 10, "REPORTE DE PROGRAMACION DE PAGOS - TARJETAS", align="C")
-    pdf.ln(15)
-    
-    pdf.set_font("Helvetica", style="B", size=10)
-    pdf.set_fill_color(220, 220, 220)
-    pdf.cell(30, 10, "FECHA", border=1, fill=True, align="C")
-    pdf.cell(50, 10, "TARJETA", border=1, fill=True, align="C")
-    pdf.cell(35, 10, "MONTO", border=1, fill=True, align="C")
-    pdf.cell(50, 10, "CUENTA ORIGEN", border=1, fill=True, align="C")
-    pdf.cell(70, 10, "CONCEPTO", border=1, fill=True, align="C")
-    pdf.cell(30, 10, "ESTADO", border=1, fill=True, align="C")
-    pdf.ln(10)
-    
-    pdf.set_font("Helvetica", size=9)
-    for p in pagos:
-        tarjeta_nombre = p.tarjeta.nombre if p.tarjeta and p.tarjeta.nombre else 'Desconocida'
-        # Truncar textos largos
-        t_n = (tarjeta_nombre[:20] + '..') if len(tarjeta_nombre) > 20 else tarjeta_nombre
-        c_o = (p.cuenta_origen[:20] + '..') if p.cuenta_origen and len(p.cuenta_origen) > 20 else str(p.cuenta_origen)
-        con = (p.concepto[:35] + '..') if p.concepto and len(p.concepto) > 35 else str(p.concepto)
+    try:
+        pagos = ProgramacionPagoTarjeta.query.order_by(ProgramacionPagoTarjeta.fecha_programada.asc()).all()
         
-        pdf.cell(30, 8, p.fecha_programada.strftime('%d/%m/%Y'), border=1, align="C")
-        pdf.cell(50, 8, t_n, border=1)
-        pdf.cell(35, 8, f"$ {p.monto:,.2f}", border=1, align="R")
-        pdf.cell(50, 8, c_o, border=1)
-        pdf.cell(70, 8, con, border=1)
-        pdf.cell(30, 8, str(p.estado), border=1, align="C")
-        pdf.ln(8)
+        pdf = FPDF(orientation='L', format="A4")
+        pdf.add_page()
+        pdf.set_margins(15, 15, 15)
+        pdf.set_font("Helvetica", style="B", size=16)
+        pdf.cell(0, 10, "REPORTE DE PROGRAMACION DE PAGOS - TARJETAS", align="C")
+        pdf.ln(15)
         
-    pdf.ln(10)
-    pdf.set_font("Helvetica", style="I", size=8)
-    pdf.cell(0, 5, "Documento generado automaticamente.", align="L")
-    
-    byte_string = pdf.output()
-    return send_file(
-        io.BytesIO(byte_string),
-        download_name="Reporte_Pagos_Tarjetas.pdf",
-        mimetype="application/pdf"
-    )
+        pdf.set_font("Helvetica", style="B", size=10)
+        pdf.set_fill_color(220, 220, 220)
+        pdf.cell(30, 10, "FECHA", border=1, fill=True, align="C")
+        pdf.cell(50, 10, "TARJETA", border=1, fill=True, align="C")
+        pdf.cell(35, 10, "MONTO", border=1, fill=True, align="C")
+        pdf.cell(50, 10, "CUENTA ORIGEN", border=1, fill=True, align="C")
+        pdf.cell(70, 10, "CONCEPTO", border=1, fill=True, align="C")
+        pdf.cell(30, 10, "ESTADO", border=1, fill=True, align="C")
+        pdf.ln(10)
+        
+        pdf.set_font("Helvetica", size=9)
+        total_monto = 0.0
+        
+        for p in pagos:
+            tarjeta_obj = getattr(p, 'tarjeta', None)
+            tarjeta_nombre = tarjeta_obj.nombre if (tarjeta_obj and hasattr(tarjeta_obj, 'nombre') and tarjeta_obj.nombre) else 'Desconocida'
+            
+            t_n = (str(tarjeta_nombre)[:20] + '..') if len(str(tarjeta_nombre)) > 20 else str(tarjeta_nombre)
+            
+            cuenta_origen = getattr(p, 'cuenta_origen', None) or '-'
+            c_o = (str(cuenta_origen)[:20] + '..') if len(str(cuenta_origen)) > 20 else str(cuenta_origen)
+            
+            concepto = getattr(p, 'concepto', None) or '-'
+            con = (str(concepto)[:35] + '..') if len(str(concepto)) > 35 else str(concepto)
+            
+            f_prog = getattr(p, 'fecha_programada', None)
+            if f_prog and hasattr(f_prog, 'strftime'):
+                fecha_str = f_prog.strftime('%d/%m/%Y')
+            else:
+                fecha_str = str(f_prog or '-')
+                
+            try:
+                monto_num = float(getattr(p, 'monto', 0) or 0)
+            except (ValueError, TypeError):
+                monto_num = 0.0
+            total_monto += monto_num
+            
+            estado_str = str(getattr(p, 'estado', '') or 'Programado')
+            
+            pdf.cell(30, 8, fecha_str, border=1, align="C")
+            pdf.cell(50, 8, t_n, border=1)
+            pdf.cell(35, 8, f"$ {monto_num:,.2f}", border=1, align="R")
+            pdf.cell(50, 8, c_o, border=1)
+            pdf.cell(70, 8, con, border=1)
+            pdf.cell(30, 8, estado_str, border=1, align="C")
+            pdf.ln(8)
+            
+        pdf.set_font("Helvetica", style="B", size=9)
+        pdf.set_fill_color(240, 240, 240)
+        pdf.cell(80, 8, "SUMA TOTAL", border=1, fill=True, align="R")
+        pdf.cell(35, 8, f"$ {total_monto:,.2f}", border=1, fill=True, align="R")
+        pdf.cell(150, 8, "", border=1, fill=True)
+        pdf.ln(12)
+        
+        pdf.set_font("Helvetica", style="I", size=8)
+        pdf.cell(0, 5, "Documento generado automaticamente.", align="L")
+        
+        byte_output = pdf.output()
+        if isinstance(byte_output, str):
+            byte_output = byte_output.encode('latin1')
+        else:
+            byte_output = bytes(byte_output)
+            
+        return send_file(
+            io.BytesIO(byte_output),
+            download_name="Reporte_Pagos_Tarjetas.pdf",
+            mimetype="application/pdf"
+        )
+    except Exception as e:
+        import traceback
+        print(f"Error al exportar PDF de tarjetas: {e}")
+        print(traceback.format_exc())
+        flash(f"Error al generar el archivo PDF: {str(e)}", "danger")
+        return redirect(url_for("trabajadores.tarjetas"))
 
 @trabajadores_bp.route("/oficina/trabajadores/tarjetas/exportar-pdf-historial")
 @login_required

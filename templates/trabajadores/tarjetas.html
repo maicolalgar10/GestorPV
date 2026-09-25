@@ -61,7 +61,7 @@
         </h5>
         <div>
           <a href="{{ url_for('trabajadores.historial_tarjetas') }}" class="btn btn-outline-secondary btn-sm me-2"><i class="bi bi-clock-history"></i> Historial de Pagos</a>
-          <a href="{{ url_for('dashboard.exportar_pdf_pagos_consolidados') }}" target="_blank" class="btn btn-danger btn-sm fw-bold shadow-sm me-2">
+          <a href="{{ url_for('trabajadores.exportar_pdf_tarjetas') }}" target="_blank" class="btn btn-danger btn-sm fw-bold shadow-sm me-2">
             <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
           </a>
           <button class="btn btn-sm btn-outline-primary rounded-circle" data-bs-toggle="collapse" data-bs-target="#collapsePagos"><i class="bi bi-chevron-down"></i></button>
@@ -134,6 +134,15 @@
                 </tr>
                 {% endfor %}
               </tbody>
+              {% if pagos_programados %}
+              <tfoot>
+                <tr class="table-light fw-bold" style="background-color: #f8f9fa; border-top: 2px solid #0d6efd;">
+                  <td colspan="2" class="text-end text-primary fs-6 py-3 fw-bold">SUMA TOTAL:</td>
+                  <td class="text-primary fs-6 py-3 fw-bold">$ {{ "{:,.2f}".format(total_programado if total_programado is defined else (pagos_programados | sum(attribute='monto'))) }}</td>
+                  <td colspan="4"></td>
+                </tr>
+              </tfoot>
+              {% endif %}
             </table>
           </div>
         </div>
