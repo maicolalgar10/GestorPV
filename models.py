@@ -1266,11 +1266,19 @@ class ProgramacionPagoTarjeta(db.Model):
 # ===========================================
 # 24. Planillas de Seguridad Social
 # ===========================================
+class TipoPlanillaSeguridadSocial(db.Model):
+    __tablename__ = 'tipo_planilla_seguridad_social'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    nombre = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    planillas = db.relationship('PlanillaSeguridadSocial', backref='entidad', lazy=True, cascade="all, delete-orphan")
+
 class PlanillaSeguridadSocial(db.Model):
     __tablename__ = 'planillas_seguridad_social'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tipo_planilla_id = db.Column(db.Integer, db.ForeignKey('tipo_planilla_seguridad_social.id', ondelete='CASCADE'), nullable=False)
     concepto = db.Column(db.String(255), nullable=True)
-    tipo_planilla = db.Column(db.String(100), nullable=True)
     valor = db.Column(db.Numeric(15, 2), default=0.0)
     estado_pago = db.Column(db.String(255), nullable=True)
     fecha_vencimiento = db.Column(db.Date, nullable=True)

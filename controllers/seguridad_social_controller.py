@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from models import db, PlanillaSeguridadSocial, Usuarios, Notificaciones
+from models import db, PlanillaSeguridadSocial, TipoPlanillaSeguridadSocial, Usuarios, Notificaciones
 from decorators import login_required, admin_oficina_required
 from datetime import datetime as dt
 from supabase_client import supabase
@@ -29,9 +29,27 @@ def index():
     else:
         planillas = PlanillaSeguridadSocial.query.order_by(order_col.desc()).all()
         
+    entidades = TipoPlanillaSeguridadSocial.query.order_by(TipoPlanillaSeguridadSocial.nombre.asc()).all()
+        
     total_valor = sum(p.valor for p in planillas if p.valor)
     
-    return render_template("seguridad_social.html", usuario=usuario, notificaciones=notificaciones, planillas=planillas, total_valor=total_valor, current_order=order, current_sort=sort_by)
+    return render_template("seguridad_social.html", usuario=usuario, notificaciones=notificaciones, planillas=planillas, entidades=entidades, total_valor=total_valor, current_order=order, current_sort=sort_by)
+
+@seguridad_social_bp.route("/crear_entidad", methods=["POST"])
+@login_required
+@admin_oficina_required
+def crear_entidad():
+    nombre = request.form.get("nombre", "").strip()
+    if nombre:
+        nueva_entidad = TipoPlanillaSeguridadSocial(nombre=nombre)
+        try:
+            db.session.add(nueva_entidad)
+            db.session.commit()
+            flash("Entidad registrada correctamente.", "success")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error al registrar entidad: {e}", "danger")
+    return redirect(url_for("seguridad_social.index"))
 
 @seguridad_social_bp.route("/crear", methods=["POST"])
 @login_required
@@ -76,7 +94,7 @@ def crear():
         valor = float(valor_limpio) if valor_limpio else 0.0
         
         estado_pago = request.form.get("estado_pago", "").strip()
-        tipo_planilla = request.form.get("tipo_planilla", "").strip()
+        tipo_planilla_id = request.form.get("tipo_planilla_id")
 
         fecha_pago_raw = request.form.get("fecha_pago", "").strip()
         fecha_pago = dt.strptime(fecha_pago_raw, "%Y-%m-%d").date() if fecha_pago_raw else None
@@ -93,7 +111,7 @@ def crear():
             estado_pago=estado_pago,
             fecha_pago=fecha_pago,
             fecha_vencimiento=fecha_vencimiento,
-            tipo_planilla=tipo_planilla,
+            tipo_planilla_id=tipo_planilla_id,
             soporte_declaracion_url=soporte_declaracion_url,
             soporte_pago_url=soporte_pago_url
         )
@@ -152,7 +170,7 @@ def editar(id):
         planilla.valor = float(valor_limpio) if valor_limpio else 0.0
         
         planilla.estado_pago = request.form.get("estado_pago", "").strip()
-        planilla.tipo_planilla = request.form.get("tipo_planilla", "").strip()
+        planilla.tipo_planilla_id = request.form.get("tipo_planilla_id")
 
         fecha_pago_raw = request.form.get("fecha_pago", "").strip()
         planilla.fecha_pago = dt.strptime(fecha_pago_raw, "%Y-%m-%d").date() if fecha_pago_raw else None
