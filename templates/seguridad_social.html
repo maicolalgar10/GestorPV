@@ -86,7 +86,7 @@
             <tr>
               <td><strong>{{ p.concepto }}</strong></td>
               <td><span class="badge bg-secondary">{{ p.entidad.nombre if p.entidad else '-' }}</span></td>
-              <td class="text-end">${{ "{:,.2f}".format(p.valor) }}</td>
+              <td class="text-end">{{ p.valor|formato_miles }}</td>
               <td>{{ p.estado_pago }}</td>
               <td>{{ p.fecha_vencimiento.strftime('%d/%m/%Y') if p.fecha_vencimiento else '-' }}</td>
               <td>{{ p.fecha_pago.strftime('%d/%m/%Y') if p.fecha_pago else '-' }}</td>
@@ -106,8 +106,7 @@
                 {% endif %}
               </td>
               <td class="text-center text-nowrap">
-                <button type="button" class="btn btn-sm btn-outline-warning rounded-pill" title="Editar" 
-                  onclick="abrirModalEditar({{ p.id }}, '{{ p.concepto | replace("'", "\\'") }}', {{ p.tipo_planilla_id }}, {{ p.valor|formato_miles }}, '{{ p.estado_pago }}', '{{ p.fecha_vencimiento or '' }}', '{{ p.fecha_pago or '' }}', '{{ p.soporte_declaracion_url or '' }}', '{{ p.soporte_pago_url or '' }}')">
+                <button type="button" class="btn btn-sm btn-outline-warning rounded-pill" title="Editar" data-bs-toggle="modal" data-bs-target="#modalEditarPlanilla{{ p.id }}">
                   <i class="bi bi-pencil"></i>
                 </button>
 
@@ -117,6 +116,83 @@
                     <i class="bi bi-trash"></i>
                   </button>
                 </form>
+
+<!-- Modal Editar Planilla -->
+<div class="modal fade" id="modalEditarPlanilla{{ p.id }}" tabindex="-1" style="text-align: left;">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+      <form method="POST" action="{{ url_for('seguridad_social.editar_planilla', id=p.id) }}" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header border-0 bg-warning text-dark" style="border-radius: 20px 20px 0 0;">
+          <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square"></i> Editar Planilla de Seguridad Social</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4 bg-light text-start">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Concepto / Descripción</label>
+              <input type="text" name="concepto" class="form-control" value="{{ p.concepto }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Entidad / Tipo de Planilla</label>
+              <select name="tipo_planilla_id" class="form-select" required>
+                <option value="" disabled>Seleccione...</option>
+                {% for entidad in entidades %}
+                <option value="{{ entidad.id }}" {% if p.tipo_planilla_id == entidad.id %}selected{% endif %}>{{ entidad.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Valor</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="text" name="valor" class="form-control monto-input" value="{{ p.valor|formato_miles|replace('$ ', '') }}" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Estado de Pago (Opcional)</label>
+              <input type="text" name="estado_pago" class="form-control" value="{{ p.estado_pago }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Fecha de Vencimiento</label>
+              <input type="date" name="fecha_vencimiento" class="form-control" value="{{ p.fecha_vencimiento.strftime('%Y-%m-%d') if p.fecha_vencimiento else '' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Fecha de Pago (Opcional)</label>
+              <input type="date" name="fecha_pago" class="form-control" value="{{ p.fecha_pago.strftime('%Y-%m-%d') if p.fecha_pago else '' }}">
+            </div>
+            <div class="col-md-6 mt-3">
+              <label class="form-label fw-semibold">Soporte Declaración/Planilla (Opcional)</label>
+              {% if p.soporte_declaracion_url %}
+              <div class="mb-2"><a href="{{ p.soporte_declaracion_url }}" target="_blank">Ver actual</a></div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="eliminar_soporte_declaracion" value="true" id="eliminar_dec_{{ p.id }}">
+                <label class="form-check-label text-danger" for="eliminar_dec_{{ p.id }}">Eliminar soporte actual</label>
+              </div>
+              {% endif %}
+              <input type="file" name="soporte_declaracion" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.webp">
+            </div>
+            <div class="col-md-6 mt-3">
+              <label class="form-label fw-semibold">Soporte de Pago (Opcional)</label>
+              {% if p.soporte_pago_url %}
+              <div class="mb-2"><a href="{{ p.soporte_pago_url }}" target="_blank">Ver actual</a></div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="eliminar_soporte_pago" value="true" id="eliminar_pago_{{ p.id }}">
+                <label class="form-check-label text-danger" for="eliminar_pago_{{ p.id }}">Eliminar soporte actual</label>
+              </div>
+              {% endif %}
+              <input type="file" name="soporte_pago" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.webp">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-warning rounded-pill fw-bold text-dark"><i class="bi bi-save"></i> Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
               </td>
             </tr>
             {% else %}
@@ -126,7 +202,7 @@
           <tfoot>
             <tr class="table-light fw-bold">
               <td colspan="2" class="text-end text-uppercase">Suma Total:</td>
-              <td class="text-end text-info fs-5">${{ "{:,.2f}".format(total_valor|default(0)) }}</td>
+              <td class="text-end text-info fs-5">{{ total_valor|default(0)|formato_miles }}</td>
               <td colspan="5"></td>
             </tr>
           </tfoot>
@@ -256,94 +332,7 @@
     </div>
   </div>
 
-  <!-- Modal Editar Planilla -->
-  <div class="modal fade" id="modalEditarPlanilla" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
-        <form method="POST" id="formEditarPlanilla" enctype="multipart/form-data">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          
-          <div class="modal-header border-0 bg-warning text-dark" style="border-radius: 20px 20px 0 0;">
-            <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square"></i> Editar Planilla</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-
-          <div class="modal-body p-4 bg-light">
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Concepto / Descripción</label>
-                <input type="text" name="concepto" id="e_concepto" class="form-control" required>
-              </div>
-              
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Entidad / Tipo de Planilla</label>
-                <div class="input-group">
-                  <select name="tipo_planilla_id" id="e_tipo_planilla_id" class="form-select" required>
-                    <option value="" disabled>Seleccione...</option>
-                    {% for entidad in entidades %}
-                    <option value="{{ entidad.id }}">{{ entidad.nombre }}</option>
-                    {% endfor %}
-                  </select>
-                  <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#modalEntidades">
-                    <i class="bi bi-plus"></i>
-                  </button>
-                </div>
-              </div>
-              
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Valor</label>
-                <div class="input-group">
-                  <span class="input-group-text">$</span>
-                  <input type="hidden" name="valor" id="e_valor_hidden" required>
-                  <input type="text" id="e_valor_visual" class="form-control" required oninput="formatearMoneda(this, 'e_valor_hidden')">
-                </div>
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Estado de Pago (Opcional)</label>
-                <input type="text" name="estado_pago" id="e_estado_pago" class="form-control" placeholder="Ej: Pendiente, Pagado Bancolombia...">
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Fecha de Vencimiento</label>
-                <input type="date" name="fecha_vencimiento" id="e_fecha_vencimiento" class="form-control">
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Fecha de Pago (Opcional)</label>
-                <input type="date" name="fecha_pago" id="e_fecha_pago" class="form-control">
-              </div>
-
-              <div class="col-md-6 mt-3">
-                <label class="form-label fw-semibold">Soporte Declaración (PDF/Img)</label>
-                <input type="file" name="soporte_declaracion" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.webp">
-                <div class="form-check mt-1">
-                  <input class="form-check-input" type="checkbox" name="eliminar_soporte_declaracion" value="true" id="e_eliminar_soporte_declaracion">
-                  <label class="form-check-label text-danger small" for="e_eliminar_soporte_declaracion">Eliminar archivo actual</label>
-                </div>
-                <div id="e_archivo_actual" class="small mt-1 text-info"></div>
-              </div>
-              
-              <div class="col-md-6 mt-3">
-                <label class="form-label fw-semibold">Soporte de Pago (PDF/Img)</label>
-                <input type="file" name="soporte_pago" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.webp">
-                <div class="form-check mt-1">
-                  <input class="form-check-input" type="checkbox" name="eliminar_soporte_pago" value="true" id="e_eliminar_soporte_pago">
-                  <label class="form-check-label text-danger small" for="e_eliminar_soporte_pago">Eliminar recibo actual</label>
-                </div>
-                <div id="e_recibo_pago_actual" class="small mt-1 text-success"></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="modal-footer border-0">
-            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-warning fw-bold"><i class="bi bi-pencil"></i> Guardar Cambios</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
+  
 
   <!-- Modal Gestión de Entidades -->
   <div class="modal fade" id="modalEntidades" tabindex="-1">
@@ -403,40 +392,7 @@
       }
     }
     
-    function abrirModalEditar(id, concepto, tipo_planilla_id, valor, estado_pago, fecha_vencimiento, fecha_pago, soporte_declaracion_url, soporte_pago_url) {
-      document.getElementById('formEditarPlanilla').action = `/seguridad_social/editar/${id}`;
-      document.getElementById('e_concepto').value = concepto;
-      document.getElementById('e_tipo_planilla_id').value = tipo_planilla_id;
-      document.getElementById('e_valor_hidden').value = valor;
-      
-      const vVisual = document.getElementById('e_valor_visual');
-      vVisual.value = valor;
-      formatearMoneda(vVisual, 'e_valor_hidden');
-      
-      document.getElementById('e_estado_pago').value = estado_pago !== 'None' ? estado_pago : '';
-      document.getElementById('e_fecha_vencimiento').value = fecha_vencimiento !== 'None' ? fecha_vencimiento : '';
-      document.getElementById('e_fecha_pago').value = fecha_pago !== 'None' ? fecha_pago : '';
-      
-      const lblArchivo = document.getElementById('e_archivo_actual');
-      if (soporte_declaracion_url && soporte_declaracion_url !== 'None' && soporte_declaracion_url.trim() !== '') {
-          lblArchivo.innerHTML = `<i class="bi bi-check-circle-fill"></i> Documento actual guardado`;
-      } else {
-          lblArchivo.innerHTML = ``;
-      }
-      
-      const lblRecibo = document.getElementById('e_recibo_pago_actual');
-      if (soporte_pago_url && soporte_pago_url !== 'None' && soporte_pago_url.trim() !== '') {
-          lblRecibo.innerHTML = `<i class="bi bi-check-circle-fill"></i> Recibo de pago guardado`;
-      } else {
-          lblRecibo.innerHTML = ``;
-      }
-      
-      document.getElementById('e_eliminar_soporte_declaracion').checked = false;
-      document.getElementById('e_eliminar_soporte_pago').checked = false;
-      
-      var modal = new bootstrap.Modal(document.getElementById('modalEditarPlanilla'));
-      modal.show();
-    }
+    
   </script>
 <script src="{{ url_for('static', filename='js/formatos.js') }}"></script>
 </body>

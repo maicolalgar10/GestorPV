@@ -81,18 +81,7 @@ def crear():
 
     try:
         concepto = request.form.get("concepto", "").strip()
-        valor_raw = clean_amount(request.form.get("valor"))
-        valor_limpio = str(valor_raw).replace('$', '').replace(' ', '')
-        if ',' in valor_limpio and '.' in valor_limpio:
-            valor_limpio = valor_limpio.replace('.', '').replace(',', '.')
-        elif ',' in valor_limpio:
-            valor_limpio = valor_limpio.replace(',', '.')
-        elif '.' in valor_limpio:
-            partes = valor_limpio.split('.')
-            if len(partes[-1]) == 3:
-                valor_limpio = valor_limpio.replace('.', '')
-        
-        valor = float(valor_limpio) if valor_limpio else 0.0
+        valor = clean_amount(request.form.get("valor"))
         
         estado_pago = request.form.get("estado_pago", "").strip()
         tipo_planilla_id = request.form.get("tipo_planilla_id")
@@ -126,10 +115,10 @@ def crear():
         
     return redirect(url_for("seguridad_social.index"))
 
-@seguridad_social_bp.route("/editar/<int:id>", methods=["POST"])
+@seguridad_social_bp.route("/editar_planilla/<int:id>", methods=["POST"])
 @login_required
 @admin_oficina_required
-def editar(id):
+def editar_planilla(id):
     planilla = PlanillaSeguridadSocial.query.get_or_404(id)
     
     def upload_or_keep(file_field, current_url):
@@ -158,17 +147,7 @@ def editar(id):
     try:
         planilla.concepto = request.form.get("concepto", "").strip()
         
-        valor_raw = clean_amount(request.form.get("valor"))
-        valor_limpio = str(valor_raw).replace('$', '').replace(' ', '')
-        if ',' in valor_limpio and '.' in valor_limpio:
-            valor_limpio = valor_limpio.replace('.', '').replace(',', '.')
-        elif ',' in valor_limpio:
-            valor_limpio = valor_limpio.replace(',', '.')
-        elif '.' in valor_limpio:
-            partes = valor_limpio.split('.')
-            if len(partes[-1]) == 3:
-                valor_limpio = valor_limpio.replace('.', '')
-        planilla.valor = float(valor_limpio) if valor_limpio else 0.0
+        planilla.valor = clean_amount(request.form.get("valor"))
         
         planilla.estado_pago = request.form.get("estado_pago", "").strip()
         planilla.tipo_planilla_id = request.form.get("tipo_planilla_id")
