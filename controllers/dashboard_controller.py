@@ -1021,6 +1021,7 @@ def exportar_pdf_pagos_consolidados():
         consolidados = []
         
         import unicodedata
+        from helpers import clean_amount
         def clean_text(text):
             if not text: return ""
             return unicodedata.normalize('NFKD', str(text)).encode('ASCII', 'ignore').decode('utf-8')
@@ -1127,8 +1128,8 @@ def exportar_pdf_pagos_consolidados():
             obs = getattr(ss, 'concepto', None) or entidad_nombre
             
             try:
-                monto_val = float(getattr(ss, 'valor', 0) or 0)
-            except (ValueError, TypeError):
+                monto_val = clean_amount(getattr(ss, 'valor', 0))
+            except Exception:
                 monto_val = 0.0
 
             consolidados.append({

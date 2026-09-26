@@ -193,10 +193,14 @@ def exportar_pdf_historial():
     # Query Contratistas
     query_cont = ProgramacionPagoContratista.query.filter(ProgramacionPagoContratista.estado.ilike('Realizado'))
     
-    from models import DianFactura
+    from models import DianFactura, PlanillaSeguridadSocial
     from sqlalchemy import not_, or_
     query_dian = DianFactura.query.filter(
         not_(or_(DianFactura.pago == None, DianFactura.pago == '', DianFactura.pago.ilike('pendiente')))
+    )
+    
+    query_ss = PlanillaSeguridadSocial.query.filter(
+        or_(PlanillaSeguridadSocial.estado_pago.ilike('REALIZADO'), PlanillaSeguridadSocial.estado_pago.ilike('PAGADO'))
     )
 
     if fecha_inicio:
@@ -206,6 +210,7 @@ def exportar_pdf_historial():
             query_tarj = query_tarj.filter(ProgramacionPagoTarjeta.fecha_programada >= f_inicio)
             query_cont = query_cont.filter(ProgramacionPagoContratista.fecha_programada >= f_inicio)
             query_dian = query_dian.filter(DianFactura.fecha_pago >= f_inicio)
+            query_ss = query_ss.filter(PlanillaSeguridadSocial.fecha_pago >= f_inicio)
         except ValueError:
             pass
 
@@ -216,6 +221,7 @@ def exportar_pdf_historial():
             query_tarj = query_tarj.filter(ProgramacionPagoTarjeta.fecha_programada <= f_fin)
             query_cont = query_cont.filter(ProgramacionPagoContratista.fecha_programada <= f_fin)
             query_dian = query_dian.filter(DianFactura.fecha_pago <= f_fin)
+            query_ss = query_ss.filter(PlanillaSeguridadSocial.fecha_pago <= f_fin)
         except ValueError:
             pass
 
@@ -223,6 +229,7 @@ def exportar_pdf_historial():
     pagos_tarj = query_tarj.all()
     pagos_cont = query_cont.all()
     pagos_dian = query_dian.all()
+    pagos_ss = query_ss.all()
     
     unificados = []
     
@@ -275,6 +282,19 @@ def exportar_pdf_historial():
             'monto': float(d.valor or 0),
             'forma_pago': d.pago or 'Realizado',
             'concepto': concepto_dian,
+            'estado': 'Realizado'
+        })
+        
+    for ss in pagos_ss:
+        entidad_nombre = ss.entidad.nombre if (hasattr(ss, 'entidad') and ss.entidad and hasattr(ss.entidad, 'nombre') and ss.entidad.nombre) else "Seguridad Social"
+        obs = ss.concepto or entidad_nombre
+        unificados.append({
+            'fecha': ss.fecha_pago,
+            'tipo': 'Seguridad Social',
+            'entidad': entidad_nombre,
+            'monto': float(ss.valor or 0),
+            'forma_pago': 'Realizado',
+            'concepto': obs,
             'estado': 'Realizado'
         })
 
