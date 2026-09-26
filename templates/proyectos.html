@@ -395,7 +395,7 @@ background: rgba(255, 255, 255, 0.85);
                   </div>
                   <div class="text-end">
                     <span class="badge bg-secondary mb-1" style="font-size: 0.85rem;">
-                      {{ actividad.avanzado|formato_miles }} / {{ actividad.unidades_totales|formato_miles }}
+                      {{ actividad.avanzado|formato_miles }} / {{ actividad.unidades_totales|formato_unidades }}
                     </span>
                     <div class="small text-muted">{{ actividad.tipo_unidad or 'unidades' }}</div>
                   </div>
@@ -421,7 +421,7 @@ background: rgba(255, 255, 255, 0.85);
                     </span>
                     {% else %}
                     <span class="text-muted small fw-semibold">
-                      <i class="bi bi-info-circle"></i> Faltan: {{ faltan|formato_miles }} unidades
+                      <i class="bi bi-info-circle"></i> Faltan: {{ faltan|formato_unidades }} unidades
                     </span>
                     {% endif %}
                   </div>
@@ -923,7 +923,7 @@ background: rgba(255, 255, 255, 0.85);
                   </div>
                   <div class="text-end">
                     <span class="badge bg-secondary mb-1" style="font-size: 0.85rem;">
-                      {{ actividad.avanzado|formato_miles }} / {{ actividad.unidades_totales|formato_miles }}
+                      {{ actividad.avanzado|formato_miles }} / {{ actividad.unidades_totales|formato_unidades }}
                     </span>
                     <div class="small text-muted">unidades</div>
                   </div>
@@ -949,7 +949,7 @@ background: rgba(255, 255, 255, 0.85);
                     </span>
                     {% else %}
                     <span class="text-muted small fw-semibold">
-                      <i class="bi bi-info-circle"></i> Faltan: {{ faltan|formato_miles }} unidades
+                      <i class="bi bi-info-circle"></i> Faltan: {{ faltan|formato_unidades }} unidades
                     </span>
                     {% endif %}
                   </div>

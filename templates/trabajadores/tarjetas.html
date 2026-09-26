@@ -92,7 +92,7 @@
                       <span>{{ pago.tarjeta.nombre }}</span>
                     </div>
                   </td>
-                  <td class="fw-bold text-primary">$ {{ "%.2f"|format(pago.monto) }}</td>
+                  <td class="fw-bold text-primary">{{ pago.monto|formato_miles }}</td>
                   <td>{{ pago.cuenta_origen if pago.cuenta_origen else '<span class="text-muted fst-italic">No definida</span>'|safe }}</td>
                   <td class="text-muted small">{{ pago.concepto if pago.concepto else '-' }}</td>
                   <td>
@@ -234,7 +234,7 @@
           <div class="modal-body pt-3">
             <div class="mb-3">
               <label class="form-label fw-semibold text-secondary small">Monto</label>
-              <input type="number" step="any" name="monto" class="form-control" placeholder="Ej: 150000" required>
+              <input type="text" step="any" name="monto" class="form-control" placeholder="Ej: 150000" required>
             </div>
             <div class="mb-3">
               <label class="form-label fw-semibold text-secondary small">Fecha Programada</label>
@@ -335,7 +335,7 @@
             </div>
             <div class="mb-3">
               <label class="form-label fw-semibold text-secondary small">Monto</label>
-              <input type="number" step="any" name="monto" id="inputEditarPagoMonto" class="form-control" required>
+              <input type="text" step="any" name="monto" id="inputEditarPagoMonto" class="form-control" required>
             </div>
             <div class="mb-3">
               <label class="form-label fw-semibold text-secondary small">Cuenta de Origen</label>

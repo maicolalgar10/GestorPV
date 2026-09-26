@@ -250,7 +250,7 @@
                            style="cursor: pointer;">
                         <div class="d-flex flex-column w-100">
                           <strong>
-                            {{ actividad.nombre }} ({{ actividad.unidades_avanzadas|formato_miles }} / {{ actividad.unidades_totales|formato_miles }} unidades)
+                            {{ actividad.nombre }} ({{ actividad.unidades_avanzadas|formato_unidades }} / {{ actividad.unidades_totales|formato_unidades }} unidades)
                           </strong>
                           <small class="text-muted">{{ actividad.descripcion or "Sin descripción" }}</small>
                         </div>
@@ -278,7 +278,7 @@
                                 </span>
                               {% else %}
                                 <span class="text-muted small fw-semibold">
-                                  <i class="bi bi-info-circle"></i> Faltan: {{ faltan|formato_miles }} unidades
+                                  <i class="bi bi-info-circle"></i> Faltan: {{ faltan|formato_unidades }} unidades
                                 </span>
                               {% endif %}
                             </div>

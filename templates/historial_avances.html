@@ -100,7 +100,7 @@
                 <!-- Detalles -->
                 <div class="flex-grow-1 w-100">
                   <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-                    <h5 class="fw-bold mb-0 text-dark">{{ avance.unidades_avanzadas|formato_miles if avance.unidades_avanzadas != None else 0 }} <small class="text-muted fs-6">unidades reportadas</small></h5>
+                    <h5 class="fw-bold mb-0 text-dark">{{ avance.unidades_avanzadas|formato_unidades if avance.unidades_avanzadas != None else 0 }} <small class="text-muted fs-6">unidades reportadas</small></h5>
                     <span class="badge bg-light text-secondary border shadow-sm px-3 py-2"><i class="bi bi-calendar-event me-1"></i> {{ avance.fecha.strftime('%d/%m/%Y') }}</span>
                   </div>
                   
