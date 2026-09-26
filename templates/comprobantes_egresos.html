@@ -134,7 +134,7 @@
                 data-numero="{{ comp.numero_comprobante }}"
                 data-fecha="{{ comp.fecha.strftime('%Y-%m-%d') if comp.fecha else '' }}"
                 data-concepto="{{ comp.concepto }}"
-                data-valor="{{ comp.valor }}"
+                data-valor="{{ comp.valor|formato_miles }}"
                 data-metodo="{{ comp.metodo_pago }}"
                 data-banco="{{ comp.banco or '' }}"
                 data-cheque="{{ comp.numero_cheque or '' }}"
@@ -653,5 +653,6 @@
     }
   });
 </script>
+<script src="{{ url_for('static', filename='js/formatos.js') }}"></script>
 </body>
 </html>

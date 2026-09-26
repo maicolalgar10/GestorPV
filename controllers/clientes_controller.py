@@ -1,3 +1,4 @@
+from helpers import clean_amount
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, session
 from datetime import datetime
 import os
@@ -14,30 +15,8 @@ clientes_bp = Blueprint('clientes', __name__, url_prefix='/clientes')
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'pdf', 'png', 'jpg', 'jpeg', 'webp'}
 
-def parse_float_safe(val):
-    if not val:
-        return 0.0
-    if isinstance(val, (int, float)):
-        return float(val)
-    # Eliminar el signo $ y espacios
-    s = str(val).replace('$', '').strip()
-    # Si contiene puntos de miles, quitarlos y convertir coma a punto
-    if '.' in s and ',' in s:
-        s = s.replace('.', '').replace(',', '.')
-    elif '.' in s and not ',' in s:
-        # Si tiene puntos como separadores de miles (ej: 211.975.886)
-        parts = s.split('.')
-        if len(parts) > 2 or (len(parts) == 2 and len(parts[1]) != 2):
-            s = s.replace('.', '')
-        else:
-            s = s.replace(',', '.')
-    elif ',' in s:
-        s = s.replace(',', '.')
-    try:
-        return float(s)
-    except ValueError:
-        return 0.0
-
+def parse_float_safe(val, default=0.0):
+    return clean_amount(val)
 def limpiar_porcentaje(val):
     if not val:
         return 0.0

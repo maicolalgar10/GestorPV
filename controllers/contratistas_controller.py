@@ -1,3 +1,4 @@
+from helpers import clean_amount
 from flask import make_response, Blueprint, render_template, request, redirect, url_for, flash, current_app, session
 from datetime import datetime as dt
 import os
@@ -17,29 +18,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'pdf', 'png', 'jpg', 'jpeg', 'webp'}
 
 def limpiar_monto(val):
-    if not val:
-        return 0.0
-    if isinstance(val, (int, float)):
-        return float(val)
-
-    texto = str(val).strip().replace('$', '').replace(' ', '')
-
-    # Formato CO: 1.641.589,48
-    if '.' in texto and ',' in texto:
-        texto = texto.replace('.', '').replace(',', '.')
-    elif ',' in texto:
-        texto = texto.replace(',', '.')
-    elif '.' in texto:
-        # Si tiene puntos de miles (ej: 1.641.589)
-        partes = texto.split('.')
-        if len(partes) > 2 or (len(partes) == 2 and len(partes[1]) == 3):
-            texto = texto.replace('.', '')
-
-    try:
-        return float(texto)
-    except ValueError:
-        return 0.0
-
+    return clean_amount(val)
 import tempfile
 def subir_archivo_supabase(file_obj, carpeta="contratistas"):
     """Sube un archivo a Supabase Storage y retorna la URL pública."""
@@ -203,7 +182,7 @@ def programar_pago():
     try:
         contratista_id = request.form.get("contratista_id")
         fecha_raw = request.form.get("fecha_programada")
-        monto_raw = request.form.get("monto", "0")
+        monto_raw = clean_amount(request.form.get("monto"))
         observacion = request.form.get("observacion", "").strip()
 
         fecha_programada = dt.strptime(fecha_raw, "%Y-%m-%d").date() if fecha_raw else None
@@ -266,7 +245,7 @@ def editar_programacion(id):
     pago = ProgramacionPagoContratista.query.get_or_404(id)
     try:
         fecha_raw = request.form.get("fecha_programada")
-        monto_raw = request.form.get("monto", "0")
+        monto_raw = clean_amount(request.form.get("monto"))
         observacion = request.form.get("observacion", "").strip()
 
         fecha_programada = dt.strptime(fecha_raw, "%Y-%m-%d").date() if fecha_raw else None
@@ -432,7 +411,7 @@ def editar_contrato(id):
         contrato.numero_contrato = request.form.get('numero_contrato', contrato.numero_contrato)
         contrato.objeto = request.form.get('objeto', contrato.objeto)
         
-        val_total_str = request.form.get('valor_total')
+        val_total_str = clean_amount(request.form.get("valor_total"))
         if val_total_str:
             contrato.valor_total = limpiar_monto(val_total_str)
             

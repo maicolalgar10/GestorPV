@@ -107,7 +107,7 @@
               </td>
               <td class="text-center text-nowrap">
                 <button type="button" class="btn btn-sm btn-outline-warning rounded-pill" title="Editar" 
-                  onclick="abrirModalEditar({{ p.id }}, '{{ p.concepto | replace("'", "\\'") }}', {{ p.tipo_planilla_id }}, {{ p.valor }}, '{{ p.estado_pago }}', '{{ p.fecha_vencimiento or '' }}', '{{ p.fecha_pago or '' }}', '{{ p.soporte_declaracion_url or '' }}', '{{ p.soporte_pago_url or '' }}')">
+                  onclick="abrirModalEditar({{ p.id }}, '{{ p.concepto | replace("'", "\\'") }}', {{ p.tipo_planilla_id }}, {{ p.valor|formato_miles }}, '{{ p.estado_pago }}', '{{ p.fecha_vencimiento or '' }}', '{{ p.fecha_pago or '' }}', '{{ p.soporte_declaracion_url or '' }}', '{{ p.soporte_pago_url or '' }}')">
                   <i class="bi bi-pencil"></i>
                 </button>
 
@@ -438,5 +438,6 @@
       modal.show();
     }
   </script>
+<script src="{{ url_for('static', filename='js/formatos.js') }}"></script>
 </body>
 </html>

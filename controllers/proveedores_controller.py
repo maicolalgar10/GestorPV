@@ -1,3 +1,4 @@
+from helpers import clean_amount
 from flask import Blueprint, request, redirect, url_for, flash, render_template, send_file, current_app
 import io
 from reportlab.lib.pagesizes import letter, landscape
@@ -21,7 +22,7 @@ def programar_pago():
     print("FORM DATA:", request.form)
     try:
         proveedor_id = request.form.get('proveedor_id')
-        monto = request.form.get('monto')
+        monto = clean_amount(request.form.get("monto"))
         fecha_programada = request.form.get('fecha_programada')
         observacion = request.form.get('observacion', '')
 
@@ -56,7 +57,7 @@ def editar_programacion(id):
     pago = ProgramacionPagoProveedor.query.get_or_404(id)
     try:
         fecha_raw = request.form.get("fecha_programada")
-        monto_raw = request.form.get("monto", "0")
+        monto_raw = clean_amount(request.form.get("monto"))
         observacion = request.form.get("observacion", "").strip()
 
         if fecha_raw:

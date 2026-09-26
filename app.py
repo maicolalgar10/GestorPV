@@ -134,9 +134,13 @@ def create_app():
     @app.template_filter("formato_miles")
     def formato_miles(value):
         if value is None:
-            return "0"
+            return "0,00"
         try:
-            return f"{int(value):,}".replace(",", ".")
+            val_float = float(value)
+            formatted = f"{val_float:,.2f}"
+            # formatted is like "1,234,567.89"
+            formatted = formatted.replace(",", "X").replace(".", ",").replace("X", ".")
+            return formatted
         except:
             return str(value)
 

@@ -1,3 +1,4 @@
+from helpers import clean_amount
 import io
 from fpdf import FPDF
 from flask import send_file, Blueprint, render_template, session, redirect, url_for, flash, request
@@ -132,7 +133,7 @@ def eliminar_tarjeta(id):
 def programar_pago_tarjeta():
     try:
         tarjeta_id = request.form.get("tarjeta_id")
-        monto = request.form.get("monto")
+        monto = clean_amount(request.form.get("monto"))
         fecha_str = request.form.get("fecha_programada")
         concepto = request.form.get("concepto")
         cuenta_origen = request.form.get("cuenta_origen")
@@ -168,7 +169,7 @@ def editar_pago_programado():
     try:
         pago_id = request.form.get("pago_id")
         fecha_str = request.form.get("fecha_programada")
-        monto = request.form.get("monto")
+        monto = clean_amount(request.form.get("monto"))
         cuenta_origen = request.form.get("cuenta_origen")
         concepto = request.form.get("concepto")
         

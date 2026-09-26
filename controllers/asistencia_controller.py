@@ -1,3 +1,4 @@
+from helpers import clean_amount
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from datetime import date as d, datetime
 from models import db, Asistencia, Proyectos, Personal, ProyectoPersonal, AsignacionDiaria

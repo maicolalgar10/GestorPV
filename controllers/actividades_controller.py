@@ -1,3 +1,4 @@
+from helpers import clean_amount
 from flask import Blueprint, request, redirect, url_for, flash
 from models import db, Actividades
 from models import db, Actividades, Avances  # solo si usas cálculo de progreso

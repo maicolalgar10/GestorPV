@@ -1,3 +1,4 @@
+from helpers import clean_amount
 from functools import wraps
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from models import db, Usuarios, Personal

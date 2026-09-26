@@ -1,3 +1,4 @@
+from helpers import clean_amount
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from models import db, DianFactura, Usuarios, Notificaciones
 from decorators import login_required, admin_oficina_required
@@ -62,7 +63,7 @@ def crear():
 
     try:
         concepto = request.form.get("concepto", "").strip()
-        valor_raw = request.form.get("valor", "0")
+        valor_raw = clean_amount(request.form.get("valor"))
         valor_limpio = str(valor_raw).replace('$', '').replace(' ', '')
         if ',' in valor_limpio and '.' in valor_limpio:
             valor_limpio = valor_limpio.replace('.', '').replace(',', '.')
@@ -139,7 +140,7 @@ def editar(id):
     try:
         factura.concepto = request.form.get("concepto", "").strip()
         
-        valor_raw = request.form.get("valor", "0")
+        valor_raw = clean_amount(request.form.get("valor"))
         valor_limpio = str(valor_raw).replace('$', '').replace(' ', '')
         if ',' in valor_limpio and '.' in valor_limpio:
             valor_limpio = valor_limpio.replace('.', '').replace(',', '.')

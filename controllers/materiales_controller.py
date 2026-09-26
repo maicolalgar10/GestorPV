@@ -1,3 +1,4 @@
+from helpers import clean_amount
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app, send_file
 from models import db, Materiales, MaterialesProyecto, Proyectos, SolicitudMateriales, Notificaciones, Usuarios, DetalleSolicitudMaterial, RequisicionOficina, DetalleRequisicionOficina
 from datetime import datetime, date
@@ -669,4 +670,4 @@ def pdf_requisicion_oficina(id):
         download_name=f"Requisicion_{req.id}_Corseing.pdf",
         as_attachment=True,
         mimetype="application/pdf"
-    )
+    )

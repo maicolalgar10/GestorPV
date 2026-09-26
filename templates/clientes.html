@@ -1240,13 +1240,7 @@
       }
     }
 
-    function formatMoneyField(input) {
-      let val = input.value;
-      if (!val) {
-        input.dataset.rawValue = '0';
-        input.value = '';
-        return;
-      }
+    
       
       let cleanVal = val.toString().replace(/[\$\s]/g, '').trim();
 
@@ -1532,6 +1526,7 @@
       calcularValores();
     });
   </script>
+<script src="{{ url_for('static', filename='js/formatos.js') }}"></script>
 </body>
 
 </html>

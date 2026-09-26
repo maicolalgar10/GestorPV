@@ -1,3 +1,4 @@
+from helpers import clean_amount
 from flask import Blueprint, render_template, request, redirect, flash
 from decorators import login_required
 from models import db, Factura, Cotizacion, Actas

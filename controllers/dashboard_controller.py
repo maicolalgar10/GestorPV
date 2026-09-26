@@ -1,3 +1,4 @@
+from helpers import clean_amount
 import datetime
 import os
 import io
@@ -515,14 +516,8 @@ def nueva_factura_proveedor():
         fecha_pago_raw    = request.form.get("fecha_pago", "").strip()
         fecha_pago        = dt.strptime(fecha_pago_raw, "%Y-%m-%d").date() if fecha_pago_raw else None
 
-        def parse_float_safe(value, default=0.0):
-            try:
-                if value is None or str(value).strip() == "": return default
-                clean_value = str(value).replace('.', '').replace(',', '.').strip()
-                return float(clean_value)
-            except (ValueError, TypeError):
-                return default
-
+        def parse_float_safe(val, default=0.0):
+            return clean_amount(val)
         def parse_pct(value, default=0.0):
             try:
                 if value is None or str(value).strip() == "": return default
@@ -590,14 +585,8 @@ def editar_factura_proveedor(id):
             return current_url
 
     try:
-        def parse_float_safe(value, default=0.0):
-            try:
-                if value is None or str(value).strip() == "": return default
-                clean_value = str(value).replace('.', '').replace(',', '.').strip()
-                return float(clean_value)
-            except (ValueError, TypeError):
-                return default
-
+        def parse_float_safe(val, default=0.0):
+            return clean_amount(val)
         def parse_pct(value, default=0.0):
             try:
                 if value is None or str(value).strip() == "": return default
@@ -847,7 +836,7 @@ def crear_proveedor_subfactura():
         concepto = request.form.get("concepto", "")
         
         # parse valor
-        valor_raw = request.form.get("valor", "0")
+        valor_raw = clean_amount(request.form.get("valor"))
         valor_limpio = str(valor_raw).replace('$', '').replace(' ', '')
         
         # Format CO: 1.641.589,48
@@ -945,27 +934,8 @@ def editar_proveedor_subfactura(id):
     from models import ProveedorSubFactura
     from datetime import datetime
     
-    def parse_float_safe(val):
-        if not val:
-            return 0.0
-        if isinstance(val, (int, float)):
-            return float(val)
-        s = str(val).replace('$', '').strip()
-        if '.' in s and ',' in s:
-            s = s.replace('.', '').replace(',', '.')
-        elif '.' in s and not ',' in s:
-            parts = s.split('.')
-            if len(parts) > 2 or (len(parts) == 2 and len(parts[1]) != 2):
-                s = s.replace('.', '')
-            else:
-                s = s.replace(',', '.')
-        elif ',' in s:
-            s = s.replace(',', '.')
-        try:
-            return float(s)
-        except ValueError:
-            return 0.0
-
+    def parse_float_safe(val, default=0.0):
+        return clean_amount(val)
     try:
         sub = ProveedorSubFactura.query.get(id)
         if not sub:

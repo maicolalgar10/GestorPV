@@ -518,7 +518,7 @@
                           }) %}
                         {% endfor %}
                         <button class="btn btn-sm btn-outline-info rounded-pill px-2 py-0 position-relative" title="Sub-Facturas"
-                          onclick="abrirModalContratistaSubFacturas('{{ r.id }}', '{{ contrato.contratista.nombre | replace("\'","\\\'")|replace('\"','\\\"') }}', {{ r.valor_neto }}, {{ r.valor_cancelado or 0 }}, {{ r.total_adeudado or 0 }}, {{ subfacturas_json | tojson | forceescape }})">
+                          onclick="abrirModalContratistaSubFacturas('{{ r.id }}', '{{ contrato.contratista.nombre | replace("\'","\\\'")|replace('\"','\\\"') }}', {{ r.valor_neto|formato_miles }}, {{ r.valor_cancelado or 0 }}, {{ r.total_adeudado or 0 }}, {{ subfacturas_json | tojson | forceescape }})">
                           <i class="bi bi-list-ul"></i>
                           {% if r.subfacturas|length > 0 %}
                           <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.5rem; padding: 0.2em 0.4em;">
@@ -1404,12 +1404,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     // FORMATEADORES PARA MODALES DARK
-    function formatMoneyField(input) {
-      let raw = input.value.replace(/[^0-9]/g, '');
-      if (raw === '') raw = '0';
-      input.setAttribute('data-raw-value', raw);
-      input.value = new Intl.NumberFormat('es-CO').format(parseInt(raw, 10));
-    }
+    
 
     function formatPercentField(input) {
       let value = input.value;
@@ -1748,6 +1743,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 </script>
+<script src="{{ url_for('static', filename='js/formatos.js') }}"></script>
 </body>
 </html>
 

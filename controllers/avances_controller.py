@@ -1,3 +1,4 @@
+from helpers import clean_amount
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from models import db, Actividades, Avances, Proyectos, AvanceMaterial, Evidencias, Usuarios, Notificaciones, Materiales
 from datetime import datetime

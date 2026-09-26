@@ -1,3 +1,4 @@
+from helpers import clean_amount
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
 from decorators import login_required, admin_oficina_required
 from models import db, Contrato, Cotizacion, Movimientos, Bancos
@@ -32,7 +33,7 @@ def crear_contrato_desde_cotizacion(id_cotizacion):
         return redirect(request.referrer)
 
     try:
-        valor_total = Decimal(request.form.get("valor_total", 0))
+        valor_total = clean_amount(request.form.get("valor_total", 0))
         anticipo_porcentaje = Decimal(request.form.get("anticipo_porcentaje", 0))
         retencion_garantia_porcentaje = Decimal(request.form.get("retencion_garantia_porcentaje", 0))
         banco_nombre = request.form.get("banco_nombre")
@@ -105,7 +106,7 @@ def editar_contrato(id_contrato):
     contrato = Contrato.query.get_or_404(id_contrato)
     
     try:
-        nuevo_valor_total = Decimal(request.form.get("valor_total", contrato.valor_total))
+        nuevo_valor_total = clean_amount(request.form.get("valor_total", contrato.valor_total))
         nuevo_anticipo_porc = Decimal(request.form.get("anticipo_porcentaje", contrato.anticipo_porcentaje))
         nueva_retencion_porc = Decimal(request.form.get("retencion_garantia_porcentaje", contrato.retencion_garantia_porcentaje))
 
@@ -700,7 +701,7 @@ def comprobantes_egresos():
 
             fecha_str = request.form.get("fecha")
             concepto = request.form.get("concepto")
-            valor = request.form.get("valor")
+            valor = clean_amount(request.form.get("valor"))
             metodo = request.form.get("metodo_pago")
             num_cheque = request.form.get("numero_cheque") if metodo == "Cheque" else None
             debitese_a = request.form.get("debitese_a")
@@ -778,7 +779,7 @@ def editar_comprobante_egreso(id):
             from datetime import datetime
             comprobante.fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
         comprobante.concepto = request.form.get("concepto")
-        comprobante.valor = request.form.get("valor")
+        comprobante.valor = clean_amount(request.form.get("valor"))
         
         metodo = request.form.get("metodo_pago")
         comprobante.metodo_pago = metodo

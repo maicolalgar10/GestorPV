@@ -218,7 +218,7 @@
 
                     <td class="text-end">
                             <button type="button" class="btn btn-warning btn-sm rounded-pill px-3 me-2" title="Editar Contrato"
-                              onclick="abrirModalEditarContrato({{ f.id }}, '{{ f.cotizacion.proyecto | replace('\'', '\\\'') if f.cotizacion else '' }}', {{ f.valor_total }}, {{ f.anticipo_porcentaje }}, {{ f.retencion_garantia_porcentaje }})">
+                              onclick="abrirModalEditarContrato({{ f.id }}, '{{ f.cotizacion.proyecto | replace('\'', '\\\'') if f.cotizacion else '' }}', {{ f.valor_total|formato_miles }}, {{ f.anticipo_porcentaje }}, {{ f.retencion_garantia_porcentaje }})">
                               <i class="bi bi-pencil-square"></i> Editar
                             </button>
                       <a href="{{ url_for('tesoreria.ver_tesoreria') }}"
@@ -526,7 +526,7 @@
 
                     <td class="text-end">
                             <button type="button" class="btn btn-warning btn-sm rounded-pill px-3 me-2" title="Editar Contrato"
-                              onclick="abrirModalEditarContrato({{ f.id }}, '{{ f.cotizacion.proyecto | replace('\'', '\\\'') if f.cotizacion else '' }}', {{ f.valor_total }}, {{ f.anticipo_porcentaje }}, {{ f.retencion_garantia_porcentaje }})">
+                              onclick="abrirModalEditarContrato({{ f.id }}, '{{ f.cotizacion.proyecto | replace('\'', '\\\'') if f.cotizacion else '' }}', {{ f.valor_total|formato_miles }}, {{ f.anticipo_porcentaje }}, {{ f.retencion_garantia_porcentaje }})">
                               <i class="bi bi-pencil-square"></i> Editar
                             </button>
                       <a href="{{ url_for('tesoreria.ver_tesoreria') }}"
@@ -1034,5 +1034,6 @@
     });
   </script>
 
+<script src="{{ url_for('static', filename='js/formatos.js') }}"></script>
 </body>
 </html>

@@ -1,3 +1,4 @@
+from helpers import clean_amount
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from models import db, Personal, Usuarios, Asistencia, ProyectoPersonal
 from flask_bcrypt import Bcrypt
