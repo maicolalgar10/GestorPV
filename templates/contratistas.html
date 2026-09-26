@@ -518,7 +518,7 @@
                           }) %}
                         {% endfor %}
                         <button class="btn btn-sm btn-outline-info rounded-pill px-2 py-0 position-relative" title="Sub-Facturas"
-                          onclick="abrirModalContratistaSubFacturas('{{ r.id }}', '{{ contrato.contratista.nombre | replace("\'","\\\'")|replace('\"','\\\"') }}', {{ r.valor_neto|formato_miles }}, {{ r.valor_cancelado or 0 }}, {{ r.total_adeudado or 0 }}, {{ subfacturas_json | tojson | forceescape }})">
+                          onclick="abrirModalContratistaSubFacturas('{{ r.id }}', '{{ contrato.contratista.nombre | replace("\'","\\\'")|replace('\"','\\\"') }}', {{ r.valor_neto }}, {{ r.valor_cancelado or 0 }}, {{ r.total_adeudado or 0 }}, {{ subfacturas_json | tojson | forceescape }})">
                           <i class="bi bi-list-ul"></i>
                           {% if r.subfacturas|length > 0 %}
                           <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.5rem; padding: 0.2em 0.4em;">

@@ -114,7 +114,7 @@
                             title="Editar pago"
                             data-bs-toggle="modal" 
                             data-bs-target="#modalEditarPagoProgramado" 
-                            onclick="prepararModalEditarPago({{ pago.id }}, '{{ pago.fecha_programada.strftime('%Y-%m-%d') }}', {{ pago.monto|formato_miles }}, '{{ pago.cuenta_origen|e if pago.cuenta_origen else '' }}', '{{ pago.concepto|e if pago.concepto else '' }}')">
+                            onclick="prepararModalEditarPago({{ pago.id }}, '{{ pago.fecha_programada.strftime('%Y-%m-%d') }}', {{ pago.monto }}, '{{ pago.cuenta_origen|e if pago.cuenta_origen else '' }}', '{{ pago.concepto|e if pago.concepto else '' }}')">
                       <i class="bi bi-pencil"></i>
                     </button>
                     <form action="{{ url_for('trabajadores.eliminar_pago_tarjeta', id=pago.id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de eliminar este pago programado?');">
