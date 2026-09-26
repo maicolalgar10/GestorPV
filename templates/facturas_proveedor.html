@@ -418,7 +418,7 @@
               
               <button class="btn btn-sm btn-outline-info rounded-pill px-2 me-1 mb-1 position-relative"
                       title="Sub-Facturas"
-                      onclick="abrirModalProveedorSubFacturas({{ f.id }}, '{{ f.nombre_proveedor | replace("'","\\'")|replace('"','\\"') }}', {{ f.valor_neto|formato_miles }}, {{ f.valor_cancelado or 0 }}, {{ f.total_adeudado or 0 }}, {{ subfacturas_json | tojson | forceescape }})">
+                      onclick="abrirModalProveedorSubFacturas({{ f.id }}, '{{ f.nombre_proveedor | replace("'","\\'")|replace('"','\\"') }}', {{ f.valor_neto }}, {{ f.valor_cancelado or 0 }}, {{ f.total_adeudado or 0 }}, {{ subfacturas_json | tojson | forceescape }})">
                 <i class="bi bi-list-ul"></i>
                 {% if f.subfacturas|length > 0 %}
                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
@@ -429,7 +429,7 @@
 
               <button class="btn btn-sm btn-outline-primary rounded-pill px-2 me-1 mb-1"
                       title="Editar"
-                      onclick="abrirModalEditar({{ f.id }}, '{{ f.nombre_proveedor | replace("'","\\'")|replace('"','\\"') }}', '{{ f.fecha_factura }}', {{ f.plazo_dias }}, '{{ f.fecha_vencimiento }}', {{ f.valor_neto|formato_miles }}, {{ f.porcentaje_iva }}, {{ f.valor_cancelado or 0 }}, {{ f.retencion }}, '{{ f.fecha_pago or '' }}', '{{ f.orden_compra_url or '' }}', '{{ f.comprobante_compra_url or '' }}', '{{ f.banco_pago_url or '' }}')">
+                      onclick="abrirModalEditar({{ f.id }}, '{{ f.nombre_proveedor | replace("'","\\'")|replace('"','\\"') }}', '{{ f.fecha_factura }}', {{ f.plazo_dias }}, '{{ f.fecha_vencimiento }}', {{ f.valor_neto }}, {{ f.porcentaje_iva }}, {{ f.valor_cancelado or 0 }}, {{ f.retencion }}, '{{ f.fecha_pago or '' }}', '{{ f.orden_compra_url or '' }}', '{{ f.comprobante_compra_url or '' }}', '{{ f.banco_pago_url or '' }}')">
                 <i class="bi bi-pencil-square"></i>
               </button>
               <form method="POST"
@@ -786,16 +786,6 @@
    CÁLCULOS EN TIEMPO REAL
 ══════════════════════════════════════════════════════════ */
 
-    
-    if (parts.length > 1) {
-        let decimalPart = parts[1].replace(/\D/g, '').slice(0, 2);
-        input.value = '$ ' + integerPart + ',' + decimalPart;
-    } else if (value.includes(',')) {
-        input.value = '$ ' + integerPart + ',';
-    } else {
-        input.value = integerPart ? '$ ' + integerPart : '';
-    }
-}
 
 function limpiarMonto(valorString) {
     if (!valorString) return '0';
