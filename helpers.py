@@ -37,13 +37,21 @@ def clean_amount(val) -> float:
         
     val_str = str(val).strip().replace('$', '').replace(' ', '')
     
-    # Si hay coma (separador decimal colombiano), reemplazar puntos de miles por nada y la coma por punto decimal
     if ',' in val_str:
+        # Formato colombiano: 1.134.850,00 -> quita puntos, coma a punto
         val_str = val_str.replace('.', '').replace(',', '.')
     else:
-        # Si no hay coma pero hay puntos, quitar puntos de miles
-        val_str = val_str.replace('.', '')
-        
+        # No hay coma. Puede ser un número puro como 1134850.00 o miles como 1.134.850
+        partes = val_str.split('.')
+        if len(partes) > 2:
+            # Múltiples puntos, son miles
+            val_str = val_str.replace('.', '')
+        elif len(partes) == 2:
+            # Un solo punto. Si tiene exactamente 3 dígitos después, asumimos que son miles (ej. 1.234)
+            if len(partes[1]) == 3:
+                val_str = val_str.replace('.', '')
+            # De lo contrario, es un decimal puro (ej. 1134850.00 o 1134850.5), lo dejamos intacto
+            
     try:
         return float(val_str)
     except ValueError:

@@ -81,7 +81,8 @@ def crear():
 
     try:
         concepto = request.form.get("concepto", "").strip()
-        valor = clean_amount(request.form.get("valor"))
+        valor_raw = request.form.get("valor", "0")
+        valor = clean_amount(valor_raw)
         
         estado_pago = request.form.get("estado_pago", "").strip()
         tipo_planilla_id = request.form.get("tipo_planilla_id")
@@ -147,7 +148,8 @@ def editar_planilla(id):
     try:
         planilla.concepto = request.form.get("concepto", "").strip()
         
-        planilla.valor = clean_amount(request.form.get("valor"))
+        valor_raw = request.form.get("valor", "0")
+        planilla.valor = clean_amount(valor_raw)
         
         planilla.estado_pago = request.form.get("estado_pago", "").strip()
         planilla.tipo_planilla_id = request.form.get("tipo_planilla_id")

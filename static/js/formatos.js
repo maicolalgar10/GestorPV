@@ -60,8 +60,16 @@ function formatMoneyWhileTyping(input) {
 }
 
 function formatMoneyOnBlur(input) {
-    let value = input.value;
+    let value = String(input.value);
     if (value === '') return;
+
+    // Si viene como float de base de datos (ej. "1234.56") sin comas, cambiar punto a coma para procesar
+    if (value.includes('.') && !value.includes(',')) {
+        // Solo si tiene un único punto
+        if (value.split('.').length === 2) {
+            value = value.replace('.', ',');
+        }
+    }
 
     let cleanVal = value.replace(/[^\d,]/g, "");
     if (cleanVal === '') {
