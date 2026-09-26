@@ -320,6 +320,7 @@ def exportar_pdf_tarjetas():
 @admin_oficina_required
 def exportar_pdf_historial():
     fecha_inicio = request.args.get("fecha_inicio")
+    comentario = request.args.get("comentario", "").strip()
     fecha_fin = request.args.get("fecha_fin")
     
     query = ProgramacionPagoTarjeta.query.filter_by(estado='REALIZADO')

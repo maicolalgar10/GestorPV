@@ -177,6 +177,7 @@ def historial_pagos():
 @admin_oficina_required
 def exportar_pdf_historial():
     fecha_inicio = request.args.get("fecha_inicio")
+    comentario = request.args.get("comentario", "").strip()
     fecha_fin = request.args.get("fecha_fin")
     saldo_inicial_str = request.args.get("saldo_inicial", "0")
     
@@ -387,6 +388,11 @@ def exportar_pdf_historial():
     elements.append(Paragraph(f"<b>Saldo Inicial:</b> {saldo_inicial_str_fmt}", styles['Normal']))
     elements.append(Paragraph(f"<b>Total Pagado:</b> {total_str}", styles['Normal']))
     elements.append(Paragraph(f"<b>Saldo Final / Restante:</b> {saldo_final_str}", styles['Normal']))
+    
+    if comentario:
+        elements.append(Spacer(1, 15))
+        elements.append(Paragraph("<b>Observaciones / Notas del Reporte:</b>", styles['Normal']))
+        elements.append(Paragraph(comentario, styles['Normal']))
     
     elements.append(Spacer(1, 40))
     
