@@ -349,7 +349,16 @@
                         replace(",",".") }}</td>
                       <td class="text-center pe-4">
                         <button class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0" title="Editar"
-                          onclick="abrirModalEditarReporte('{{ r.id }}', '{{ ((r.valor_bruto or r.valor_factura) or 0)|int }}', '{{ (r.amortizacion or 0)|int }}', '{{ r.porcentaje_rete_garantia or 0 }}', '{{ (r.retencion_ley or 0)|int }}', '{{ (r.pago_realizado or 0)|int }}', '{{ r.fecha_pago if r.fecha_pago else '' }}', '{{ r.fecha_factura if r.fecha_factura else '' }}', '{{ r.porcentaje_iva or 0 }}')">
+                          data-id="{{ r.id }}"
+                          data-bruto="{{ ((r.valor_bruto or r.valor_factura) or 0)|int }}"
+                          data-amort="{{ (r.amortizacion or 0)|int }}"
+                          data-rete-garantia="{{ r.porcentaje_rete_garantia or 0 }}"
+                          data-retencion-ley="{{ (r.retencion_ley or 0)|int }}"
+                          data-pago-realizado="{{ (r.pago_realizado or 0)|int }}"
+                          data-fecha-pago="{{ r.fecha_pago if r.fecha_pago else '' }}"
+                          data-fecha-factura="{{ r.fecha_factura if r.fecha_factura else '' }}"
+                          data-iva="{{ r.porcentaje_iva or 0 }}"
+                          onclick="abrirModalEditarReporte(this)">
                           <i class="bi bi-pencil-square"></i>
                         </button>
                         <form action="{{ url_for('clientes.eliminar_reporte', id=r.id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de eliminar esta factura? Esta acción no se puede deshacer.');">
@@ -1153,7 +1162,13 @@
               <td class="text-success fw-bold">${valorFmt}</td>
               <td class="text-center">${pdfHtml}</td>
               <td class="text-center">
-                <button type="button" class="btn btn-sm btn-outline-warning rounded-pill me-1" onclick="abrirModalEditarSubfacturaCliente('${sub.id}', '${sub.numero}', '${sub.fecha || ''}', '${sub.concepto}', '${sub.valor}')">
+                <button type="button" class="btn btn-sm btn-outline-warning rounded-pill me-1" 
+                  data-id="${sub.id}" 
+                  data-num="${sub.numero}" 
+                  data-fecha="${sub.fecha || ''}" 
+                  data-concepto="${sub.concepto.replace(/"/g, '&quot;')}" 
+                  data-valor="${sub.valor}" 
+                  onclick="abrirModalEditarSubfacturaCliente(this)">
                   <i class="bi bi-pencil"></i>
                 </button>
                 <form action="/clientes/subfactura/eliminar/${sub.id}" method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar esta sub-factura?');">
@@ -1189,7 +1204,13 @@
       modal.show();
     }
     
-    function abrirModalEditarSubfacturaCliente(id, numero, fecha, concepto, valor) {
+    function abrirModalEditarSubfacturaCliente(btn) {
+      const id = btn.getAttribute('data-id');
+      const numero = btn.getAttribute('data-num');
+      const fecha = btn.getAttribute('data-fecha');
+      const concepto = btn.getAttribute('data-concepto');
+      const valor = btn.getAttribute('data-valor');
+
       document.getElementById('edit_subf_id').value = id;
       document.getElementById('edit_subf_numero').value = numero;
       document.getElementById('edit_subf_fecha').value = fecha !== '---' ? fecha : '';
@@ -1240,48 +1261,7 @@
       }
     }
 
-    
-      
-      let cleanVal = val.toString().replace(/[\$\s]/g, '').trim();
 
-      // Handle pasting a number with dot as decimal (e.g. 1641589.48)
-      if (/^\d+\.\d{1,2}$/.test(cleanVal)) {
-          cleanVal = cleanVal.replace('.', ',');
-      }
-
-      if (cleanVal.endsWith('.')) {
-        cleanVal = cleanVal.slice(0, -1) + ',';
-      }
-      
-      cleanVal = cleanVal.replace(/\./g, '');
-      cleanVal = cleanVal.replace(/[^0-9,]/g, '');
-      
-      let parts = cleanVal.split(',');
-      if (parts.length > 2) {
-          cleanVal = parts[0] + ',' + parts.slice(1).join('');
-          parts = cleanVal.split(',');
-      }
-      
-      let intPart = parts[0];
-      let decPart = parts.length > 1 ? parts[1].slice(0, 2) : undefined;
-      
-      let raw = intPart || '0';
-      if (decPart !== undefined) {
-          raw += '.' + decPart;
-      }
-      input.dataset.rawValue = raw;
-      
-      let intNumber = parseInt(intPart || '0', 10);
-      if (isNaN(intNumber)) intNumber = 0;
-      
-      let formattedInt = intNumber.toLocaleString('es-CO');
-      
-      if (decPart !== undefined) {
-        input.value = formattedInt + ',' + decPart;
-      } else {
-        input.value = formattedInt;
-      }
-    }
 
     function formatPercentField(input) {
       let val = input.value.replace(/[^0-9.,]/g, '');
@@ -1387,7 +1367,17 @@
       }
     }
 
-    function abrirModalEditarReporte(reporteId, valorBruto, amortizacion, porcRete, retencionLey, pagoRealizado, fechaPago, fechaFactura, porcIvaFactura) {
+    function abrirModalEditarReporte(btn) {
+      const reporteId = btn.getAttribute('data-id');
+      const valorBruto = btn.getAttribute('data-bruto');
+      const amortizacion = btn.getAttribute('data-amort');
+      const porcRete = btn.getAttribute('data-rete-garantia');
+      const retencionLey = btn.getAttribute('data-retencion-ley');
+      const pagoRealizado = btn.getAttribute('data-pago-realizado');
+      const fechaPago = btn.getAttribute('data-fecha-pago');
+      const fechaFactura = btn.getAttribute('data-fecha-factura');
+      const porcIvaFactura = btn.getAttribute('data-iva');
+
       const form = document.getElementById('formEditarReporte');
       form.action = "{{ url_for('clientes.editar_reporte', reporte_id=0) }}".replace('0', reporteId);
 
