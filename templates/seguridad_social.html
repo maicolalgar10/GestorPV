@@ -292,8 +292,7 @@
                 <label class="form-label fw-semibold">Valor</label>
                 <div class="input-group">
                   <span class="input-group-text">$</span>
-                  <input type="hidden" name="valor" id="valor_hidden" required>
-                  <input type="text" id="valor_visual" class="form-control" required oninput="formatearMoneda(this, 'valor_hidden')">
+                  <input type="text" name="valor" class="form-control monto-input" required>
                 </div>
               </div>
 
@@ -381,15 +380,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    function formatearMoneda(inputVisual, idInputOculto) {
-      let valor = inputVisual.value.replace(/\D/g, "");
-      if(valor !== "") {
-        document.getElementById(idInputOculto).value = valor;
-        inputVisual.value = new Intl.NumberFormat('es-CO').format(parseInt(valor, 10));
-      } else {
-        document.getElementById(idInputOculto).value = "";
-        inputVisual.value = "";
-      }
+    
     }
     
     

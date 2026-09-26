@@ -34,8 +34,17 @@ def clean_amount(val) -> float:
         return 0.0
     if isinstance(val, (int, float)):
         return float(val)
-    cleaned = str(val).replace('$', '').replace('.', '').replace(',', '.').strip()
+        
+    val_str = str(val).strip().replace('$', '').replace(' ', '')
+    
+    # Si hay coma (separador decimal colombiano), reemplazar puntos de miles por nada y la coma por punto decimal
+    if ',' in val_str:
+        val_str = val_str.replace('.', '').replace(',', '.')
+    else:
+        # Si no hay coma pero hay puntos, quitar puntos de miles
+        val_str = val_str.replace('.', '')
+        
     try:
-        return float(cleaned)
+        return float(val_str)
     except ValueError:
         return 0.0
