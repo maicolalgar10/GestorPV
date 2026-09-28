@@ -890,7 +890,7 @@
                 <div class="input-group">
                   <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
                   <input type="text" name="valor_neto" id="valor_neto" class="form-control money-input" value="0"
-                    data-raw-value="0" required oninput="formatMoneyField(this); calcularFactura()">
+                    data-raw-value="0" required oninput="formatCurrencyInput(this); calcularFactura()">
                 </div>
               </div>
               <div class="col-md-3">
@@ -1031,7 +1031,7 @@
                 <div class="input-group">
                   <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">$</span>
                   <input type="text" name="valor_neto" id="edit_valor_neto" class="form-control money-input" value="0"
-                    data-raw-value="0" required oninput="formatMoneyField(this); calcularFacturaEdit()">
+                    data-raw-value="0" required oninput="formatCurrencyInput(this); calcularFacturaEdit()">
                 </div>
               </div>
               <div class="col-md-3">
@@ -1371,7 +1371,7 @@
           <div class="col-lg-5">
             <div class="p-3" style="background:#1d1d2b; border:1px solid #3f3f5c; border-radius:12px;">
               <h6 class="text-white mb-3 border-bottom border-secondary pb-2">Registrar Nueva Sub-factura / Pago</h6>
-              <form method="POST" action="{{ url_for('contratistas.crear_contratista_subfactura') }}" enctype="multipart/form-data" onsubmit="limpiarMontoSubFacturaContratista(event)">
+              <form method="POST" action="{{ url_for('contratistas.crear_contratista_subfactura') }}" enctype="multipart/form-data">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="factura_padre_id" id="hidden_factura_id_sub_contratista">
                 
@@ -1433,10 +1433,16 @@
       input.setAttribute('data-raw-value', value.replace(',', '.'));
     }
 
+    function parseMonedaInput(val) {
+        if (!val) return 0;
+        let limpio = val.toString().replace(/\./g, '').replace(',', '.');
+        return parseFloat(limpio) || 0;
+    }
+
     function parseRawValue(id) {
       const el = document.getElementById(id);
       if (!el) return 0;
-      return parseFloat(el.getAttribute('data-raw-value')) || 0;
+      return parseMonedaInput(el.value);
     }
 
     function mostrarNombreArchivo(input, labelId) {
@@ -1455,10 +1461,11 @@
       document.querySelectorAll('form').forEach(form => {
         form.addEventListener('submit', function() {
           this.querySelectorAll('.money-input, .pct-input').forEach(input => {
-            const raw = input.getAttribute('data-raw-value');
-            if (raw !== null && raw !== undefined) {
-              input.value = raw;
-            }
+            // Submit string directly to let backend sanitize
+            // const raw = input.getAttribute('data-raw-value');
+            // if (raw !== null && raw !== undefined) {
+            //   input.value = raw;
+            // }
           });
         });
       });
@@ -1486,7 +1493,7 @@
       let val = document.getElementById('edit_contrato_valor');
       val.setAttribute('data-raw-value', btn.dataset.valor);
       val.value = btn.dataset.valor;
-      formatMoneyField(val);
+      formatCurrencyInput(val);
     }
 
     function prepararModalCrearFactura(nombreContratista, contratoId) {

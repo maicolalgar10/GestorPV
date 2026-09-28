@@ -17,8 +17,15 @@ contratistas_bp = Blueprint("contratistas", __name__, url_prefix='/contratistas'
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'pdf', 'png', 'jpg', 'jpeg', 'webp'}
 
-def limpiar_monto(val):
-    return clean_amount(val)
+def limpiar_monto(valor_str):
+    if not valor_str:
+        return 0.0
+    # Quitar prefijos de moneda, espacios y puntos de miles
+    limpio = str(valor_str).replace('$', '').replace(' ', '').replace('.', '').replace(',', '.')
+    try:
+        return float(limpio)
+    except ValueError:
+        return 0.0
 import tempfile
 def subir_archivo_supabase(file_obj, carpeta="contratistas"):
     """Sube un archivo a Supabase Storage y retorna la URL pública."""
