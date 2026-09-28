@@ -1337,6 +1337,7 @@ function fmtPeso(num) {
 
 function limpiarMonto(valorString) {
     if (!valorString) return '0';
+    if (window.parseMoneda) return window.parseMoneda(valorString).toString();
     return String(valorString)
         .replace(/\$/g, '')
         .replace(/\./g, '')
@@ -1345,7 +1346,7 @@ function limpiarMonto(valorString) {
 }
 
 function parseMonto(valorString) {
-    return parseFloat(limpiarMonto(valorString)) || 0;
+    return window.parseMoneda ? window.parseMoneda(valorString) : (parseFloat(limpiarMonto(valorString)) || 0);
 }
 
 function formatPercentageInput(input) {

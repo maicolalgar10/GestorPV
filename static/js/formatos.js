@@ -59,29 +59,27 @@ function formatMoneyWhileTyping(input) {
     }
 }
 
+window.parseMoneda = function(val) {
+    if (!val) return 0;
+    let s = String(val).trim();
+    
+    // Si viene en formato DB puro (ej: 1234.56 o 1234.5 o -1234.56) sin comas
+    if (/^-?\d+\.\d{1,2}$/.test(s)) {
+        return parseFloat(s);
+    }
+    
+    // Formato visual: quitar $, espacios, quitar puntos de miles, cambiar coma por punto
+    s = s.replace(/[\$\s]/g, '').replace(/\./g, '').replace(',', '.');
+    
+    let num = parseFloat(s);
+    return isNaN(num) ? 0 : num;
+};
+
 function formatMoneyOnBlur(input) {
     let value = String(input.value);
     if (value === '') return;
 
-    // Si viene como float de base de datos (ej. "1234.56") sin comas, cambiar punto a coma para procesar
-    if (value.includes('.') && !value.includes(',')) {
-        // Solo si tiene un único punto
-        if (value.split('.').length === 2) {
-            value = value.replace('.', ',');
-        }
-    }
-
-    let cleanVal = value.replace(/[^\d,]/g, "");
-    if (cleanVal === '') {
-        input.value = '';
-        return;
-    }
-
-    let parts = cleanVal.split(',');
-    let integerPart = parts[0] || '0';
-    let decimalPart = parts.length > 1 ? parts[1] : '';
-
-    let num = parseFloat(integerPart + '.' + (decimalPart || '0'));
+    let num = window.parseMoneda(value);
     if (isNaN(num)) return;
 
     // Formatear con Intl para asegurar los 2 decimales y puntos de miles
@@ -97,9 +95,8 @@ function cleanMoneyForSubmit(input) {
     let value = input.value;
     if (!value) return;
     
-    // Remove all dots, spaces, $ signs, and replace the comma with a dot for pure float string
-    let cleanVal = value.replace(/\$/g, '').replace(/\./g, '').replace(/\s/g, '').replace(',', '.').trim();
-    input.value = cleanVal;
+    let num = window.parseMoneda(value);
+    input.value = isNaN(num) ? '' : num.toString();
 }
 
 // Global Event Listeners using Event Delegation
