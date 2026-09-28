@@ -59,20 +59,18 @@ function formatMoneyWhileTyping(input) {
     }
 }
 
-window.parseMoneda = function(val) {
-    if (!val) return 0;
-    let s = String(val).trim();
-    
-    // Si viene en formato DB puro (ej: 1234.56 o 1234.5 o -1234.56) sin comas
-    if (/^-?\d+\.\d{1,2}$/.test(s)) {
-        return parseFloat(s);
+window.parseMoneda = function(str) {
+    if (!str) return 0;
+    // Permitir formato DB si es que viene (ej: 1234.56)
+    if (/^-?\d+\.\d{1,2}$/.test(String(str).trim())) {
+        return parseFloat(String(str).trim());
     }
-    
-    // Formato visual: quitar $, espacios, quitar puntos de miles, cambiar coma por punto
-    s = s.replace(/[\$\s]/g, '').replace(/\./g, '').replace(',', '.');
-    
-    let num = parseFloat(s);
-    return isNaN(num) ? 0 : num;
+    // Lógica estricta de Parsing de Moneda
+    let partes = str.toString().split(',');
+    // Quita puntos y caracteres no numéricos, preservando el signo negativo
+    let entero = partes[0].replace(/[^\d-]/g, ''); 
+    let decimal = partes.length > 1 ? partes[1].replace(/\D/g, '') : '00';
+    return parseFloat(entero + '.' + decimal);
 };
 
 function formatMoneyOnBlur(input) {
