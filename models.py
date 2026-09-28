@@ -1124,8 +1124,8 @@ class ContratistaFactura(db.Model):
     @property
     def valor_total(self):
         try:
-            # VALOR TOTAL FACTURA = Valor Bruto - TOTAL RETENCIÓN
-            return round(float(self.valor_neto or 0) - self.retencion_pesos, 2)
+            # VALOR TOTAL FACTURA = Valor Bruto + IVA
+            return round(float(self.valor_neto or 0) + self.iva, 2)
         except (ValueError, TypeError):
             return 0.0
 
@@ -1135,7 +1135,7 @@ class ContratistaFactura(db.Model):
             val_cancelado = float(self.valor_cancelado or 0)
             if hasattr(self, 'subfacturas') and self.subfacturas:
                 val_cancelado = sum([float(s.valor) for s in self.subfacturas if s.valor]) or 0.0
-            return round(self.valor_total - val_cancelado, 2)
+            return round(self.valor_total - val_cancelado - self.retencion_pesos - self.retegarantia_pesos, 2)
         except (ValueError, TypeError):
             return 0.0
 

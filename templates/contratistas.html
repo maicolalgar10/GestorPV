@@ -1543,8 +1543,8 @@
       const val_iva = bruto * (iva_pct / 100);
       const val_ret = bruto * (ret_pct / 100);
       const val_retegarantia = bruto * (retegarantia_pct / 100);
-      const total = bruto - val_ret;
-      const adeudado = total - pago;
+      const total = bruto + val_iva;
+      const adeudado = total - pago - val_ret - val_retegarantia;
 
       let el_retegarantia = document.getElementById('calc_retegarantia_factura');
       if(el_retegarantia) el_retegarantia.innerText = '$' + new Intl.NumberFormat('es-CO').format(val_retegarantia);
@@ -1563,8 +1563,8 @@
       const val_iva = bruto * (iva_pct / 100);
       const val_ret = bruto * (ret_pct / 100);
       const val_retegarantia = bruto * (retegarantia_pct / 100);
-      const total = bruto - val_ret;
-      const adeudado = total - pago;
+      const total = bruto + val_iva;
+      const adeudado = total - pago - val_ret - val_retegarantia;
 
       let el_retegarantia = document.getElementById('calc_retegarantia_factura_edit');
       if(el_retegarantia) el_retegarantia.innerText = '$' + new Intl.NumberFormat('es-CO').format(val_retegarantia);
