@@ -60,15 +60,18 @@
               <input type="text" id="buscadorEmpleados" class="form-control border-start-0 bg-light" placeholder="Buscar por nombre, cédula o email..." onkeyup="filtrarTabla()">
             </div>
           </div>
-          <div class="col-md-6 text-md-end mt-3 mt-md-0">
-            <span class="badge bg-light text-dark border me-2 py-2 px-3" style="border-radius: 10px;">
-              <i class="bi bi-people-fill text-primary"></i> {{ empleados|length }} en Nómina
+          <div class="col-md-6 text-md-end mt-3 mt-md-0 d-flex justify-content-md-end align-items-center gap-2">
+            <span class="badge bg-light text-dark border py-2 px-3" style="border-radius: 10px;">
+              <i class="bi bi-people-fill text-primary"></i> <span id="contadorVisibles">{{ empleados|length }}</span> en Nómina
             </span>
-            {% if desvinculados and desvinculados|length > 0 %}
-            <button type="button" class="btn btn-outline-secondary btn-sm py-2 px-3" data-bs-toggle="modal" data-bs-target="#modalDesvinculados" style="border-radius: 10px;">
-              <i class="bi bi-person-x"></i> Desvinculados ({{ desvinculados|length }})
+            <button type="button" 
+                    id="btnRestablecerOcultos" 
+                    class="btn btn-outline-secondary btn-sm py-2 px-3 d-none" 
+                    onclick="restablecerOcultos()" 
+                    style="border-radius: 10px;"
+                    title="Mostrar todos los trabajadores que se habían quitado">
+              <i class="bi bi-arrow-counterclockwise"></i> Restablecer (<span id="contadorOcultos">0</span>)
             </button>
-            {% endif %}
           </div>
         </div>
 
@@ -86,9 +89,9 @@
                 <th class="text-end">Acciones</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="tbodyEmpleados">
               {% for emp in empleados %}
-              <tr>
+              <tr id="fila-emp-{{ emp.id_usuario }}" data-emp-id="{{ emp.id_usuario }}" class="fila-empleado">
                 <td class="fw-semibold">
                   <div class="d-flex align-items-center gap-2">
                     <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; font-size: 0.8rem;">
@@ -117,21 +120,28 @@
                   <button class="btn btn-sm btn-light border" title="Ver Detalle" disabled><i class="bi bi-eye"></i></button>
                   <button class="btn btn-sm btn-primary" title="Liquidar" disabled><i class="bi bi-calculator"></i> Liquidar</button>
                   <button type="button" 
-                          class="btn btn-sm btn-outline-danger ms-1" 
-                          title="Quitar / Desvincular de nómina"
-                          data-bs-toggle="modal" 
-                          data-bs-target="#modalDesvincular"
+                          class="btn btn-sm btn-outline-danger ms-1 btn-quitar-fila" 
+                          title="Quitar / Ocultar de la nómina"
                           data-id="{{ emp.id_usuario }}"
-                          data-nombre="{{ emp.nombre }}">
-                    <i class="bi bi-trash"></i> Desvincular
+                          data-nombre="{{ emp.nombre }}"
+                          onclick="abrirModalQuitar(this)">
+                    <i class="bi bi-trash"></i> Quitar
                   </button>
                 </td>
               </tr>
               {% else %}
-              <tr>
-                <td colspan="7" class="text-center py-4 text-muted">No se encontraron empleados registrados en la nómina.</td>
+              <tr id="filaSinEmpleados">
+                <td colspan="7" class="text-center py-4 text-muted">No se encontraron empleados registrados.</td>
               </tr>
               {% endfor %}
+              <tr id="filaTodosOcultos" class="d-none">
+                <td colspan="7" class="text-center py-4 text-muted">
+                  Todos los trabajadores han sido quitados de la vista actual. 
+                  <a href="javascript:void(0)" onclick="restablecerOcultos()" class="text-primary text-decoration-none fw-semibold ms-1">
+                    <i class="bi bi-arrow-counterclockwise"></i> Restablecer lista
+                  </a>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -139,124 +149,183 @@
     </div>
   </div>
 
-  <!-- Modal Confirmación Desvincular -->
-  <div class="modal fade" id="modalDesvincular" tabindex="-1" aria-labelledby="modalDesvincularLabel" aria-hidden="true">
+  <!-- Modal Confirmación Ocultar Trabajador (Frontend Puro) -->
+  <div class="modal fade" id="modalQuitarTrabajador" tabindex="-1" aria-labelledby="modalQuitarTrabajadorLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content shadow" style="border-radius: 16px; border: none;">
         <div class="modal-header border-0 pb-0">
-          <h5 class="modal-title fw-bold text-danger d-flex align-items-center gap-2" id="modalDesvincularLabel">
+          <h5 class="modal-title fw-bold text-danger d-flex align-items-center gap-2" id="modalQuitarTrabajadorLabel">
             <i class="bi bi-exclamation-triangle-fill"></i> Quitar de Nómina
           </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
-        <form id="formDesvincularTrabajador" method="POST" action="">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <div class="modal-body py-3">
-            <p class="mb-2 fs-6">
-              ¿Estás seguro de quitar a <strong id="nombreTrabajadorModal" class="text-dark">este trabajador</strong> de esta lista de nómina?
-            </p>
-            <div class="alert alert-warning d-flex align-items-start gap-2 mb-0 mt-3" style="border-radius: 12px; font-size: 0.875rem;">
-              <i class="bi bi-info-circle-fill text-warning fs-5 flex-shrink-0 mt-1"></i>
-              <div>
-                <strong>Nota:</strong> El trabajador seguirá existiendo en el sistema general (no se eliminarán sus registros ni datos de usuario).
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer border-0 pt-0">
-            <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal" style="border-radius: 10px;">Cancelar</button>
-            <button type="submit" class="btn btn-danger px-3" style="border-radius: 10px;">
-              <i class="bi bi-trash me-1"></i> Sí, Quitar de Nómina
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  {% if desvinculados and desvinculados|length > 0 %}
-  <!-- Modal Trabajadores Desvinculados -->
-  <div class="modal fade" id="modalDesvinculados" tabindex="-1" aria-labelledby="modalDesvinculadosLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content shadow" style="border-radius: 16px; border: none;">
-        <div class="modal-header border-0 pb-0">
-          <h5 class="modal-title fw-bold text-secondary d-flex align-items-center gap-2" id="modalDesvinculadosLabel">
-            <i class="bi bi-person-x-fill text-muted"></i> Trabajadores Desvinculados de Nómina
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-        </div>
         <div class="modal-body py-3">
-          <p class="text-muted small mb-3">Los siguientes trabajadores fueron quitados de la nómina pero siguen existiendo en el sistema general. Puedes reincorporarlos en cualquier momento.</p>
-          <div class="table-responsive">
-            <table class="table table-hover align-middle">
-              <thead class="table-light">
-                <tr>
-                  <th>Nombre</th>
-                  <th>Email</th>
-                  <th>Contacto</th>
-                  <th class="text-end">Acción</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for d in desvinculados %}
-                <tr>
-                  <td class="fw-semibold">{{ d.nombre }}</td>
-                  <td>{{ d.email }}</td>
-                  <td>{{ d.telefono if d.telefono else 'N/A' }}</td>
-                  <td class="text-end">
-                    <form action="{{ url_for('trabajadores.vincular_a_nomina', id=d.id_usuario) }}" method="POST" class="d-inline">
-                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                      <button type="submit" class="btn btn-sm btn-success" style="border-radius: 8px;">
-                        <i class="bi bi-arrow-counterclockwise"></i> Reincorporar a Nómina
-                      </button>
-                    </form>
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+          <p class="mb-2 fs-6">
+            ¿Estás seguro de quitar a <strong id="nombreTrabajadorModal" class="text-dark">este trabajador</strong> de esta lista de nómina?
+          </p>
+          <div class="alert alert-warning d-flex align-items-start gap-2 mb-0 mt-3" style="border-radius: 12px; font-size: 0.875rem;">
+            <i class="bi bi-info-circle-fill text-warning fs-5 flex-shrink-0 mt-1"></i>
+            <div>
+              <strong>Nota:</strong> El trabajador seguirá existiendo en el sistema general (únicamente se quita de esta lista).
+            </div>
           </div>
         </div>
         <div class="modal-footer border-0 pt-0">
-          <button type="button" class="btn btn-light border px-3" data-bs-dismiss="modal" style="border-radius: 10px;">Cerrar</button>
+          <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal" style="border-radius: 10px;">Cancelar</button>
+          <button type="button" class="btn btn-danger px-3" id="btnConfirmarQuitar" style="border-radius: 10px;">
+            <i class="bi bi-trash me-1"></i> Sí, Quitar
+          </button>
         </div>
       </div>
     </div>
   </div>
-  {% endif %}
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    function filtrarTabla() {
-      const input = document.getElementById("buscadorEmpleados");
-      const filter = input.value.toLowerCase();
-      const table = document.getElementById("tablaEmpleados");
-      const tr = table.getElementsByTagName("tr");
+    const STORAGE_KEY = 'nomina_trabajadores_ocultos';
+    let trabajadorSeleccionado = null;
 
-      for (let i = 1; i < tr.length; i++) {
-        const rowText = tr[i].textContent || tr[i].innerText;
-        if (rowText.toLowerCase().indexOf(filter) > -1) {
-          tr[i].style.display = "";
+    function getOcultos() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveOcultos(list) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+      } catch (e) {
+        console.error('Error guardando en localStorage:', e);
+      }
+    }
+
+    function actualizarContadores() {
+      const ocultos = getOcultos();
+      const filas = document.querySelectorAll('.fila-empleado');
+      let visibles = 0;
+
+      filas.forEach(f => {
+        const id = f.getAttribute('data-emp-id');
+        if (ocultos.includes(String(id))) {
+          f.style.display = 'none';
         } else {
-          tr[i].style.display = "none";
+          // Si no está oculto por eliminación, respetar filtro de búsqueda
+          if (!f.classList.contains('filtrado-busqueda')) {
+            f.style.display = '';
+            visibles++;
+          }
+        }
+      });
+
+      const contadorVis = document.getElementById('contadorVisibles');
+      if (contadorVis) contadorVis.textContent = visibles;
+
+      const btnRestablecer = document.getElementById('btnRestablecerOcultos');
+      const contadorOcultos = document.getElementById('contadorOcultos');
+      const filaTodosOcultos = document.getElementById('filaTodosOcultos');
+
+      if (btnRestablecer && contadorOcultos) {
+        if (ocultos.length > 0) {
+          btnRestablecer.classList.remove('d-none');
+          contadorOcultos.textContent = ocultos.length;
+        } else {
+          btnRestablecer.classList.add('d-none');
+          contadorOcultos.textContent = '0';
+        }
+      }
+
+      if (filaTodosOcultos) {
+        if (visibles === 0 && filas.length > 0) {
+          filaTodosOcultos.classList.remove('d-none');
+        } else {
+          filaTodosOcultos.classList.add('d-none');
         }
       }
     }
 
-    document.addEventListener("DOMContentLoaded", function () {
-      const modalDesvincular = document.getElementById("modalDesvincular");
-      if (modalDesvincular) {
-        modalDesvincular.addEventListener("show.bs.modal", function (event) {
-          const button = event.relatedTarget;
-          const trabajadorId = button.getAttribute("data-id");
-          const trabajadorNombre = button.getAttribute("data-nombre");
+    function abrirModalQuitar(boton) {
+      const id = boton.getAttribute('data-id');
+      const nombre = boton.getAttribute('data-nombre');
+      trabajadorSeleccionado = { id, nombre, elemento: boton.closest('tr') };
 
-          const form = document.getElementById("formDesvincularTrabajador");
-          form.action = "{{ url_for('trabajadores.quitar_de_nomina', id=0) }}".replace("/0", "/" + trabajadorId);
+      const nombreModal = document.getElementById('nombreTrabajadorModal');
+      if (nombreModal) {
+        nombreModal.textContent = nombre ? `"${nombre}"` : 'este trabajador';
+      }
 
-          const nombreElem = document.getElementById("nombreTrabajadorModal");
-          if (nombreElem) {
-            nombreElem.textContent = trabajadorNombre ? `"${trabajadorNombre}"` : "este trabajador";
+      const modalEl = document.getElementById('modalQuitarTrabajador');
+      const modal = new bootstrap.Modal(modalEl);
+      modal.show();
+    }
+
+    function restablecerOcultos() {
+      saveOcultos([]);
+      const filas = document.querySelectorAll('.fila-empleado');
+      filas.forEach(f => {
+        f.classList.remove('filtrado-busqueda');
+        f.style.display = '';
+      });
+      const input = document.getElementById('buscadorEmpleados');
+      if (input) input.value = '';
+      actualizarContadores();
+    }
+
+    function filtrarTabla() {
+      const input = document.getElementById('buscadorEmpleados');
+      const filter = (input ? input.value : '').toLowerCase().trim();
+      const ocultos = getOcultos();
+      const filas = document.querySelectorAll('.fila-empleado');
+
+      filas.forEach(tr => {
+        const id = tr.getAttribute('data-emp-id');
+        // Si fue quitado por el usuario, permanece oculto
+        if (ocultos.includes(String(id))) {
+          tr.style.display = 'none';
+          return;
+        }
+
+        const rowText = (tr.textContent || tr.innerText).toLowerCase();
+        if (filter === '' || rowText.indexOf(filter) > -1) {
+          tr.classList.remove('filtrado-busqueda');
+          tr.style.display = '';
+        } else {
+          tr.classList.add('filtrado-busqueda');
+          tr.style.display = 'none';
+        }
+      });
+
+      actualizarContadores();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      actualizarContadores();
+
+      const btnConfirmar = document.getElementById('btnConfirmarQuitar');
+      if (btnConfirmar) {
+        btnConfirmar.addEventListener('click', function () {
+          if (!trabajadorSeleccionado) return;
+
+          const { id, elemento } = trabajadorSeleccionado;
+          const ocultos = getOcultos();
+          if (!ocultos.includes(String(id))) {
+            ocultos.push(String(id));
+            saveOcultos(ocultos);
           }
+
+          if (elemento) {
+            elemento.style.display = 'none';
+          }
+
+          const modalEl = document.getElementById('modalQuitarTrabajador');
+          const modalInstance = bootstrap.Modal.getInstance(modalEl);
+          if (modalInstance) {
+            modalInstance.hide();
+          }
+
+          trabajadorSeleccionado = null;
+          actualizarContadores();
         });
       }
     });
