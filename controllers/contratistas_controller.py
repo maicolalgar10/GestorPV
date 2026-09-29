@@ -17,13 +17,30 @@ contratistas_bp = Blueprint("contratistas", __name__, url_prefix='/contratistas'
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'pdf', 'png', 'jpg', 'jpeg', 'webp'}
 
-def limpiar_monto(valor_str):
-    if not valor_str:
+def limpiar_monto(valor):
+    if not valor:
         return 0.0
-    # Quitar prefijos de moneda, espacios y puntos de miles
-    limpio = str(valor_str).replace('$', '').replace(' ', '').replace('.', '').replace(',', '.')
+    val_str = str(valor).strip().replace('$', '').replace(' ', '')
+    if not val_str:
+        return 0.0
+        
+    if '.' in val_str and ',' in val_str:
+        if val_str.rfind('.') > val_str.rfind(','):
+            val_str = val_str.replace(',', '')
+        else:
+            val_str = val_str.replace('.', '').replace(',', '.')
+    elif ',' in val_str:
+        val_str = val_str.replace(',', '.')
+    else:
+        parts = val_str.split('.')
+        if len(parts) > 2:
+            val_str = val_str.replace('.', '')
+        elif len(parts) == 2:
+            if len(parts[1]) == 3: 
+                val_str = val_str.replace('.', '')
+
     try:
-        return float(limpio)
+        return float(val_str)
     except ValueError:
         return 0.0
 import tempfile
