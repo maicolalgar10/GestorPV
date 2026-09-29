@@ -23,6 +23,7 @@ class Usuarios(db.Model):
 
     debe_cambiar_contrasena = db.Column(db.Boolean, default=True)  # 👈 nuevo campo
     reset_token = db.Column(db.String(100), nullable=True)  # 👈 nuevo campo
+    activo_en_nomina = db.Column(db.Boolean, default=True, nullable=True)  # 👈 campo para gestión de nómina
 
     # Relaciones
     avances = db.relationship("Avances", back_populates="usuario", passive_deletes=True)
@@ -31,6 +32,26 @@ class Usuarios(db.Model):
     # Relación uno a uno con Personal
     personal_id = db.Column(db.Integer, db.ForeignKey("personal.id", ondelete="SET NULL"), nullable=True)
     personal_data = db.relationship("Personal", back_populates="usuario_data")
+
+    @property
+    def id(self):
+        return self.id_usuario
+
+    @property
+    def telefono(self):
+        return self.personal_data.contacto if self.personal_data else None
+
+    @property
+    def estado(self):
+        if self.personal_data and hasattr(self.personal_data, 'activo'):
+            return 'Activo' if self.personal_data.activo else 'Inactivo'
+        return 'Activo'
+
+    @property
+    def cedula(self):
+        if self.personal_data and hasattr(self.personal_data, 'cedula'):
+            return self.personal_data.cedula
+        return None
 
 
 # ===========================================

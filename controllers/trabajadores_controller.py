@@ -24,8 +24,43 @@ def index():
 @admin_oficina_required
 def nomina():
     usuario = Usuarios.query.get(session["user_id"])
-    empleados = Usuarios.query.filter_by(rol="EMPLEADO").all()
-    return render_template("trabajadores/nomina.html", usuario=usuario, empleados=empleados)
+    empleados = Usuarios.query.filter(
+        Usuarios.rol == "EMPLEADO",
+        db.or_(Usuarios.activo_en_nomina.is_(None), Usuarios.activo_en_nomina == True)
+    ).all()
+    desvinculados = Usuarios.query.filter(
+        Usuarios.rol == "EMPLEADO",
+        Usuarios.activo_en_nomina == False
+    ).all()
+    return render_template("trabajadores/nomina.html", usuario=usuario, empleados=empleados, desvinculados=desvinculados)
+
+@trabajadores_bp.route("/oficina/trabajadores/nomina/quitar/<int:id>", methods=["POST"])
+@login_required
+@admin_oficina_required
+def quitar_de_nomina(id):
+    try:
+        trabajador = Usuarios.query.get_or_404(id)
+        trabajador.activo_en_nomina = False
+        db.session.commit()
+        flash(f"El trabajador {trabajador.nombre} ha sido desvinculado de la nómina correctamente. (Sigue registrado en el sistema)", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al desvincular el trabajador: {str(e)}", "danger")
+    return redirect(url_for("trabajadores.nomina"))
+
+@trabajadores_bp.route("/oficina/trabajadores/nomina/vincular/<int:id>", methods=["POST"])
+@login_required
+@admin_oficina_required
+def vincular_a_nomina(id):
+    try:
+        trabajador = Usuarios.query.get_or_404(id)
+        trabajador.activo_en_nomina = True
+        db.session.commit()
+        flash(f"El trabajador {trabajador.nombre} ha sido reincorporado a la nómina exitosamente.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al reincorporar trabajador a la nómina: {str(e)}", "danger")
+    return redirect(url_for("trabajadores.nomina"))
 
 @trabajadores_bp.route("/oficina/trabajadores/tarjetas")
 @login_required

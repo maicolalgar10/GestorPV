@@ -53,12 +53,22 @@
 
     <div class="card card-custom">
       <div class="card-body p-4">
-        <div class="row mb-4">
+        <div class="row mb-4 align-items-center">
           <div class="col-md-6">
             <div class="input-group">
               <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
               <input type="text" id="buscadorEmpleados" class="form-control border-start-0 bg-light" placeholder="Buscar por nombre, cédula o email..." onkeyup="filtrarTabla()">
             </div>
+          </div>
+          <div class="col-md-6 text-md-end mt-3 mt-md-0">
+            <span class="badge bg-light text-dark border me-2 py-2 px-3" style="border-radius: 10px;">
+              <i class="bi bi-people-fill text-primary"></i> {{ empleados|length }} en Nómina
+            </span>
+            {% if desvinculados and desvinculados|length > 0 %}
+            <button type="button" class="btn btn-outline-secondary btn-sm py-2 px-3" data-bs-toggle="modal" data-bs-target="#modalDesvinculados" style="border-radius: 10px;">
+              <i class="bi bi-person-x"></i> Desvinculados ({{ desvinculados|length }})
+            </button>
+            {% endif %}
           </div>
         </div>
 
@@ -103,14 +113,23 @@
                 </td>
                 <td class="text-muted fst-italic">Por definir</td>
                 <td class="text-muted fst-italic">Por definir</td>
-                <td class="text-end">
+                <td class="text-end text-nowrap">
                   <button class="btn btn-sm btn-light border" title="Ver Detalle" disabled><i class="bi bi-eye"></i></button>
                   <button class="btn btn-sm btn-primary" title="Liquidar" disabled><i class="bi bi-calculator"></i> Liquidar</button>
+                  <button type="button" 
+                          class="btn btn-sm btn-outline-danger ms-1" 
+                          title="Quitar / Desvincular de nómina"
+                          data-bs-toggle="modal" 
+                          data-bs-target="#modalDesvincular"
+                          data-id="{{ emp.id_usuario }}"
+                          data-nombre="{{ emp.nombre }}">
+                    <i class="bi bi-trash"></i> Desvincular
+                  </button>
                 </td>
               </tr>
               {% else %}
               <tr>
-                <td colspan="7" class="text-center py-4 text-muted">No se encontraron empleados registrados.</td>
+                <td colspan="7" class="text-center py-4 text-muted">No se encontraron empleados registrados en la nómina.</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -119,6 +138,91 @@
       </div>
     </div>
   </div>
+
+  <!-- Modal Confirmación Desvincular -->
+  <div class="modal fade" id="modalDesvincular" tabindex="-1" aria-labelledby="modalDesvincularLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow" style="border-radius: 16px; border: none;">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold text-danger d-flex align-items-center gap-2" id="modalDesvincularLabel">
+            <i class="bi bi-exclamation-triangle-fill"></i> Quitar de Nómina
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <form id="formDesvincularTrabajador" method="POST" action="">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="modal-body py-3">
+            <p class="mb-2 fs-6">
+              ¿Estás seguro de quitar a <strong id="nombreTrabajadorModal" class="text-dark">este trabajador</strong> de esta lista de nómina?
+            </p>
+            <div class="alert alert-warning d-flex align-items-start gap-2 mb-0 mt-3" style="border-radius: 12px; font-size: 0.875rem;">
+              <i class="bi bi-info-circle-fill text-warning fs-5 flex-shrink-0 mt-1"></i>
+              <div>
+                <strong>Nota:</strong> El trabajador seguirá existiendo en el sistema general (no se eliminarán sus registros ni datos de usuario).
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer border-0 pt-0">
+            <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal" style="border-radius: 10px;">Cancelar</button>
+            <button type="submit" class="btn btn-danger px-3" style="border-radius: 10px;">
+              <i class="bi bi-trash me-1"></i> Sí, Quitar de Nómina
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {% if desvinculados and desvinculados|length > 0 %}
+  <!-- Modal Trabajadores Desvinculados -->
+  <div class="modal fade" id="modalDesvinculados" tabindex="-1" aria-labelledby="modalDesvinculadosLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content shadow" style="border-radius: 16px; border: none;">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold text-secondary d-flex align-items-center gap-2" id="modalDesvinculadosLabel">
+            <i class="bi bi-person-x-fill text-muted"></i> Trabajadores Desvinculados de Nómina
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body py-3">
+          <p class="text-muted small mb-3">Los siguientes trabajadores fueron quitados de la nómina pero siguen existiendo en el sistema general. Puedes reincorporarlos en cualquier momento.</p>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Nombre</th>
+                  <th>Email</th>
+                  <th>Contacto</th>
+                  <th class="text-end">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for d in desvinculados %}
+                <tr>
+                  <td class="fw-semibold">{{ d.nombre }}</td>
+                  <td>{{ d.email }}</td>
+                  <td>{{ d.telefono if d.telefono else 'N/A' }}</td>
+                  <td class="text-end">
+                    <form action="{{ url_for('trabajadores.vincular_a_nomina', id=d.id_usuario) }}" method="POST" class="d-inline">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-sm btn-success" style="border-radius: 8px;">
+                        <i class="bi bi-arrow-counterclockwise"></i> Reincorporar a Nómina
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light border px-3" data-bs-dismiss="modal" style="border-radius: 10px;">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
@@ -137,6 +241,25 @@
         }
       }
     }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      const modalDesvincular = document.getElementById("modalDesvincular");
+      if (modalDesvincular) {
+        modalDesvincular.addEventListener("show.bs.modal", function (event) {
+          const button = event.relatedTarget;
+          const trabajadorId = button.getAttribute("data-id");
+          const trabajadorNombre = button.getAttribute("data-nombre");
+
+          const form = document.getElementById("formDesvincularTrabajador");
+          form.action = "{{ url_for('trabajadores.quitar_de_nomina', id=0) }}".replace("/0", "/" + trabajadorId);
+
+          const nombreElem = document.getElementById("nombreTrabajadorModal");
+          if (nombreElem) {
+            nombreElem.textContent = trabajadorNombre ? `"${trabajadorNombre}"` : "este trabajador";
+          }
+        });
+      }
+    });
   </script>
 <script src="{{ url_for('static', filename='js/formatos.js') }}"></script>
 </body>
