@@ -123,7 +123,7 @@
                   <button type="button" class="btn btn-sm btn-info ms-1 text-white" title="Ver Pagos Programados" data-bs-toggle="modal" data-bs-target="#modalVerPagos{{ emp.id_usuario }}">
                     <i class="bi bi-list-check"></i>
                   </button>
-                  
+        
                   <button type="button" 
                           class="btn btn-sm btn-outline-danger ms-1 btn-quitar-fila" 
                           title="Quitar / Ocultar de la nómina"
@@ -196,11 +196,15 @@
                               <td class="text-nowrap">
                                 {% if pago.estado != 'Realizado' %}
                                 <form method="POST" action="{{ url_for('trabajadores.marcar_pagado_nomina', id=pago.id) }}" class="d-inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
                                   <button type="submit" class="btn btn-sm btn-outline-success" title="Marcar como Pagado"><i class="bi bi-check-circle"></i></button>
                                 </form>
                                 <button type="button" class="btn btn-sm btn-outline-primary ms-1" title="Editar" onclick="abrirModalEditarPago({{ pago.id }}, '{{ pago.fecha_programada }}', '{{ pago.monto }}', '{{ pago.forma_pago }}', '{{ pago.estado }}', '{{ pago.observacion }}')"><i class="bi bi-pencil"></i></button>
                                 {% endif %}
                                 <form method="POST" action="{{ url_for('trabajadores.eliminar_pago_nomina', id=pago.id) }}" class="d-inline ms-1" onsubmit="return confirm('¿Seguro que deseas eliminar este pago?');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
                                   <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar"><i class="bi bi-trash"></i></button>
                                 </form>
                               </td>
@@ -261,16 +265,18 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <form method="POST" action="{{ url_for('trabajadores.programar_pago_nomina') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
           <div class="modal-body py-3">
             <input type="hidden" name="nombre_trabajador" id="programarTrabajadorId">
             <input type="hidden" name="identificacion_trabajador" id="programarTrabajadorCedula">
             <p class="mb-3 text-muted">Trabajador: <strong id="programarTrabajadorNombre" class="text-dark"></strong></p>
-            
+  
             <div class="mb-3">
               <label class="form-label small fw-bold">Fecha Programada <span class="text-danger">*</span></label>
               <input type="date" class="form-control" name="fecha_programada" required>
             </div>
-            
+  
             <div class="mb-3">
               <label class="form-label small fw-bold">Monto <span class="text-danger">*</span></label>
               <div class="input-group">
@@ -278,7 +284,7 @@
                 <input type="text" class="form-control money-input" name="monto" required>
               </div>
             </div>
-            
+  
             <div class="mb-3">
               <label class="form-label small fw-bold">Forma de Pago</label>
               <select class="form-select" name="forma_pago">
@@ -287,7 +293,7 @@
                 <option value="Cheque">Cheque</option>
               </select>
             </div>
-            
+  
             <div class="mb-3">
               <label class="form-label small fw-bold">Observación</label>
               <textarea class="form-control" name="observacion" rows="2" placeholder="Opcional..."></textarea>
@@ -311,13 +317,15 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <form method="POST" id="formEditarPago">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
           <div class="modal-body py-3">
-            
+  
             <div class="mb-3">
               <label class="form-label small fw-bold">Fecha Programada <span class="text-danger">*</span></label>
               <input type="date" class="form-control" name="fecha_programada" id="editFecha" required>
             </div>
-            
+  
             <div class="mb-3">
               <label class="form-label small fw-bold">Monto <span class="text-danger">*</span></label>
               <div class="input-group">
@@ -325,7 +333,7 @@
                 <input type="text" class="form-control money-input" name="monto" id="editMonto" required>
               </div>
             </div>
-            
+  
             <div class="mb-3">
               <label class="form-label small fw-bold">Forma de Pago</label>
               <select class="form-select" name="forma_pago" id="editFormaPago">
@@ -334,7 +342,7 @@
                 <option value="Cheque">Cheque</option>
               </select>
             </div>
-            
+  
             <div class="mb-3">
               <label class="form-label small fw-bold">Estado</label>
               <select class="form-select" name="estado" id="editEstado">
