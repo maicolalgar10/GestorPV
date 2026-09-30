@@ -134,6 +134,30 @@
                   </button>
                 </td>
               </tr>
+
+              {% else %}
+              <tr id="filaSinEmpleados">
+                <td colspan="7" class="text-center py-4 text-muted">No se encontraron empleados registrados.</td>
+              </tr>
+              {% endfor %}
+              <tr id="filaTodosOcultos" class="d-none">
+                <td colspan="7" class="text-center py-4 text-muted">
+                  Todos los trabajadores han sido quitados de la vista actual. 
+                  <a href="javascript:void(0)" onclick="restablecerOcultos()" class="text-primary text-decoration-none fw-semibold ms-1">
+                    <i class="bi bi-arrow-counterclockwise"></i> Restablecer lista
+                  </a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Modales Ver Pagos Programados -->
+  {% for emp in empleados %}
               <div class="modal fade" id="modalVerPagos{{ emp.id_usuario }}" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-lg modal-dialog-centered">
                   <div class="modal-content">
@@ -194,25 +218,7 @@
                 </div>
               </div>
 
-              {% else %}
-              <tr id="filaSinEmpleados">
-                <td colspan="7" class="text-center py-4 text-muted">No se encontraron empleados registrados.</td>
-              </tr>
-              {% endfor %}
-              <tr id="filaTodosOcultos" class="d-none">
-                <td colspan="7" class="text-center py-4 text-muted">
-                  Todos los trabajadores han sido quitados de la vista actual. 
-                  <a href="javascript:void(0)" onclick="restablecerOcultos()" class="text-primary text-decoration-none fw-semibold ms-1">
-                    <i class="bi bi-arrow-counterclockwise"></i> Restablecer lista
-                  </a>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
+  {% endfor %}
 
   <!-- Modal Confirmación Ocultar Trabajador (Frontend Puro) -->
   <div class="modal fade" id="modalQuitarTrabajador" tabindex="-1" aria-labelledby="modalQuitarTrabajadorLabel" aria-hidden="true">
