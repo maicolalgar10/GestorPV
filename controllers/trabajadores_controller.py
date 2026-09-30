@@ -25,7 +25,8 @@ def index():
 def nomina():
     usuario = Usuarios.query.get(session["user_id"])
     empleados = Usuarios.query.filter_by(rol="EMPLEADO").all()
-    return render_template("trabajadores/nomina.html", usuario=usuario, empleados=empleados)
+    pagos = ProgramacionPagoTrabajador.query.order_by(ProgramacionPagoTrabajador.fecha_programada.asc()).all()
+    return render_template("trabajadores/nomina.html", usuario=usuario, empleados=empleados, pagos=pagos)
 
 @trabajadores_bp.route("/oficina/trabajadores/tarjetas")
 @login_required
@@ -390,20 +391,22 @@ def exportar_pdf_historial():
 @admin_oficina_required
 def programar_pago_nomina():
     try:
-        trabajador_id = request.form.get('trabajador_id')
+        nombre_trabajador = request.form.get('nombre_trabajador')
+        identificacion_trabajador = request.form.get('identificacion_trabajador', '')
         fecha = request.form.get('fecha_programada')
         monto_str = request.form.get('monto')
         observacion = request.form.get('observacion')
         forma_pago = request.form.get('forma_pago')
 
-        if not trabajador_id or not fecha or not monto_str:
+        if not nombre_trabajador or not fecha or not monto_str:
             flash('Faltan campos obligatorios para programar el pago.', 'warning')
             return redirect(url_for('trabajadores.nomina'))
 
         monto = clean_amount(monto_str)
 
         nuevo_pago = ProgramacionPagoTrabajador(
-            trabajador_id=trabajador_id,
+            nombre_trabajador=nombre_trabajador,
+            identificacion_trabajador=identificacion_trabajador,
             fecha_programada=datetime.strptime(fecha, '%Y-%m-%d').date(),
             monto=monto,
             forma_pago=forma_pago,

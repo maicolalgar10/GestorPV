@@ -117,7 +117,7 @@
                 <td class="text-muted fst-italic">Por definir</td>
                 <td class="text-muted fst-italic">Por definir</td>
                 <td class="text-end text-nowrap">
-                  <button type="button" class="btn btn-sm btn-success ms-1" title="Programar Pago" data-id="{{ emp.id_usuario }}" data-nombre="{{ emp.nombre }}" onclick="abrirModalProgramarPago(this)">
+                  <button type="button" class="btn btn-sm btn-success ms-1" title="Programar Pago" data-id="{{ emp.id_usuario }}" data-nombre="{{ emp.nombre }}" data-cedula="{{ emp.cedula }}" onclick="abrirModalProgramarPago(this)">
                     <i class="bi bi-calendar-plus"></i>
                   </button>
                   <button type="button" class="btn btn-sm btn-info ms-1 text-white" title="Ver Pagos Programados" data-bs-toggle="modal" data-bs-target="#modalVerPagos{{ emp.id_usuario }}">
@@ -154,7 +154,8 @@
                             </tr>
                           </thead>
                           <tbody>
-                            {% for pago in emp.pagos_programados %}
+                            {% set pagos_emp = pagos | selectattr('nombre_trabajador', 'equalto', emp.nombre) | list %}
+                            {% for pago in pagos_emp %}
                             <tr>
                               <td>{{ pago.fecha_programada.strftime('%d/%m/%Y') }}</td>
                               <td>$ {{ "{:,.0f}".format(pago.monto).replace(',', '.') }}</td>
@@ -255,7 +256,8 @@
         </div>
         <form method="POST" action="{{ url_for('trabajadores.programar_pago_nomina') }}">
           <div class="modal-body py-3">
-            <input type="hidden" name="trabajador_id" id="programarTrabajadorId">
+            <input type="hidden" name="nombre_trabajador" id="programarTrabajadorId">
+            <input type="hidden" name="identificacion_trabajador" id="programarTrabajadorCedula">
             <p class="mb-3 text-muted">Trabajador: <strong id="programarTrabajadorNombre" class="text-dark"></strong></p>
             
             <div class="mb-3">
@@ -352,9 +354,12 @@
 
   <script>
     function abrirModalProgramarPago(btn) {
-      const id = btn.getAttribute('data-id');
       const nombre = btn.getAttribute('data-nombre');
-      document.getElementById('programarTrabajadorId').value = id;
+      const cedula = btn.getAttribute('data-cedula');
+      document.getElementById('programarTrabajadorId').value = nombre;
+      if (document.getElementById('programarTrabajadorCedula')) {
+          document.getElementById('programarTrabajadorCedula').value = cedula;
+      }
       document.getElementById('programarTrabajadorNombre').textContent = nombre;
       
       const modal = new bootstrap.Modal(document.getElementById('modalProgramarPago'));

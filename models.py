@@ -31,7 +31,6 @@ class Usuarios(db.Model):
     # Relación uno a uno con Personal
     personal_id = db.Column(db.Integer, db.ForeignKey("personal.id", ondelete="SET NULL"), nullable=True)
     personal_data = db.relationship("Personal", back_populates="usuario_data")
-    pagos_programados = db.relationship('ProgramacionPagoTrabajador', backref='usuario', lazy=True, cascade='all, delete-orphan')
 
 # ===========================================
 # 2. Personal operativo (distinto al login)
@@ -1234,7 +1233,8 @@ class ProgramacionPagoProveedor(db.Model):
 class ProgramacionPagoTrabajador(db.Model):
     __tablename__ = 'programacion_pagos_trabajadores'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    trabajador_id = db.Column(db.Integer, db.ForeignKey('usuarios.id_usuario', ondelete='CASCADE'), nullable=False)
+    nombre_trabajador = db.Column(db.String(255), nullable=False)
+    identificacion_trabajador = db.Column(db.String(100), nullable=True)
     fecha_programada = db.Column(db.Date, nullable=False)
     monto = db.Column(db.Numeric(15, 2), nullable=False)
     forma_pago = db.Column(db.String(100), nullable=True)
