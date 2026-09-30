@@ -2,7 +2,7 @@ from helpers import clean_amount
 import io
 from fpdf import FPDF
 from flask import send_file, Blueprint, render_template, session, redirect, url_for, flash, request
-from models import db, Usuarios, Tarjeta, ProgramacionPagoTarjeta
+from models import db, Usuarios, Tarjeta, ProgramacionPagoTarjeta, ProgramacionPagoTrabajador
 from datetime import datetime
 from decorators import login_required, admin_oficina_required
 from openpyxl import Workbook
@@ -379,3 +379,98 @@ def exportar_pdf_historial():
         mimetype="application/pdf",
         as_attachment=True
     )
+
+
+# ==========================================
+# PROGRAMADOR DE PAGOS DE NÓMINA (TRABAJADORES)
+# ==========================================
+
+@trabajadores_bp.route('/oficina/trabajadores/programacion_pago/crear', methods=['POST'])
+@login_required
+@admin_oficina_required
+def programar_pago_nomina():
+    try:
+        trabajador_id = request.form.get('trabajador_id')
+        fecha = request.form.get('fecha_programada')
+        monto_str = request.form.get('monto')
+        observacion = request.form.get('observacion')
+        forma_pago = request.form.get('forma_pago')
+
+        if not trabajador_id or not fecha or not monto_str:
+            flash('Faltan campos obligatorios para programar el pago.', 'warning')
+            return redirect(url_for('trabajadores.nomina'))
+
+        monto = clean_amount(monto_str)
+
+        nuevo_pago = ProgramacionPagoTrabajador(
+            trabajador_id=trabajador_id,
+            fecha_programada=datetime.strptime(fecha, '%Y-%m-%d').date(),
+            monto=monto,
+            forma_pago=forma_pago,
+            observacion=observacion,
+            estado='Programado'
+        )
+        
+        db.session.add(nuevo_pago)
+        db.session.commit()
+        flash('Pago programado exitosamente para el trabajador.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al programar pago trabajador: {e}")
+        flash('Ocurrió un error al programar el pago.', 'danger')
+
+    return redirect(url_for('trabajadores.nomina'))
+
+@trabajadores_bp.route('/oficina/trabajadores/programacion_pago/editar/<int:id>', methods=['POST'])
+@login_required
+@admin_oficina_required
+def editar_pago_programado_nomina(id):
+    pago = ProgramacionPagoTrabajador.query.get_or_404(id)
+    try:
+        pago.fecha_programada = datetime.strptime(request.form.get('fecha_programada'), '%Y-%m-%d').date()
+        pago.monto = clean_amount(request.form.get('monto'))
+        pago.forma_pago = request.form.get('forma_pago')
+        pago.observacion = request.form.get('observacion')
+        pago.estado = request.form.get('estado')
+        
+        db.session.commit()
+        flash('Pago programado actualizado correctamente.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al editar pago programado trabajador: {e}")
+        flash('Error al actualizar el pago programado.', 'danger')
+        
+    return redirect(url_for('trabajadores.nomina'))
+
+@trabajadores_bp.route('/oficina/trabajadores/programacion_pago/eliminar/<int:id>', methods=['POST'])
+@login_required
+@admin_oficina_required
+def eliminar_pago_nomina(id):
+    pago = ProgramacionPagoTrabajador.query.get_or_404(id)
+    try:
+        db.session.delete(pago)
+        db.session.commit()
+        flash('Programación de pago eliminada exitosamente.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al eliminar pago programado trabajador: {e}")
+        flash('Error al eliminar la programación de pago.', 'danger')
+        
+    return redirect(url_for('trabajadores.nomina'))
+
+@trabajadores_bp.route('/oficina/trabajadores/programacion_pago/marcar_pagado/<int:id>', methods=['POST'])
+@login_required
+@admin_oficina_required
+def marcar_pagado_nomina(id):
+    pago = ProgramacionPagoTrabajador.query.get_or_404(id)
+    try:
+        pago.estado = 'Realizado'
+        db.session.commit()
+        flash('Pago marcado como realizado exitosamente.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al marcar pago realizado trabajador: {e}")
+        flash('Error al actualizar el estado del pago.', 'danger')
+        
+    return redirect(url_for('trabajadores.nomina'))
+

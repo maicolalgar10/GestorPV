@@ -117,18 +117,82 @@
                 <td class="text-muted fst-italic">Por definir</td>
                 <td class="text-muted fst-italic">Por definir</td>
                 <td class="text-end text-nowrap">
-                  <button class="btn btn-sm btn-light border" title="Ver Detalle" disabled><i class="bi bi-eye"></i></button>
-                  <button class="btn btn-sm btn-primary" title="Liquidar" disabled><i class="bi bi-calculator"></i> Liquidar</button>
+                  <button type="button" class="btn btn-sm btn-success ms-1" title="Programar Pago" data-id="{{ emp.id_usuario }}" data-nombre="{{ emp.nombre }}" onclick="abrirModalProgramarPago(this)">
+                    <i class="bi bi-calendar-plus"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-info ms-1 text-white" title="Ver Pagos Programados" data-bs-toggle="modal" data-bs-target="#modalVerPagos{{ emp.id_usuario }}">
+                    <i class="bi bi-list-check"></i>
+                  </button>
+                  
                   <button type="button" 
                           class="btn btn-sm btn-outline-danger ms-1 btn-quitar-fila" 
                           title="Quitar / Ocultar de la nómina"
                           data-id="{{ emp.id_usuario }}"
                           data-nombre="{{ emp.nombre }}"
                           onclick="abrirModalQuitar(this)">
-                    <i class="bi bi-trash"></i> Quitar
+                    <i class="bi bi-trash"></i>
                   </button>
                 </td>
               </tr>
+              <div class="modal fade" id="modalVerPagos{{ emp.id_usuario }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                  <div class="modal-content">
+                    <div class="modal-header border-0 pb-0">
+                      <h5 class="modal-title fw-bold text-primary"><i class="bi bi-list-check"></i> Pagos Programados: {{ emp.nombre }}</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body py-3">
+                      <div class="table-responsive">
+                        <table class="table table-sm table-hover table-custom">
+                          <thead>
+                            <tr>
+                              <th>Fecha</th>
+                              <th>Monto</th>
+                              <th>Forma Pago</th>
+                              <th>Estado</th>
+                              <th>Acciones</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {% for pago in emp.pagos_programados %}
+                            <tr>
+                              <td>{{ pago.fecha_programada.strftime('%d/%m/%Y') }}</td>
+                              <td>$ {{ "{:,.0f}".format(pago.monto).replace(',', '.') }}</td>
+                              <td>{{ pago.forma_pago }}</td>
+                              <td>
+                                {% if pago.estado == 'Programado' %}
+                                  <span class="badge bg-warning text-dark">{{ pago.estado }}</span>
+                                {% elif pago.estado == 'Realizado' %}
+                                  <span class="badge bg-success">{{ pago.estado }}</span>
+                                {% else %}
+                                  <span class="badge bg-secondary">{{ pago.estado }}</span>
+                                {% endif %}
+                              </td>
+                              <td class="text-nowrap">
+                                {% if pago.estado != 'Realizado' %}
+                                <form method="POST" action="{{ url_for('trabajadores.marcar_pagado_nomina', id=pago.id) }}" class="d-inline">
+                                  <button type="submit" class="btn btn-sm btn-outline-success" title="Marcar como Pagado"><i class="bi bi-check-circle"></i></button>
+                                </form>
+                                <button type="button" class="btn btn-sm btn-outline-primary ms-1" title="Editar" onclick="abrirModalEditarPago({{ pago.id }}, '{{ pago.fecha_programada }}', '{{ pago.monto }}', '{{ pago.forma_pago }}', '{{ pago.estado }}', '{{ pago.observacion }}')"><i class="bi bi-pencil"></i></button>
+                                {% endif %}
+                                <form method="POST" action="{{ url_for('trabajadores.eliminar_pago_nomina', id=pago.id) }}" class="d-inline ms-1" onsubmit="return confirm('¿Seguro que deseas eliminar este pago?');">
+                                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar"><i class="bi bi-trash"></i></button>
+                                </form>
+                              </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                              <td colspan="5" class="text-center text-muted">No hay pagos programados</td>
+                            </tr>
+                            {% endfor %}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {% else %}
               <tr id="filaSinEmpleados">
                 <td colspan="7" class="text-center py-4 text-muted">No se encontraron empleados registrados.</td>
@@ -179,6 +243,142 @@
       </div>
     </div>
   </div>
+
+  
+  <!-- Modal Programar Pago -->
+  <div class="modal fade" id="modalProgramarPago" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow" style="border-radius: 16px; border: none;">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold text-success"><i class="bi bi-calendar-plus"></i> Programar Pago</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form method="POST" action="{{ url_for('trabajadores.programar_pago_nomina') }}">
+          <div class="modal-body py-3">
+            <input type="hidden" name="trabajador_id" id="programarTrabajadorId">
+            <p class="mb-3 text-muted">Trabajador: <strong id="programarTrabajadorNombre" class="text-dark"></strong></p>
+            
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Fecha Programada <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" name="fecha_programada" required>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Monto <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="text" class="form-control money-input" name="monto" required>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Forma de Pago</label>
+              <select class="form-select" name="forma_pago">
+                <option value="Transferencia">Transferencia</option>
+                <option value="Efectivo">Efectivo</option>
+                <option value="Cheque">Cheque</option>
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Observación</label>
+              <textarea class="form-control" name="observacion" rows="2" placeholder="Opcional..."></textarea>
+            </div>
+          </div>
+          <div class="modal-footer border-0 pt-0">
+            <button type="button" class="btn btn-secondary px-3" style="border-radius: 10px;" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-success px-3" style="border-radius: 10px;"><i class="bi bi-save"></i> Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Editar Pago -->
+  <div class="modal fade" id="modalEditarPago" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow" style="border-radius: 16px; border: none;">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold text-primary"><i class="bi bi-pencil-square"></i> Editar Pago Programado</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form method="POST" id="formEditarPago">
+          <div class="modal-body py-3">
+            
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Fecha Programada <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" name="fecha_programada" id="editFecha" required>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Monto <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="text" class="form-control money-input" name="monto" id="editMonto" required>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Forma de Pago</label>
+              <select class="form-select" name="forma_pago" id="editFormaPago">
+                <option value="Transferencia">Transferencia</option>
+                <option value="Efectivo">Efectivo</option>
+                <option value="Cheque">Cheque</option>
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Estado</label>
+              <select class="form-select" name="estado" id="editEstado">
+                <option value="Programado">Programado</option>
+                <option value="Realizado">Realizado</option>
+                <option value="Cancelado">Cancelado</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Observación</label>
+              <textarea class="form-control" name="observacion" id="editObservacion" rows="2"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer border-0 pt-0">
+            <button type="button" class="btn btn-secondary px-3" style="border-radius: 10px;" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary px-3" style="border-radius: 10px;"><i class="bi bi-save"></i> Actualizar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function abrirModalProgramarPago(btn) {
+      const id = btn.getAttribute('data-id');
+      const nombre = btn.getAttribute('data-nombre');
+      document.getElementById('programarTrabajadorId').value = id;
+      document.getElementById('programarTrabajadorNombre').textContent = nombre;
+      
+      const modal = new bootstrap.Modal(document.getElementById('modalProgramarPago'));
+      modal.show();
+    }
+
+    function abrirModalEditarPago(id, fecha, monto, forma_pago, estado, observacion) {
+      document.getElementById('formEditarPago').action = `/oficina/trabajadores/programacion_pago/editar/${id}`;
+      document.getElementById('editFecha').value = fecha;
+      document.getElementById('editMonto').value = Math.round(Number(monto));
+      document.getElementById('editMonto').dataset.rawValue = Math.round(Number(monto)); // For formatos.js
+      document.getElementById('editFormaPago').value = forma_pago;
+      document.getElementById('editEstado').value = estado;
+      document.getElementById('editObservacion').value = observacion && observacion !== 'None' ? observacion : '';
+      
+      // Formatear visualmente
+      if(typeof formatMoneyField === 'function') {
+         formatMoneyField(document.getElementById('editMonto'));
+      }
+      
+      const modal = new bootstrap.Modal(document.getElementById('modalEditarPago'));
+      modal.show();
+    }
+  </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
