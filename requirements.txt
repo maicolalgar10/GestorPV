@@ -49,3 +49,4 @@ supabase==2.31.0
 reportlab==4.1.0
 pandas
 openpyxl
+jedi

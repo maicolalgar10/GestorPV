@@ -3,7 +3,7 @@ function isMoneyInput(el) {
     if (!el || el.tagName !== 'INPUT') return false;
     
     // Check classes
-    if (el.classList.contains('monto-input') || el.classList.contains('currency-input')) return true;
+    if (el.classList.contains('monto-input') || el.classList.contains('currency-input') || el.classList.contains('money-input')) return true;
     
     // Check name or id keywords
     const keywords = ['monto', 'valor', 'precio', 'costo', 'tarifa', 'saldo'];
@@ -123,11 +123,12 @@ document.addEventListener('submit', function(e) {
 
 // Polyfills for existing inline handlers to prevent errors
 window.formatCurrencyInput = function(input) {
-    // We can just call formatMoneyWhileTyping or let the event listener handle it
     formatMoneyWhileTyping(input);
+    input.dataset.rawValue = window.parseMoneda(input.value);
 };
 window.formatMoneyField = function(input) {
     formatMoneyWhileTyping(input);
+    input.dataset.rawValue = window.parseMoneda(input.value);
 };
 
 // Also format any pre-filled money inputs on page load
