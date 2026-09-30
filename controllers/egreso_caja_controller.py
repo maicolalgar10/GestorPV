@@ -121,3 +121,95 @@ def agregar_desglose():
         flash('Ocurrió un error al agregar el gasto.', 'danger')
 
     return redirect(url_for('egreso_caja.index'))
+
+
+@egreso_caja_bp.route('/oficina/egreso_caja/editar/<int:id>', methods=['POST'])
+@login_required
+@admin_oficina_required
+def editar(id):
+    egreso = EgresoCaja.query.get_or_404(id)
+    try:
+        egreso.persona_prestamo = request.form.get('persona_prestamo')
+        egreso.identificacion = request.form.get('identificacion')
+        egreso.fecha = datetime.strptime(request.form.get('fecha'), '%Y-%m-%d').date()
+        egreso.monto_total = clean_amount(request.form.get('monto_total'))
+        egreso.concepto = request.form.get('concepto')
+        egreso.forma_pago = request.form.get('forma_pago')
+        
+        db.session.commit()
+        flash('Egreso principal actualizado correctamente.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al editar egreso principal: {e}")
+        flash('Error al actualizar el egreso.', 'danger')
+        
+    return redirect(url_for('egreso_caja.index'))
+
+@egreso_caja_bp.route('/oficina/egreso_caja/eliminar/<int:id>', methods=['POST'])
+@login_required
+@admin_oficina_required
+def eliminar(id):
+    egreso = EgresoCaja.query.get_or_404(id)
+    try:
+        db.session.delete(egreso)
+        db.session.commit()
+        flash('Egreso y todos sus desgloses eliminados exitosamente.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al eliminar egreso principal: {e}")
+        flash('Error al eliminar el egreso.', 'danger')
+        
+    return redirect(url_for('egreso_caja.index'))
+
+@egreso_caja_bp.route('/oficina/egreso_caja/desglose/editar/<int:id>', methods=['POST'])
+@login_required
+@admin_oficina_required
+def editar_desglose(id):
+    desglose = EgresoCajaDesglose.query.get_or_404(id)
+    try:
+        desglose.concepto_gasto = request.form.get('concepto_gasto')
+        desglose.monto = clean_amount(request.form.get('monto'))
+        desglose.fecha_gasto = datetime.strptime(request.form.get('fecha_gasto'), '%Y-%m-%d').date()
+        desglose.observacion = request.form.get('observacion')
+        
+        # Procesar nuevo archivo PDF si existe
+        pdf_file = request.files.get('pdf_soporte')
+        if pdf_file and pdf_file.filename != '':
+            if not pdf_file.filename.lower().endswith('.pdf'):
+                flash('El soporte debe ser un archivo PDF.', 'warning')
+                return redirect(url_for('egreso_caja.index'))
+            
+            filename = secure_filename(f"egreso_{desglose.egreso_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf")
+            upload_path = os.path.join(current_app.root_path, 'static', 'uploads', 'egresos')
+            os.makedirs(upload_path, exist_ok=True)
+            
+            file_path = os.path.join(upload_path, filename)
+            pdf_file.save(file_path)
+            
+            # Borrar el archivo viejo si se desea, pero por simplicidad solo actualizamos la url
+            desglose.pdf_url = f"uploads/egresos/{filename}"
+            
+        db.session.commit()
+        flash('Gasto desglosado actualizado correctamente.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al editar desglose de egreso: {e}")
+        flash('Error al actualizar el gasto.', 'danger')
+        
+    return redirect(url_for('egreso_caja.index'))
+
+@egreso_caja_bp.route('/oficina/egreso_caja/desglose/eliminar/<int:id>', methods=['POST'])
+@login_required
+@admin_oficina_required
+def eliminar_desglose(id):
+    desglose = EgresoCajaDesglose.query.get_or_404(id)
+    try:
+        db.session.delete(desglose)
+        db.session.commit()
+        flash('Gasto desglosado eliminado exitosamente.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al eliminar desglose de egreso: {e}")
+        flash('Error al eliminar el gasto desglosado.', 'danger')
+        
+    return redirect(url_for('egreso_caja.index'))

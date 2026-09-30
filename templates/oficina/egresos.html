@@ -79,13 +79,20 @@
                   <span class="badge bg-danger fs-6">$ {{ "{:,.0f}".format(saldo).replace(',', '.') }}</span>
                 {% endif %}
               </td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-outline-primary ms-1" type="button" data-bs-toggle="collapse" data-bs-target="#desglose-{{ egreso.id }}" aria-expanded="false" aria-controls="desglose-{{ egreso.id }}">
-                  <i class="bi bi-list-nested"></i> Desglose
+              <td class="text-end text-nowrap">
+                <button class="btn btn-sm btn-outline-primary ms-1" type="button" data-bs-toggle="collapse" data-bs-target="#desglose-{{ egreso.id }}" aria-expanded="false" aria-controls="desglose-{{ egreso.id }}" title="Ver Desglose">
+                  <i class="bi bi-list-nested"></i>
                 </button>
-                <button type="button" class="btn btn-sm btn-outline-success ms-1" onclick="abrirModalDesglose({{ egreso.id }}, '{{ egreso.persona_prestamo }}')">
-                  <i class="bi bi-plus-circle"></i> Agregar Gasto
+                <button type="button" class="btn btn-sm btn-outline-success ms-1" onclick="abrirModalDesglose({{ egreso.id }}, '{{ egreso.persona_prestamo }}')" title="Agregar Gasto">
+                  <i class="bi bi-plus-circle"></i>
                 </button>
+                <button type="button" class="btn btn-sm btn-outline-warning ms-1" onclick="abrirModalEditarEgreso({{ egreso.id }}, '{{ egreso.persona_prestamo }}', '{{ egreso.identificacion }}', '{{ egreso.fecha }}', '{{ egreso.monto_total }}', '{{ egreso.forma_pago }}', '{{ egreso.concepto }}')" title="Editar">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <form method="POST" action="{{ url_for('egreso_caja.eliminar', id=egreso.id) }}" class="d-inline ms-1" onsubmit="return confirm('¿Seguro que deseas eliminar este egreso y todos sus gastos?');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar"><i class="bi bi-trash"></i></button>
+                </form>
               </td>
             </tr>
             
@@ -103,6 +110,7 @@
                           <th>Concepto</th>
                           <th>Monto</th>
                           <th>Soporte (PDF)</th>
+                          <th class="text-end">Acciones</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -113,12 +121,21 @@
                           <td class="text-danger fw-semibold">$ {{ "{:,.0f}".format(desglose.monto).replace(',', '.') }}</td>
                           <td>
                             {% if desglose.pdf_url %}
-                              <a href="{{ url_for('static', filename=desglose.pdf_url) }}" target="_blank" class="btn btn-sm btn-danger">
-                                <i class="bi bi-file-pdf"></i> Ver PDF
+                              <a href="{{ url_for('static', filename=desglose.pdf_url) }}" target="_blank" class="btn btn-sm btn-danger" title="Ver PDF">
+                                <i class="bi bi-file-pdf"></i>
                               </a>
                             {% else %}
                               <span class="text-muted fst-italic">Sin soporte</span>
                             {% endif %}
+                          </td>
+                          <td class="text-end text-nowrap">
+                            <button type="button" class="btn btn-sm btn-outline-warning ms-1" onclick="abrirModalEditarDesglose({{ desglose.id }}, '{{ desglose.concepto_gasto }}', '{{ desglose.fecha_gasto }}', '{{ desglose.monto }}', '{{ desglose.observacion }}')" title="Editar">
+                              <i class="bi bi-pencil"></i>
+                            </button>
+                            <form method="POST" action="{{ url_for('egreso_caja.eliminar_desglose', id=desglose.id) }}" class="d-inline ms-1" onsubmit="return confirm('¿Seguro que deseas eliminar este gasto?');">
+                              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                              <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar"><i class="bi bi-trash"></i></button>
+                            </form>
                           </td>
                         </tr>
                         {% endfor %}
@@ -402,5 +419,135 @@
     });
   </script>
 <script src="{{ url_for('static', filename='js/formatos.js') }}"></script>
+
+<!-- Modal Editar Egreso Principal -->
+<div class="modal fade" id="modalEditarEgreso" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow" style="border-radius: 16px; border: none;">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold text-warning"><i class="bi bi-pencil-square"></i> Editar Egreso</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="POST" id="formEditarEgreso">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body py-3">
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Persona/Beneficiario <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="persona_prestamo" id="editEgresoPersona" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Identificación</label>
+            <input type="text" class="form-control" name="identificacion" id="editEgresoIdentificacion">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Fecha del Egreso <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" name="fecha" id="editEgresoFecha" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Monto Total <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input type="text" class="form-control money-input" name="monto_total" id="editEgresoMonto" required>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Forma de Pago</label>
+            <select class="form-select" name="forma_pago" id="editEgresoFormaPago">
+              <option value="Transferencia">Transferencia</option>
+              <option value="Efectivo">Efectivo</option>
+              <option value="Cheque">Cheque</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Concepto / Motivo</label>
+            <textarea class="form-control" name="concepto" id="editEgresoConcepto" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal" style="border-radius: 10px;">Cancelar</button>
+          <button type="submit" class="btn btn-warning px-3" style="border-radius: 10px;"><i class="bi bi-save"></i> Actualizar Egreso</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Editar Desglose -->
+<div class="modal fade" id="modalEditarDesglose" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow" style="border-radius: 16px; border: none;">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold text-warning"><i class="bi bi-pencil-square"></i> Editar Gasto</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="POST" id="formEditarDesglose" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body py-3">
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Fecha del Gasto <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" name="fecha_gasto" id="editDesgloseFecha" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Concepto del Gasto <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="concepto_gasto" id="editDesgloseConcepto" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Monto <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input type="text" class="form-control money-input" name="monto" id="editDesgloseMonto" required>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Reemplazar Soporte PDF (Opcional)</label>
+            <input type="file" class="form-control" name="pdf_soporte" accept=".pdf">
+            <small class="text-muted">Si no subes nada, se mantendrá el anterior.</small>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Observación</label>
+            <textarea class="form-control" name="observacion" id="editDesgloseObservacion" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal" style="border-radius: 10px;">Cancelar</button>
+          <button type="submit" class="btn btn-warning px-3" style="border-radius: 10px;"><i class="bi bi-save"></i> Actualizar Gasto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  function abrirModalEditarEgreso(id, persona, identificacion, fecha, monto, forma_pago, concepto) {
+    document.getElementById('formEditarEgreso').action = `/oficina/egreso_caja/editar/${id}`;
+    document.getElementById('editEgresoPersona').value = persona !== 'None' ? persona : '';
+    document.getElementById('editEgresoIdentificacion').value = identificacion !== 'None' ? identificacion : '';
+    document.getElementById('editEgresoFecha').value = fecha;
+    document.getElementById('editEgresoMonto').value = Math.round(Number(monto));
+    document.getElementById('editEgresoMonto').dataset.rawValue = Math.round(Number(monto));
+    if(typeof formatMoneyField === 'function') formatMoneyField(document.getElementById('editEgresoMonto'));
+    
+    document.getElementById('editEgresoFormaPago').value = forma_pago !== 'None' ? forma_pago : '';
+    document.getElementById('editEgresoConcepto').value = concepto !== 'None' ? concepto : '';
+    
+    const modal = new bootstrap.Modal(document.getElementById('modalEditarEgreso'));
+    modal.show();
+  }
+  
+  function abrirModalEditarDesglose(id, concepto, fecha, monto, observacion) {
+    document.getElementById('formEditarDesglose').action = `/oficina/egreso_caja/desglose/editar/${id}`;
+    document.getElementById('editDesgloseConcepto').value = concepto !== 'None' ? concepto : '';
+    document.getElementById('editDesgloseFecha').value = fecha;
+    document.getElementById('editDesgloseMonto').value = Math.round(Number(monto));
+    document.getElementById('editDesgloseMonto').dataset.rawValue = Math.round(Number(monto));
+    if(typeof formatMoneyField === 'function') formatMoneyField(document.getElementById('editDesgloseMonto'));
+    
+    document.getElementById('editDesgloseObservacion').value = observacion !== 'None' ? observacion : '';
+    
+    const modal = new bootstrap.Modal(document.getElementById('modalEditarDesglose'));
+    modal.show();
+  }
+</script>
+
 </body>
 </html>
