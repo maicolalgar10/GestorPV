@@ -1297,3 +1297,40 @@ class PlanillaSeguridadSocial(db.Model):
     soporte_declaracion_url = db.Column(db.String(500), nullable=True)
     soporte_pago_url = db.Column(db.String(500), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+# ==========================================
+# EGRESOS DE CAJA (OFICINA)
+# ==========================================
+
+class EgresoCaja(db.Model):
+    __tablename__ = 'egresos_caja'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    persona_prestamo = db.Column(db.String(255), nullable=False)
+    identificacion = db.Column(db.String(100), nullable=True)
+    fecha = db.Column(db.Date, nullable=False)
+    monto_total = db.Column(db.Numeric(15, 2), nullable=False)
+    concepto = db.Column(db.Text, nullable=True)
+    forma_pago = db.Column(db.String(100), nullable=True)
+    creado_en = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    desgloses = db.relationship('EgresoCajaDesglose', backref='egreso', lazy=True, cascade='all, delete-orphan')
+
+    @property
+    def monto_ejecutado(self):
+        return sum([d.monto for d in self.desgloses])
+
+    @property
+    def saldo_restante(self):
+        return self.monto_total - self.monto_ejecutado
+
+class EgresoCajaDesglose(db.Model):
+    __tablename__ = 'egresos_caja_desgloses'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    egreso_id = db.Column(db.Integer, db.ForeignKey('egresos_caja.id', ondelete='CASCADE'), nullable=False)
+    concepto_gasto = db.Column(db.String(255), nullable=False)
+    monto = db.Column(db.Numeric(15, 2), nullable=False)
+    fecha_gasto = db.Column(db.Date, nullable=False)
+    pdf_url = db.Column(db.String(500), nullable=True)
+    observacion = db.Column(db.Text, nullable=True)
+    creado_en = db.Column(db.DateTime, default=datetime.utcnow)

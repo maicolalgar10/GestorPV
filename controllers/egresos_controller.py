@@ -6,8 +6,9 @@ from helpers import clean_amount
 from werkzeug.utils import secure_filename
 from functools import wraps
 
-egreso_caja_bp = Blueprint('egreso_caja', __name__)
+egresos_bp = Blueprint('egresos', __name__)
 
+# Reutilizar validadores o definir dependencias
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -26,7 +27,7 @@ def admin_oficina_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-@egreso_caja_bp.route('/oficina/egreso_caja')
+@egresos_bp.route('/oficina/egresos/')
 @login_required
 @admin_oficina_required
 def index():
@@ -34,7 +35,7 @@ def index():
     egresos = EgresoCaja.query.order_by(EgresoCaja.fecha.desc()).all()
     return render_template("oficina/egresos.html", usuario=usuario, egresos=egresos)
 
-@egreso_caja_bp.route('/oficina/egreso_caja/crear', methods=['POST'])
+@egresos_bp.route('/oficina/egresos/crear', methods=['POST'])
 @login_required
 @admin_oficina_required
 def crear():
@@ -48,7 +49,7 @@ def crear():
 
         if not persona_prestamo or not fecha or not monto_str:
             flash('Faltan campos obligatorios.', 'warning')
-            return redirect(url_for('egreso_caja.index'))
+            return redirect(url_for('egresos.index'))
 
         monto_total = clean_amount(monto_str)
 
@@ -69,9 +70,9 @@ def crear():
         print(f"Error al crear egreso de caja: {e}")
         flash('Ocurrió un error al registrar el egreso.', 'danger')
 
-    return redirect(url_for('egreso_caja.index'))
+    return redirect(url_for('egresos.index'))
 
-@egreso_caja_bp.route('/oficina/egreso_caja/desglose/agregar', methods=['POST'])
+@egresos_bp.route('/oficina/egresos/desglose/agregar', methods=['POST'])
 @login_required
 @admin_oficina_required
 def agregar_desglose():
@@ -84,18 +85,20 @@ def agregar_desglose():
 
         if not egreso_id or not concepto_gasto or not monto_str or not fecha_gasto:
             flash('Faltan campos obligatorios en el desglose.', 'warning')
-            return redirect(url_for('egreso_caja.index'))
+            return redirect(url_for('egresos.index'))
 
         monto = clean_amount(monto_str)
 
+        # Procesar archivo PDF si existe
         pdf_url = None
         pdf_file = request.files.get('pdf_soporte')
         if pdf_file and pdf_file.filename != '':
             if not pdf_file.filename.lower().endswith('.pdf'):
                 flash('El soporte debe ser un archivo PDF.', 'warning')
-                return redirect(url_for('egreso_caja.index'))
+                return redirect(url_for('egresos.index'))
             
             filename = secure_filename(f"egreso_{egreso_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf")
+            # Ensure upload folder exists
             upload_path = os.path.join(current_app.root_path, 'static', 'uploads', 'egresos')
             os.makedirs(upload_path, exist_ok=True)
             
@@ -120,4 +123,4 @@ def agregar_desglose():
         print(f"Error al agregar desglose de egreso: {e}")
         flash('Ocurrió un error al agregar el gasto.', 'danger')
 
-    return redirect(url_for('egreso_caja.index'))
+    return redirect(url_for('egresos.index'))
