@@ -15,6 +15,7 @@ from io import BytesIO
 import tempfile
 import os
 import gc
+import concurrent.futures
 from PIL import Image as PILImage
 from openpyxl.cell import WriteOnlyCell
 from openpyxl.drawing.image import Image as ExcelImage
@@ -354,6 +355,53 @@ def exportar_informe_excel(id_proyecto):
         else:
             return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'Ubicación PR', 'Unidades Avanzadas', 'Comentario', 'Usuario', 'Evidencia']
 
+    # 0. Pre-descargar imágenes concurrentemente
+    todas_evidencias = (
+        db.session.query(Evidencias.ruta_archivo)
+        .join(Avances)
+        .join(Actividades)
+        .filter(Actividades.id_proyecto == id_proyecto)
+        .distinct()
+        .all()
+    )
+    
+    urls_unicas = [e.ruta_archivo for e in todas_evidencias]
+    cache_imagenes = {}
+    
+    def descargar_imagen(url_original):
+        es_http = url_original.startswith('http')
+        url_completa = url_original if es_http else request.host_url.rstrip('/') + url_for('static', filename=url_original)
+        
+        try:
+            img_stream = None
+            if not es_http:
+                ruta_local = os.path.join("static", url_original)
+                if os.path.exists(ruta_local):
+                    with open(ruta_local, 'rb') as f:
+                        img_stream = BytesIO(f.read())
+            
+            if img_stream is None:
+                response = requests.get(url_completa, stream=True, timeout=3)
+                if response.status_code == 200:
+                    img_stream = BytesIO(response.content)
+
+            if img_stream:
+                with PILImage.open(img_stream) as pil_img:
+                    pil_img.thumbnail((150, 150))
+                    thumb_io = BytesIO()
+                    if pil_img.mode in ("RGBA", "P"):
+                        pil_img = pil_img.convert("RGB")
+                    pil_img.save(thumb_io, format='JPEG', quality=85)
+                    return url_original, thumb_io.getvalue()
+        except Exception as e:
+            print(f"Error descargando miniatura {url_completa}:", e)
+        return url_original, None
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        for url, img_bytes in executor.map(descargar_imagen, urls_unicas):
+            if img_bytes:
+                cache_imagenes[url] = img_bytes
+
     def procesar_evidencia_miniatura(avance, ws, row_idx, col_letra):
         if not avance.evidencias:
             return ""
@@ -367,36 +415,14 @@ def exportar_informe_excel(id_proyecto):
             es_http = url.startswith('http')
             url_completa = url if es_http else request.host_url.rstrip('/') + url_for('static', filename=url)
             
-            try:
-                img_stream = None
-                if not es_http:
-                    ruta_local = os.path.join("static", url)
-                    if os.path.exists(ruta_local):
-                        with open(ruta_local, 'rb') as f:
-                            img_stream = BytesIO(f.read())
-                
-                if img_stream is None:
-                    response = requests.get(url_completa, stream=True, timeout=5)
-                    if response.status_code == 200:
-                        img_stream = BytesIO(response.content)
-
-                if img_stream:
-                    with PILImage.open(img_stream) as pil_img:
-                        pil_img.thumbnail((150, 150))
-                        thumb_io = BytesIO()
-                        if pil_img.mode in ("RGBA", "P"):
-                            pil_img = pil_img.convert("RGB")
-                        pil_img.save(thumb_io, format='JPEG', quality=85)
-                        thumb_io.seek(0)
-                        
-                        img_excel = ExcelImage(thumb_io)
-                        ws.add_image(img_excel, f"{col_letra}{row_idx}")
-                        
-                        gc.collect() # Liberar memoria tras procesar imagen
-                        return "" # Si tuvimos exito incrustando, retornamos vacio para la celda
-
-            except Exception as e:
-                print(f"Error procesando miniatura {url_completa}:", e)
+            img_bytes = cache_imagenes.get(url)
+            if img_bytes:
+                try:
+                    img_excel = ExcelImage(BytesIO(img_bytes))
+                    ws.add_image(img_excel, f"{col_letra}{row_idx}")
+                    return "" # Si tuvimos exito incrustando, retornamos vacio para la celda
+                except Exception as e:
+                    print(f"Error incrustando miniatura {url_completa}:", e)
             
             texto_fallback.append(url_completa)
             
