@@ -9,9 +9,11 @@ import requests
 from supabase_client import supabase
 from frases import obtener_frase
 from decorators import login_required, admin_required, admin_encargado_required
-from flask import send_file
+from flask import send_file, after_this_request, request
 from openpyxl import load_workbook, Workbook
 from io import BytesIO
+import tempfile
+from openpyxl.cell import WriteOnlyCell
 from openpyxl.drawing.image import Image as ExcelImage
 from openpyxl.styles import Font, Alignment, PatternFill
 from openpyxl.utils import get_column_letter
@@ -318,154 +320,146 @@ def exportar_informe_excel(id_proyecto):
 
     proyecto = Proyectos.query.get_or_404(id_proyecto)
 
-    avances = (
-        db.session.query(Avances, Actividades, Usuarios)
-        .join(Actividades, Actividades.id_actividad == Avances.id_actividad)
-        .outerjoin(Usuarios, Usuarios.id_usuario == Avances.id_usuario)
-        .filter(Actividades.id_proyecto == id_proyecto)
-        .order_by(Avances.fecha)
-        .all()
-    )
-
-    wb = Workbook()
-    
-    # Eliminar hoja por defecto si creamos nuevas
-    sheet_global = wb.active
-    sheet_global.title = "Resumen Global"
+    # Use write_only=True to prevent holding the workbook structure in memory
+    wb = Workbook(write_only=True)
     
     # Estilos
     header_font = Font(bold=True, color="FFFFFF")
     header_fill = PatternFill("solid", fgColor="4F81BD")
     align_center = Alignment(horizontal="center", vertical="center", wrap_text=True)
 
-    def style_header(ws, row):
-        for cell in ws[row]:
-            cell.font = header_font
-            cell.fill = header_fill
-            cell.alignment = align_center
-
-    # Configurar Global
-    headers_global = ["Actividad", "Tipo Unidad", "Fecha", "Usuario", "Comentario", "Total Unidades", "Evidencia"]
-    sheet_global.append(["Proyecto:", proyecto.nombre])
-    sheet_global.append(["Descripción:", proyecto.descripcion or ""])
-    sheet_global.append([])
-    sheet_global.append(headers_global)
-    style_header(sheet_global, 4)
+    def style_row(ws, values):
+        row = []
+        for v in values:
+            c = WriteOnlyCell(ws, value=v)
+            c.font = header_font
+            c.fill = header_fill
+            c.alignment = align_center
+            row.append(c)
+        return row
 
     def get_columns_by_tipo(tipo_unidad):
         tipo = (tipo_unidad or "").lower()
         if "metro lineal" in tipo:
-            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'PR Inicio', 'PR Fin', 'Longitud Lineal (m)', 'Color Lineal', 'Unidades Avanzadas', 'Comentario', 'Usuario', 'Evidencia']
+            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'PR Inicio', 'PR Fin', 'Longitud Lineal (m)', 'Color Lineal', 'Unidades Avanzadas', 'Comentario', 'Usuario', 'Evidencia (Enlaces)']
         elif "metro cuadrado" in tipo:
-            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'Margen', 'Ubicación PR', 'Tipo', 'Elemento', 'Ancho (m)', 'Largo (m)', 'Cantidad', 'Área Total (m²)', 'Comentario', 'Usuario', 'Evidencia']
+            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'Margen', 'Ubicación PR', 'Tipo', 'Elemento', 'Ancho (m)', 'Largo (m)', 'Cantidad', 'Área Total (m²)', 'Comentario', 'Usuario', 'Evidencia (Enlaces)']
         elif "señalización vertical" in tipo or "senalizacion" in tipo:
-            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'Margen', 'Ubicación PR', 'Tipo', 'Elemento', 'Cantidad', 'Comentario', 'Usuario', 'Evidencia']
+            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'Margen', 'Ubicación PR', 'Tipo', 'Elemento', 'Cantidad', 'Comentario', 'Usuario', 'Evidencia (Enlaces)']
         elif "tacha" in tipo or "captafaro" in tipo or "hito" in tipo or "defensa" in tipo:
-            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'Ubicación PR', 'Tipo', 'Elemento', 'Tamaño', 'Color', 'Cantidad', 'Comentario', 'Usuario', 'Evidencia']
+            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'Ubicación PR', 'Tipo', 'Elemento', 'Tamaño', 'Color', 'Cantidad', 'Comentario', 'Usuario', 'Evidencia (Enlaces)']
         else:
-            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'Ubicación PR', 'Unidades Avanzadas', 'Comentario', 'Usuario', 'Evidencia']
+            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'Ubicación PR', 'Unidades Avanzadas', 'Comentario', 'Usuario', 'Evidencia (Enlaces)']
 
-    def insertar_imagen(ws, avance, fila, col_letra):
-        if avance.evidencias:
-            for evidencia in avance.evidencias:
-                if evidencia.ruta_archivo.startswith('http'):
-                    try:
-                        response = requests.get(evidencia.ruta_archivo)
-                        if response.status_code == 200:
-                            img_stream = BytesIO(response.content)
-                            img = ExcelImage(img_stream)
-                            img.width = 120
-                            img.height = 90
-                            ws.add_image(img, f"{col_letra}{fila}")
-                            ws.row_dimensions[fila].height = 75
-                            break
-                    except Exception as e:
-                        print("Error descargando imagen de Supabase para Excel:", e)
-                else:
-                    ruta_imagen = os.path.join("static", evidencia.ruta_archivo)
-                    if os.path.exists(ruta_imagen):
-                        img = ExcelImage(ruta_imagen)
-                        img.width = 120
-                        img.height = 90
-                        ws.add_image(img, f"{col_letra}{fila}")
-                        ws.row_dimensions[fila].height = 75
-                        break
+    def obtener_enlaces_evidencia(avance):
+        if not avance.evidencias:
+            return ""
+        enlaces = []
+        for evidencia in avance.evidencias:
+            if evidencia.ruta_archivo.startswith('http'):
+                enlaces.append(evidencia.ruta_archivo)
+            else:
+                # Ruta local, asume la misma app
+                enlaces.append(request.host_url.rstrip('/') + url_for('static', filename=evidencia.ruta_archivo))
+        return "\n".join(enlaces)
 
-    hojas_por_tipo = {}
-    row_global = 5
+    avances_query = (
+        db.session.query(Avances, Actividades, Usuarios)
+        .join(Actividades, Actividades.id_actividad == Avances.id_actividad)
+        .outerjoin(Usuarios, Usuarios.id_usuario == Avances.id_usuario)
+        .filter(Actividades.id_proyecto == id_proyecto)
+        .order_by(Avances.fecha)
+    )
 
-    for avance, actividad, usuario in avances:
+    # 1. Crear y llenar la hoja global
+    sheet_global = wb.create_sheet(title="Resumen Global")
+    headers_global = ["Actividad", "Tipo Unidad", "Fecha", "Usuario", "Comentario", "Total Unidades", "Evidencia (Enlaces)"]
+    sheet_global.append(["Proyecto:", proyecto.nombre])
+    sheet_global.append(["Descripción:", proyecto.descripcion or ""])
+    sheet_global.append([])
+    sheet_global.append(style_row(sheet_global, headers_global))
+
+    # Usamos yield_per(100) para procesar en bloques (streaming de la DB)
+    for avance, actividad, usuario in avances_query.yield_per(100):
         fecha_str = avance.fecha.strftime("%d/%m/%Y") if avance.fecha else ""
-        nombre_actividad = actividad.nombre
-        tipo_unidad = actividad.tipo_unidad or "Otro"
         nombre_usuario = getattr(usuario, 'nombre', getattr(usuario, 'username', 'N/A')) if usuario else "N/A"
-        comentario = avance.mensaje or ""
-        unidades = avance.unidades_avanzadas or 0
+        enlaces = obtener_enlaces_evidencia(avance)
 
-        # Llenar hoja Global
         sheet_global.append([
-            nombre_actividad, tipo_unidad, fecha_str, nombre_usuario, comentario, unidades, ""
+            actividad.nombre,
+            actividad.tipo_unidad or "Otro",
+            fecha_str,
+            nombre_usuario,
+            avance.mensaje or "",
+            avance.unidades_avanzadas or 0,
+            enlaces
         ])
-        insertar_imagen(sheet_global, avance, row_global, col_letra="G")
-        row_global += 1
 
-        # Hoja específica
-        if tipo_unidad not in hojas_por_tipo:
-            cols = get_columns_by_tipo(tipo_unidad)
-            ws_tipo = wb.create_sheet(title=str(tipo_unidad)[:31])
-            ws_tipo.append([f"Detalle de Avances - {tipo_unidad}"])
-            ws_tipo.append(cols)
-            style_header(ws_tipo, 2)
-            hojas_por_tipo[tipo_unidad] = {"ws": ws_tipo, "cols": cols, "row_idx": 3}
-
-        info_hoja = hojas_por_tipo[tipo_unidad]
-        ws_tipo = info_hoja["ws"]
-        cols = info_hoja["cols"]
-        row_idx = info_hoja["row_idx"]
-
-        fila_datos = []
-        for c in cols:
-            if c == "Actividad": fila_datos.append(nombre_actividad)
-            elif c == "Fecha": fila_datos.append(fecha_str)
-            elif c == "Trayecto": fila_datos.append(avance.trayecto if avance.trayecto else "-")
-            elif c == "Calzada": fila_datos.append(avance.calzada if avance.calzada else "-")
-            elif c == "Carril": fila_datos.append(avance.carril if avance.carril else "-")
-            elif c == "Ubicación PR": fila_datos.append(avance.ubicacion_pr if avance.ubicacion_pr else "-")
-            elif c == "PR Inicio": fila_datos.append(avance.pr_inicio if avance.pr_inicio else "-")
-            elif c == "PR Fin": fila_datos.append(avance.pr_fin if avance.pr_fin else "-")
-            elif c == "Margen": fila_datos.append(avance.margen if avance.margen else "-")
-            elif c == "Tipo": fila_datos.append(avance.tipo if avance.tipo else "-")
-            elif c == "Elemento": fila_datos.append(avance.elemento if avance.elemento else "-")
-            elif c == "Tamaño": fila_datos.append(avance.tamano if avance.tamano else "-")
-            elif c == "Color": fila_datos.append(avance.color if avance.color else "-")
-            elif c == "Color Lineal": fila_datos.append(avance.color_lineal if avance.color_lineal else "-")
-            elif c == "Ancho (m)": fila_datos.append(avance.ancho if avance.ancho is not None else "-")
-            elif c == "Largo (m)": fila_datos.append(avance.largo if avance.largo is not None else "-")
-            elif c == "Longitud Lineal (m)": fila_datos.append(avance.longitud_lineal if avance.longitud_lineal is not None else "-")
-            elif c == "Área Elemento (m²)": fila_datos.append(avance.area_elemento if avance.area_elemento is not None else "-")
-            elif c == "Área Total (m²)": fila_datos.append(avance.area_total if avance.area_total is not None else "-")
-            elif c == "Cantidad": fila_datos.append(avance.cantidad if avance.cantidad is not None else "-")
-            elif c == "Unidades Avanzadas": fila_datos.append(avance.unidades_avanzadas if avance.unidades_avanzadas is not None else "-")
-            elif c == "Comentario": fila_datos.append(comentario if comentario else "-")
-            elif c == "Usuario": fila_datos.append(nombre_usuario)
-            elif c == "Evidencia": fila_datos.append("")
-            else: fila_datos.append("-")
-            
-        ws_tipo.append(fila_datos)
-
-        col_evidencia_idx = cols.index("Evidencia") + 1
-        col_letra = get_column_letter(col_evidencia_idx)
-        insertar_imagen(ws_tipo, avance, row_idx, col_letra)
+    # 2. Generar hojas específicas por tipo de unidad
+    tipos_db = db.session.query(Actividades.tipo_unidad).filter(Actividades.id_proyecto == id_proyecto).distinct().all()
+    
+    for (tipo_unidad,) in tipos_db:
+        tipo_nombre = tipo_unidad or "Otro"
+        ws_tipo = wb.create_sheet(title=str(tipo_nombre)[:31])
         
-        info_hoja["row_idx"] += 1
+        cols = get_columns_by_tipo(tipo_unidad)
+        ws_tipo.append([f"Detalle de Avances - {tipo_nombre}"])
+        ws_tipo.append(style_row(ws_tipo, cols))
 
-    # 💾 Guardar en memoria
-    output = BytesIO()
-    wb.save(output)
-    output.seek(0)
+        if tipo_unidad is None:
+            q_tipo = avances_query.filter(Actividades.tipo_unidad.is_(None))
+        else:
+            q_tipo = avances_query.filter(Actividades.tipo_unidad == tipo_unidad)
+
+        for avance, actividad, usuario in q_tipo.yield_per(100):
+            fecha_str = avance.fecha.strftime("%d/%m/%Y") if avance.fecha else ""
+            nombre_usuario = getattr(usuario, 'nombre', getattr(usuario, 'username', 'N/A')) if usuario else "N/A"
+            enlaces = obtener_enlaces_evidencia(avance)
+
+            fila_datos = []
+            for c in cols:
+                if c == "Actividad": fila_datos.append(actividad.nombre)
+                elif c == "Fecha": fila_datos.append(fecha_str)
+                elif c == "Trayecto": fila_datos.append(avance.trayecto if avance.trayecto else "-")
+                elif c == "Calzada": fila_datos.append(avance.calzada if avance.calzada else "-")
+                elif c == "Carril": fila_datos.append(avance.carril if avance.carril else "-")
+                elif c == "Ubicación PR": fila_datos.append(avance.ubicacion_pr if avance.ubicacion_pr else "-")
+                elif c == "PR Inicio": fila_datos.append(avance.pr_inicio if avance.pr_inicio else "-")
+                elif c == "PR Fin": fila_datos.append(avance.pr_fin if avance.pr_fin else "-")
+                elif c == "Margen": fila_datos.append(avance.margen if avance.margen else "-")
+                elif c == "Tipo": fila_datos.append(avance.tipo if avance.tipo else "-")
+                elif c == "Elemento": fila_datos.append(avance.elemento if avance.elemento else "-")
+                elif c == "Tamaño": fila_datos.append(avance.tamano if avance.tamano else "-")
+                elif c == "Color": fila_datos.append(avance.color if avance.color else "-")
+                elif c == "Color Lineal": fila_datos.append(avance.color_lineal if avance.color_lineal else "-")
+                elif c == "Ancho (m)": fila_datos.append(avance.ancho if avance.ancho is not None else "-")
+                elif c == "Largo (m)": fila_datos.append(avance.largo if avance.largo is not None else "-")
+                elif c == "Longitud Lineal (m)": fila_datos.append(avance.longitud_lineal if avance.longitud_lineal is not None else "-")
+                elif c == "Área Elemento (m²)": fila_datos.append(avance.area_elemento if avance.area_elemento is not None else "-")
+                elif c == "Área Total (m²)": fila_datos.append(avance.area_total if avance.area_total is not None else "-")
+                elif c == "Cantidad": fila_datos.append(avance.cantidad if avance.cantidad is not None else "-")
+                elif c == "Unidades Avanzadas": fila_datos.append(avance.unidades_avanzadas if avance.unidades_avanzadas is not None else "-")
+                elif c == "Comentario": fila_datos.append(avance.mensaje if avance.mensaje else "-")
+                elif c == "Usuario": fila_datos.append(nombre_usuario)
+                elif c == "Evidencia (Enlaces)": fila_datos.append(enlaces)
+                else: fila_datos.append("-")
+            ws_tipo.append(fila_datos)
+
+    # 💾 Guardar usando NamedTemporaryFile para evitar cargar todo el XML en RAM
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
+    wb.save(temp_file.name)
+    wb.close()
+
+    @after_this_request
+    def remove_file(response):
+        try:
+            os.remove(temp_file.name)
+        except Exception as error:
+            print("Error eliminando archivo temporal:", error)
+        return response
 
     return send_file(
-        output,
+        temp_file.name,
         as_attachment=True,
         download_name=f"informe_avance_{proyecto.nombre}.xlsx",
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
