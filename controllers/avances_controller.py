@@ -19,6 +19,9 @@ import concurrent.futures
 from PIL import Image as PILImage
 from openpyxl.cell import WriteOnlyCell
 from openpyxl.drawing.image import Image as ExcelImage
+from openpyxl.drawing.spreadsheet_drawing import OneCellAnchor, AnchorMarker
+from openpyxl.drawing.xdr import XDRPositiveSize2D
+from openpyxl.utils import column_index_from_string
 from openpyxl.styles import Font, Alignment, PatternFill
 from openpyxl.utils import get_column_letter
 
@@ -410,6 +413,17 @@ def exportar_informe_excel(id_proyecto):
         ws.row_dimensions[row_idx].height = 115
         texto_fallback = []
 
+        col_num = column_index_from_string(col_letra) - 1 # Zero-indexed column
+        row_num = row_idx - 1 # Zero-indexed row
+        
+        pixels_to_emu = 9525
+        x_offset = 0
+        img_width_px = 150
+        img_height_px = 150
+        margin_px = 10
+        
+        exito_incrustacion = False
+
         for evidencia in avance.evidencias:
             url = evidencia.ruta_archivo
             es_http = url.startswith('http')
@@ -419,14 +433,35 @@ def exportar_informe_excel(id_proyecto):
             if img_bytes:
                 try:
                     img_excel = ExcelImage(BytesIO(img_bytes))
-                    ws.add_image(img_excel, f"{col_letra}{row_idx}")
-                    return "" # Si tuvimos exito incrustando, retornamos vacio para la celda
+                    
+                    # Custom Anchor para múltiples imágenes en la misma celda con desplazamiento
+                    marker = AnchorMarker(col=col_num, colOff=x_offset * pixels_to_emu, row=row_num, rowOff=5 * pixels_to_emu)
+                    ext = XDRPositiveSize2D(cx=img_width_px * pixels_to_emu, cy=img_height_px * pixels_to_emu)
+                    img_excel.anchor = OneCellAnchor(_from=marker, ext=ext)
+                    
+                    ws.add_image(img_excel)
+                    
+                    x_offset += img_width_px + margin_px
+                    exito_incrustacion = True
+                    continue # Imagen incrustada, pasar a la siguiente
                 except Exception as e:
                     print(f"Error incrustando miniatura {url_completa}:", e)
             
             texto_fallback.append(url_completa)
             
-        return "\n".join(texto_fallback) or "Sin imagen"
+        # Ajustamos el ancho de la columna si insertamos imágenes
+        if exito_incrustacion and x_offset > 0:
+            ancho_requerido = (x_offset / 7.0) + 2
+            ancho_actual = ws.column_dimensions[col_letra].width or 13.0
+            if ancho_requerido > ancho_actual:
+                ws.column_dimensions[col_letra].width = ancho_requerido
+                
+        if exito_incrustacion and not texto_fallback:
+            return "" # Todas se insertaron correctamente
+        elif exito_incrustacion:
+            return "Imágenes + Fallos:\n" + "\n".join(texto_fallback)
+        else:
+            return "\n".join(texto_fallback) or "Sin imagen"
 
     avances_query = (
         db.session.query(Avances, Actividades, Usuarios)
