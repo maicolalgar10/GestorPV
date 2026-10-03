@@ -13,6 +13,9 @@ from flask import send_file, after_this_request, request
 from openpyxl import load_workbook, Workbook
 from io import BytesIO
 import tempfile
+import os
+import gc
+from PIL import Image as PILImage
 from openpyxl.cell import WriteOnlyCell
 from openpyxl.drawing.image import Image as ExcelImage
 from openpyxl.styles import Font, Alignment, PatternFill
@@ -341,27 +344,63 @@ def exportar_informe_excel(id_proyecto):
     def get_columns_by_tipo(tipo_unidad):
         tipo = (tipo_unidad or "").lower()
         if "metro lineal" in tipo:
-            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'PR Inicio', 'PR Fin', 'Longitud Lineal (m)', 'Color Lineal', 'Unidades Avanzadas', 'Comentario', 'Usuario', 'Evidencia (Enlaces)']
+            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'PR Inicio', 'PR Fin', 'Longitud Lineal (m)', 'Color Lineal', 'Unidades Avanzadas', 'Comentario', 'Usuario', 'Evidencia']
         elif "metro cuadrado" in tipo:
-            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'Margen', 'Ubicación PR', 'Tipo', 'Elemento', 'Ancho (m)', 'Largo (m)', 'Cantidad', 'Área Total (m²)', 'Comentario', 'Usuario', 'Evidencia (Enlaces)']
+            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'Margen', 'Ubicación PR', 'Tipo', 'Elemento', 'Ancho (m)', 'Largo (m)', 'Cantidad', 'Área Total (m²)', 'Comentario', 'Usuario', 'Evidencia']
         elif "señalización vertical" in tipo or "senalizacion" in tipo:
-            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'Margen', 'Ubicación PR', 'Tipo', 'Elemento', 'Cantidad', 'Comentario', 'Usuario', 'Evidencia (Enlaces)']
+            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'Margen', 'Ubicación PR', 'Tipo', 'Elemento', 'Cantidad', 'Comentario', 'Usuario', 'Evidencia']
         elif "tacha" in tipo or "captafaro" in tipo or "hito" in tipo or "defensa" in tipo:
-            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'Ubicación PR', 'Tipo', 'Elemento', 'Tamaño', 'Color', 'Cantidad', 'Comentario', 'Usuario', 'Evidencia (Enlaces)']
+            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'Ubicación PR', 'Tipo', 'Elemento', 'Tamaño', 'Color', 'Cantidad', 'Comentario', 'Usuario', 'Evidencia']
         else:
-            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'Ubicación PR', 'Unidades Avanzadas', 'Comentario', 'Usuario', 'Evidencia (Enlaces)']
+            return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'Ubicación PR', 'Unidades Avanzadas', 'Comentario', 'Usuario', 'Evidencia']
 
-    def obtener_enlaces_evidencia(avance):
+    def procesar_evidencia_miniatura(avance, ws, row_idx, col_letra):
         if not avance.evidencias:
             return ""
-        enlaces = []
+        
+        # Ajustamos el alto de la fila para que quepa la miniatura
+        ws.row_dimensions[row_idx].height = 115
+        texto_fallback = []
+
         for evidencia in avance.evidencias:
-            if evidencia.ruta_archivo.startswith('http'):
-                enlaces.append(evidencia.ruta_archivo)
-            else:
-                # Ruta local, asume la misma app
-                enlaces.append(request.host_url.rstrip('/') + url_for('static', filename=evidencia.ruta_archivo))
-        return "\n".join(enlaces)
+            url = evidencia.ruta_archivo
+            es_http = url.startswith('http')
+            url_completa = url if es_http else request.host_url.rstrip('/') + url_for('static', filename=url)
+            
+            try:
+                img_stream = None
+                if not es_http:
+                    ruta_local = os.path.join("static", url)
+                    if os.path.exists(ruta_local):
+                        with open(ruta_local, 'rb') as f:
+                            img_stream = BytesIO(f.read())
+                
+                if img_stream is None:
+                    response = requests.get(url_completa, stream=True, timeout=5)
+                    if response.status_code == 200:
+                        img_stream = BytesIO(response.content)
+
+                if img_stream:
+                    with PILImage.open(img_stream) as pil_img:
+                        pil_img.thumbnail((150, 150))
+                        thumb_io = BytesIO()
+                        if pil_img.mode in ("RGBA", "P"):
+                            pil_img = pil_img.convert("RGB")
+                        pil_img.save(thumb_io, format='JPEG', quality=85)
+                        thumb_io.seek(0)
+                        
+                        img_excel = ExcelImage(thumb_io)
+                        ws.add_image(img_excel, f"{col_letra}{row_idx}")
+                        
+                        gc.collect() # Liberar memoria tras procesar imagen
+                        return "" # Si tuvimos exito incrustando, retornamos vacio para la celda
+
+            except Exception as e:
+                print(f"Error procesando miniatura {url_completa}:", e)
+            
+            texto_fallback.append(url_completa)
+            
+        return "\n".join(texto_fallback) or "Sin imagen"
 
     avances_query = (
         db.session.query(Avances, Actividades, Usuarios)
@@ -373,17 +412,19 @@ def exportar_informe_excel(id_proyecto):
 
     # 1. Crear y llenar la hoja global
     sheet_global = wb.create_sheet(title="Resumen Global")
-    headers_global = ["Actividad", "Tipo Unidad", "Fecha", "Usuario", "Comentario", "Total Unidades", "Evidencia (Enlaces)"]
+    headers_global = ["Actividad", "Tipo Unidad", "Fecha", "Usuario", "Comentario", "Total Unidades", "Evidencia"]
     sheet_global.append(["Proyecto:", proyecto.nombre])
     sheet_global.append(["Descripción:", proyecto.descripcion or ""])
     sheet_global.append([])
     sheet_global.append(style_row(sheet_global, headers_global))
 
     # Usamos yield_per(100) para procesar en bloques (streaming de la DB)
+    row_global_idx = 5
     for avance, actividad, usuario in avances_query.yield_per(100):
         fecha_str = avance.fecha.strftime("%d/%m/%Y") if avance.fecha else ""
         nombre_usuario = getattr(usuario, 'nombre', getattr(usuario, 'username', 'N/A')) if usuario else "N/A"
-        enlaces = obtener_enlaces_evidencia(avance)
+        
+        texto_celda = procesar_evidencia_miniatura(avance, sheet_global, row_global_idx, 'G')
 
         sheet_global.append([
             actividad.nombre,
@@ -392,8 +433,9 @@ def exportar_informe_excel(id_proyecto):
             nombre_usuario,
             avance.mensaje or "",
             avance.unidades_avanzadas or 0,
-            enlaces
+            texto_celda
         ])
+        row_global_idx += 1
 
     # 2. Generar hojas específicas por tipo de unidad
     tipos_db = db.session.query(Actividades.tipo_unidad).filter(Actividades.id_proyecto == id_proyecto).distinct().all()
@@ -411,10 +453,13 @@ def exportar_informe_excel(id_proyecto):
         else:
             q_tipo = avances_query.filter(Actividades.tipo_unidad == tipo_unidad)
 
+        row_tipo_idx = 3
         for avance, actividad, usuario in q_tipo.yield_per(100):
             fecha_str = avance.fecha.strftime("%d/%m/%Y") if avance.fecha else ""
             nombre_usuario = getattr(usuario, 'nombre', getattr(usuario, 'username', 'N/A')) if usuario else "N/A"
-            enlaces = obtener_enlaces_evidencia(avance)
+            
+            col_evidencia = get_column_letter(cols.index("Evidencia") + 1)
+            texto_celda = procesar_evidencia_miniatura(avance, ws_tipo, row_tipo_idx, col_evidencia)
 
             fila_datos = []
             for c in cols:
@@ -441,9 +486,10 @@ def exportar_informe_excel(id_proyecto):
                 elif c == "Unidades Avanzadas": fila_datos.append(avance.unidades_avanzadas if avance.unidades_avanzadas is not None else "-")
                 elif c == "Comentario": fila_datos.append(avance.mensaje if avance.mensaje else "-")
                 elif c == "Usuario": fila_datos.append(nombre_usuario)
-                elif c == "Evidencia (Enlaces)": fila_datos.append(enlaces)
+                elif c == "Evidencia": fila_datos.append(texto_celda)
                 else: fila_datos.append("-")
             ws_tipo.append(fila_datos)
+            row_tipo_idx += 1
 
     # 💾 Guardar usando NamedTemporaryFile para evitar cargar todo el XML en RAM
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
