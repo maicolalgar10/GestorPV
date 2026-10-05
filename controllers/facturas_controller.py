@@ -2,7 +2,7 @@ from helpers import clean_amount
 from flask import Blueprint, render_template, request, redirect, flash
 from decorators import login_required
 from models import db, Factura, Cotizacion, Actas
-from decorators import login_required
+from decorators import login_required, admin_oficina_required
 from werkzeug.utils import secure_filename
 from decimal import Decimal
 import os
@@ -12,6 +12,7 @@ facturas_bp = Blueprint("facturas", __name__, url_prefix="/facturas")
 
 @facturas_bp.route("/crear", methods=["POST"])
 @login_required
+@admin_oficina_required
 def crear_factura():
     cotizacion_id = int(request.form.get("cotizacion_id"))
     cotizacion = Cotizacion.query.get_or_404(cotizacion_id)
@@ -81,6 +82,7 @@ def ver_factura():
 
 @facturas_bp.route("/registrar-cuenta-cobro/<int:factura_id>", methods=["POST"])
 @login_required
+@admin_oficina_required
 def registrar_cuenta_cobro(factura_id):
     factura = Factura.query.get_or_404(factura_id)
 
@@ -137,6 +139,7 @@ def registrar_cuenta_cobro(factura_id):
 
 @facturas_bp.route("/registrar-consignacion/<int:factura_id>", methods=["POST"])
 @login_required
+@admin_oficina_required
 def registrar_consignacion(factura_id):
     factura = Factura.query.get_or_404(factura_id)
 

@@ -845,6 +845,7 @@ def marcar_facturado(id_proyecto):
 
 @proyectos_bp.route('/actualizar_estado_factura/<int:id_proyecto>', methods=['POST'])
 @login_required
+@admin_oficina_required
 def actualizar_estado_factura(id_proyecto):
     nuevo_estado = request.form.get('nuevo_estado')
     proyecto = Proyectos.query.get_or_404(id_proyecto)
