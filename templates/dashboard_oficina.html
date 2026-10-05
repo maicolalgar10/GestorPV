@@ -151,6 +151,46 @@
         color: #6366f1;
     }
 
+    .modern-card-hz {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 0.75rem 1rem;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      text-decoration: none !important;
+    }
+    .modern-card-hz:hover {
+      transform: translateX(4px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      border-color: #d1d5db;
+    }
+    .modern-card-hz .icon-wrapper {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .modern-card-hz .title {
+      font-weight: 600;
+      color: #1f2937;
+      font-size: 0.9rem;
+      line-height: 1.2;
+    }
+    .modern-card-hz .desc {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-bottom: 0;
+      line-height: 1.2;
+    }
+
     /* Flecha de rotación */
     .rotate-icon { transition: transform 0.3s ease; }
     .collapsed .rotate-icon { transform: rotate(0deg); }
@@ -164,12 +204,12 @@
   <div class="container mt-4 pb-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div>
-        <h2 class="fw-bold m-0"><i class="bi bi-building-fill text-primary"></i> Gestión de Oficina</h2>
+        <h2 class="fw-bold m-0"><i class="bi bi-building-fill text-dark"></i> Gestión de Oficina</h2>
         <p class="text-secondary small">Panel Administrativo | {{ usuario.nombre }}</p>
       </div>
       <div class="dropdown">
         <button class="btn btn-white shadow-sm dropdown-toggle px-3 py-2 border-0 bg-white" data-bs-toggle="dropdown" style="border-radius: 12px;">
-          <i class="bi bi-person-circle text-primary"></i> Mi Perfil
+          <i class="bi bi-person-circle text-dark"></i> Mi Perfil
         </button>
         <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
           <li><a class="dropdown-item" href="{{ url_for('usuarios.perfil') }}">Ajustes</a></li>
@@ -182,47 +222,77 @@
     {% if config.get('CLIENTE') == 'icc' %}
     <div class="row g-4">
       <div class="col-12 col-md-4 col-lg-3">
-        <h5 class="section-title mb-3"><i class="bi bi-grid-1x2 text-primary"></i> Módulos</h5>
+        <h5 class="section-title mb-3"><i class="bi bi-grid-1x2 text-dark"></i> Módulos</h5>
         <div class="d-flex flex-column gap-2">
-          <a href="{{ url_for('dashboard.proveedores') }}" class="card-link-compact border-primary">
-            <span class="card-title">Proveedores</span>
-            <span class="card-sub">Gestión y pagos</span>
+          <a href="{{ url_for('dashboard.proveedores') }}" class="modern-card-hz">
+            <div class="icon-wrapper icon-blue"><i class="bi bi-truck"></i></div>
+            <div>
+              <div class="title">Proveedores</div>
+              <div class="desc">Gestión y pagos</div>
+            </div>
           </a>
-          <a href="{{ url_for('contratistas.index') }}" class="card-link-compact border-info">
-            <span class="card-title">Contratistas</span>
-            <span class="card-sub">Personal externo</span>
+          <a href="{{ url_for('contratistas.index') }}" class="modern-card-hz">
+            <div class="icon-wrapper icon-indigo"><i class="bi bi-tools"></i></div>
+            <div>
+              <div class="title">Contratistas</div>
+              <div class="desc">Personal externo</div>
+            </div>
           </a>
-          <a href="{{ url_for('dashboard.clientes') }}" class="card-link-compact border-success">
-            <span class="card-title">Clientes</span>
-            <span class="card-sub">Cartera y proyectos</span>
+          <a href="{{ url_for('dashboard.clientes') }}" class="modern-card-hz">
+            <div class="icon-wrapper icon-emerald"><i class="bi bi-people-fill"></i></div>
+            <div>
+              <div class="title">Clientes</div>
+              <div class="desc">Cartera y proyectos</div>
+            </div>
           </a>
-          <a href="{{ url_for('trabajadores.index') }}" class="card-link-compact border-warning">
-            <span class="card-title">Trabajadores</span>
-            <span class="card-sub">Nómina y asistencia</span>
+          <a href="{{ url_for('trabajadores.index') }}" class="modern-card-hz">
+            <div class="icon-wrapper icon-teal"><i class="bi bi-person-badge"></i></div>
+            <div>
+              <div class="title">Trabajadores</div>
+              <div class="desc">Nómina y asistencia</div>
+            </div>
           </a>
-          <a href="{{ url_for('egreso_caja.index') }}" class="card-link-compact border-secondary">
-            <span class="card-title">Egreso de Caja</span>
-            <span class="card-sub">Salidas y gastos</span>
+          <a href="{{ url_for('egreso_caja.index') }}" class="modern-card-hz">
+            <div class="icon-wrapper icon-amber"><i class="bi bi-cash-stack"></i></div>
+            <div>
+              <div class="title">Egreso de caja</div>
+              <div class="desc">Salidas y gastos</div>
+            </div>
           </a>
-          <a href="{{ url_for('dashboard.gestion_materiales_oficina') }}" class="card-link-compact border-danger">
-            <span class="card-title">Materiales</span>
-            <span class="card-sub">Inventario</span>
+          <a href="{{ url_for('dashboard.gestion_materiales_oficina') }}" class="modern-card-hz">
+            <div class="icon-wrapper icon-red"><i class="bi bi-box-seam"></i></div>
+            <div>
+              <div class="title">Materiales</div>
+              <div class="desc">Inventario</div>
+            </div>
           </a>
-          <a href="{{ url_for('tesoreria.comprobantes_egresos') }}" class="card-link-compact border-secondary">
-            <span class="card-title">Comprobantes</span>
-            <span class="card-sub">Egresos</span>
+          <a href="{{ url_for('tesoreria.comprobantes_egresos') }}" class="modern-card-hz">
+            <div class="icon-wrapper icon-slate"><i class="bi bi-receipt"></i></div>
+            <div>
+              <div class="title">Comprobantes</div>
+              <div class="desc">Egresos</div>
+            </div>
           </a>
-          <a href="{{ url_for('tesoreria.ver_bancos') }}" class="card-link-compact border-dark">
-            <span class="card-title">Bancos</span>
-            <span class="card-sub">Cuentas y saldos</span>
+          <a href="{{ url_for('tesoreria.ver_bancos') }}" class="modern-card-hz">
+            <div class="icon-wrapper icon-sky"><i class="bi bi-bank"></i></div>
+            <div>
+              <div class="title">Bancos</div>
+              <div class="desc">Cuentas y saldos</div>
+            </div>
           </a>
-          <a href="{{ url_for('dian.index') }}" class="card-link-compact border-primary">
-            <span class="card-title">DIAN</span>
-            <span class="card-sub">Impuestos</span>
+          <a href="{{ url_for('dian.index') }}" class="modern-card-hz">
+            <div class="icon-wrapper icon-blue"><i class="bi bi-receipt-cutoff"></i></div>
+            <div>
+              <div class="title">DIAN</div>
+              <div class="desc">Impuestos</div>
+            </div>
           </a>
-          <a href="{{ url_for('seguridad_social.index') }}" class="card-link-compact border-info">
-            <span class="card-title">Seguridad Social</span>
-            <span class="card-sub">Planillas EPS/ARL</span>
+          <a href="{{ url_for('seguridad_social.index') }}" class="modern-card-hz">
+            <div class="icon-wrapper icon-indigo"><i class="bi bi-shield-check"></i></div>
+            <div>
+              <div class="title">Seguridad social</div>
+              <div class="desc">Planillas EPS/ARL</div>
+            </div>
           </a>
         </div>
       </div>
@@ -232,8 +302,8 @@
       <div class="col-lg-8">
         <div class="module-card p-4">
           <div class="d-flex justify-content-between align-items-center mb-4">
-            <h5 class="section-title m-0"><i class="bi bi-wallet2 text-success"></i> Facturación y Contratos</h5>
-            <a href="{{ url_for('tesoreria.ver_tesoreria') }}" class="btn btn-outline-success btn-sm rounded-pill px-3">
+            <h5 class="section-title m-0"><i class="bi bi-wallet2 text-dark"></i> Facturación y Contratos</h5>
+            <a href="{{ url_for('tesoreria.ver_tesoreria') }}" class="btn btn-outline-dark btn-sm rounded-pill px-3">
               <i class="bi bi-box-arrow-up-right me-1"></i> Abrir Facturación
             </a>
           </div>
@@ -275,14 +345,16 @@
                     </td>
 
                     <td class="text-end">
-                            <button type="button" class="btn btn-warning btn-sm rounded-pill px-3 me-2" title="Editar Contrato"
-                              onclick="abrirModalEditarContrato({{ f.id }}, '{{ f.cotizacion.proyecto | replace('\'', '\\\'') if f.cotizacion else '' }}', {{ f.valor_total }}, {{ f.anticipo_porcentaje }}, {{ f.retencion_garantia_porcentaje }})">
-                              <i class="bi bi-pencil-square"></i> Editar
-                            </button>
-                      <a href="{{ url_for('tesoreria.ver_tesoreria') }}"
-                        class="btn btn-primary btn-sm rounded-pill px-3 mb-1">
-                        Ver Detalles
-                      </a>
+                      <div class="d-inline-flex gap-1">
+                        <button type="button" class="btn btn-light btn-sm text-secondary border-0" title="Editar Contrato"
+                          onclick="abrirModalEditarContrato({{ f.id }}, '{{ f.cotizacion.proyecto | replace('\'', '\\\'') if f.cotizacion else '' }}', {{ f.valor_total }}, {{ f.anticipo_porcentaje }}, {{ f.retencion_garantia_porcentaje }})">
+                          <i class="bi bi-pencil-square"></i>
+                        </button>
+                        <a href="{{ url_for('tesoreria.ver_tesoreria') }}"
+                          class="btn btn-light btn-sm text-primary border-0" title="Ver Detalles">
+                          <i class="bi bi-box-arrow-up-right"></i>
+                        </a>
+                      </div>
                     </td>
 
                   </tr>
@@ -300,16 +372,16 @@
 
       <div class="col-lg-4">
 
-        <div class="module-card p-4 mb-4" style="border-top: 4px solid #4f46e5;">
-          <h5 class="section-title"><i class="bi bi-calculator text-primary"></i> Cotizador</h5>
+        <div class="module-card p-4 mb-4" style="border-top: 4px solid #1f2937;">
+          <h5 class="section-title"><i class="bi bi-calculator text-dark"></i> Cotizador</h5>
           <p class="text-muted small">Crea presupuestos y expórtalos a PDF.</p>
-          <button class="btn btn-primary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#modalCotizacion">
+          <button class="btn btn-dark btn-sm w-100" data-bs-toggle="modal" data-bs-target="#modalCotizacion">
             <i class="bi bi-plus-circle me-1"></i> Nueva Cotización
           </button>
         </div>
 
         <div class="module-card p-4">
-          <h5 class="section-title"><i class="bi bi-receipt-cutoff text-success"></i> Historial</h5>
+          <h5 class="section-title"><i class="bi bi-receipt-cutoff text-dark"></i> Historial</h5>
           <div class="table-responsive">
             <table class="table table-sm align-middle">
               <thead class="table-light">
@@ -328,7 +400,7 @@
                     
                     <div class="mt-1">
                         {% if c.estado == "PENDIENTE" %}
-                        <button type="button" class="btn btn-success btn-sm p-0 px-1" title="Aceptar" data-bs-toggle="modal" data-bs-target="#modalAceptarCotizacion_{{c.id}}">✔</button>
+                        <button type="button" class="btn btn-light text-success btn-sm p-0 px-2 border-0" title="Aceptar" data-bs-toggle="modal" data-bs-target="#modalAceptarCotizacion_{{c.id}}">✔</button>
                         
                         <!-- Modal de Aceptar Cotización -->
                         <div class="modal fade" id="modalAceptarCotizacion_{{c.id}}" tabindex="-1" style="text-align: left;">
@@ -362,7 +434,7 @@
                         </div>
                         <form method="POST" action="{{ url_for('cotizaciones.cambiar_estado_cotizacion', id=c.id, estado='RECHAZADA') }}" class="d-inline">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button class="btn btn-danger btn-sm p-0 px-1" title="Rechazar">✖</button>
+                            <button class="btn btn-light text-danger btn-sm p-0 px-2 border-0" title="Rechazar">✖</button>
                         </form>
                         {% endif %}
 
@@ -376,7 +448,7 @@
                             {% if '.pdf' in url|lower %}
                               <i class="bi bi-file-earmark-pdf text-danger"></i>
                             {% else %}
-                              <i class="bi bi-image text-primary"></i>
+                              <i class="bi bi-image text-dark"></i>
                             {% endif %}
                           </a>
                           {% endfor %}
@@ -384,7 +456,7 @@
 
 
                         {% if c.estado == "ACEPTADA" and not c.contrato %}
-                        <button type="button" class="btn btn-light btn-sm border me-1 text-success" title="Configurar Contrato" onclick="abrirModalContrato({{ c.id }}, '{{ c.proyecto | replace("'", "\\'") }}')">
+                        <button type="button" class="btn btn-light btn-sm border-0 me-1 text-dark" title="Configurar Contrato" onclick="abrirModalContrato({{ c.id }}, '{{ c.proyecto | replace("'", "\\'") }}')">
                             <i class="bi bi-file-earmark-text"></i> Generar Contrato
                         </button>
                         {% endif %}
@@ -396,7 +468,7 @@
                               class="d-inline"
                               onsubmit="return confirm('¿Seguro que deseas eliminar esta cotización? Esta acción no se puede deshacer.')">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button class="btn btn-light btn-sm border p-0 px-1 text-danger"
+                            <button class="btn btn-light btn-sm border-0 p-0 px-2 text-danger"
                                     title="Eliminar cotización">
                                 <i class="bi bi-trash"></i>
                             </button>
@@ -408,11 +480,11 @@
 
                   <td class="text-center">
                     {% if c.estado == "PENDIENTE" %}
-                      <span class="badge bg-warning">Pendiente</span>
+                      <span class="badge bg-light text-warning border border-warning">Pendiente</span>
                     {% elif c.estado == "ACEPTADA" %}
-                      <span class="badge bg-success">Aceptada</span>
+                      <span class="badge bg-light text-success border border-success">Aceptada</span>
                     {% else %}
-                      <span class="badge bg-danger">Rechazada</span>
+                      <span class="badge bg-light text-danger border border-danger">Rechazada</span>
                     {% endif %}
                   </td>
                 </tr>
