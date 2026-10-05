@@ -155,8 +155,8 @@
       background: #ffffff;
       border: 1px solid #e5e7eb;
       border-radius: 12px;
-      padding: 0.75rem 1rem;
-      transition: all 0.2s ease;
+      padding: 1rem 1.25rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
       display: flex;
       align-items: center;
@@ -164,31 +164,58 @@
       text-decoration: none !important;
     }
     .modern-card-hz:hover {
-      transform: translateX(4px);
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-      border-color: #d1d5db;
+      transform: translateY(-3px);
+      box-shadow: 0 12px 20px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+      border-color: #6366f1; /* Accent border on hover */
     }
     .modern-card-hz .icon-wrapper {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.1rem;
+      font-size: 1.5rem;
       flex-shrink: 0;
+      transition: transform 0.3s ease;
+    }
+    .modern-card-hz:hover .icon-wrapper {
+      transform: scale(1.1) rotate(-3deg);
     }
     .modern-card-hz .title {
       font-weight: 600;
       color: #1f2937;
-      font-size: 0.9rem;
+      font-size: 1rem;
       line-height: 1.2;
     }
     .modern-card-hz .desc {
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       color: #6b7280;
       margin-bottom: 0;
-      line-height: 1.2;
+      line-height: 1.4;
+    }
+    .modern-card-hz .metric {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: #0ea5e9;
+      letter-spacing: -0.03em;
+      margin-top: 0.25rem;
+      line-height: 1;
+    }
+
+    /* Vibrant Brand Button */
+    .btn-brand-primary {
+      background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+      border: none;
+      color: white;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+    }
+    .btn-brand-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4);
+      color: white;
     }
 
     /* Flecha de rotación */
@@ -375,7 +402,7 @@
         <div class="module-card p-4 mb-4" style="border-top: 4px solid #1f2937;">
           <h5 class="section-title"><i class="bi bi-calculator text-dark"></i> Cotizador</h5>
           <p class="text-muted small">Crea presupuestos y expórtalos a PDF.</p>
-          <button class="btn btn-dark btn-sm w-100" data-bs-toggle="modal" data-bs-target="#modalCotizacion">
+          <button class="btn btn-brand-primary btn-sm w-100 rounded-pill py-2" data-bs-toggle="modal" data-bs-target="#modalCotizacion">
             <i class="bi bi-plus-circle me-1"></i> Nueva Cotización
           </button>
         </div>
@@ -504,8 +531,8 @@
     <div class="row g-4 mb-5">
       <div class="col-sm-6 col-md-3">
         <a href="{{ url_for('dashboard.proveedores') }}" class="modern-card-hz">
-          <div class="icon-hz bg-light text-secondary border"><i class="bi bi-truck"></i></div>
-          <div class="content-hz">
+          <div class="icon-wrapper icon-blue"><i class="bi bi-truck"></i></div>
+          <div>
             <div class="title">Proveedores</div>
             <p class="desc">Gestión y pagos</p>
           </div>
@@ -513,8 +540,8 @@
       </div>
       <div class="col-sm-6 col-md-3">
         <a href="{{ url_for('contratistas.index') }}" class="modern-card-hz">
-          <div class="icon-hz bg-light text-secondary border"><i class="bi bi-tools"></i></div>
-          <div class="content-hz">
+          <div class="icon-wrapper icon-indigo"><i class="bi bi-tools"></i></div>
+          <div>
             <div class="title">Contratistas</div>
             <p class="desc">Personal externo</p>
           </div>
@@ -522,8 +549,8 @@
       </div>
       <div class="col-sm-6 col-md-3">
         <a href="{{ url_for('dashboard.clientes') }}" class="modern-card-hz">
-          <div class="icon-hz bg-light text-secondary border"><i class="bi bi-people-fill"></i></div>
-          <div class="content-hz">
+          <div class="icon-wrapper icon-emerald"><i class="bi bi-people-fill"></i></div>
+          <div>
             <div class="title">Clientes</div>
             <p class="desc">Cartera y proyectos</p>
           </div>
@@ -531,8 +558,8 @@
       </div>
       <div class="col-sm-6 col-md-3">
         <a href="{{ url_for('trabajadores.index') }}" class="modern-card-hz">
-          <div class="icon-hz bg-light text-secondary border"><i class="bi bi-person-badge"></i></div>
-          <div class="content-hz">
+          <div class="icon-wrapper icon-teal"><i class="bi bi-person-badge"></i></div>
+          <div>
             <div class="title">Trabajadores</div>
             <p class="desc">Nómina y asistencia</p>
           </div>
@@ -540,8 +567,8 @@
       </div>
       <div class="col-sm-6 col-md-3">
         <a href="{{ url_for('dashboard.gestion_materiales_oficina') }}" class="modern-card-hz">
-          <div class="icon-hz bg-light text-secondary border"><i class="bi bi-box-seam"></i></div>
-          <div class="content-hz">
+          <div class="icon-wrapper icon-sky"><i class="bi bi-box-seam"></i></div>
+          <div>
             <div class="title">Stock materiales</div>
             <p class="desc">Inventario en bodega</p>
             <div class="metric">{{ total_materiales }}</div>
@@ -550,8 +577,8 @@
       </div>
       <div class="col-sm-6 col-md-3">
         <a href="{{ url_for('tesoreria.comprobantes_egresos') }}" class="modern-card-hz">
-          <div class="icon-hz bg-light text-secondary border"><i class="bi bi-receipt"></i></div>
-          <div class="content-hz">
+          <div class="icon-wrapper icon-amber"><i class="bi bi-receipt"></i></div>
+          <div>
             <div class="title">Comprobantes egresos</div>
             <p class="desc">Control de gastos</p>
           </div>
@@ -559,8 +586,8 @@
       </div>
       <div class="col-sm-6 col-md-3">
         <a href="{{ url_for('tesoreria.ver_bancos') }}" class="modern-card-hz">
-          <div class="icon-hz bg-light text-secondary border"><i class="bi bi-bank"></i></div>
-          <div class="content-hz">
+          <div class="icon-wrapper icon-slate"><i class="bi bi-bank"></i></div>
+          <div>
             <div class="title">Bancos y cuentas</div>
             <p class="desc">Saldos y transacciones</p>
           </div>
@@ -568,8 +595,8 @@
       </div>
       <div class="col-sm-6 col-md-3">
         <a href="{{ url_for('dian.index') }}" class="modern-card-hz">
-          <div class="icon-hz bg-light text-secondary border"><i class="bi bi-receipt-cutoff"></i></div>
-          <div class="content-hz">
+          <div class="icon-wrapper icon-amber"><i class="bi bi-receipt-cutoff"></i></div>
+          <div>
             <div class="title">DIAN</div>
             <p class="desc">Impuestos y reportes</p>
           </div>
@@ -577,8 +604,8 @@
       </div>
       <div class="col-sm-6 col-md-3">
         <a href="{{ url_for('seguridad_social.index') }}" class="modern-card-hz">
-          <div class="icon-hz bg-light text-secondary border"><i class="bi bi-shield-check"></i></div>
-          <div class="content-hz">
+          <div class="icon-wrapper icon-blue"><i class="bi bi-shield-check"></i></div>
+          <div>
             <div class="title">Seguridad social</div>
             <p class="desc">Planillas EPS/ARL</p>
           </div>
@@ -586,8 +613,8 @@
       </div>
       <div class="col-sm-6 col-md-3">
         <a href="{{ url_for('egreso_caja.index') }}" class="modern-card-hz">
-          <div class="icon-hz bg-light text-secondary border"><i class="bi bi-cash-stack"></i></div>
-          <div class="content-hz">
+          <div class="icon-wrapper icon-emerald"><i class="bi bi-cash-stack"></i></div>
+          <div>
             <div class="title">Egreso de caja</div>
             <p class="desc">Control de caja menor</p>
           </div>
@@ -674,7 +701,7 @@
         <div class="module-card p-4 mb-4" style="border-top: 4px solid #1f2937;">
           <h5 class="section-title"><i class="bi bi-calculator text-dark"></i> Cotizador</h5>
           <p class="text-muted small">Crea presupuestos y expórtalos a PDF.</p>
-          <button class="btn btn-dark btn-sm w-100" data-bs-toggle="modal" data-bs-target="#modalCotizacion">
+          <button class="btn btn-brand-primary btn-sm w-100 rounded-pill py-2" data-bs-toggle="modal" data-bs-target="#modalCotizacion">
             <i class="bi bi-plus-circle me-1"></i> Nueva Cotización
           </button>
         </div>
