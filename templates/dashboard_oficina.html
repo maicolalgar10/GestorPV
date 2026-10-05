@@ -37,6 +37,64 @@
     .bg-grad-green { background: var(--success-grad); }
     .bg-grad-orange { background: var(--warning-grad); }
 
+    /* Modern Cards */
+    .modern-card {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 1.25rem;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      text-align: left;
+      height: 100%;
+      text-decoration: none !important;
+    }
+    .modern-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+      border-color: #d1d5db;
+    }
+    .modern-card .icon-wrapper {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      margin-bottom: 0.75rem;
+    }
+    .modern-card .title {
+      font-weight: 600;
+      color: #1f2937;
+      font-size: 0.95rem;
+      margin-bottom: 0.2rem;
+    }
+    .modern-card .desc {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-bottom: 0;
+    }
+    .modern-card .metric {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #111827;
+      letter-spacing: -0.02em;
+      margin-top: 0.5rem;
+    }
+    
+    .icon-blue { background: #eff6ff; color: #3b82f6; }
+    .icon-indigo { background: #eef2ff; color: #6366f1; }
+    .icon-emerald { background: #ecfdf5; color: #10b981; }
+    .icon-teal { background: #f0fdfa; color: #14b8a6; }
+    .icon-amber { background: #fffbeb; color: #f59e0b; }
+    .icon-red { background: #fef2f2; color: #ef4444; }
+    .icon-slate { background: #f1f5f9; color: #475569; }
+    .icon-sky { background: #e0f2fe; color: #0ea5e9; }
+
     .section-title {
       font-weight: 700;
       color: #374151;
@@ -372,107 +430,76 @@
     </div>
     {% else %}
     <div class="row g-4 mb-5">
-      <div class="col-md-3">
-        <div class="d-flex flex-column gap-4">
-          <a href="{{ url_for('dashboard.proveedores') }}" class="text-decoration-none">
-            <div class="card stat-card bg-grad-blue p-3" style="cursor:pointer;">
-              <div class="card-body text-center">
-                <h2 class="fw-bold m-0"><i class="bi bi-truck"></i></h2>
-                <p class="mb-0 opacity-75 small fw-bold text-uppercase mt-1">Proveedores</p>
-                <div class="mt-2 opacity-50" style="font-size:0.75rem;"><i class="bi bi-arrow-right-circle"></i> Ir al módulo</div>
-              </div>
-            </div>
-          </a>
-          <a href="{{ url_for('contratistas.index') }}" class="text-decoration-none">
-            <div class="card stat-card bg-grad-blue p-3" style="cursor:pointer; background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);">
-              <div class="card-body text-center">
-                <h2 class="fw-bold m-0"><i class="bi bi-tools"></i></h2>
-                <p class="mb-0 opacity-75 small fw-bold text-uppercase mt-1">Contratistas</p>
-                <div class="mt-2 opacity-50" style="font-size:0.75rem;"><i class="bi bi-arrow-right-circle"></i> Ir al módulo</div>
-              </div>
-            </div>
-          </a>
-        </div>
+      <div class="col-sm-6 col-md-3">
+        <a href="{{ url_for('dashboard.proveedores') }}" class="modern-card">
+          <div class="icon-wrapper icon-blue"><i class="bi bi-truck"></i></div>
+          <div class="title">Proveedores</div>
+          <p class="desc">Gestión y pagos</p>
+        </a>
       </div>
-      <div class="col-md-3">
-        <div class="d-flex flex-column gap-4">
-          <a href="{{ url_for('dashboard.clientes') }}" class="text-decoration-none">
-            <div class="card stat-card bg-grad-green p-3" style="cursor:pointer;">
-              <div class="card-body text-center">
-                <h2 class="fw-bold m-0"><i class="bi bi-people-fill"></i></h2>
-                <p class="mb-0 opacity-75 small fw-bold text-uppercase mt-1">Clientes</p>
-                <div class="mt-2 opacity-50" style="font-size:0.75rem;"><i class="bi bi-arrow-right-circle"></i> Ir al módulo</div>
-              </div>
-            </div>
-          </a>
-          <a href="{{ url_for('trabajadores.index') }}" class="text-decoration-none">
-            <div class="card stat-card p-3" style="cursor:pointer; background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);">
-              <div class="card-body text-center">
-                <h2 class="fw-bold m-0 text-white"><i class="bi bi-person-badge"></i></h2>
-                <p class="mb-0 opacity-75 small fw-bold text-uppercase text-white mt-1">Trabajadores</p>
-                <div class="mt-2 opacity-50 text-white" style="font-size:0.75rem;"><i class="bi bi-arrow-right-circle"></i> Ir al módulo</div>
-              </div>
-            </div>
-          </a>
-        </div>
+      <div class="col-sm-6 col-md-3">
+        <a href="{{ url_for('contratistas.index') }}" class="modern-card">
+          <div class="icon-wrapper icon-indigo"><i class="bi bi-tools"></i></div>
+          <div class="title">Contratistas</div>
+          <p class="desc">Personal externo</p>
+        </a>
       </div>
-      <div class="col-md-3">
-        <div class="d-flex flex-column gap-4">
-          <a href="{{ url_for('dashboard.gestion_materiales_oficina') }}" class="text-decoration-none">
-            <div class="card stat-card bg-grad-orange p-3">
-              <div class="card-body text-center">
-                <h2 class="fw-bold m-0">{{ total_materiales }}</h2>
-                <p class="mb-0 opacity-75 small fw-bold text-uppercase mt-1">Stock Materiales</p>
-              </div>
-            </div>
-          </a>
-          <a href="{{ url_for('tesoreria.comprobantes_egresos') }}" class="text-decoration-none">
-            <div class="card stat-card p-3" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);">
-              <div class="card-body text-center">
-                <h2 class="fw-bold m-0 text-white"><i class="bi bi-receipt"></i></h2>
-                <p class="mb-0 opacity-75 small fw-bold text-uppercase text-white mt-1">Comprobante Egresos</p>
-              </div>
-            </div>
-          </a>
-        </div>
+      <div class="col-sm-6 col-md-3">
+        <a href="{{ url_for('dashboard.clientes') }}" class="modern-card">
+          <div class="icon-wrapper icon-emerald"><i class="bi bi-people-fill"></i></div>
+          <div class="title">Clientes</div>
+          <p class="desc">Cartera y proyectos</p>
+        </a>
       </div>
-      <div class="col-md-3">
-        <div class="d-flex flex-column gap-4">
-          <a href="{{ url_for('tesoreria.ver_bancos') }}" class="text-decoration-none">
-            <div class="card stat-card p-3" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
-              <div class="card-body text-center">
-                <h2 class="fw-bold m-0 text-white"><i class="bi bi-bank"></i></h2>
-                <p class="mb-0 opacity-75 small fw-bold text-uppercase text-white mt-1">Bancos y Cuentas</p>
-              </div>
-            </div>
-          </a>
-          <a href="{{ url_for('dian.index') }}" class="text-decoration-none">
-            <div class="card stat-card p-3" style="background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);">
-              <div class="card-body text-center">
-                <h2 class="fw-bold m-0 text-white"><i class="bi bi-receipt-cutoff"></i></h2>
-                <p class="mb-0 opacity-75 small fw-bold text-uppercase text-white mt-1">DIAN (Impuestos)</p>
-              </div>
-            </div>
-          </a>
-          <a href="{{ url_for('seguridad_social.index') }}" class="text-decoration-none">
-            <div class="card stat-card p-3" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);">
-              <div class="card-body text-center">
-                <h2 class="fw-bold m-0 text-white"><i class="bi bi-shield-check"></i></h2>
-                <p class="mb-0 opacity-75 small fw-bold text-uppercase text-white mt-1">PLANILLAS SEGURIDAD SOCIAL</p>
-                <div class="mt-2 opacity-50 text-white" style="font-size:0.75rem;"><i class="bi bi-arrow-right-circle"></i> Ir al módulo</div>
-              </div>
-            </div>
-          </a>
-          <a href="{{ url_for('egreso_caja.index') }}" class="text-decoration-none">
-            <div class="card stat-card p-3" style="cursor:pointer; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
-              <div class="card-body text-center">
-                <h2 class="fw-bold m-0 text-white"><i class="bi bi-cash-stack"></i></h2>
-                <p class="mb-0 opacity-75 small fw-bold text-uppercase text-white mt-1">Egreso de Caja</p>
-                <div class="mt-2 opacity-50 text-white" style="font-size:0.75rem;"><i class="bi bi-arrow-right-circle"></i> Ir al módulo</div>
-              </div>
-            </div>
-          </a>
-        </div>
+      <div class="col-sm-6 col-md-3">
+        <a href="{{ url_for('trabajadores.index') }}" class="modern-card">
+          <div class="icon-wrapper icon-teal"><i class="bi bi-person-badge"></i></div>
+          <div class="title">Trabajadores</div>
+          <p class="desc">Nómina y asistencia</p>
+        </a>
+      </div>
+      <div class="col-sm-6 col-md-3">
+        <a href="{{ url_for('dashboard.gestion_materiales_oficina') }}" class="modern-card">
+          <div class="icon-wrapper icon-amber"><i class="bi bi-box-seam"></i></div>
+          <div class="title">Stock materiales</div>
+          <p class="desc">Inventario en bodega</p>
+          <div class="metric">{{ total_materiales }}</div>
+        </a>
+      </div>
+      <div class="col-sm-6 col-md-3">
+        <a href="{{ url_for('tesoreria.comprobantes_egresos') }}" class="modern-card">
+          <div class="icon-wrapper icon-red"><i class="bi bi-receipt"></i></div>
+          <div class="title">Comprobantes egresos</div>
+          <p class="desc">Control de gastos</p>
+        </a>
+      </div>
+      <div class="col-sm-6 col-md-3">
+        <a href="{{ url_for('tesoreria.ver_bancos') }}" class="modern-card">
+          <div class="icon-wrapper icon-slate"><i class="bi bi-bank"></i></div>
+          <div class="title">Bancos y cuentas</div>
+          <p class="desc">Saldos y transacciones</p>
+        </a>
+      </div>
+      <div class="col-sm-6 col-md-3">
+        <a href="{{ url_for('dian.index') }}" class="modern-card">
+          <div class="icon-wrapper icon-sky"><i class="bi bi-receipt-cutoff"></i></div>
+          <div class="title">DIAN</div>
+          <p class="desc">Impuestos y reportes</p>
+        </a>
+      </div>
+      <div class="col-sm-6 col-md-3">
+        <a href="{{ url_for('seguridad_social.index') }}" class="modern-card">
+          <div class="icon-wrapper icon-blue"><i class="bi bi-shield-check"></i></div>
+          <div class="title">Seguridad social</div>
+          <p class="desc">Planillas EPS/ARL</p>
+        </a>
+      </div>
+      <div class="col-sm-6 col-md-3">
+        <a href="{{ url_for('egreso_caja.index') }}" class="modern-card">
+          <div class="icon-wrapper icon-amber"><i class="bi bi-cash-stack"></i></div>
+          <div class="title">Egreso de caja</div>
+          <p class="desc">Control de caja menor</p>
+        </a>
       </div>
     </div>
 
