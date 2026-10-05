@@ -104,6 +104,7 @@ def login():
 # REGISTRO
 # -----------------------------
 @usuarios_bp.route('/register', methods=['GET', 'POST'])
+@admin_required
 def register():
     if request.method == 'POST':
         nombre = request.form['nombre'].strip()
