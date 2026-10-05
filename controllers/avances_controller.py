@@ -1,6 +1,6 @@
 from helpers import clean_amount
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from models import db, Actividades, Avances, Proyectos, AvanceMaterial, Evidencias, Usuarios, Notificaciones, Materiales
+from models import db, Actividades, Avances, Proyectos, AvanceMaterial, Evidencias, Usuarios, Notificaciones, Materiales, MaterialesProyecto
 from datetime import datetime
 import os, base64
 from werkzeug.utils import secure_filename
@@ -24,6 +24,7 @@ from openpyxl.drawing.xdr import XDRPositiveSize2D
 from openpyxl.utils import column_index_from_string
 from openpyxl.styles import Font, Alignment, PatternFill
 from openpyxl.utils import get_column_letter
+from sqlalchemy.orm import selectinload, joinedload
 
 
 # Carpeta donde se guardarán las imágenes
@@ -91,6 +92,57 @@ def registrar_avance(id_actividad):
         # ==========================
         # Crear avance
         # ==========================
+        # ==================================================
+        # 1. Guardar evidencias en Supabase (Sin bloquear BD)
+        # ==================================================
+        archivos_subidos = []
+        files = request.files.getlist("evidencias")
+
+        for file in files:
+            if file and allowed_file(file.filename):
+                original_filename = secure_filename(file.filename)
+                ext = original_filename.rsplit('.', 1)[1].lower() if '.' in original_filename else 'jpg'
+                filename = f"{uuid.uuid4().hex}.{ext}"
+                file_bytes = file.read()
+                
+                if supabase:
+                    supabase.storage.from_("evidencias").upload(
+                        path=filename, file=file_bytes, file_options={"content-type": file.content_type}
+                    )
+                    public_url = supabase.storage.from_("evidencias").get_public_url(filename)
+                else:
+                    ruta_relativa = os.path.join("uploads", "evidencias", filename)
+                    ruta_completa = os.path.join("static", ruta_relativa)
+                    os.makedirs(os.path.dirname(ruta_completa), exist_ok=True)
+                    with open(ruta_completa, "wb") as f:
+                        f.write(file_bytes)
+                    public_url = ruta_relativa
+                
+                archivos_subidos.append(public_url)
+
+        imagen_capturada = request.form.get("captura_base64")
+        if imagen_capturada:
+            img_data = base64.b64decode(imagen_capturada.split(",")[1])
+            filename = f"captura_{uuid.uuid4().hex}.jpg"
+            
+            if supabase:
+                supabase.storage.from_("evidencias").upload(
+                    path=filename, file=img_data, file_options={"content-type": "image/jpeg"}
+                )
+                public_url = supabase.storage.from_("evidencias").get_public_url(filename)
+            else:
+                ruta_relativa = os.path.join("uploads", "evidencias", filename)
+                ruta_completa = os.path.join("static", ruta_relativa)
+                os.makedirs(os.path.dirname(ruta_completa), exist_ok=True)
+                with open(ruta_completa, "wb") as f:
+                    f.write(img_data)
+                public_url = ruta_relativa
+            
+            archivos_subidos.append(public_url)
+
+        # ==========================
+        # 2. Iniciar Transacción SQL
+        # ==========================
         nuevo_avance = Avances(
             id_actividad=id_actividad,
             id_usuario=id_usuario,
@@ -118,106 +170,30 @@ def registrar_avance(id_actividad):
         )
 
         db.session.add(nuevo_avance)
-        # 🟢 NUEVO: Usamos flush para obtener el ID del avance sin cerrar la transacción
         db.session.flush()
 
+        for url in archivos_subidos:
+            evidencia = Evidencias(id_avance=nuevo_avance.id_avance, ruta_archivo=url, tipo="imagen")
+            db.session.add(evidencia)
+
         # ==================================================
-        # 🟢 NUEVO: PROCESAR MATERIALES USADOS (ESTUDIO EFICIENCIA)
+        # 3. PROCESAR MATERIALES USADOS
         # ==================================================
-        # Buscamos en el formulario campos que empiecen con 'material_'
         for key in request.form:
             if key.startswith("material_"):
                 try:
-                    # Extraemos el ID del material del nombre del input (ej: material_5 -> 5)
                     id_material = int(key.split("_")[1])
                     cantidad_usada = float(request.form.get(key) or 0)
 
                     if cantidad_usada > 0:
-                        # 1. Registrar el consumo para el estudio comparativo
-                        consumo = AvanceMaterial(
-                            id_avance=nuevo_avance.id_avance,
-                            id_material=id_material,
-                            cantidad_usada=cantidad_usada
-                        )
+                        consumo = AvanceMaterial(id_avance=nuevo_avance.id_avance, id_material=id_material, cantidad_usada=cantidad_usada)
                         db.session.add(consumo)
 
-                        # 2. Descontar del stock global en BODEGA (Tabla Materiales)
                         mat_inventario = Materiales.query.get(id_material)
                         if mat_inventario:
                             mat_inventario.cantidad -= cantidad_usada
                 except (ValueError, IndexError):
-                    continue # Si hay un error con un campo, sigue con el siguiente
-
-
-
-        # ==================================================
-        # Guardar evidencias (galería o cámara) en Supabase
-        # ==================================================
-        files = request.files.getlist("evidencias")
-
-        # 1️⃣ Archivos desde galería
-        for file in files:
-            if file and allowed_file(file.filename):
-                original_filename = secure_filename(file.filename)
-                ext = original_filename.rsplit('.', 1)[1].lower() if '.' in original_filename else 'jpg'
-                filename = f"{uuid.uuid4().hex}.{ext}"
-                
-                # Leer el archivo en memoria
-                file_bytes = file.read()
-                
-                if supabase:
-                    # Subir a Supabase
-                    supabase.storage.from_("evidencias").upload(
-                        path=filename, 
-                        file=file_bytes, 
-                        file_options={"content-type": file.content_type}
-                    )
-                    # Obtener URL pública
-                    public_url = supabase.storage.from_("evidencias").get_public_url(filename)
-                else:
-                    # Fallback local por si acaso no hay keys
-                    ruta_relativa = os.path.join("uploads", "evidencias", filename)
-                    ruta_completa = os.path.join("static", ruta_relativa)
-                    os.makedirs(os.path.dirname(ruta_completa), exist_ok=True)
-                    with open(ruta_completa, "wb") as f:
-                        f.write(file_bytes)
-                    public_url = ruta_relativa
-
-                evidencia = Evidencias(
-                    id_avance=nuevo_avance.id_avance,
-                    ruta_archivo=public_url,
-                    tipo="imagen"
-                )
-                db.session.add(evidencia)
-
-        # Imagen tomada con cámara (base64)
-        imagen_capturada = request.form.get("captura_base64")
-        if imagen_capturada:
-            img_data = base64.b64decode(imagen_capturada.split(",")[1])
-            filename = f"captura_{uuid.uuid4().hex}.jpg"
-            
-            if supabase:
-                # Subir a Supabase
-                supabase.storage.from_("evidencias").upload(
-                    path=filename, 
-                    file=img_data, 
-                    file_options={"content-type": "image/jpeg"}
-                )
-                public_url = supabase.storage.from_("evidencias").get_public_url(filename)
-            else:
-                ruta_relativa = os.path.join("uploads", "evidencias", filename)
-                ruta_completa = os.path.join("static", ruta_relativa)
-                os.makedirs(os.path.dirname(ruta_completa), exist_ok=True)
-                with open(ruta_completa, "wb") as f:
-                    f.write(img_data)
-                public_url = ruta_relativa
-
-            evidencia = Evidencias(
-                id_avance=nuevo_avance.id_avance,
-                ruta_archivo=public_url,
-                tipo="imagen"
-            )
-            db.session.add(evidencia)
+                    continue
 
         # ==================================================
         # Notificar a ADMIN
@@ -358,23 +334,9 @@ def exportar_informe_excel(id_proyecto):
         else:
             return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'Ubicación PR', 'Unidades Avanzadas', 'Comentario', 'Usuario', 'Evidencia']
 
-    # 0. Pre-descargar imágenes concurrentemente
-    todas_evidencias = (
-        db.session.query(Evidencias.ruta_archivo)
-        .join(Avances)
-        .join(Actividades)
-        .filter(Actividades.id_proyecto == id_proyecto)
-        .distinct()
-        .all()
-    )
-    
-    urls_unicas = [e.ruta_archivo for e in todas_evidencias]
-    cache_imagenes = {}
-    
-    def descargar_imagen(url_original):
+    def descargar_imagen_on_demand(url_original):
         es_http = url_original.startswith('http')
         url_completa = url_original if es_http else request.host_url.rstrip('/') + url_for('static', filename=url_original)
-        
         try:
             img_stream = None
             if not es_http:
@@ -395,61 +357,53 @@ def exportar_informe_excel(id_proyecto):
                     if pil_img.mode in ("RGBA", "P"):
                         pil_img = pil_img.convert("RGB")
                     pil_img.save(thumb_io, format='JPEG', quality=85)
-                    return url_original, thumb_io.getvalue()
+                    return thumb_io.getvalue()
         except Exception as e:
             print(f"Error descargando miniatura {url_completa}:", e)
-        return url_original, None
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-        for url, img_bytes in executor.map(descargar_imagen, urls_unicas):
-            if img_bytes:
-                cache_imagenes[url] = img_bytes
+        return None
 
     def procesar_evidencia_miniatura(avance, ws, row_idx, col_letra):
         if not avance.evidencias:
             return ""
         
-        # Ajustamos el alto de la fila para que quepa la miniatura
         ws.row_dimensions[row_idx].height = 115
         texto_fallback = []
-
-        col_num = column_index_from_string(col_letra) - 1 # Zero-indexed column
-        row_num = row_idx - 1 # Zero-indexed row
+        col_num = column_index_from_string(col_letra) - 1
+        row_num = row_idx - 1
         
         pixels_to_emu = 9525
         x_offset = 0
         img_width_px = 150
         img_height_px = 150
         margin_px = 10
-        
         exito_incrustacion = False
 
-        for evidencia in avance.evidencias:
-            url = evidencia.ruta_archivo
+        urls_fila = [e.ruta_archivo for e in avance.evidencias]
+        resultados_bytes = []
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+            resultados_bytes = list(executor.map(descargar_imagen_on_demand, urls_fila))
+
+        for url, img_bytes in zip(urls_fila, resultados_bytes):
             es_http = url.startswith('http')
             url_completa = url if es_http else request.host_url.rstrip('/') + url_for('static', filename=url)
             
-            img_bytes = cache_imagenes.get(url)
             if img_bytes:
                 try:
                     img_excel = ExcelImage(BytesIO(img_bytes))
-                    
-                    # Custom Anchor para múltiples imágenes en la misma celda con desplazamiento
                     marker = AnchorMarker(col=col_num, colOff=x_offset * pixels_to_emu, row=row_num, rowOff=5 * pixels_to_emu)
                     ext = XDRPositiveSize2D(cx=img_width_px * pixels_to_emu, cy=img_height_px * pixels_to_emu)
                     img_excel.anchor = OneCellAnchor(_from=marker, ext=ext)
-                    
                     ws.add_image(img_excel)
                     
                     x_offset += img_width_px + margin_px
                     exito_incrustacion = True
-                    continue # Imagen incrustada, pasar a la siguiente
+                    continue
                 except Exception as e:
                     print(f"Error incrustando miniatura {url_completa}:", e)
             
             texto_fallback.append(url_completa)
             
-        # Ajustamos el ancho de la columna si insertamos imágenes
         if exito_incrustacion and x_offset > 0:
             ancho_requerido = (x_offset / 7.0) + 2
             ancho_actual = ws.column_dimensions[col_letra].width or 13.0
@@ -457,7 +411,7 @@ def exportar_informe_excel(id_proyecto):
                 ws.column_dimensions[col_letra].width = ancho_requerido
                 
         if exito_incrustacion and not texto_fallback:
-            return "" # Todas se insertaron correctamente
+            return ""
         elif exito_incrustacion:
             return "Imágenes + Fallos:\n" + "\n".join(texto_fallback)
         else:
@@ -468,6 +422,7 @@ def exportar_informe_excel(id_proyecto):
         .join(Actividades, Actividades.id_actividad == Avances.id_actividad)
         .outerjoin(Usuarios, Usuarios.id_usuario == Avances.id_usuario)
         .filter(Actividades.id_proyecto == id_proyecto)
+        .options(selectinload(Avances.evidencias))
         .order_by(Avances.fecha)
     )
 
@@ -577,7 +532,9 @@ def exportar_informe_excel(id_proyecto):
 @login_required
 @admin_required
 def analisis_comparativo(id_proyecto):
-    proyecto = Proyectos.query.get_or_404(id_proyecto)
+    proyecto = Proyectos.query.options(
+        selectinload(Proyectos.materiales).joinedload(MaterialesProyecto.material)
+    ).get_or_404(id_proyecto)
     
     # 1. Obtenemos lo planeado (de la tabla MaterialesProyecto)
     planeado = {mp.id_material: mp.cantidad for mp in proyecto.materiales}
