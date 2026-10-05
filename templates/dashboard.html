@@ -9,118 +9,63 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
   <style>
-    /* ===================== FONDO CON IMAGEN ===================== */
+    /* ===================== FONDO ===================== */
     .background {
-
-      /* AQUÍ ESTÁ EL CAMBIO DE IMAGEN */
-      /* Asegúrate de que 'fondo.jpg' esté en la misma carpeta o usa /static/fondo.jpg si es Flask */
-      background-image: url("{{ url_for('static', filename='img/fondo.jpg') }}");
+      background-color: var(--bs-light);
       width: 100%;
       min-height: 100vh;
-
-      /* Ajustes para que la imagen cubra todo y se vea bien */
-      background-size: cover;
-      /* Cubre toda la pantalla */
-      background-position: center;
-      /* Centra la imagen */
-      background-repeat: no-repeat;
-      /* No repetir */
-      background-attachment: fixed;
-      /* El fondo se queda fijo al hacer scroll */
-      background-position: bottom center;
-
       display: flex;
       justify-content: center;
-      align-items: center;
+      align-items: flex-start;
       padding: 20px;
     }
 
-    /* ===================== CONTENEDOR TRANSPARENTE ===================== */
+    /* ===================== CONTENEDOR ===================== */
     .container-dashboard {
       width: 100%;
       max-width: 1300px;
-
-      /* AQUÍ ESTÁ EL CAMBIO DE TRANSPARENCIA */
-      /* Usamos RGBA: Los primeros 3 números son blanco, el 0.85 es la transparencia (0 es invisible, 1 es sólido) */
-      background: rgba(255, 255, 255, 0.50);
-
-      /* Efecto de desenfoque estilo 'vidrio esmerilado' para mejorar lectura */
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      /* Para soporte en Safari */
-
-      border-radius: 30px;
-      box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.15);
-      padding: 25px 40px 40px 40px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      /* Borde sutil para resaltar el vidrio */
+      background: var(--bs-white);
+      border-radius: 20px;
+      box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.05);
+      padding: 30px;
     }
 
     /* ===================== TARJETAS ===================== */
     .card-summary {
       height: 100%;
-      border-radius: 15px;
-      transition: transform 0.2s;
+      border-radius: 12px;
+      transition: transform 0.2s, box-shadow 0.2s;
       display: flex;
       flex-direction: column;
       justify-content: flex-start;
-      /* Aseguramos que las tarjetas sean blancas o semi-transparentes según gusto */
-      background-color: rgba(255, 255, 255, 0.9);
+      background-color: var(--bs-white);
+      border: 1px solid var(--bs-gray-200);
     }
 
     .card-summary:hover {
-      transform: translateY(-5px);
-      background-color: #fff;
-      /* Blanco puro al pasar el mouse */
-    }
-
-    .card h3 {
-      font-size: 2rem;
-      font-weight: bold;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08) !important;
     }
 
     /* ===================== FRASE =====================*/
-    /* ⭐ ESTILO INTERMEDIO: Fondo oscuro con texto claro */
     .alert-destacada {
-      background: linear-gradient(135deg, #2d3748, #4a5568) !important;
-      /* Gradiente de gris/azul oscuro */
-      color: #e2e8f0 !important;
-      /* Texto muy claro */
-      border: none !important;
-      border-radius: 15px !important;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
-      /* Sombra sutil para "levantarla" */
-    }
-
-    .alert-destacada strong {
-      color: #63b3ed;
-      /* Color de acento (azul claro) para la frase */
-    }
-
-    /* ⭐ CAMBIO SUGERIDO: Fondo azul un poco más vibrante */
-    .alert-info-custom {
-      background-color: #bbdefb !important;
-      /* Azul más saturado y visible (Material Design Light Blue 100/200) */
-      color: #0d47a1 !important;
-      /* Color de texto azul oscuro para alto contraste */
-      border: none !important;
+      background-color: var(--bs-primary-bg-subtle) !important;
+      color: var(--bs-primary-text-emphasis) !important;
+      border: 1px solid var(--bs-primary-border-subtle) !important;
       border-radius: 12px !important;
-      font-weight: 500;
+      box-shadow: none !important;
     }
 
     /* Cuadros internos "Finalizados" y "En Progreso" */
     .card-summary .border-success:hover,
     .card-summary .border-success a:hover>div {
-      background-color: rgba(1, 253, 85, 0.1) !important;
+      background-color: var(--bs-success-bg-subtle) !important;
     }
 
     .card-summary .border-primary:hover,
     .card-summary .border-primary a:hover>div {
-      background-color: rgba(59, 128, 197, 0.652) !important;
+      background-color: var(--bs-primary-bg-subtle) !important;
     }
-
-
-
 
     /* ===================== BADGES ===================== */
     .status-badge {
@@ -129,10 +74,6 @@
       font-size: 0.8rem;
       font-weight: 500;
     }
-
-
-
-
 
     /* ===================== ALERTAS ===================== */
     .alertas .list-group-item {
@@ -143,10 +84,8 @@
     }
 
     #alerta-card {
-      background-color: #fcfcfc;
-      /* Un blanco muy suave, casi imperceptible */
-      border-left: 5px solid #ffbf00;
-      /* Línea de color a la izquierda para darle énfasis */
+      background-color: var(--bs-white);
+      border-left: 4px solid var(--bs-warning);
     }
 
     /* ========== ESTILOS DEL DROPDOWN DE PERFIL ========== */
@@ -367,7 +306,7 @@
 
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h2 class="fw-bold">Dashboard de Administración</h2>
+          <h1 class="h2 fw-bold">Dashboard de Administración</h1>
           <p class="text-muted">Gestiona todos los aspectos de tus proyectos desde un solo lugar</p>
         </div>
 
@@ -392,7 +331,7 @@
   <!-- Encabezado con botones -->
   <li class="px-3 py-2 border-bottom">
     <div class="d-flex justify-content-between align-items-center">
-      <h6 class="mb-0">Notificaciones</h6>
+      <div class="h6 mb-0 fw-bold">Notificaciones</div>
       <div class="btn-group btn-group-sm">
         <a href="{{ url_for('dashboard.historial_notificaciones') }}" class="btn btn-outline-secondary" title="Historial">
           <i class="bi bi-clock-history"></i>
@@ -469,11 +408,10 @@
 
 
 
-      <div class="alert alert-destacada text-center shadow-sm mb-4 py-2">
+      <div class="alert alert-destacada text-center mb-4 py-3">
         <strong>
-          <i class="bi bi-stars"></i>
-          <i class="bi bi-lightbulb-fill"></i>
-          <span class="texto-animado" id="fraseEscrita">
+          <i class="bi bi-stars me-1"></i>
+          <span id="fraseEscrita">
             {{ frase|trim }}
           </span>
         </strong>
@@ -483,9 +421,9 @@
   
   <div class="col">
     <div class="card card-summary shadow-sm text-center p-3 h-100">
-      <h6 class="fw-bold">Proyectos</h6>
-      <h3>{{ proyectos_activos|length }}</h3>
-      <p class="text-muted small">Proyectos Activos</p>
+      <h2 class="h6 fw-bold">Proyectos</h2>
+      <div class="display-6 fw-bold my-2">{{ proyectos_activos|length }}</div>
+      <p class="text-muted small mb-3 mt-auto">Proyectos Activos</p>
       <div class="card-actions">
         <a href="{{ url_for('proyectos.manage_proyectos')}}" class="btn btn-dark btn-sm w-100">Ver Proyectos</a>
       </div>
@@ -494,33 +432,33 @@
 
   <div class="col">
     <div class="card card-summary shadow-sm text-center p-3 h-100">
-      <h6 class="fw-bold">Vehículos</h6>
-      <h3>{{ vehiculos_disponibles|length }}/{{ vehiculos|length }}</h3>
-      <p class="text-muted small">Disponibles</p>
-      <div class="card-actions">
-        <a href="{{ url_for('vehiculos.manage_vehiculos')}}" class="btn btn-dark btn-sm">Ver Todos</a>
-        <a href="{{ url_for('vehiculos.gestion_vehiculos')}}" class="btn btn-outline-primary btn-sm">Movimientos</a>
+      <h2 class="h6 fw-bold">Vehículos</h2>
+      <div class="display-6 fw-bold my-2">{{ vehiculos_disponibles|length }}/{{ vehiculos|length }}</div>
+      <p class="text-muted small mb-3 mt-auto">Disponibles</p>
+      <div class="card-actions d-flex gap-2">
+        <a href="{{ url_for('vehiculos.manage_vehiculos')}}" class="btn btn-dark btn-sm flex-fill">Ver Todos</a>
+        <a href="{{ url_for('vehiculos.gestion_vehiculos')}}" class="btn btn-outline-primary btn-sm flex-fill">Movs.</a>
       </div>
     </div>
   </div>
 
   <div class="col">
     <div class="card card-summary shadow-sm text-center p-3 h-100">
-      <h6 class="fw-bold">Personal</h6>
-      <h3>{{ personal|length }}</h3>
-      <p class="text-muted small">Personal en la empresa</p>
-      <div class="card-actions">
-        <a href="{{ url_for('personal.manage_personal')}}" class="btn btn-dark btn-sm">Ver Personal</a>
-        <a href="{{ url_for('horarios.gestion_asignaciones_diarias')}}" class="btn btn-outline-primary btn-sm">Horarios</a>
+      <h2 class="h6 fw-bold">Personal</h2>
+      <div class="display-6 fw-bold my-2">{{ personal|length }}</div>
+      <p class="text-muted small mb-3 mt-auto">Personal en la empresa</p>
+      <div class="card-actions d-flex gap-2">
+        <a href="{{ url_for('personal.manage_personal')}}" class="btn btn-dark btn-sm flex-fill">Ver Personal</a>
+        <a href="{{ url_for('horarios.gestion_asignaciones_diarias')}}" class="btn btn-outline-primary btn-sm flex-fill">Horarios</a>
       </div>
     </div>
   </div>
 
   <div class="col">
     <div class="card card-summary shadow-sm text-center p-3 h-100">
-      <h6 class="fw-bold">Materiales</h6>
-      <h3>{{ materiales|length }}</h3>
-      <p class="text-muted small">Tipos de Materiales</p>
+      <h2 class="h6 fw-bold">Materiales</h2>
+      <div class="display-6 fw-bold my-2">{{ materiales|length }}</div>
+      <p class="text-muted small mb-3 mt-auto">Tipos de Materiales</p>
       <div class="card-actions">
         <a href="{{ url_for('materiales.manage_materiales')}}" class="btn btn-dark btn-sm w-100">Inventario</a>
       </div>
@@ -529,9 +467,9 @@
 
   <div class="col">
     <div class="card card-summary shadow-sm text-center p-3 h-100 border-info">
-      <h6 class="fw-bold text-info">Análisis</h6>
-      <h3><i class="bi bi-bar-chart-line text-info"></i></h3>
-      <p class="text-muted small">Gasto de Materiales</p>
+      <h2 class="h6 fw-bold text-info">Análisis</h2>
+      <div class="display-6 fw-bold my-2"><i class="bi bi-bar-chart-line text-info"></i></div>
+      <p class="text-muted small mb-3 mt-auto">Gasto de Materiales</p>
       <div class="card-actions">
         <a href="{{ url_for('avances.seleccion_analisis') }}" class="btn btn-info btn-sm w-100 text-white fw-bold">Comparativa</a>
       </div>
@@ -543,16 +481,16 @@
       <div class="row g-4 align-items-start">
         <div class="col-lg-8">
           <div class="card card-summary shadow-sm p-4 h-100">
-            <h5 class="fw-bold mb-4 border-bottom pb-2">Estado de Proyectos & Vehículos</h5>
+            <h2 class="h5 fw-bold mb-4 border-bottom pb-2">Estado de Proyectos & Vehículos</h2>
             <div class="row">
 
               <div class="col-md-6 border-end pe-md-4">
-                <h6 class="text-muted mb-3 fw-bold">Proyectos</h6>
+                <h3 class="h6 text-muted mb-3 fw-bold">Proyectos</h3>
                 <div class="row g-2 mb-4">
                   <div class="col-6">
                     <a href="{{url_for('proyectos.proyectos_finalizados')}}" class="text-decoration-none">
                       <div class="p-2 border border-success rounded text-center bg-light">
-                        <h4 class="text-success m-0">{{ proyectos_finalizados|length }}</h4>
+                        <div class="h4 text-success m-0">{{ proyectos_finalizados|length }}</div>
                         <small class="text-muted" style="font-size: 0.75rem;">Finalizados</small>
                       </div>
                     </a>
@@ -560,7 +498,7 @@
                   <div class="col-6">
                     <a href="{{url_for('proyectos.proyectos_progreso')}}" class="text-decoration-none">
                       <div class="p-2 border border-primary rounded text-center bg-light">
-                        <h4 class="text-primary m-0">{{ proyectos_activos|length }}</h4>
+                        <div class="h4 text-primary m-0">{{ proyectos_activos|length }}</div>
                         <small class="text-muted" style="font-size: 0.75rem;">En Progreso</small>
                       </div>
                     </a>
@@ -568,8 +506,8 @@
                 </div>
               </div>
 
-              <div class="col-md-4 ps-md-4 mt-4 mt-md-0">
-                <h6 class="text-muted mb-3 fw-bold">Vehículos Disponibles</h6>
+              <div class="col-md-5 ps-md-4 mt-4 mt-md-0">
+                <h3 class="h6 text-muted mb-3 fw-bold">Vehículos Disponibles</h3>
                 <div class="d-flex justify-content-between text-muted small mb-2 border-bottom pb-1">
                   <span>Placa / Tipo</span>
                   <span>Estado</span>
@@ -596,30 +534,28 @@
 
         <div class="col-lg-4">
           <div class="card card-summary shadow-sm p-3 h-100" id="alerta-card">
-            <h5 class="fw-bold mb-3 border-bottom pb-2">Alertas y Avisos</h5>
+            <h2 class="h5 fw-bold mb-3 border-bottom pb-2">Alertas y Avisos</h2>
 
             <div class="scroll-list" style="max-height: 400px;">
-              <div class="card" style="border: none;">
-                {% if alertas %}
-                <ul class="list-group list-group-flush">
-                  {% for a in alertas %}
-                  <li class="list-group-item d-flex align-items-start border-0 px-0 mb-2">
-                    <div class="me-2 mt-1">
-                      {% if a.tipo == 'danger' %} <i class="bi bi-exclamation-triangle-fill text-danger"></i>
-                      {% elif a.tipo == 'warning' %} <i class="bi bi-exclamation-triangle-fill text-warning"></i>
-                      {% else %} <i class="bi bi-info-circle-fill text-info"></i> {% endif %}
-                    </div>
-                    <div>
-                      <span class="d-block small text-dark">{{ a.mensaje }}</span>
-                      {% if a.fecha %}
-                      <small class="text-muted" style="font-size: 0.7rem;">{{ a.fecha }}</small>
-                      {% endif %}
-                    </div>
-                  </li>
-                  {% endfor %}
-                </ul>
-                {% else %}
-              </div>
+              {% if alertas %}
+              <ul class="list-group list-group-flush">
+                {% for a in alertas %}
+                <li class="list-group-item d-flex align-items-start border-0 px-0 mb-2 bg-transparent">
+                  <div class="me-2 mt-1">
+                    {% if a.tipo == 'danger' %} <i class="bi bi-exclamation-triangle-fill text-danger"></i>
+                    {% elif a.tipo == 'warning' %} <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                    {% else %} <i class="bi bi-info-circle-fill text-info"></i> {% endif %}
+                  </div>
+                  <div>
+                    <span class="d-block small text-dark">{{ a.mensaje }}</span>
+                    {% if a.fecha %}
+                    <small class="text-muted" style="font-size: 0.7rem;">{{ a.fecha }}</small>
+                    {% endif %}
+                  </div>
+                </li>
+                {% endfor %}
+              </ul>
+              {% else %}
               <div class="text-center py-4 text-muted">
                 <i class="bi bi-check-circle fs-4"></i>
                 <p class="small mt-2">No hay alertas pendientes</p>
@@ -674,39 +610,7 @@
   </script>
 
 
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    const span = document.getElementById("fraseEscrita");
-    const texto = span.textContent.trim();
-    let i = 0;
-    let escribiendo = true;
 
-    function cycle() {
-        if (escribiendo) {
-            if (i <= texto.length) {
-                span.textContent = texto.substring(0, i);
-                i++;
-                setTimeout(cycle, 80);
-            } else {
-                // esperar 5 segundos
-                setTimeout(() => { escribiendo = false; cycle(); }, 5000);
-            }
-        } else {
-            if (i >= 0) {
-                span.textContent = texto.substring(0, i);
-                i--;
-                setTimeout(cycle, 50);
-            } else {
-                escribiendo = true;
-                setTimeout(cycle, 800);
-            }
-        }
-    }
-
-    span.textContent = "";
-    cycle();
-});
-</script>
 
 <script src="{{ url_for('static', filename='js/formatos.js') }}"></script>
 </body>
