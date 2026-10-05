@@ -1,3 +1,5 @@
+import mimetypes
+from werkzeug.utils import secure_filename
 from helpers import clean_amount
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from models import db, PlanillaSeguridadSocial, TipoPlanillaSeguridadSocial, Usuarios, Notificaciones
@@ -73,7 +75,7 @@ def crear():
             data = f.read()
             supabase.storage.from_("tesoreria").upload(
                 path, data,
-                {"content-type": f.content_type, "upsert": "false"}
+                {"content-type": mimetypes.guess_type(f.filename)[0] or "application/octet-stream", "upsert": "false"}
             )
             return supabase.storage.from_("tesoreria").get_public_url(path)
         except Exception as e:
@@ -139,7 +141,7 @@ def editar_planilla(id):
             data = f.read()
             supabase.storage.from_("tesoreria").upload(
                 path, data,
-                {"content-type": f.content_type, "upsert": "false"}
+                {"content-type": mimetypes.guess_type(f.filename)[0] or "application/octet-stream", "upsert": "false"}
             )
             return supabase.storage.from_("tesoreria").get_public_url(path)
         except Exception as e:

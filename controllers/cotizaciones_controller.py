@@ -1,3 +1,5 @@
+import mimetypes
+from werkzeug.utils import secure_filename
 from helpers import clean_amount
 from datetime import datetime
 import os
@@ -41,7 +43,7 @@ def crear_cotizacion():
                         # Leer el archivo como bytes
                         file_bytes = imagen.read()
                         # Subir al bucket 'uploads' dentro de la carpeta 'cotizaciones'
-                        supabase.storage.from_("uploads").upload(f"cotizaciones/{unique_filename}", file_bytes, {"content-type": imagen.content_type})
+                        supabase.storage.from_("uploads").upload(f"cotizaciones/{unique_filename}", file_bytes, {"content-type": mimetypes.guess_type(imagen.filename)[0] or "application/octet-stream"})
                         
                         # Obtener la URL pública
                         public_url = supabase.storage.from_("uploads").get_public_url(f"cotizaciones/{unique_filename}")

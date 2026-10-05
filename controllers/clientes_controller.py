@@ -1,3 +1,5 @@
+import mimetypes
+from werkzeug.utils import secure_filename
 from helpers import clean_amount
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, session
 from datetime import datetime
@@ -46,7 +48,7 @@ def subir_archivo_supabase(file_obj, carpeta="clientes"):
             supabase.storage.from_("tesoreria").upload(
                 path,
                 file_bytes,
-                {"content-type": file_obj.content_type}
+                {"content-type": mimetypes.guess_type(file_obj.filename)[0] or "application/octet-stream"}
             )
             return supabase.storage.from_("tesoreria").get_public_url(path)
         except Exception as e:

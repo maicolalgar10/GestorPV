@@ -17,7 +17,8 @@ def create_app():
 
     #  Configuración de uploads
     app.config["UPLOAD_FOLDER"] = os.path.join("static", "uploads", "perfiles")
-    app.config["ALLOWED_EXTENSIONS"] = {"png", "jpg", "jpeg", "gif"}
+    app.config["ALLOWED_EXTENSIONS"] = {"png", "jpg", "jpeg", "gif", "pdf", "webp", "doc", "docx", "xls", "xlsx"}
+    app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # Límite global de 16 MB para evitar DoS
 
     #  MUY IMPORTANTE: Configurar pool para planes gratuitos
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {

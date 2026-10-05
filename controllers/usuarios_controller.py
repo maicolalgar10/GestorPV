@@ -1,3 +1,5 @@
+import mimetypes
+from werkzeug.utils import secure_filename
 from helpers import clean_amount
 from functools import wraps
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
@@ -304,7 +306,7 @@ def perfil():
                 try:
                     supabase.storage.from_("uploads").upload(
                         path, data,
-                        {"content-type": file.content_type, "upsert": "false"}
+                        {"content-type": mimetypes.guess_type(file.filename)[0] or "application/octet-stream", "upsert": "false"}
                     )
                     public_url = supabase.storage.from_("uploads").get_public_url(path)
                     

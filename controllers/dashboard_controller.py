@@ -1,3 +1,5 @@
+import mimetypes
+from werkzeug.utils import secure_filename
 from helpers import clean_amount
 import datetime
 import os
@@ -491,7 +493,7 @@ def nueva_factura_proveedor():
             data = f.read()
             supabase.storage.from_("tesoreria").upload(
                 path, data,
-                {"content-type": f.content_type, "upsert": "false"}
+                {"content-type": mimetypes.guess_type(f.filename)[0] or "application/octet-stream", "upsert": "false"}
             )
             return supabase.storage.from_("tesoreria").get_public_url(path)
         except Exception as e:
@@ -577,7 +579,7 @@ def editar_factura_proveedor(id):
             data = f.read()
             supabase.storage.from_("tesoreria").upload(
                 path, data,
-                {"content-type": f.content_type, "upsert": "false"}
+                {"content-type": mimetypes.guess_type(f.filename)[0] or "application/octet-stream", "upsert": "false"}
             )
             return supabase.storage.from_("tesoreria").get_public_url(path)
         except Exception as e:
@@ -817,7 +819,7 @@ def crear_proveedor_subfactura():
             data = f.read()
             supabase.storage.from_("tesoreria").upload(
                 path, data,
-                {"content-type": f.content_type, "upsert": "false"}
+                {"content-type": mimetypes.guess_type(f.filename)[0] or "application/octet-stream", "upsert": "false"}
             )
             return supabase.storage.from_("tesoreria").get_public_url(path)
         except Exception as e:

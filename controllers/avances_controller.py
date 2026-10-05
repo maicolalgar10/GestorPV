@@ -1,3 +1,5 @@
+import mimetypes
+from werkzeug.utils import secure_filename
 from helpers import clean_amount
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from models import db, Actividades, Avances, Proyectos, AvanceMaterial, Evidencias, Usuarios, Notificaciones, Materiales, MaterialesProyecto
@@ -107,7 +109,7 @@ def registrar_avance(id_actividad):
                 
                 if supabase:
                     supabase.storage.from_("evidencias").upload(
-                        path=filename, file=file_bytes, file_options={"content-type": file.content_type}
+                        path=filename, file=file_bytes, file_options={"content-type": mimetypes.guess_type(file.filename)[0] or "application/octet-stream"}
                     )
                     public_url = supabase.storage.from_("evidencias").get_public_url(filename)
                 else:

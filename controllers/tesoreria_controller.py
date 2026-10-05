@@ -1,3 +1,5 @@
+import mimetypes
+from werkzeug.utils import secure_filename
 from helpers import clean_amount
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
 from decorators import login_required, admin_oficina_required
@@ -276,7 +278,7 @@ def registrar_movimiento():
                 supabase.storage.from_("tesoreria").upload(
                     path=filename, 
                     file=file_bytes, 
-                    file_options={"content-type": archivo.content_type}
+                    file_options={"content-type": mimetypes.guess_type(archivo.filename)[0] or "application/octet-stream"}
                 )
                 nombre_archivo = supabase.storage.from_("tesoreria").get_public_url(filename)
             else:
@@ -728,7 +730,7 @@ def comprobantes_egresos():
                         supabase.storage.from_("tesoreria").upload(
                             f"comprobantes/{unique_filename}", 
                             file_bytes, 
-                            {"content-type": archivo.content_type}
+                            {"content-type": mimetypes.guess_type(archivo.filename)[0] or "application/octet-stream"}
                         )
                         url_soporte = supabase.storage.from_("tesoreria").get_public_url(f"comprobantes/{unique_filename}")
                     except Exception as upload_error:
@@ -806,7 +808,7 @@ def editar_comprobante_egreso(id):
                     supabase.storage.from_("tesoreria").upload(
                         f"comprobantes/{unique_filename}", 
                         file_bytes, 
-                        {"content-type": archivo.content_type}
+                        {"content-type": mimetypes.guess_type(archivo.filename)[0] or "application/octet-stream"}
                     )
                     
                     comprobante.archivo_url = supabase.storage.from_("tesoreria").get_public_url(f"comprobantes/{unique_filename}")

@@ -144,15 +144,13 @@ background: rgba(255, 255, 255, 0.85);
 
 /* ===== PROYECTOS ATRASADOS ===== */
 .proyecto-atrasado {
-  border: 3px solid #dc3545 !important;
-  box-shadow: 0 0 12px rgba(220, 53, 69, 0.5) !important;
-  border-radius: 10px !important;
-  background-color: #ffeaea !important;
-  transition: all 0.3s ease-in-out;
+  border-left: 4px solid #dc3545 !important;
+  background-color: #fffdfd !important;
+  transition: all 0.2s ease-in-out;
 }
 
 .proyecto-atrasado:hover {
-  box-shadow: 0 0 20px rgba(220, 53, 69, 0.8) !important;
+  background-color: #ffffff !important;
 }
 
 /* ===== ALERTA DE PROYECTO ===== */
@@ -259,7 +257,7 @@ background: rgba(255, 255, 255, 0.85);
       <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left"></i> Volver al Dashboard
       </a>
-      <h3 class="fw-bold">📑 Gestión de Proyectos</h3>
+      <h1 class="h3 fw-bold">📑 Gestión de Proyectos</h1>
       <!-- ✅ BOTÓN MOVIDO AQUÍ, DENTRO DEL CONTAINER Y ANTES DEL ACORDEÓN -->
       <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#nuevoProyectoModal">
         <i class="bi bi-plus-circle"></i> Nuevo Proyecto
@@ -285,18 +283,18 @@ background: rgba(255, 255, 255, 0.85);
     <div class="accordion" id="proyectosAccordion">
 
       <!-- Sección: Proyectos en Ejecución -->
-      <h4>Proyectos en Ejecución <span class="badge bg-primary">{{ proyectos_activos|length }} activos</span></h4>
+      <h2 class="h4">Proyectos en Ejecución <span class="badge bg-primary">{{ proyectos_activos|length }} activos</span></h2>
       {% if proyectos_activos %}
       {% for item in proyectos_activos %}
       <div class="mb-3">
         <div class="accordion-item shadow-sm {% if item.estado_visual == 'ATRASADO' %}proyecto-atrasado{% endif %}">
-          <h2 class="accordion-header" id="heading{{ item.proyecto.id_proyecto }}">
+          <h3 class="accordion-header" id="heading{{ item.proyecto.id_proyecto }}">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
               data-bs-target="#collapse{{ item.proyecto.id_proyecto }}" aria-expanded="false"
               aria-controls="collapse{{ item.proyecto.id_proyecto }}">
               <div class="d-flex justify-content-between w-100 align-items-center">
                 <div>
-                  <h5 class="fw-bold mb-0">{{ item.proyecto.nombre }}</h5>
+                  <span class="h5 fw-bold mb-0 d-block">{{ item.proyecto.nombre }}</span>
                   <small class="text-muted">{{ item.proyecto.descripcion or "Sin descripción" }}</small>
                 </div>
 
@@ -352,7 +350,7 @@ background: rgba(255, 255, 255, 0.85);
             <!-- 🔹 Avance de actividades -->
             <div class="mt-3">
               <div class="d-flex justify-content-between align-items-center mb-2">
-                <h6 class="fw-bold mb-0">📊 Avance de Actividades</h6>
+                <h4 class="h6 fw-bold mb-0">📊 Avance de Actividades</h4>
                 <button class="btn btn-sm btn-outline-dark" data-bs-toggle="modal"
                   data-bs-target="#actividadModal{{ item.proyecto.id_proyecto }}">
                   <i class="bi bi-plus-circle"></i> Agregar Actividad
@@ -369,14 +367,14 @@ background: rgba(255, 255, 255, 0.85);
                 {% set actividades_grupo = grupo.actividades %}
                 
                 <div class="accordion-item mb-3 shadow-sm" style="border-radius: 12px; border-left: 5px solid {{ color_grupo }}; overflow: hidden;">
-                  <h2 class="accordion-header" id="headingAct{{ item.proyecto.id_proyecto }}-{{ sp_id }}">
+                  <h5 class="accordion-header" id="headingAct{{ item.proyecto.id_proyecto }}-{{ sp_id }}">
                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
                             data-bs-target="#collapseAct{{ item.proyecto.id_proyecto }}-{{ sp_id }}" 
                             aria-expanded="false" aria-controls="collapseAct{{ item.proyecto.id_proyecto }}-{{ sp_id }}">
                       <strong>{{ nombre_grupo }}</strong>
                       <span class="badge ms-2" style="background-color: {{ color_grupo }};">{{ actividades_grupo|length }} actividades</span>
                     </button>
-                  </h2>
+                  </h5>
                   <div id="collapseAct{{ item.proyecto.id_proyecto }}-{{ sp_id }}" class="accordion-collapse collapse" 
                        aria-labelledby="headingAct{{ item.proyecto.id_proyecto }}-{{ sp_id }}">
                     <div class="accordion-body bg-light" style="padding-bottom: 0;">
@@ -384,9 +382,7 @@ background: rgba(255, 255, 255, 0.85);
                       <div class="card actividad-card mb-4 shadow-sm p-3 border-0">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                           <div>
-                            <h6 class="fw-bold mb-1 text-dark">
-                              {{ actividad.nombre }}
-                            </h6>
+                            <span class="h6 fw-bold mb-1 text-dark d-block">{{ actividad.nombre }}</span>
                     {% if actividad.descripcion %}
                     <p class="text-muted small mb-0">{{ actividad.descripcion }}</p>
                     {% else %}
@@ -834,19 +830,19 @@ background: rgba(255, 255, 255, 0.85);
 
 
       <!-- Sección: Proyectos Finalizados -->
-      <h4 class="mt-5">Proyectos Finalizados <span class="badge bg-success">{{ proyectos_finalizados|length }}
-          finalizados</span></h4>
+      <h2 class="h4 mt-5">Proyectos Finalizados <span class="badge bg-success">{{ proyectos_finalizados|length }}
+          finalizados</span></h2>
       {% if proyectos_finalizados %}
       {% for item in proyectos_finalizados %}
       <div class="mb-3">
         <div class="accordion-item shadow-sm {% if item.estado_visual == 'ATRASADO' %}proyecto-atrasado{% endif %}">
-          <h2 class="accordion-header" id="heading{{ item.proyecto.id_proyecto }}">
+          <h3 class="accordion-header" id="heading{{ item.proyecto.id_proyecto }}">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
               data-bs-target="#collapse{{ item.proyecto.id_proyecto }}" aria-expanded="false"
               aria-controls="collapse{{ item.proyecto.id_proyecto }}">
               <div class="d-flex justify-content-between w-100 align-items-center">
                 <div>
-                  <h5 class="fw-bold mb-0">{{ item.proyecto.nombre }}</h5>
+                  <span class="h5 fw-bold mb-0 d-block">{{ item.proyecto.nombre }}</span>
                   <small class="text-muted">{{ item.proyecto.descripcion or "Sin descripción" }}</small>
                 </div>
 
@@ -902,7 +898,7 @@ background: rgba(255, 255, 255, 0.85);
             <!-- 🔹 Avance de actividades -->
             <div class="mt-3">
               <div class="d-flex justify-content-between align-items-center mb-2">
-                <h6 class="fw-bold mb-0">📊 Avance de Actividades</h6>
+                <h4 class="h6 fw-bold mb-0">📊 Avance de Actividades</h4>
                 <button class="btn btn-sm btn-outline-dark" data-bs-toggle="modal"
                   data-bs-target="#actividadModal{{ item.proyecto.id_proyecto }}">
                   <i class="bi bi-plus-circle"></i> Agregar Actividad
@@ -914,7 +910,7 @@ background: rgba(255, 255, 255, 0.85);
               <div class="card actividad-card mb-4 shadow-sm p-3" data-subproyecto-id="{{ actividad.sub_proyecto_id or 0 }}">
                 <div class="d-flex justify-content-between align-items-start mb-2">
                   <div>
-                    <h6 class="fw-bold mb-1 text-dark">{{ actividad.nombre }}</h6>
+                    <span class="h6 fw-bold mb-1 text-dark d-block">{{ actividad.nombre }}</span>
                     {% if actividad.descripcion %}
                     <p class="text-muted small mb-0">{{ actividad.descripcion }}</p>
                     {% else %}

@@ -1,3 +1,5 @@
+import mimetypes
+from werkzeug.utils import secure_filename
 from helpers import clean_amount
 from flask import Blueprint, render_template, request, redirect, flash
 from decorators import login_required
@@ -108,7 +110,7 @@ def registrar_cuenta_cobro(factura_id):
             try:
                 supabase.storage.from_("tesoreria").upload(
                     filename, data,
-                    {"content-type": archivo.content_type, "upsert": "false"}
+                    {"content-type": mimetypes.guess_type(archivo.filename)[0] or "application/octet-stream", "upsert": "false"}
                 )
                 nombre_archivo = supabase.storage.from_("tesoreria").get_public_url(filename)
             except Exception as e:
@@ -179,7 +181,7 @@ def registrar_consignacion(factura_id):
             try:
                 supabase.storage.from_("tesoreria").upload(
                     filename, data,
-                    {"content-type": archivo.content_type, "upsert": "false"}
+                    {"content-type": mimetypes.guess_type(archivo.filename)[0] or "application/octet-stream", "upsert": "false"}
                 )
                 nombre_archivo = supabase.storage.from_("tesoreria").get_public_url(filename)
             except Exception as e:
