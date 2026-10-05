@@ -169,9 +169,13 @@ def manage_proyectos():
     termino_busqueda = request.args.get('q', '').strip()
 
     # 1️⃣ CONSULTA ÓPTIMA CON JOIN PRECARGADOS
+    from sqlalchemy.orm import joinedload
     query = Proyectos.query.options(
         selectinload(Proyectos.responsable),
-        selectinload(Proyectos.personal_asignado).selectinload(ProyectoPersonal.personal)
+        selectinload(Proyectos.personal_asignado).joinedload(ProyectoPersonal.personal),
+        selectinload(Proyectos.actividades).joinedload(Actividades.sub_proyecto),
+        selectinload(Proyectos.materiales).joinedload(MaterialesProyecto.material),
+        selectinload(Proyectos.vehiculos).joinedload(VehiculoProyecto.vehiculo)
     ).filter_by(visible=True) # ✅ FILTRAR SOLO PROYECTOS VISIBLES
     
     if termino_busqueda:
@@ -187,28 +191,37 @@ def manage_proyectos():
     vehiculos = Vehiculos.query.all()  # Puedes filtrar si es necesario
     materiales = Materiales.query.all()
 
-    # 3️⃣ PRE-COMPUTAR DATOS DE ASISTENCIAS EN UNA SOLA CONSULTA
-    asistencias_data = db.session.query(
-        Asistencia.proyecto_id,
-        Asistencia.personal_id,
-        func.count().label("total")
-    ).filter(
-        (Asistencia.trabajo_manana == True) | (Asistencia.trabajo_tarde == True)
-    ).group_by(Asistencia.proyecto_id, Asistencia.personal_id).all()
-    
-    # Convertir a diccionario para acceso rápido
+    # Extraer IDs de los proyectos filtrados y paginados (Bound computation)
+    proyecto_ids = [p.id_proyecto for p in proyectos]
     asistencias_dict = {}
-    for row in asistencias_data:
-        key = (row.proyecto_id, row.personal_id)
-        asistencias_dict[key] = row.total
+    avances_dict = {}
 
-    # 4️⃣ PRE-COMPUTAR AVANCES DE ACTIVIDADES EN UNA SOLA CONSULTA
-    avances_data = db.session.query(
-        Avances.id_actividad,
-        func.sum(Avances.unidades_avanzadas).label("avanzado")
-    ).group_by(Avances.id_actividad).all()
-    
-    avances_dict = {row.id_actividad: row.avanzado or 0 for row in avances_data}
+    if proyecto_ids:
+        # 3️⃣ PRE-COMPUTAR DATOS DE ASISTENCIAS EN UNA SOLA CONSULTA (BOUNDED)
+        asistencias_data = db.session.query(
+            Asistencia.proyecto_id,
+            Asistencia.personal_id,
+            func.count().label("total")
+        ).filter(
+            Asistencia.proyecto_id.in_(proyecto_ids),
+            ((Asistencia.trabajo_manana == True) | (Asistencia.trabajo_tarde == True))
+        ).group_by(Asistencia.proyecto_id, Asistencia.personal_id).all()
+        
+        for row in asistencias_data:
+            key = (row.proyecto_id, row.personal_id)
+            asistencias_dict[key] = row.total
+
+        # 4️⃣ PRE-COMPUTAR AVANCES DE ACTIVIDADES EN UNA SOLA CONSULTA (BOUNDED)
+        actividades_ids = [act.id_actividad for p in proyectos for act in p.actividades]
+        if actividades_ids:
+            avances_data = db.session.query(
+                Avances.id_actividad,
+                func.sum(Avances.unidades_avanzadas).label("avanzado")
+            ).filter(
+                Avances.id_actividad.in_(actividades_ids)
+            ).group_by(Avances.id_actividad).all()
+            
+            avances_dict = {row.id_actividad: row.avanzado or 0 for row in avances_data}
 
     # 5️⃣ PROCESAR PROYECTOS CON CÁLCULOS ÓPTIMOS
     proyectos_data = []
@@ -416,7 +429,11 @@ def show_proyecto(id_proyecto):
 @admin_required
 def editar_proyecto(id_proyecto):
     hoy = dt.utcnow().date()
-    proyecto = Proyectos.query.get_or_404(id_proyecto)
+    from sqlalchemy.orm import selectinload, joinedload
+    proyecto = Proyectos.query.options(
+        selectinload(Proyectos.vehiculos).joinedload(VehiculoProyecto.vehiculo),
+        selectinload(Proyectos.materiales).joinedload(MaterialesProyecto.material)
+    ).get_or_404(id_proyecto)
 
     if request.method == 'POST':
         try:
