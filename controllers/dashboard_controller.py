@@ -307,6 +307,56 @@ def dashboard_oficina():
         print("Error calculando total_materiales:", e)
         total_materiales = 0
 
+    # 📌 Lógica de Alertas de Documentación de Vehículos
+    from models import Vehiculos
+    from datetime import date, timedelta
+    
+    hoy = date.today()
+    limite = hoy + timedelta(days=30)
+    
+    vehiculos_query = Vehiculos.query.all()
+    
+    vehiculos_vencidos = []
+    vehiculos_por_vencer = []
+    
+    for v in vehiculos_query:
+        if not v.soat_vencimiento or not v.tecno_vencimiento:
+            continue
+
+        soat_vencido = v.soat_vencimiento <= hoy
+        tecno_vencida = v.tecno_vencimiento <= hoy
+        
+        if soat_vencido or tecno_vencida:
+            doc = "SOAT y Tecno" if soat_vencido and tecno_vencida else ("SOAT" if soat_vencido else "Tecno")
+            fechas_v = [d for d in [v.soat_vencimiento if soat_vencido else None, v.tecno_vencimiento if tecno_vencida else None] if d]
+            fecha_urgente = min(fechas_v) if fechas_v else hoy
+            dias = (hoy - fecha_urgente).days
+            vehiculos_vencidos.append({
+                "placa": v.placa,
+                "documento": doc,
+                "fecha": fecha_urgente,
+                "dias_pasados": dias
+            })
+            continue 
+            
+        soat_por_vencer = hoy < v.soat_vencimiento <= limite
+        tecno_por_vencer = hoy < v.tecno_vencimiento <= limite
+        
+        if soat_por_vencer or tecno_por_vencer:
+            doc = "SOAT y Tecno" if soat_por_vencer and tecno_por_vencer else ("SOAT" if soat_por_vencer else "Tecno")
+            fechas_p = [d for d in [v.soat_vencimiento if soat_por_vencer else None, v.tecno_vencimiento if tecno_por_vencer else None] if d]
+            fecha_urgente = min(fechas_p) if fechas_p else hoy
+            dias = (fecha_urgente - hoy).days
+            vehiculos_por_vencer.append({
+                "placa": v.placa,
+                "documento": doc,
+                "fecha": fecha_urgente,
+                "dias_restantes": dias
+            })
+
+    vehiculos_vencidos.sort(key=lambda x: x["fecha"])
+    vehiculos_por_vencer.sort(key=lambda x: x["fecha"])
+
     return render_template(
         "dashboard_oficina.html",
         usuario=usuario,
@@ -316,7 +366,9 @@ def dashboard_oficina():
         notificaciones=notificaciones,
         bancos=bancos,
         trabajadores=trabajadores,
-        total_materiales=total_materiales
+        total_materiales=total_materiales,
+        vehiculos_vencidos=vehiculos_vencidos,
+        vehiculos_por_vencer=vehiculos_por_vencer
     )
 
 # -----------------------------
