@@ -1,6 +1,6 @@
 from helpers import clean_amount
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from decorators import login_required, admin_required, admin_oficina_required
+from decorators import login_required, admin_required, admin_oficina_required, admin_encargado_required, admin_bodega_required, admin_oficina_bodega_required
 from datetime import date as d, datetime
 from models import db, Asistencia, Proyectos, Personal, ProyectoPersonal, AsignacionDiaria
 import traceback

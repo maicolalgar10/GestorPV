@@ -2,7 +2,7 @@ import mimetypes
 from werkzeug.utils import secure_filename
 from helpers import clean_amount
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
-from decorators import login_required, admin_oficina_required
+from decorators import login_required, admin_required, admin_oficina_required, admin_encargado_required, admin_bodega_required, admin_oficina_bodega_required
 from models import db, Contrato, Cotizacion, Movimientos, Bancos
 from werkzeug.utils import secure_filename
 from decimal import Decimal

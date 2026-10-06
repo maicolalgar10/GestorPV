@@ -2,7 +2,7 @@ from helpers import clean_amount
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from models import db, Horario, Personal, Proyectos, ProyectoPersonal, Notificaciones, AsignacionDiaria
 from datetime import datetime, date
-from decorators import login_required, admin_required
+from decorators import login_required, admin_required, admin_oficina_required, admin_encargado_required, admin_bodega_required, admin_oficina_bodega_required
 
 horarios_bp = Blueprint("horarios", __name__)
 
