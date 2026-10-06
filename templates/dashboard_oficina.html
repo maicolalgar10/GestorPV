@@ -433,9 +433,9 @@
               {% endfor %}
             </ul>
           {% else %}
-            <div class="text-center text-muted py-3">
-              <i class="bi bi-check-circle text-success fs-4 d-block mb-2"></i>
-              <small>Documentación al día</small>
+            <div class="text-center py-3 bg-success-subtle text-success rounded">
+              <i class="bi bi-check-circle fs-4 d-block mb-2"></i>
+              <small class="fw-bold">Documentación al día (0 alertas)</small>
             </div>
           {% endif %}
         </div>
@@ -738,7 +738,47 @@
       </div>
 
       <div class="col-lg-4">
-
+      
+        <!-- Alertas de Documentación de Vehículos -->
+        <div class="module-card p-4 mb-4" style="border-top: 4px solid #ef4444;">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="section-title m-0"><i class="bi bi-car-front text-dark"></i> Alertas Vehículos</h5>
+            <a href="{{ url_for('vehiculos.manage_vehiculos') }}" class="btn btn-outline-dark btn-sm rounded-pill px-3">Ver Todos</a>
+          </div>
+          
+          {% if vehiculos_vencidos or vehiculos_por_vencer %}
+            <ul class="list-group list-group-flush mb-0">
+              {% for v in vehiculos_vencidos %}
+              <li class="list-group-item px-0 py-2 border-0 d-flex justify-content-between align-items-center">
+                <div>
+                  <strong class="d-block">{{ v.placa }}</strong>
+                  <span class="small text-muted">{{ v.documento }}</span>
+                </div>
+                <span class="badge bg-danger-subtle text-danger border border-danger">
+                  Vencido (hace {{ v.dias_pasados }} d)
+                </span>
+              </li>
+              {% endfor %}
+              
+              {% for v in vehiculos_por_vencer %}
+              <li class="list-group-item px-0 py-2 border-0 d-flex justify-content-between align-items-center">
+                <div>
+                  <strong class="d-block">{{ v.placa }}</strong>
+                  <span class="small text-muted">{{ v.documento }}</span>
+                </div>
+                <span class="badge bg-warning-subtle text-warning border border-warning">
+                  En {{ v.dias_restantes }} d
+                </span>
+              </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="text-center py-3 bg-success-subtle text-success rounded">
+              <i class="bi bi-check-circle fs-4 d-block mb-2"></i>
+              <small class="fw-bold">Documentación al día (0 alertas)</small>
+            </div>
+          {% endif %}
+        </div>
         <div class="module-card p-4 mb-4" style="border-top: 4px solid #1f2937;">
           <h5 class="section-title"><i class="bi bi-calculator text-dark"></i> Cotizador</h5>
           <p class="text-muted small">Crea presupuestos y expórtalos a PDF.</p>
