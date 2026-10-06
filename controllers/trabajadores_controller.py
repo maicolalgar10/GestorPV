@@ -11,6 +11,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 trabajadores_bp = Blueprint("trabajadores", __name__)
+from sqlalchemy.orm import selectinload
 
 @trabajadores_bp.route("/oficina/trabajadores")
 @login_required
@@ -24,7 +25,7 @@ def index():
 @admin_oficina_required
 def nomina():
     usuario = Usuarios.query.get(session["user_id"])
-    empleados = Usuarios.query.filter_by(rol="EMPLEADO").all()
+    empleados = Usuarios.query.options(selectinload(Usuarios.personal_data)).all()
     pagos = ProgramacionPagoTrabajador.query.order_by(ProgramacionPagoTrabajador.fecha_programada.asc()).all()
     return render_template("trabajadores/nomina.html", usuario=usuario, empleados=empleados, pagos=pagos)
 
