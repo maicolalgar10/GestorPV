@@ -237,6 +237,8 @@ def exportar_whatsapp():
 # 📋 LISTAR HORARIOS
 # ================================
 @horarios_bp.route("/horarios")
+@login_required
+@admin_required
 def listar_horarios():
     horarios = Horario.query.order_by(Horario.fecha.desc()).all()
     return render_template("horario.html", horarios=horarios)
@@ -246,6 +248,8 @@ def listar_horarios():
 # 🕒 CREAR NUEVO HORARIO (por trabajador)
 # ================================
 @horarios_bp.route("/horarios/nuevo/<int:id>", methods=["GET", "POST"])
+@login_required
+@admin_required
 def nuevo_horario(id):
     # Obtener el trabajador específico
     personal = Personal.query.get_or_404(id)
@@ -326,6 +330,8 @@ def nuevo_horario(id):
 # 🗑️ ELIMINAR HORARIO
 # ================================
 @horarios_bp.route("/horarios/eliminar/<int:id>", methods=["POST"])
+@login_required
+@admin_required
 def eliminar_horario(id):
     horario = Horario.query.get_or_404(id)
     try:
@@ -340,6 +346,8 @@ def eliminar_horario(id):
 
 
 @horarios_bp.route("/detalle/<int:id>")
+@login_required
+@admin_required
 def detalle_horario(id):
     horario = Horario.query.get_or_404(id)
     return render_template("detalle_horario.html", horario=horario)
@@ -349,6 +357,8 @@ def detalle_horario(id):
 # 🔔 MARCAR NOTIFICACIONES COMO LEÍDAS (desde el dropdown)
 # ================================
 @horarios_bp.route("/notificaciones/marcar_leidas", methods=["POST"])
+@login_required
+@admin_required
 def marcar_leidas():
 
     if "user_id" not in session:

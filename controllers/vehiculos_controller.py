@@ -4,7 +4,7 @@ from models import db, Vehiculos, Proyectos, VehiculoProyecto, MovimientoVehicul
 from datetime import datetime as dt, date
 from decimal import Decimal
 from operator import attrgetter
-from sqlalchemy.orm import aliased
+from sqlalchemy.orm import aliased, selectinload
 from decorators import login_required, admin_required, admin_encargado_required # Importa los decoradores
 
 
@@ -18,7 +18,9 @@ vehiculos_bp = Blueprint("vehiculos", __name__)
 def manage_vehiculos():
     hoy = date.today()
 
-    vehiculos = Vehiculos.query.order_by(Vehiculos.placa).all()
+    vehiculos = Vehiculos.query.options(
+        selectinload(Vehiculos.usos).selectinload(VehiculoProyecto.proyecto)
+    ).order_by(Vehiculos.placa).all()
 
     vehiculos_info = []
 
@@ -43,14 +45,12 @@ def manage_vehiculos():
         else:
             v.estado_documento = "vigente"  
 
-        # Buscar la última asignación del vehículo
-        uso = VehiculoProyecto.query.filter_by(id_vehiculo=v.id_vehiculo)\
-            .order_by(VehiculoProyecto.id_vp.desc()).first()
+        # Buscar la última asignación del vehículo usando la relación precargada
+        uso = sorted(v.usos, key=lambda u: u.id_vp, reverse=True)[0] if v.usos else None
 
         proyecto_nombre = None
         if uso:
-            proyecto = Proyectos.query.filter_by(id_proyecto=uso.id_proyecto).first()
-            proyecto_nombre = proyecto.nombre if proyecto else None
+            proyecto_nombre = uso.proyecto.nombre if uso.proyecto else uso.nombre_proyecto_eliminado
 
         vehiculos_info.append({
             "vehiculo": v,

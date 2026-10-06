@@ -1,5 +1,6 @@
 from helpers import clean_amount
 from flask import Blueprint, render_template, request, redirect, url_for, flash
+from decorators import login_required, admin_required, admin_oficina_required
 from datetime import date as d, datetime
 from models import db, Asistencia, Proyectos, Personal, ProyectoPersonal, AsignacionDiaria
 import traceback
@@ -17,6 +18,8 @@ def hoy_ymd() -> str:
 # (1) 🧱 REGISTRO MASIVO DIARIO (Estilo Asignaciones)
 # =======================================================
 @asistencia_bp.route('/asistencia/diaria', methods=['GET', 'POST'])
+@login_required
+@admin_required
 def registro_diario_masivo():
     """
     Muestra las tarjetas por proyecto basadas en la ASIGNACIÓN DIARIA.
@@ -113,6 +116,8 @@ def registro_diario_masivo():
 # (2) ✏️ EDICIÓN INDIVIDUAL (Detallada)
 # =======================================================
 @asistencia_bp.route("/personal/<int:personal_id>/asistencia", methods=["GET", "POST"])
+@login_required
+@admin_required
 def asistencia_trabajador(personal_id):
     """
     Permite editar la asistencia de UN solo trabajador.
@@ -263,6 +268,8 @@ def asistencia_trabajador(personal_id):
 # (3) 🗑️ ELIMINAR ASISTENCIA
 # =======================================================
 @asistencia_bp.route('/asistencia/eliminar/<int:personal_id>/<string:fecha>')
+@login_required
+@admin_required
 def delete_asistencia(personal_id, fecha):
     try:
         fecha_dt = d.fromisoformat(fecha)

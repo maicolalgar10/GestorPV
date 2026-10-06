@@ -5,7 +5,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
-    SECRET_KEY = os.getenv("SECRET_KEY_CORSEING", "CorseingSecretKey2026_ToPreventLogoutIssues")
+    SECRET_KEY = os.getenv("SECRET_KEY_CORSEING")
+    if not SECRET_KEY:
+        raise ValueError("No SECRET_KEY_CORSEING set for Flask application. Check your .env file.")
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     WTF_CSRF_TIME_LIMIT = 60 * 60 * 2

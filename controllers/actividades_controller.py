@@ -1,5 +1,6 @@
 from helpers import clean_amount
 from flask import Blueprint, request, redirect, url_for, flash
+from decorators import login_required, admin_required, admin_oficina_required
 from models import db, Actividades
 from models import db, Actividades, Avances  # solo si usas cálculo de progreso
 
@@ -9,6 +10,8 @@ actividades_bp = Blueprint('actividades', __name__)
 # ➕ CREAR ACTIVIDAD (con o sin ubicación)
 # ===============================================================
 @actividades_bp.route('/crear', methods=['POST'])
+@login_required
+@admin_required
 def agregar_actividad():
     try:
         nombre = request.form['nombre'].strip()
@@ -43,6 +46,8 @@ def agregar_actividad():
 # ✏️ EDITAR ACTIVIDAD
 # ===============================================================
 @actividades_bp.route('/editar/<int:id_actividad>', methods=['POST'])
+@login_required
+@admin_required
 def editar_actividad(id_actividad):
     actividad = Actividades.query.get_or_404(id_actividad)
     try:
@@ -66,6 +71,8 @@ def editar_actividad(id_actividad):
 # 🗑️ ELIMINAR ACTIVIDAD
 # ===============================================================
 @actividades_bp.route('/eliminar/<int:id_actividad>', methods=['POST'])
+@login_required
+@admin_required
 def eliminar_actividad(id_actividad):
     actividad = Actividades.query.get(id_actividad)
     if not actividad:
