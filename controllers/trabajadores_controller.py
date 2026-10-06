@@ -25,7 +25,7 @@ def index():
 @admin_oficina_required
 def nomina():
     usuario = Usuarios.query.get(session["user_id"])
-    empleados = Usuarios.query.options(selectinload(Usuarios.personal_data)).all()
+    empleados = Usuarios.query.options(selectinload(Usuarios.personal_data)).order_by(Usuarios.nombre.asc()).all()
     pagos = ProgramacionPagoTrabajador.query.order_by(ProgramacionPagoTrabajador.fecha_programada.asc()).all()
     return render_template("trabajadores/nomina.html", usuario=usuario, empleados=empleados, pagos=pagos)
 
