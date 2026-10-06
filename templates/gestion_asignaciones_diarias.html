@@ -161,14 +161,14 @@
                 </div>
                 <div>
                     <a href="{{ url_for('asistencia.registro_diario_masivo', fecha=fecha_seleccionada) }}" 
-           class="btn btn-primary shadow-sm rounded-pill px-3 d-flex align-items-center">
+           class="btn btn-outline-primary shadow-sm rounded-pill px-3 d-flex align-items-center">
             <i class="bi bi-person-check-fill me-2"></i> 
             <span class="d-none d-md-inline">Tomar Asistencia</span>
         </a>
 </div>
 
                 <a href="{{ url_for('horarios.exportar_whatsapp', fecha=fecha_seleccionada) }}" target="_blank"
-                    class="btn btn-success shadow-sm rounded-pill px-3">
+                    class="btn btn-outline-success shadow-sm rounded-pill px-3">
                     <i class="bi bi-whatsapp"></i> <span class="d-none d-md-inline">Exportar ({{ fecha_seleccionada
                         }})</span>
                 </a>
@@ -179,7 +179,7 @@
                     class="bg-white p-2 rounded-pill shadow-sm d-flex align-items-center gap-2 border">
                     <input type="date" class="form-control border-0 rounded-pill bg-light" name="fecha"
                         value="{{ fecha_seleccionada }}" required style="max-width: 160px;">
-                    <button class="btn btn-primary rounded-pill px-4" type="submit">Ir a Fecha</button>
+                    <button class="btn btn-outline-primary rounded-pill px-4" type="submit">Ir a Fecha</button>
                 </form>
             </div>
 

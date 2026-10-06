@@ -148,7 +148,7 @@
           <h2 class="fw-bold text-dark"><i class="bi bi-person-standing"></i> Gestión de Personal</h2>
           <p class="text-muted mb-0">Administra tu personal, roles y estados.</p>
         </div>
-        <button class="btn btn-dark-custom shadow" data-bs-toggle="modal" data-bs-target="#crearPersonalModal">
+        <button class="btn btn-outline-dark-custom shadow" data-bs-toggle="modal" data-bs-target="#crearPersonalModal">
           <i class="bi bi-person-plus-fill"></i> Nuevo Miembro
         </button>
       </div>
@@ -163,7 +163,7 @@
             value="{{ q or '' }}">
           <button class="btn btn-light border" type="submit"><i class="bi bi-search"></i> Buscar</button>
           {% if q %}
-          <a class="btn btn-danger" href="{{ url_for('personal.manage_personal') }}">Limpiar</a>
+          <a class="btn btn-outline-danger" href="{{ url_for('personal.manage_personal') }}">Limpiar</a>
           {% endif %}
         </div>
       </form>
@@ -207,7 +207,7 @@
                   </div>
 
                   <div class="text-end ms-auto pe-2">
-                    <span class="badge rounded-pill {% if p.activo %}bg-success{% else %}bg-danger{% endif %}">
+                    <span class="badge rounded-pill {% if p.activo %}bg-success-subtle text-success{% else %}bg-danger-subtle text-danger{% endif %}">
                       {{ "Activo" if p.activo else "Inactivo" }}
                     </span>
                     <div class="small fw-bold text-secondary mt-1">${{ "%.0f"|format(p.costo_diario * 30) }}/mes</div>
@@ -377,7 +377,7 @@
 
             <div class="mt-4 d-flex justify-content-end gap-2">
               <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-              <button type="submit" class="btn btn-dark-custom">Guardar Personal</button>
+              <button type="submit" class="btn btn-outline-dark-custom">Guardar Personal</button>
             </div>
           </form>
         </div>
@@ -473,7 +473,7 @@
 
             <div class="mt-4 d-flex justify-content-end gap-2">
               <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-              <button type="submit" class="btn btn-dark-custom">Guardar Cambios</button>
+              <button type="submit" class="btn btn-outline-dark-custom">Guardar Cambios</button>
             </div>
           </form>
         </div>

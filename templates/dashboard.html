@@ -319,7 +319,7 @@
               <i class="bi bi-bell fs-5"></i>
 
               {% if notificaciones and notificaciones|length > 0 %}
-              <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+              <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger-subtle text-danger">
                 {{ notificaciones|selectattr('leido', 'equalto', False)|list|length }}
               </span>
               {% endif %}
@@ -425,7 +425,7 @@
       <div class="display-6 fw-bold my-2">{{ proyectos_activos|length }}</div>
       <p class="text-muted small mb-3 mt-auto">Proyectos Activos</p>
       <div class="card-actions">
-        <a href="{{ url_for('proyectos.manage_proyectos')}}" class="btn btn-dark btn-sm w-100">Ver Proyectos</a>
+        <a href="{{ url_for('proyectos.manage_proyectos')}}" class="btn btn-outline-dark btn-sm w-100">Ver Proyectos</a>
       </div>
     </div>
   </div>
@@ -436,7 +436,7 @@
       <div class="display-6 fw-bold my-2">{{ vehiculos_disponibles|length }}/{{ vehiculos|length }}</div>
       <p class="text-muted small mb-3 mt-auto">Disponibles</p>
       <div class="card-actions d-flex gap-2">
-        <a href="{{ url_for('vehiculos.manage_vehiculos')}}" class="btn btn-dark btn-sm flex-fill">Ver Todos</a>
+        <a href="{{ url_for('vehiculos.manage_vehiculos')}}" class="btn btn-outline-dark btn-sm flex-fill">Ver Todos</a>
         <a href="{{ url_for('vehiculos.gestion_vehiculos')}}" class="btn btn-outline-primary btn-sm flex-fill">Movs.</a>
       </div>
     </div>
@@ -448,7 +448,7 @@
       <div class="display-6 fw-bold my-2">{{ personal|length }}</div>
       <p class="text-muted small mb-3 mt-auto">Personal en la empresa</p>
       <div class="card-actions d-flex gap-2">
-        <a href="{{ url_for('personal.manage_personal')}}" class="btn btn-dark btn-sm flex-fill">Ver Personal</a>
+        <a href="{{ url_for('personal.manage_personal')}}" class="btn btn-outline-dark btn-sm flex-fill">Ver Personal</a>
         <a href="{{ url_for('horarios.gestion_asignaciones_diarias')}}" class="btn btn-outline-primary btn-sm flex-fill">Horarios</a>
       </div>
     </div>
@@ -460,7 +460,7 @@
       <div class="display-6 fw-bold my-2">{{ materiales|length }}</div>
       <p class="text-muted small mb-3 mt-auto">Tipos de Materiales</p>
       <div class="card-actions">
-        <a href="{{ url_for('materiales.manage_materiales')}}" class="btn btn-dark btn-sm w-100">Inventario</a>
+        <a href="{{ url_for('materiales.manage_materiales')}}" class="btn btn-outline-dark btn-sm w-100">Inventario</a>
       </div>
     </div>
   </div>
@@ -471,7 +471,7 @@
       <div class="display-6 fw-bold my-2"><i class="bi bi-bar-chart-line text-info"></i></div>
       <p class="text-muted small mb-3 mt-auto">Gasto de Materiales</p>
       <div class="card-actions">
-        <a href="{{ url_for('avances.seleccion_analisis') }}" class="btn btn-info btn-sm w-100 text-white fw-bold">Comparativa</a>
+        <a href="{{ url_for('avances.seleccion_analisis') }}" class="btn btn-outline-info btn-sm w-100 text-white fw-bold">Comparativa</a>
       </div>
     </div>
   </div>
@@ -521,7 +521,7 @@
                         <div class="fw-bold text-dark">{{ v.placa }}</div>
                         <small class="text-muted">{{ v.tipo }}</small>
                       </div>
-                      <span class="badge bg-success rounded-pill">Disponible</span>
+                      <span class="badge bg-success-subtle text-success rounded-pill">Disponible</span>
                     </li>
                     {% endfor %}
                   </ul>

@@ -410,7 +410,7 @@
             <td class="text-end">
               {% set deuda = deuda_por_proveedor.get(p.nombre, 0) %}
               {% if deuda <= 0 %}
-                <span class="badge bg-success">Paz y Salvo</span>
+                <span class="badge bg-success-subtle text-success">Paz y Salvo</span>
               {% else %}
                 <span class="text-danger fw-bold">${{ "{:,.0f}".format(deuda) | replace(",",".") }}</span>
               {% endif %}
@@ -467,8 +467,8 @@
                         </div>
            
                         <div class="modal-footer">
-                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                          <button type="submit" class="btn btn-primary">Programar</button>
+                          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                          <button type="submit" class="btn btn-outline-primary">Programar</button>
                         </div>
                       </form>
                     </div>
@@ -501,7 +501,7 @@
         <a href="{{ url_for('proveedores.historial_pagos') }}" class="btn btn-sm btn-outline-success ms-2" title="Historial">
           <i class="bi bi-clock-history"></i> Historial de Pagos
         </a>
-        <a href="{{ url_for('dashboard.exportar_pdf_pagos_consolidados') }}" class="btn btn-danger btn-sm fw-bold shadow-sm" target="_blank" title="Exportar PDF">
+        <a href="{{ url_for('dashboard.exportar_pdf_pagos_consolidados') }}" class="btn btn-outline-danger btn-sm fw-bold shadow-sm" target="_blank" title="Exportar PDF">
           <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
         </a>
       </div>
@@ -533,7 +533,7 @@
               <td class="text-end text-primary fw-bold">${{ "{:,.0f}".format(pago.monto) | replace(",",".") }}</td>
               <td class="text-end fw-semibold">
                 {% if pago.saldo_restante <= 0 %}
-                  <span class="badge bg-success">Paz y Salvo</span>
+                  <span class="badge bg-success-subtle text-success">Paz y Salvo</span>
                 {% else %}
                   <span class="text-danger">${{ "{:,.0f}".format(pago.saldo_restante) | replace(",",".") }}</span>
                 {% endif %}
@@ -541,11 +541,11 @@
               <td class="small text-muted">{{ pago.observacion or '—' }}</td>
               <td class="text-center">
                 {% if pago.estado == 'Programado' %}
-                  <span class="badge bg-warning text-dark">Programado</span>
+                  <span class="badge bg-warning-subtle text-warning text-dark">Programado</span>
                 {% elif pago.estado == 'Realizado' %}
-                  <span class="badge bg-success">Realizado</span>
+                  <span class="badge bg-success-subtle text-success">Realizado</span>
                 {% else %}
-                  <span class="badge bg-secondary">Cancelado</span>
+                  <span class="badge bg-secondary-subtle text-secondary">Cancelado</span>
                 {% endif %}
               </td>
               <td class="text-center">
@@ -625,7 +625,7 @@
             </td>
             <td class="text-center">
               {% if f.dias_mora > 0 %}
-                <span class="badge bg-danger text-white">{{ f.dias_mora }}d</span>
+                <span class="badge bg-danger-subtle text-danger text-white">{{ f.dias_mora }}d</span>
               {% else %}
                 <span class="text-muted small">—</span>
               {% endif %}
@@ -705,7 +705,7 @@
                       onclick="abrirModalProveedorSubFacturas(this)">
                 <i class="bi bi-list-ul"></i>
                 {% if f.subfacturas|length > 0 %}
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger-subtle text-danger" style="font-size: 0.6rem;">
                   {{ f.subfacturas|length }}
                 </span>
                 {% endif %}
@@ -815,8 +815,8 @@
         </form>
       </div>
       <div class="modal-footer d-flex justify-content-end border-top pt-3 bg-dark" style="border-color:#3f3f5c !important;">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="submit" form="formEditarPagoProgramado" class="btn btn-primary px-4 text-white"><i class="bi bi-save me-1"></i> Guardar Cambios</button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" form="formEditarPagoProgramado" class="btn btn-outline-primary px-4 text-white"><i class="bi bi-save me-1"></i> Guardar Cambios</button>
       </div>
     </div>
   </div>
@@ -859,8 +859,8 @@
       </div>
 
       <div class="modal-footer d-flex justify-content-end gap-2 mt-4 border-top pt-3 bg-dark" style="border-color:#3f3f5c !important;">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="submit" form="formNuevoProveedor" class="btn btn-info px-4 text-white"><i class="bi bi-save me-1"></i> Guardar Proveedor</button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" form="formNuevoProveedor" class="btn btn-outline-info px-4 text-white"><i class="bi bi-save me-1"></i> Guardar Proveedor</button>
       </div>
     </div>
   </div>
@@ -1037,8 +1037,8 @@
       </div><!-- /modal-body -->
 
       <div class="modal-footer d-flex justify-content-end gap-2 mt-4 border-top pt-3 bg-dark" style="border-color:#3f3f5c !important;">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="submit" form="formNuevaFactura" class="btn btn-success px-4"><i class="bi bi-save me-1"></i> Guardar Factura</button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" form="formNuevaFactura" class="btn btn-outline-success px-4"><i class="bi bi-save me-1"></i> Guardar Factura</button>
       </div>
     </div>
   </div>
@@ -1170,7 +1170,7 @@
                 <label id="e_lbl_oc"><i class="bi bi-arrow-repeat me-1"></i>Mantener actual / Reemplazar</label>
               </div>
               <div id="e_link_oc_container" class="mt-2 d-none gap-2">
-                 <a href="#" id="e_link_oc" target="_blank" class="btn btn-sm btn-outline-info flex-grow-1 fw-semibold"><i class="bi bi-eye me-1"></i> Ver Archivo Actual</a>
+                 <a href="javascript:void(0);" id="e_link_oc" target="_blank" class="btn btn-sm btn-outline-info flex-grow-1 fw-semibold"><i class="bi bi-eye me-1"></i> Ver Archivo Actual</a>
                  <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar Archivo" onclick="marcarEliminarArchivo('oc')"><i class="bi bi-trash"></i></button>
               </div>
               <input type="hidden" name="eliminar_orden" id="e_eliminar_oc" value="false">
@@ -1183,7 +1183,7 @@
                 <label id="e_lbl_cc"><i class="bi bi-arrow-repeat me-1"></i>Mantener actual / Reemplazar</label>
               </div>
               <div id="e_link_cc_container" class="mt-2 d-none gap-2">
-                 <a href="#" id="e_link_cc" target="_blank" class="btn btn-sm btn-outline-info flex-grow-1 fw-semibold"><i class="bi bi-eye me-1"></i> Ver Archivo Actual</a>
+                 <a href="javascript:void(0);" id="e_link_cc" target="_blank" class="btn btn-sm btn-outline-info flex-grow-1 fw-semibold"><i class="bi bi-eye me-1"></i> Ver Archivo Actual</a>
                  <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar Archivo" onclick="marcarEliminarArchivo('cc')"><i class="bi bi-trash"></i></button>
               </div>
               <input type="hidden" name="eliminar_comprobante" id="e_eliminar_cc" value="false">
@@ -1196,7 +1196,7 @@
                 <label id="e_lbl_bp"><i class="bi bi-arrow-repeat me-1"></i>Mantener actual / Reemplazar</label>
               </div>
               <div id="e_link_bp_container" class="mt-2 d-none gap-2">
-                 <a href="#" id="e_link_bp" target="_blank" class="btn btn-sm btn-outline-info flex-grow-1 fw-semibold"><i class="bi bi-eye me-1"></i> Ver Archivo Actual</a>
+                 <a href="javascript:void(0);" id="e_link_bp" target="_blank" class="btn btn-sm btn-outline-info flex-grow-1 fw-semibold"><i class="bi bi-eye me-1"></i> Ver Archivo Actual</a>
                  <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar Archivo" onclick="marcarEliminarArchivo('bp')"><i class="bi bi-trash"></i></button>
               </div>
               <input type="hidden" name="eliminar_soporte" id="e_eliminar_bp" value="false">
@@ -1206,8 +1206,8 @@
       </div>
 
       <div class="modal-footer d-flex justify-content-end gap-2 mt-4 border-top pt-3 bg-dark" style="border-color:#3f3f5c !important;">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="submit" form="formEditarFactura" class="btn btn-primary px-4"><i class="bi bi-cloud-arrow-up me-1"></i> Actualizar Factura</button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" form="formEditarFactura" class="btn btn-outline-primary px-4"><i class="bi bi-cloud-arrow-up me-1"></i> Actualizar Factura</button>
       </div>
     </div>
   </div>
@@ -1307,7 +1307,7 @@
                   <input type="file" class="form-control" name="pdf_subfactura" accept=".pdf, .png, .jpg, .jpeg, .webp, application/pdf, image/*">
                 </div>
                 
-                <button type="submit" class="btn btn-primary w-100 fw-bold"><i class="bi bi-plus-circle me-2"></i>Registrar Sub-factura</button>
+                <button type="submit" class="btn btn-outline-primary w-100 fw-bold"><i class="bi bi-plus-circle me-2"></i>Registrar Sub-factura</button>
               </form>
             </div>
           </div>
@@ -1351,8 +1351,8 @@
           </div>
         </div>
         <div class="modal-footer border-top border-secondary">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-warning text-dark"><i class="bi bi-save me-1"></i>Guardar</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-outline-warning text-dark"><i class="bi bi-save me-1"></i>Guardar</button>
         </div>
       </form>
     </div>
@@ -1421,9 +1421,9 @@ function calcularIVA(prefix) {
   if (badgeEstado) {
     // Tolerancia contable de 1 centavo por errores de punto flotante en JS
     if (final_adeudado <= 0.01 && cancelado > 0) {
-      badgeEstado.innerHTML = '<span class="badge bg-success" style="font-size:0.6rem;"><i class="bi bi-check-circle me-1"></i>CANCELADO</span>';
+      badgeEstado.innerHTML = '<span class="badge bg-success-subtle text-success" style="font-size:0.6rem;"><i class="bi bi-check-circle me-1"></i>CANCELADO</span>';
     } else {
-      badgeEstado.innerHTML = '<span class="badge bg-danger" style="font-size:0.6rem;"><i class="bi bi-hourglass-split me-1"></i>SE DEBE</span>';
+      badgeEstado.innerHTML = '<span class="badge bg-danger-subtle text-danger" style="font-size:0.6rem;"><i class="bi bi-hourglass-split me-1"></i>SE DEBE</span>';
     }
   }
 }
@@ -1458,13 +1458,13 @@ function _calcVencimiento(prefix) {
     const moraDisplay = document.getElementById(prefix + '_mora_display');
     
     if (isCancelado) {
-        badge.innerHTML = '<span class="badge bg-success" style="font-size:0.6rem;">VIGENTE</span>';
+        badge.innerHTML = '<span class="badge bg-success-subtle text-success" style="font-size:0.6rem;">VIGENTE</span>';
         moraDisplay.innerText = '0 días mora';
     } else if (mora > 0) {
-        badge.innerHTML = '<span class="badge bg-danger" style="font-size:0.6rem;">VENCIDA</span>';
+        badge.innerHTML = '<span class="badge bg-danger-subtle text-danger" style="font-size:0.6rem;">VENCIDA</span>';
         moraDisplay.innerText = mora + ' días mora';
     } else {
-        badge.innerHTML = '<span class="badge bg-success" style="font-size:0.6rem;">VIGENTE</span>';
+        badge.innerHTML = '<span class="badge bg-success-subtle text-success" style="font-size:0.6rem;">VIGENTE</span>';
         moraDisplay.innerText = '0 días mora';
     }
   }
@@ -1916,8 +1916,8 @@ function abrirModalEditarPagoProgramado(btn) {
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-success"><i class="bi bi-check-circle"></i> Confirmar Pago</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-outline-success"><i class="bi bi-check-circle"></i> Confirmar Pago</button>
         </div>
       </form>
     </div>

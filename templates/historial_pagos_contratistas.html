@@ -53,7 +53,7 @@
           <input type="date" name="fecha_fin" class="form-control" value="{{ request.args.get('fecha_fin', '') }}">
         </div>
         <div class="col-md-4">
-          <button type="submit" class="btn btn-primary"><i class="bi bi-search me-1"></i> Filtrar</button>
+          <button type="submit" class="btn btn-outline-primary"><i class="bi bi-search me-1"></i> Filtrar</button>
           <a href="{{ url_for('contratistas.historial_pagos') }}" class="btn btn-outline-secondary ms-2">Mostrar Todos</a>
         </div>
       </form>
@@ -78,7 +78,7 @@
             <td class="fw-semibold">{{ pago.fecha_programada.strftime('%d/%m/%Y') if pago.fecha_programada else '' }}</td>
             <td>{{ pago.contratista.nombre if pago.contratista else 'Desconocido' }}</td>
             <td class="text-end fw-bold text-success">${{ "{:,.0f}".format(pago.monto or 0) | replace(",", ".") }}</td>
-            <td><span class="badge bg-secondary">{{ pago.forma_pago or 'No especificada' }}</span></td>
+            <td><span class="badge bg-secondary-subtle text-secondary">{{ pago.forma_pago or 'No especificada' }}</span></td>
             <td class="text-muted small">{{ pago.observacion or '—' }}</td>
             <td class="text-center"><span class="badge-success"><i class="bi bi-check-circle me-1"></i>Realizado</span></td>
           </tr>

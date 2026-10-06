@@ -109,11 +109,11 @@
             <strong>{{ dia.dia }}</strong>
             <div>
               {% if dia.estado == 'presente' %}
-                <span class="badge bg-success text-light px-3">{{ dia.estado }}</span>
+                <span class="badge bg-success-subtle text-success text-light px-3">{{ dia.estado }}</span>
               {% elif dia.estado == 'ausente' %}
-                <span class="badge bg-danger text-light px-3">{{ dia.estado }}</span>
+                <span class="badge bg-danger-subtle text-danger text-light px-3">{{ dia.estado }}</span>
               {% else %}
-                <span class="badge bg-secondary text-light px-3">{{ dia.estado }}</span>
+                <span class="badge bg-secondary-subtle text-secondary text-light px-3">{{ dia.estado }}</span>
               {% endif %}
               
               {% if dia.horas > 0 %}

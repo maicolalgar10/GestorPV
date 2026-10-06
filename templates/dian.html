@@ -27,7 +27,7 @@
         <h2 class="fw-bold m-0"><i class="bi bi-receipt-cutoff text-primary"></i> Módulo DIAN</h2>
         <p class="text-secondary small">Gestión de Facturas e Impuestos | {{ usuario.nombre }}</p>
       </div>
-      <button class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#modalNuevaFactura">
+      <button class="btn btn-outline-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#modalNuevaFactura">
         <i class="bi bi-plus-lg"></i> Nueva Factura DIAN
       </button>
     </div>
@@ -62,7 +62,7 @@
             {% for f in facturas %}
             <tr>
               <td><strong>{{ f.concepto }}</strong></td>
-              <td><span class="badge bg-secondary">{{ f.tipo_impuesto }}</span></td>
+              <td><span class="badge bg-secondary-subtle text-secondary">{{ f.tipo_impuesto }}</span></td>
               <td class="text-end">${{ "{:,.2f}".format(f.valor) }}</td>
               <td>{{ f.pago }}</td>
               <td>{{ f.fecha_vencimiento.strftime('%d/%m/%Y') if f.fecha_vencimiento else '-' }}</td>
@@ -182,7 +182,7 @@
 
           <div class="modal-footer border-0">
             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Guardar Registro</button>
+            <button type="submit" class="btn btn-outline-primary"><i class="bi bi-save"></i> Guardar Registro</button>
           </div>
         </form>
       </div>
@@ -268,7 +268,7 @@
 
           <div class="modal-footer border-0">
             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-warning fw-bold"><i class="bi bi-pencil"></i> Guardar Cambios</button>
+            <button type="submit" class="btn btn-outline-warning fw-bold"><i class="bi bi-pencil"></i> Guardar Cambios</button>
           </div>
         </form>
       </div>

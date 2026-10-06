@@ -40,7 +40,7 @@
 <div class="container py-5">
 
     <div class="mb-4">
-        <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-secondary">
+        <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-outline-secondary">
             <i class="bi bi-reply-fill"></i> Volver al Dashboard
         </a>
     </div>
@@ -60,7 +60,7 @@
                             <div class="fecha">
                                 {{ notif.creado_en|to_colombia }}
                                 {% if not notif.leido %}
-                                    <span class="badge bg-success ms-2">Nueva</span>
+                                    <span class="badge bg-success-subtle text-success ms-2">Nueva</span>
                                 {% endif %}
                             </div>
                         </li>

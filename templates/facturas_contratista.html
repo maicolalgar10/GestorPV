@@ -347,7 +347,7 @@
             </td>
             <td class="text-center">
               {% if f.dias_mora > 0 %}
-                <span class="badge bg-danger text-white">{{ f.dias_mora }}d</span>
+                <span class="badge bg-danger-subtle text-danger text-white">{{ f.dias_mora }}d</span>
               {% else %}
                 <span class="text-muted small">â€”</span>
               {% endif %}
@@ -427,7 +427,7 @@
                       onclick="abrirModalContratistaSubFacturas(this)">
                 <i class="bi bi-list-ul"></i>
                 {% if f.subfacturas|length > 0 %}
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger-subtle text-danger" style="font-size: 0.6rem;">
                   {{ f.subfacturas|length }}
                 </span>
                 {% endif %}
@@ -609,7 +609,7 @@
                 <label id="e_lbl_oc"><i class="bi bi-arrow-repeat me-1"></i>Mantener actual / Reemplazar</label>
               </div>
               <div id="e_link_oc_container" class="mt-2 d-none gap-2">
-                 <a href="#" id="e_link_oc" target="_blank" class="btn btn-sm btn-outline-info flex-grow-1 fw-semibold"><i class="bi bi-eye me-1"></i> Ver Archivo Actual</a>
+                 <a href="javascript:void(0);" id="e_link_oc" target="_blank" class="btn btn-sm btn-outline-info flex-grow-1 fw-semibold"><i class="bi bi-eye me-1"></i> Ver Archivo Actual</a>
                  <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar Archivo" onclick="marcarEliminarArchivo('oc')"><i class="bi bi-trash"></i></button>
               </div>
               <input type="hidden" name="eliminar_orden" id="e_eliminar_oc" value="false">
@@ -622,7 +622,7 @@
                 <label id="e_lbl_cc"><i class="bi bi-arrow-repeat me-1"></i>Mantener actual / Reemplazar</label>
               </div>
               <div id="e_link_cc_container" class="mt-2 d-none gap-2">
-                 <a href="#" id="e_link_cc" target="_blank" class="btn btn-sm btn-outline-info flex-grow-1 fw-semibold"><i class="bi bi-eye me-1"></i> Ver Archivo Actual</a>
+                 <a href="javascript:void(0);" id="e_link_cc" target="_blank" class="btn btn-sm btn-outline-info flex-grow-1 fw-semibold"><i class="bi bi-eye me-1"></i> Ver Archivo Actual</a>
                  <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar Archivo" onclick="marcarEliminarArchivo('cc')"><i class="bi bi-trash"></i></button>
               </div>
               <input type="hidden" name="eliminar_comprobante" id="e_eliminar_cc" value="false">
@@ -635,7 +635,7 @@
                 <label id="e_lbl_bp"><i class="bi bi-arrow-repeat me-1"></i>Mantener actual / Reemplazar</label>
               </div>
               <div id="e_link_bp_container" class="mt-2 d-none gap-2">
-                 <a href="#" id="e_link_bp" target="_blank" class="btn btn-sm btn-outline-info flex-grow-1 fw-semibold"><i class="bi bi-eye me-1"></i> Ver Archivo Actual</a>
+                 <a href="javascript:void(0);" id="e_link_bp" target="_blank" class="btn btn-sm btn-outline-info flex-grow-1 fw-semibold"><i class="bi bi-eye me-1"></i> Ver Archivo Actual</a>
                  <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar Archivo" onclick="marcarEliminarArchivo('bp')"><i class="bi bi-trash"></i></button>
               </div>
               <input type="hidden" name="eliminar_soporte" id="e_eliminar_bp" value="false">
@@ -645,8 +645,8 @@
       </div>
 
       <div class="modal-footer d-flex justify-content-end gap-2 mt-4 border-top pt-3 bg-dark" style="border-color:#3f3f5c !important;">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="submit" form="formEditarFactura" class="btn btn-primary px-4"><i class="bi bi-cloud-arrow-up me-1"></i> Actualizar Factura</button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" form="formEditarFactura" class="btn btn-outline-primary px-4"><i class="bi bi-cloud-arrow-up me-1"></i> Actualizar Factura</button>
       </div>
     </div>
   </div>
@@ -747,7 +747,7 @@
                   <input type="file" class="form-control" name="pdf_subfactura" accept=".pdf, .png, .jpg, .jpeg, .webp, application/pdf, image/*">
                 </div>
                 
-                <button type="submit" class="btn btn-primary w-100 fw-bold"><i class="bi bi-plus-circle me-2"></i>Registrar Sub-factura</button>
+                <button type="submit" class="btn btn-outline-primary w-100 fw-bold"><i class="bi bi-plus-circle me-2"></i>Registrar Sub-factura</button>
               </form>
             </div>
           </div>
@@ -830,9 +830,9 @@ function calcularIVA(prefix) {
   const badgeEstado = document.getElementById(prefix + '_estado_badge');
   if (badgeEstado) {
     if (final_adeudado <= 0.01 && cancelado > 0) {
-      badgeEstado.innerHTML = '<span class="badge bg-success" style="font-size:0.6rem;"><i class="bi bi-check-circle me-1"></i>CANCELADO</span>';
+      badgeEstado.innerHTML = '<span class="badge bg-success-subtle text-success" style="font-size:0.6rem;"><i class="bi bi-check-circle me-1"></i>CANCELADO</span>';
     } else {
-      badgeEstado.innerHTML = '<span class="badge bg-danger" style="font-size:0.6rem;"><i class="bi bi-hourglass-split me-1"></i>SE DEBE</span>';
+      badgeEstado.innerHTML = '<span class="badge bg-danger-subtle text-danger" style="font-size:0.6rem;"><i class="bi bi-hourglass-split me-1"></i>SE DEBE</span>';
     }
   }
 }
@@ -863,13 +863,13 @@ function _calcVencimiento(prefix) {
     const moraDisplay = document.getElementById(prefix + '_mora_display');
     
     if (isCancelado) {
-        badge.innerHTML = '<span class="badge bg-success" style="font-size:0.6rem;">VIGENTE</span>';
+        badge.innerHTML = '<span class="badge bg-success-subtle text-success" style="font-size:0.6rem;">VIGENTE</span>';
         moraDisplay.innerText = '0 dÃ­as mora';
     } else if (mora > 0) {
-        badge.innerHTML = '<span class="badge bg-danger" style="font-size:0.6rem;">VENCIDA</span>';
+        badge.innerHTML = '<span class="badge bg-danger-subtle text-danger" style="font-size:0.6rem;">VENCIDA</span>';
         moraDisplay.innerText = mora + ' dÃ­as mora';
     } else {
-        badge.innerHTML = '<span class="badge bg-success" style="font-size:0.6rem;">VIGENTE</span>';
+        badge.innerHTML = '<span class="badge bg-success-subtle text-success" style="font-size:0.6rem;">VIGENTE</span>';
         moraDisplay.innerText = '0 dÃ­as mora';
     }
   }

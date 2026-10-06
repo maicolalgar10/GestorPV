@@ -109,9 +109,9 @@
                 </td>
                 <td>
                   {% if emp.estado == 'Activo' or emp.estado == True %}
-                    <span class="badge bg-success badge-estado"><i class="bi bi-check-circle"></i> Activo</span>
+                    <span class="badge bg-success-subtle text-success badge-estado"><i class="bi bi-check-circle"></i> Activo</span>
                   {% else %}
-                    <span class="badge bg-secondary badge-estado">Inactivo</span>
+                    <span class="badge bg-secondary-subtle text-secondary badge-estado">Inactivo</span>
                   {% endif %}
                 </td>
                 <td class="text-muted fst-italic">Por definir</td>
@@ -186,11 +186,11 @@
                               <td>{{ pago.forma_pago }}</td>
                               <td>
                                 {% if pago.estado == 'Programado' %}
-                                  <span class="badge bg-warning text-dark">{{ pago.estado }}</span>
+                                  <span class="badge bg-warning-subtle text-warning text-dark">{{ pago.estado }}</span>
                                 {% elif pago.estado == 'Realizado' %}
-                                  <span class="badge bg-success">{{ pago.estado }}</span>
+                                  <span class="badge bg-success-subtle text-success">{{ pago.estado }}</span>
                                 {% else %}
-                                  <span class="badge bg-secondary">{{ pago.estado }}</span>
+                                  <span class="badge bg-secondary-subtle text-secondary">{{ pago.estado }}</span>
                                 {% endif %}
                               </td>
                               <td class="text-nowrap">
@@ -246,8 +246,8 @@
           </div>
         </div>
         <div class="modal-footer border-0 pt-0">
-          <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal" style="border-radius: 10px;">Cancelar</button>
-          <button type="button" class="btn btn-danger px-3" id="btnConfirmarQuitar" style="border-radius: 10px;">
+          <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal" style="border-radius: 10px;">Cancelar</button>
+          <button type="button" class="btn btn-outline-danger px-3" id="btnConfirmarQuitar" style="border-radius: 10px;">
             <i class="bi bi-trash me-1"></i> Sí, Quitar
           </button>
         </div>
@@ -300,8 +300,8 @@
             </div>
           </div>
           <div class="modal-footer border-0 pt-0">
-            <button type="button" class="btn btn-secondary px-3" style="border-radius: 10px;" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-success px-3" style="border-radius: 10px;"><i class="bi bi-save"></i> Guardar</button>
+            <button type="button" class="btn btn-outline-secondary px-3" style="border-radius: 10px;" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-outline-success px-3" style="border-radius: 10px;"><i class="bi bi-save"></i> Guardar</button>
           </div>
         </form>
       </div>
@@ -358,8 +358,8 @@
             </div>
           </div>
           <div class="modal-footer border-0 pt-0">
-            <button type="button" class="btn btn-secondary px-3" style="border-radius: 10px;" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-primary px-3" style="border-radius: 10px;"><i class="bi bi-save"></i> Actualizar</button>
+            <button type="button" class="btn btn-outline-secondary px-3" style="border-radius: 10px;" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-outline-primary px-3" style="border-radius: 10px;"><i class="bi bi-save"></i> Actualizar</button>
           </div>
         </form>
       </div>

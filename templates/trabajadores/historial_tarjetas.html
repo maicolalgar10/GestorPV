@@ -60,12 +60,12 @@
             <input type="date" name="fecha_fin" class="form-control" value="{{ filtro_fin if filtro_fin else '' }}">
           </div>
           <div class="col-md-6 d-flex gap-2 justify-content-md-end align-items-end mt-3 mt-md-0">
-            <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-funnel"></i> Filtrar</button>
+            <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-funnel"></i> Filtrar</button>
             <a href="{{ url_for('trabajadores.historial_tarjetas') }}" class="btn btn-light btn-sm"><i class="bi bi-eraser"></i> Limpiar</a>
             <button type="button" class="btn btn-outline-danger btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#modalExportarPdfHistorial">
               <i class="bi bi-file-earmark-pdf"></i> Exportar PDF (Unificado)
             </button>
-            <a id="btnExportarExcel" href="#" class="btn btn-outline-success btn-sm shadow-sm"><i class="bi bi-file-earmark-excel"></i> Exportar Excel</a>
+            <a id="btnExportarExcel" href="javascript:void(0);" class="btn btn-outline-success btn-sm shadow-sm"><i class="bi bi-file-earmark-excel"></i> Exportar Excel</a>
           </div>
         </form>
 
@@ -87,9 +87,9 @@
                 <td class="fw-semibold">{{ pago.fecha_programada.strftime('%d/%m/%Y') }}</td>
                 <td>{{ pago.tarjeta.nombre }}</td>
                 <td class="fw-bold text-success">{{ pago.monto|formato_miles }}</td>
-                <td><span class="badge bg-secondary">{{ pago.forma_pago or pago.cuenta_origen or 'No especificada' }}</span></td>
+                <td><span class="badge bg-secondary-subtle text-secondary">{{ pago.forma_pago or pago.cuenta_origen or 'No especificada' }}</span></td>
                 <td class="text-muted small">{{ pago.concepto if pago.concepto else '-' }}</td>
-                <td><span class="badge bg-success rounded-pill"><i class="bi bi-check-circle me-1"></i> {{ pago.estado }}</span></td>
+                <td><span class="badge bg-success-subtle text-success rounded-pill"><i class="bi bi-check-circle me-1"></i> {{ pago.estado }}</span></td>
               </tr>
               {% else %}
               <tr>
@@ -127,8 +127,8 @@
           <p class="text-muted small">Este reporte unificará los pagos a proveedores y pagos de tarjetas realizados en el rango de fechas actual.</p>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-danger"><i class="bi bi-file-earmark-pdf"></i> Generar Reporte PDF</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-outline-danger"><i class="bi bi-file-earmark-pdf"></i> Generar Reporte PDF</button>
         </div>
       </form>
     </div>

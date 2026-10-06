@@ -47,7 +47,7 @@
       <a href="{{ url_for('dashboard.dashboard_oficina') }}" class="btn btn-outline-secondary shadow-sm me-2">
         <i class="bi bi-arrow-left"></i> Volver a Oficina
       </a>
-      <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCrearEgreso">
+      <button class="btn btn-outline-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCrearEgreso">
         <i class="bi bi-plus-lg"></i> Registrar Egreso
       </button>
     </div>
@@ -77,11 +77,11 @@
               <td>
                 {% set saldo = egreso.saldo_restante %}
                 {% if saldo > 0 %}
-                  <span class="badge bg-warning text-dark fs-6">$ {{ "{:,.0f}".format(saldo).replace(',', '.') }}</span>
+                  <span class="badge bg-warning-subtle text-warning text-dark fs-6">$ {{ "{:,.0f}".format(saldo).replace(',', '.') }}</span>
                 {% elif saldo == 0 %}
-                  <span class="badge bg-success fs-6"><i class="bi bi-check2-all"></i> $ 0</span>
+                  <span class="badge bg-success-subtle text-success fs-6"><i class="bi bi-check2-all"></i> $ 0</span>
                 {% else %}
-                  <span class="badge bg-danger fs-6">$ {{ "{:,.0f}".format(saldo).replace(',', '.') }}</span>
+                  <span class="badge bg-danger-subtle text-danger fs-6">$ {{ "{:,.0f}".format(saldo).replace(',', '.') }}</span>
                 {% endif %}
               </td>
               <td class="text-end text-nowrap">
@@ -209,8 +209,8 @@
           </div>
         </div>
         <div class="modal-footer border-0 pt-0">
-          <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal" style="border-radius: 10px;">Cancelar</button>
-          <button type="submit" class="btn btn-primary px-3" style="border-radius: 10px;"><i class="bi bi-save"></i> Guardar Egreso</button>
+          <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal" style="border-radius: 10px;">Cancelar</button>
+          <button type="submit" class="btn btn-outline-primary px-3" style="border-radius: 10px;"><i class="bi bi-save"></i> Guardar Egreso</button>
         </div>
       </form>
     </div>
@@ -257,8 +257,8 @@
           </div>
         </div>
         <div class="modal-footer border-0 pt-0">
-          <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal" style="border-radius: 10px;">Cancelar</button>
-          <button type="submit" class="btn btn-success px-3" style="border-radius: 10px;"><i class="bi bi-save"></i> Guardar Gasto</button>
+          <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal" style="border-radius: 10px;">Cancelar</button>
+          <button type="submit" class="btn btn-outline-success px-3" style="border-radius: 10px;"><i class="bi bi-save"></i> Guardar Gasto</button>
         </div>
       </form>
     </div>
@@ -469,8 +469,8 @@
           </div>
         </div>
         <div class="modal-footer border-0 pt-0">
-          <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal" style="border-radius: 10px;">Cancelar</button>
-          <button type="submit" class="btn btn-warning px-3" style="border-radius: 10px;"><i class="bi bi-save"></i> Actualizar Egreso</button>
+          <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal" style="border-radius: 10px;">Cancelar</button>
+          <button type="submit" class="btn btn-outline-warning px-3" style="border-radius: 10px;"><i class="bi bi-save"></i> Actualizar Egreso</button>
         </div>
       </form>
     </div>
@@ -514,8 +514,8 @@
           </div>
         </div>
         <div class="modal-footer border-0 pt-0">
-          <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal" style="border-radius: 10px;">Cancelar</button>
-          <button type="submit" class="btn btn-warning px-3" style="border-radius: 10px;"><i class="bi bi-save"></i> Actualizar Gasto</button>
+          <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal" style="border-radius: 10px;">Cancelar</button>
+          <button type="submit" class="btn btn-outline-warning px-3" style="border-radius: 10px;"><i class="bi bi-save"></i> Actualizar Gasto</button>
         </div>
       </form>
     </div>

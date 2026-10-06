@@ -72,7 +72,7 @@
             <div class="p-3 border rounded bg-light mb-3">
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <div>
-                   <span class="badge bg-warning text-dark me-2">#{{ req.id }}</span>
+                   <span class="badge bg-warning-subtle text-warning text-dark me-2">#{{ req.id }}</span>
                    <small class="text-muted fw-bold"> Bodeguero: {{ req.bodeguero.nombre }}</small>
                 </div>
                 <small class="text-muted"><i class="bi bi-calendar"></i> {{ req.fecha_solicitud.strftime('%d/%m/%Y %H:%M') }}</small>
@@ -80,7 +80,7 @@
               <p class="small mb-2 text-muted">{{ req.observaciones or "Sin observaciones generales." }}</p>
               
               <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top">
-                <span class="badge {{ 'bg-success' if req.estado == 'COMPRADA' else 'bg-secondary' }}">{{ req.estado }}</span>
+                <span class="badge {{ 'bg-success-subtle text-success' if req.estado == 'COMPRADA' else 'bg-secondary' }}">{{ req.estado }}</span>
                 <button class="btn btn-sm btn-outline-primary rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#modalReq{{ req.id }}">
                   Revisar Pedido Completo ({{ req.detalles|length }} items)
                 </button>
@@ -132,7 +132,7 @@
                       <tr>
                           <td class="text-secondary">{{ loop.index }}</td>
                           <td class="fw-medium">{{ d.material_texto }}</td>
-                          <td class="text-center"><span class="badge bg-primary px-3">{{ d.cantidad }}</span></td>
+                          <td class="text-center"><span class="badge bg-primary-subtle text-primary px-3">{{ d.cantidad }}</span></td>
                       </tr>
                       {% endfor %}
                   </tbody>

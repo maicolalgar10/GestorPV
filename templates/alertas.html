@@ -28,7 +28,7 @@
                 <input type="number" name="proyecto_id" placeholder="ID Proyecto (opcional)" class="form-control">
             </div>
         </div>
-        <button class="btn btn-danger mt-3">Agregar</button>
+        <button class="btn btn-outline-danger mt-3">Agregar</button>
     </form>
 
     <!-- Lista -->
@@ -41,7 +41,7 @@
                     <div>
                         <strong>{{ a.tipo }}</strong>: {{ a.mensaje }}
                         {% if a.proyecto %}
-                            <span class="badge bg-primary">Proyecto: {{ a.proyecto.nombre }}</span>
+                            <span class="badge bg-primary-subtle text-primary">Proyecto: {{ a.proyecto.nombre }}</span>
                         {% endif %}
                     </div>
                     <a href="{{ url_for('delete_alerta', id=a.id) }}" class="btn btn-sm btn-danger">Eliminar</a>

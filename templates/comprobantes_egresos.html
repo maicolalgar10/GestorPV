@@ -42,7 +42,7 @@
 <div class="container mb-5">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="fw-bold"><i class="bi bi-receipt text-danger"></i> Comprobantes de Egresos</h2>
-    <button class="btn btn-danger rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#nuevoComprobanteModal">
+    <button class="btn btn-outline-danger rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#nuevoComprobanteModal">
       <i class="bi bi-plus-lg me-1"></i> Nuevo Comprobante
     </button>
   </div>
@@ -64,7 +64,7 @@
 
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div class="btn-group" role="group" aria-label="Filtro por Banco">
-            <button type="button" class="btn btn-primary btn-sm btn-filtro" data-banco="todos">Todos</button>
+            <button type="button" class="btn btn-outline-primary btn-sm btn-filtro" data-banco="todos">Todos</button>
             <button type="button" class="btn btn-outline-primary btn-sm btn-filtro" data-banco="bancolombia">Bancolombia</button>
             <button type="button" class="btn btn-outline-primary btn-sm btn-filtro" data-banco="davivienda">Davivienda</button>
         </div>
@@ -94,9 +94,9 @@
             <td style="max-width: 250px; white-space: normal;" class="text-muted text-start" title="{{ comp.concepto }}">{{ comp.concepto }}</td>
             <td>
               {% if comp.metodo_pago == 'Efectivo' %}
-                <span class="badge bg-success"><i class="bi bi-cash"></i> Efectivo</span>
+                <span class="badge bg-success-subtle text-success"><i class="bi bi-cash"></i> Efectivo</span>
               {% else %}
-                <span class="badge bg-primary"><i class="bi bi-bank"></i> Cheque</span>
+                <span class="badge bg-primary-subtle text-primary"><i class="bi bi-bank"></i> Cheque</span>
                 {% if comp.numero_cheque %}
                   <div class="small text-muted mt-1">N° {{ comp.numero_cheque }}</div>
                 {% endif %}
@@ -274,7 +274,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-danger px-4">Guardar Comprobante</button>
+          <button type="submit" class="btn btn-outline-danger px-4">Guardar Comprobante</button>
         </div>
       </form>
     </div>
@@ -378,7 +378,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-danger px-4">Actualizar Comprobante</button>
+          <button type="submit" class="btn btn-outline-danger px-4">Actualizar Comprobante</button>
         </div>
       </form>
     </div>
@@ -403,7 +403,7 @@
         </div>
         <div class="modal-footer border-secondary">
           <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cerrar</button>
-          <button type="button" class="btn btn-info" id="btnGuardarAnotaciones">Guardar Anotaciones</button>
+          <button type="button" class="btn btn-outline-info" id="btnGuardarAnotaciones">Guardar Anotaciones</button>
         </div>
       </form>
     </div>

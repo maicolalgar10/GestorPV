@@ -39,7 +39,7 @@
         </h5>
       </div>
       <div class="col-md-6 text-end">
-        <button type="button" class="btn btn-danger btn-sm shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalExportarPdfHistorial">
+        <button type="button" class="btn btn-outline-danger btn-sm shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalExportarPdfHistorial">
           <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
         </button>
       </div>
@@ -57,7 +57,7 @@
           <input type="date" name="fecha_fin" class="form-control" value="{{ request.args.get('fecha_fin', '') }}">
         </div>
         <div class="col-md-4">
-          <button type="submit" class="btn btn-primary"><i class="bi bi-search me-1"></i> Filtrar</button>
+          <button type="submit" class="btn btn-outline-primary"><i class="bi bi-search me-1"></i> Filtrar</button>
           <a href="{{ url_for('proveedores.historial_pagos') }}" class="btn btn-outline-secondary ms-2">Mostrar Todos</a>
         </div>
       </form>
@@ -82,7 +82,7 @@
             <td class="fw-semibold">{{ pago.fecha_programada.strftime('%d/%m/%Y') }}</td>
             <td>{{ pago.proveedor.nombre }}</td>
             <td class="text-end fw-bold text-success">${{ "{:,.0f}".format(pago.monto or 0) | replace(",", ".") }}</td>
-            <td><span class="badge bg-secondary">{{ pago.forma_pago or 'No especificada' }}</span></td>
+            <td><span class="badge bg-secondary-subtle text-secondary">{{ pago.forma_pago or 'No especificada' }}</span></td>
             <td class="text-muted small">{{ pago.observacion or '—' }}</td>
             <td class="text-center"><span class="badge-success"><i class="bi bi-check-circle me-1"></i>Realizado</span></td>
           </tr>
@@ -119,8 +119,8 @@
           <p class="text-muted small">Este reporte unificará los pagos a proveedores y pagos de tarjetas realizados en el rango de fechas actual.</p>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-danger"><i class="bi bi-file-earmark-pdf"></i> Generar Reporte PDF</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-outline-danger"><i class="bi bi-file-earmark-pdf"></i> Generar Reporte PDF</button>
         </div>
       </form>
     </div>

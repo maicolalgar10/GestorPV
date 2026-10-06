@@ -435,7 +435,7 @@
                             <div class="modal-content border-0 shadow">
                               <form method="POST" action="{{ url_for('cotizaciones.cambiar_estado_cotizacion', id=c.id, estado='ACEPTADA') }}">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <div class="modal-header bg-success text-white border-0">
+                                <div class="modal-header bg-success-subtle text-success text-white border-0">
                                   <h5 class="modal-title fw-bold">Aceptar Cotización</h5>
                                   <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                 </div>
@@ -453,7 +453,7 @@
                                 </div>
                                 <div class="modal-footer border-0">
                                   <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-                                  <button type="submit" class="btn btn-success">Aceptar y Asignar</button>
+                                  <button type="submit" class="btn btn-outline-success">Aceptar y Asignar</button>
                                 </div>
                               </form>
                             </div>
@@ -734,7 +734,7 @@
                             <div class="modal-content border-0 shadow">
                               <form method="POST" action="{{ url_for('cotizaciones.cambiar_estado_cotizacion', id=c.id, estado='ACEPTADA') }}">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <div class="modal-header bg-success text-white border-0">
+                                <div class="modal-header bg-success-subtle text-success text-white border-0">
                                   <h5 class="modal-title fw-bold">Aceptar Cotización</h5>
                                   <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                 </div>
@@ -752,7 +752,7 @@
                                 </div>
                                 <div class="modal-footer border-0">
                                   <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-                                  <button type="submit" class="btn btn-success">Aceptar y Asignar</button>
+                                  <button type="submit" class="btn btn-outline-success">Aceptar y Asignar</button>
                                 </div>
                               </form>
                             </div>
@@ -877,7 +877,7 @@
           <!-- FOOTER -->
           <div class="modal-footer border-0">
             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-success">Guardar Cotización</button>
+            <button type="submit" class="btn btn-outline-success">Guardar Cotización</button>
           </div>
 
         </form>
@@ -948,7 +948,7 @@
           <!-- FOOTER -->
           <div class="modal-footer border-0">
             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-dark">
+            <button type="submit" class="btn btn-outline-dark">
               <i class="bi bi-file-earmark-check"></i> Activar Contrato
             </button>
           </div>
@@ -1128,7 +1128,7 @@
           <!-- FOOTER -->
           <div class="modal-footer border-0">
             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-warning">
+            <button type="submit" class="btn btn-outline-warning">
               <i class="bi bi-save"></i> Guardar Cambios
             </button>
           </div>

@@ -63,7 +63,7 @@
                     </div>
                 </div>
                 <div class="mt-3 d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">Aplicar Filtros</button>
+                    <button type="submit" class="btn btn-outline-primary">Aplicar Filtros</button>
                     <a href="{{ url_for('vehiculos.historial_completo') }}" class="btn btn-outline-secondary">Limpiar
                         Filtros</a>
                 </div>
@@ -89,10 +89,10 @@
                     {% for m in movimientos %}
                     <tr>
                         <td>{{ m.fecha_hora | to_colombia }}</td>
-                        <td><span class="badge bg-primary">{{ m.vehiculo.placa }}</span></td>
+                        <td><span class="badge bg-primary-subtle text-primary">{{ m.vehiculo.placa }}</span></td>
                         <td>{{ m.vehiculo.marca }} {{ m.vehiculo.modelo }}</td>
-                        <td><span class="badge bg-info">{{ m.proyecto_anterior.nombre if m.proyecto_anterior else 'Sin asignar' }}</span></td>
-                        <td><span class="badge bg-success">{{ m.proyecto_nuevo.nombre if m.proyecto_nuevo else 'Sin asignar' }}</span></td>
+                        <td><span class="badge bg-info-subtle text-info">{{ m.proyecto_anterior.nombre if m.proyecto_anterior else 'Sin asignar' }}</span></td>
+                        <td><span class="badge bg-success-subtle text-success">{{ m.proyecto_nuevo.nombre if m.proyecto_nuevo else 'Sin asignar' }}</span></td>
                         <td>{{ m.usuario.nombre if m.usuario else 'Sistema' }}</td>
                         <td>{{ m.motivo or 'No especificado' }}</td>
                     </tr>
@@ -136,7 +136,7 @@
 
         <!-- Botón Volver -->
         <div class="mt-4">
-            <a href="{{ url_for('vehiculos.gestion_vehiculos') }}" class="btn btn-secondary">
+            <a href="{{ url_for('vehiculos.gestion_vehiculos') }}" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left"></i> Volver a Gestión de Vehículos
             </a>
         </div>

@@ -258,7 +258,7 @@
               data-bs-target="#collapse{{ c.id }}" style="background: white; color: #1f2937; font-weight: 600;">
               <div class="d-flex flex-column w-100 me-3 gap-2 text-start">
                 <div>
-                  <span class="badge bg-primary me-2">PROYECTO #{{ c.id }}</span>
+                  <span class="badge bg-primary-subtle text-primary me-2">PROYECTO #{{ c.id }}</span>
                   <strong>{{ c.cliente.nombre_cliente if c.cliente else 'Sin cliente asignado' }}</strong>
                   {% if c.cliente %}
                   <span role="button" class="btn btn-sm btn-link p-0 ms-1 text-secondary" title="Editar Cliente"
@@ -396,7 +396,7 @@
                           onclick="abrirModalSubfacturas('{{ r.id }}', this)">
                           <i class="bi bi-list-ul"></i>
                           {% if r.subfacturas|length > 0 %}
-                          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
+                          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger-subtle text-danger" style="font-size: 0.6rem;">
                             {{ r.subfacturas|length }}
                           </span>
                           {% endif %}
@@ -605,7 +605,7 @@
 
         <div class="modal-footer d-flex justify-content-end gap-2 mt-4 border-top pt-3 bg-dark"
           style="border-color:#3f3f5c !important;">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
           <button type="submit" form="formCrearReporte" class="btn btn-confirm px-4"><i class="bi bi-save me-1"></i>
             Guardar Reporte</button>
         </div>
@@ -767,8 +767,8 @@
 
         <div class="modal-footer d-flex justify-content-end gap-2 mt-4 border-top pt-3 bg-dark"
           style="border-color:#3f3f5c !important;">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" form="formEditarReporte" class="btn btn-primary px-4"><i class="bi bi-save me-1"></i>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" form="formEditarReporte" class="btn btn-outline-primary px-4"><i class="bi bi-save me-1"></i>
             Actualizar Reporte</button>
         </div>
       </div>
@@ -840,8 +840,8 @@
 
         <div class="modal-footer d-flex justify-content-end gap-2 mt-2 border-top pt-3 bg-dark"
           style="border-color:#3f3f5c !important;">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" form="formCrearContrato" class="btn btn-primary px-4"><i
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" form="formCrearContrato" class="btn btn-outline-primary px-4"><i
               class="bi bi-check-lg me-1"></i> Crear</button>
         </div>
       </div>
@@ -882,7 +882,7 @@
 
         <div class="modal-footer d-flex justify-content-end gap-2 mt-2 border-top pt-3 bg-dark"
           style="border-color:#3f3f5c !important;">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
           <button type="submit" form="formCrearCliente" class="btn btn-confirm px-4"><i class="bi bi-save me-1"></i>
             Guardar Cliente</button>
         </div>
@@ -946,8 +946,8 @@
 
         <div class="modal-footer d-flex justify-content-end gap-2 mt-2 border-top pt-3 bg-dark"
           style="border-color:#3f3f5c !important;">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" form="formEditarContrato" class="btn btn-primary px-4"><i
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" form="formEditarContrato" class="btn btn-outline-primary px-4"><i
               class="bi bi-check-lg me-1"></i> Guardar Cambios</button>
         </div>
       </div>
@@ -987,8 +987,8 @@
 
         <div class="modal-footer d-flex justify-content-end gap-2 mt-2 border-top pt-3 bg-dark"
           style="border-color:#3f3f5c !important;">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" form="formEditarCliente" class="btn btn-primary px-4"><i class="bi bi-save me-1"></i>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" form="formEditarCliente" class="btn btn-outline-primary px-4"><i class="bi bi-save me-1"></i>
             Guardar Cambios</button>
         </div>
       </div>
@@ -1079,8 +1079,8 @@
                     </div>
                   </div>
                   <div class="modal-footer border-top border-secondary">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-warning text-dark"><i class="bi bi-save me-1"></i>Guardar</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-outline-warning text-dark"><i class="bi bi-save me-1"></i>Guardar</button>
                   </div>
                 </form>
               </div>

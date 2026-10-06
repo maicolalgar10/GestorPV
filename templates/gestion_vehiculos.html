@@ -114,20 +114,20 @@
                             <div class="d-flex justify-content-between align-items-start mb-3">
                                 <div>
                                     <h5 class="fw-bold mb-0">{{ v.marca }} {{ v.modelo }}</h5>
-                                    <span class="badge bg-dark">{{ v.placa }}</span>
-                                    <span class="badge bg-success">{{ v.estado }}</span>
+                                    <span class="badge bg-dark-subtle text-dark">{{ v.placa }}</span>
+                                    <span class="badge bg-success-subtle text-success">{{ v.estado }}</span>
                                 </div>
                                 <div class="text-end">
                                     <small class="text-muted d-block mb-1">ASIGNADO A:</small>
                                     {% if v.proyecto_actual %}
-                                    <span class="badge bg-primary fs-6">{{ v.proyecto_actual.nombre }}</span>
+                                    <span class="badge bg-primary-subtle text-primary fs-6">{{ v.proyecto_actual.nombre }}</span>
                                     {% if v.ubicacion_actual %}
-                                    <span class="badge bg-secondary">{{ v.ubicacion_actual }}</span>
+                                    <span class="badge bg-secondary-subtle text-secondary">{{ v.ubicacion_actual }}</span>
                                     {% endif %}
                                     {% else %}
-                                    <span class="badge bg-dark fs-6">Sin asignar</span>
+                                    <span class="badge bg-dark-subtle text-dark fs-6">Sin asignar</span>
                                     {% if v.ubicacion_actual %}
-                                    <span class="badge bg-secondary">{{ v.ubicacion_actual }}</span>
+                                    <span class="badge bg-secondary-subtle text-secondary">{{ v.ubicacion_actual }}</span>
                                     {% endif %}
                                     {% endif %}
                                 </div>
@@ -168,7 +168,7 @@
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <div>
                                         <h6 class="mb-0 fw-bold">{{ m.vehiculo.marca }} {{ m.vehiculo.modelo }}</h6>
-                                        <span class="badge bg-primary text-white">{{ m.vehiculo.placa }}</span>
+                                        <span class="badge bg-primary-subtle text-primary text-white">{{ m.vehiculo.placa }}</span>
                                     </div>
                                     <div class="text-end">
                                         <small class="text-muted d-block">{{ m.fecha_hora | to_colombia }}</small>
@@ -181,12 +181,12 @@
                                         <div class="d-flex align-items-center">
                                             <i class="bi bi-pin-map-fill text-danger me-2"></i>
                                             <small class="text-muted me-2">DE:</small>
-                                            <span class="badge bg-info text-dark fw-normal">{{ m.proyecto_anterior.nombre if m.proyecto_anterior else 'Base / Sin asignar' }}</span>
+                                            <span class="badge bg-info-subtle text-info text-dark fw-normal">{{ m.proyecto_anterior.nombre if m.proyecto_anterior else 'Base / Sin asignar' }}</span>
                                         </div>
                                         <div class="d-flex align-items-center">
                                             <i class="bi bi-pin-map-fill text-success me-2"></i>
                                             <small class="text-muted me-2">A:</small>
-                                            <span class="badge bg-success fw-normal">{{ m.proyecto_nuevo.nombre if m.proyecto_nuevo else 'Base / Sin asignar' }}</span>
+                                            <span class="badge bg-success-subtle text-success fw-normal">{{ m.proyecto_nuevo.nombre if m.proyecto_nuevo else 'Base / Sin asignar' }}</span>
                                         </div>
                                     </div>
                                     <div class="text-end">
@@ -221,7 +221,7 @@
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="modal-body pt-4">
                         <div class="mb-3 p-2 bg-light rounded">
-                            <strong>Vehículo:</strong> {{ v.marca }} {{ v.modelo }} <span class="badge bg-primary">{{ v.placa }}</span>
+                            <strong>Vehículo:</strong> {{ v.marca }} {{ v.modelo }} <span class="badge bg-primary-subtle text-primary">{{ v.placa }}</span>
                         </div>
                         <div class="mb-3">
                             <label for="asignacion_actual" class="form-label fw-bold small text-muted">Asignación actual:</label>
@@ -248,7 +248,7 @@
                     </div>
                     <div class="modal-footer border-0">
                         <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary px-4"><i class="bi bi-save"></i> Guardar Cambio</button>
+                        <button type="submit" class="btn btn-outline-primary px-4"><i class="bi bi-save"></i> Guardar Cambio</button>
                     </div>
                 </form>
             </div>

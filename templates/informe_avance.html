@@ -40,7 +40,7 @@
 
   <div class="d-flex gap-2 mb-3">
   <a href="{{ url_for('avances.exportar_informe_excel', id_proyecto=proyecto.id_proyecto) }}"
-     class="btn btn-success">
+     class="btn btn-outline-success">
     <i class="bi bi-file-earmark-excel"></i> Exportar a Excel
   </a>
 </div>
@@ -135,7 +135,7 @@
     <div class="alert alert-info">No hay avances registrados aún.</div>
   {% endif %}
 
-  <a href="{{ url_for('proyectos.manage_proyectos') }}" class="btn btn-secondary mt-3">
+  <a href="{{ url_for('proyectos.manage_proyectos') }}" class="btn btn-outline-secondary mt-3">
     <i class="bi bi-arrow-left"></i> Volver
   </a>
 </div>

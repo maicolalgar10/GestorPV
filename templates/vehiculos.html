@@ -106,7 +106,7 @@ background: rgba(255, 255, 255, 0.85);
       <i class="bi bi-arrow-left"></i> Volver al Dashboard
     </a>
     <h2 class="fw-bold text-dark"><i class="bi bi-truck"></i> Gestión de Vehículos</h2>
-    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#nuevoVehiculoModal">
+    <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#nuevoVehiculoModal">
       <i class="bi bi-plus-circle"></i> Nuevo Vehículo
     </button>
   </div>
@@ -135,7 +135,7 @@ background: rgba(255, 255, 255, 0.85);
       {{ v.placa }} — {{ v.marca }} {{ v.modelo }}
       
       <span class="badge ms-2
-        {% if v.estado == 'Disponible' %} bg-success
+        {% if v.estado == 'Disponible' %} bg-success-subtle text-success
         {% elif v.estado == 'En uso' %} bg-primary
         {% elif v.estado == 'Mantenimiento' %} bg-warning text-dark
         {% else %} bg-secondary {% endif %}">
@@ -187,9 +187,9 @@ background: rgba(255, 255, 255, 0.85);
                 <h6>SOAT</h6>
                 <p class="mb-1">Vence: {{ v.soat_vencimiento.strftime('%Y-%m-%d') }}</p>
                 {% if v.soat_vencimiento >= fecha_hoy %}
-                  <span class="badge bg-success">Vigente</span>
+                  <span class="badge bg-success-subtle text-success">Vigente</span>
                 {% else %}
-                  <span class="badge bg-danger">Vencido</span>
+                  <span class="badge bg-danger-subtle text-danger">Vencido</span>
                 {% endif %}
               </div>
             </div>
@@ -198,9 +198,9 @@ background: rgba(255, 255, 255, 0.85);
                 <h6>Tecnomecánica</h6>
                 <p class="mb-1">Vence: {{ v.tecno_vencimiento.strftime('%Y-%m-%d') }}</p>
                 {% if v.tecno_vencimiento >= fecha_hoy %}
-                  <span class="badge bg-success">Vigente</span>
+                  <span class="badge bg-success-subtle text-success">Vigente</span>
                 {% else %}
-                  <span class="badge bg-danger">Vencido</span>
+                  <span class="badge bg-danger-subtle text-danger">Vencido</span>
                 {% endif %}
               </div>
             </div>
@@ -267,7 +267,7 @@ background: rgba(255, 255, 255, 0.85);
                 </div>
               </div>
               <div class="text-end mt-3">
-                <button type="submit" class="btn btn-primary"><i class="bi bi-floppy"></i> Guardar Cambios</button>
+                <button type="submit" class="btn btn-outline-primary"><i class="bi bi-floppy"></i> Guardar Cambios</button>
               </div>
             </form>
           </div>
@@ -299,7 +299,7 @@ background: rgba(255, 255, 255, 0.85);
                 <h6 class="fw-bold text-secondary">Estado Actual</h6>
                 <p><strong>Estado:</strong>
                   <span class="badge 
-                    {% if v.estado == 'Disponible' %} bg-success
+                    {% if v.estado == 'Disponible' %} bg-success-subtle text-success
                     {% elif v.estado == 'En uso' %} bg-warning text-dark
                     {% elif v.estado == 'Mantenimiento' %} bg-secondary
                     {% else %} bg-light text-dark {% endif %}">
@@ -308,9 +308,9 @@ background: rgba(255, 255, 255, 0.85);
                 </p>
                 <p><strong>Documentos:</strong>
                   {% if v.documentos_al_dia %}
-                    <span class="badge bg-success">Al día</span>
+                    <span class="badge bg-success-subtle text-success">Al día</span>
                   {% else %}
-                    <span class="badge bg-danger">Pendientes</span>
+                    <span class="badge bg-danger-subtle text-danger">Pendientes</span>
                   {% endif %}
                 </p>
               </div>
@@ -320,22 +320,22 @@ background: rgba(255, 255, 255, 0.85);
             <ul class="list-unstyled mb-0">
               <li class="mb-2"><i class="bi bi-envelope-paper-fill"></i> <strong>SOAT:</strong> vence el {{ v.soat_vencimiento.strftime('%Y-%m-%d') }}
                 {% if v.soat_vencimiento >= fecha_hoy %}
-                  <span class="badge bg-success">Vigente</span>
+                  <span class="badge bg-success-subtle text-success">Vigente</span>
                 {% else %}
-                  <span class="badge bg-danger">Vencido</span>
+                  <span class="badge bg-danger-subtle text-danger">Vencido</span>
                 {% endif %}
               </li>
               <li><i class="bi bi-envelope-paper-fill"></i> <strong>Tecnomecánica:</strong> vence el {{ v.tecno_vencimiento.strftime('%Y-%m-%d') }}
                 {% if v.tecno_vencimiento >= fecha_hoy %}
-                  <span class="badge bg-success">Vigente</span>
+                  <span class="badge bg-success-subtle text-success">Vigente</span>
                 {% else %}
-                  <span class="badge bg-danger">Vencido</span>
+                  <span class="badge bg-danger-subtle text-danger">Vencido</span>
                 {% endif %}
               </li>
             </ul>
           </div>
           <div class="modal-footer border-0">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
           </div>
         </div>
       </div>
@@ -389,7 +389,7 @@ background: rgba(255, 255, 255, 0.85);
               </div>
             </div>
             <div class="text-end mt-3">
-              <button type="submit" class="btn btn-success"><i class="bi bi-floppy"></i> Guardar Vehículo</button>
+              <button type="submit" class="btn btn-outline-success"><i class="bi bi-floppy"></i> Guardar Vehículo</button>
             </div>
           </form>
         </div>

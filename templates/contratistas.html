@@ -287,7 +287,7 @@
               <td class="fw-semibold">
                 {{ c.nombre }}
                 {% if c.estado == 'Inactivo' %}
-                  <span class="badge bg-secondary ms-1" style="font-size: 0.65rem;">Inactivo</span>
+                  <span class="badge bg-secondary-subtle text-secondary ms-1" style="font-size: 0.65rem;">Inactivo</span>
                 {% endif %}
               </td>
               <td>{{ c.nit or '—' }}</td>
@@ -295,7 +295,7 @@
               <td class="text-end">
                 {% set deuda = deuda_por_contratista.get(c.id, 0) %}
                 {% if deuda <= 0 %}
-                  <span class="badge bg-success">Paz y Salvo</span>
+                  <span class="badge bg-success-subtle text-success">Paz y Salvo</span>
                 {% else %}
                   <span class="text-danger fw-bold">${{ "{:,.0f}".format(deuda) | replace(",",".") }}</span>
                 {% endif %}
@@ -374,7 +374,7 @@
                 <td class="text-end text-primary fw-bold">${{ "{:,.0f}".format(pago.monto) | replace(",",".") }}</td>
                 <td class="text-end fw-semibold">
                   {% if pago.saldo_restante <= 0 %}
-                    <span class="badge bg-success">Paz y Salvo</span>
+                    <span class="badge bg-success-subtle text-success">Paz y Salvo</span>
                   {% else %}
                     <span class="text-danger">${{ "{:,.0f}".format(pago.saldo_restante) | replace(",",".") }}</span>
                   {% endif %}
@@ -382,11 +382,11 @@
                 <td class="small text-muted">{{ pago.observacion or '—' }}</td>
                 <td class="text-center">
                   {% if pago.estado == 'Programado' %}
-                    <span class="badge bg-warning text-dark">Programado</span>
+                    <span class="badge bg-warning-subtle text-warning text-dark">Programado</span>
                   {% elif pago.estado == 'Realizado' %}
-                    <span class="badge bg-success">Realizado</span>
+                    <span class="badge bg-success-subtle text-success">Realizado</span>
                   {% else %}
-                    <span class="badge bg-secondary">Cancelado</span>
+                    <span class="badge bg-secondary-subtle text-secondary">Cancelado</span>
                   {% endif %}
                 </td>
                 <td class="text-center">
@@ -432,7 +432,7 @@
               data-bs-target="#collapse{{ contrato.id }}" style="background: white; color: #1f2937; font-weight: 600;">
               <div class="d-flex flex-column w-100 me-3 gap-2 text-start">
                 <div>
-                  <span class="badge bg-primary me-2">CONTRATO #{{ contrato.numero_contrato or 'S/N' }}</span>
+                  <span class="badge bg-primary-subtle text-primary me-2">CONTRATO #{{ contrato.numero_contrato or 'S/N' }}</span>
                   <strong>{{ contrato.contratista.nombre }}</strong>
                   <span class="text-muted mx-1">&mdash;</span>
                   <span class="text-muted">{{ contrato.objeto or 'Sin objeto definido' }}</span>
@@ -532,7 +532,7 @@
                           onclick="abrirModalContratistaSubFacturas(this)">
                           <i class="bi bi-list-ul"></i>
                           {% if r.subfacturas|length > 0 %}
-                          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.5rem; padding: 0.2em 0.4em;">
+                          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger-subtle text-danger" style="font-size: 0.5rem; padding: 0.2em 0.4em;">
                             {{ r.subfacturas|length }}
                           </span>
                           {% endif %}
@@ -664,7 +664,7 @@
 
         <div class="modal-footer d-flex justify-content-end gap-2 mt-2 border-top pt-3 bg-dark"
           style="border-color:#3f3f5c !important;">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
           <button type="submit" form="formCrearContratista" class="btn btn-confirm px-4"><i class="bi bi-save me-1"></i>
             Guardar Contratista</button>
         </div>
@@ -716,7 +716,7 @@
 
         <div class="modal-footer d-flex justify-content-end gap-2 mt-2 border-top pt-3 bg-dark"
           style="border-color:#3f3f5c !important;">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
           <button type="submit" form="formEditarContratista" class="btn btn-confirm px-4"><i class="bi bi-save me-1"></i>
             Actualizar Contratista</button>
         </div>
@@ -784,7 +784,7 @@
 
         <div class="modal-footer d-flex justify-content-end gap-2 mt-4 border-top pt-3 bg-dark"
           style="border-color:#3f3f5c !important;">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
           <button type="submit" form="formCrearContrato" class="btn btn-confirm px-4"><i class="bi bi-save me-1"></i>
             Guardar Contrato</button>
         </div>
@@ -843,7 +843,7 @@
 
         <div class="modal-footer d-flex justify-content-end gap-2 mt-4 border-top pt-3 bg-dark"
           style="border-color:#3f3f5c !important;">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
           <button type="submit" form="formEditarContrato" class="btn btn-confirm px-4"><i class="bi bi-save me-1"></i>
             Actualizar Contrato</button>
         </div>
@@ -986,7 +986,7 @@
 
         <div class="modal-footer d-flex justify-content-end gap-2 mt-4 border-top pt-3 bg-dark"
           style="border-color:#3f3f5c !important;">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
           <button type="submit" form="formCrearFactura" class="btn btn-confirm px-4"><i class="bi bi-save me-1"></i>
             Guardar Factura</button>
         </div>
@@ -1133,8 +1133,8 @@
               Eliminar Factura</button>
           </form>
           <div>
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" form="formEditarFactura" class="btn btn-primary px-4"><i class="bi bi-save me-1"></i>
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" form="formEditarFactura" class="btn btn-outline-primary px-4"><i class="bi bi-save me-1"></i>
               Actualizar Factura</button>
           </div>
         </div>
@@ -1183,7 +1183,7 @@
         </div>
         <div class="modal-footer border-top border-secondary border-opacity-25">
           <button type="button" class="btn btn-outline-light rounded-pill" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-primary rounded-pill fw-bold px-4">Guardar Programación</button>
+          <button type="submit" class="btn btn-outline-primary rounded-pill fw-bold px-4">Guardar Programación</button>
         </div>
       </form>
     </div>
@@ -1219,7 +1219,7 @@
         </div>
         <div class="modal-footer border-top border-secondary border-opacity-25">
           <button type="button" class="btn btn-outline-light rounded-pill" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-primary rounded-pill fw-bold">Actualizar</button>
+          <button type="submit" class="btn btn-outline-primary rounded-pill fw-bold">Actualizar</button>
         </div>
       </form>
     </div>
@@ -1230,7 +1230,7 @@
 <div class="modal fade modal-dark" id="modalConfirmarPagoContratista" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content bg-dark text-light border border-secondary border-opacity-25 shadow-lg">
-      <div class="modal-header border-bottom border-secondary border-opacity-25 bg-success bg-opacity-10">
+      <div class="modal-header border-bottom border-secondary border-opacity-25 bg-success-subtle text-success bg-opacity-10">
         <h5 class="modal-title text-success fw-bold"><i class="bi bi-check-circle me-2"></i>Confirmar Pago Realizado</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
@@ -1249,7 +1249,7 @@
         </div>
         <div class="modal-footer border-top border-secondary border-opacity-25">
           <button type="button" class="btn btn-outline-light rounded-pill" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-success rounded-pill fw-bold">Confirmar Pago</button>
+          <button type="submit" class="btn btn-outline-success rounded-pill fw-bold">Confirmar Pago</button>
         </div>
       </form>
     </div>
@@ -1298,8 +1298,8 @@
           </div>
           
           <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top" style="border-color:#3f3f5c !important;">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-primary fw-bold"><i class="bi bi-save me-1"></i>Actualizar</button>
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-outline-primary fw-bold"><i class="bi bi-save me-1"></i>Actualizar</button>
           </div>
         </form>
       </div>
@@ -1401,7 +1401,7 @@
                   <input type="file" class="form-control" name="pdf_subfactura" accept=".pdf, .png, .jpg, .jpeg, .webp, application/pdf, image/*">
                 </div>
                 
-                <button type="submit" class="btn btn-primary w-100 fw-bold"><i class="bi bi-plus-circle me-2"></i>Registrar Sub-factura</button>
+                <button type="submit" class="btn btn-outline-primary w-100 fw-bold"><i class="bi bi-plus-circle me-2"></i>Registrar Sub-factura</button>
               </form>
             </div>
           </div>

@@ -141,7 +141,7 @@
           </a>
         {% endif %}
         <div>
-          <button type="submit" class="btn btn-primary">Guardar</button>
+          <button type="submit" class="btn btn-outline-primary">Guardar</button>
         </div>
       </div>
     </form>
@@ -164,7 +164,7 @@
           {% for fecha, info in asistencia_registrada.items() %}
             <tr class="historial-row" data-fecha="{{ fecha }}">
               <td>
-                <span class="{% if fecha == fecha_str %}badge bg-primary{% endif %}">
+                <span class="{% if fecha == fecha_str %}badge bg-primary-subtle text-primary-subtle text-primary{% endif %}">
                   {{ fecha }}
                 </span>
               </td>

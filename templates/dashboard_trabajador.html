@@ -256,7 +256,7 @@
                         </div>
                         <div class="text-end ms-auto me-3 d-flex align-items-center gap-2">
                           {% set progreso = actividad.porcentaje_progreso %}
-                          <span class="badge bg-success progress-badge">{{ progreso }}%</span>
+                          <span class="badge bg-success-subtle text-success progress-badge">{{ progreso }}%</span>
                           <i class="bi bi-chevron-down text-muted" style="transition: transform 0.2s;"></i>
                         </div>
                       </div>
@@ -457,7 +457,7 @@
                                       <i class="bi bi-arrow-repeat fs-5"></i>
                                     </button>
                                     
-                                    <button type="button" class="btn btn-danger rounded-circle shadow" style="width: 75px; height: 75px; border: 4px solid #fecaca;" onclick="tomarFoto('{{ actividad.id_actividad }}')" title="Capturar Foto">
+                                    <button type="button" class="btn btn-outline-danger rounded-circle shadow" style="width: 75px; height: 75px; border: 4px solid #fecaca;" onclick="tomarFoto('{{ actividad.id_actividad }}')" title="Capturar Foto">
                                       <i class="bi bi-camera-fill fs-2"></i>
                                     </button>
                                   </div>
@@ -474,7 +474,7 @@
                                 BOTÓN
                             ========================== -->
                             <div class="mt-3 text-end">
-                              <button type="submit" class="btn btn-success w-100">
+                              <button type="submit" class="btn btn-outline-success w-100">
                                 <i class="bi bi-send"></i> Enviar Avance
                               </button>
                             </div>
@@ -514,7 +514,7 @@
             <i class="bi bi-bell fs-5"></i>
 
             {% if notificaciones and notificaciones|length > 0 %}
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger-subtle text-danger">
               {{ notificaciones|selectattr('leido', 'equalto', False)|list|length }}
             </span>
             {% endif %}
@@ -660,7 +660,7 @@
               </div>
 
                 <div class="text-end">
-                  <span class="badge bg-success">{{ "%.1f"|format(proyecto.progreso_general) }}%</span>
+                  <span class="badge bg-success-subtle text-success">{{ "%.1f"|format(proyecto.progreso_general) }}%</span>
                 </div>
 
               </button>
@@ -682,7 +682,7 @@
                                 <h2 class="accordion-header" id="headingSub{{ sub_info.subproyecto.id }}">
                                     <button class="accordion-button collapsed fw-bold rounded-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSub{{ sub_info.subproyecto.id }}" aria-expanded="false" aria-controls="collapseSub{{ sub_info.subproyecto.id }}" style="background-color: #f8f9fa;">
                                         <i class="bi bi-diagram-3-fill me-2 text-primary"></i> {{ sub_info.subproyecto.nombre_miniproyecto }} 
-                                        <span class="badge bg-secondary ms-auto me-2">{{ sub_info.actividades|length }} acts</span>
+                                        <span class="badge bg-secondary-subtle text-secondary ms-auto me-2">{{ sub_info.actividades|length }} acts</span>
                                     </button>
                                 </h2>
                                 <div id="collapseSub{{ sub_info.subproyecto.id }}" class="accordion-collapse collapse" aria-labelledby="headingSub{{ sub_info.subproyecto.id }}" data-bs-parent="#subproyectoAccordion{{ sub_info.subproyecto.id }}">
@@ -729,7 +729,7 @@
         <div class="tab-pane fade" id="pills-solicitudes" role="tabpanel">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="fw-bold">Historial de Pedidos</h4>
-            <button class="btn btn-primary shadow" data-bs-toggle="modal" data-bs-target="#solicitarMaterialModal">
+            <button class="btn btn-outline-primary shadow" data-bs-toggle="modal" data-bs-target="#solicitarMaterialModal">
                         <i class="bi bi-send"></i> Solicitar a Bodega
             </button>
           </div>
@@ -761,7 +761,7 @@
                   <td>{{ solicitud.fecha_solicitud.strftime('%d/%m/%Y') }}</td>
                   <td>
                     {% if solicitud.fecha_entrega_estimada %}
-                    <span class="badge bg-primary px-3 py-2">
+                    <span class="badge bg-primary-subtle text-primary px-3 py-2">
                       <i class="bi bi-calendar-event me-1"></i> {{ solicitud.fecha_entrega_estimada.strftime('%d/%m/%Y') }}
                     </span>
                     {% else %}
@@ -771,9 +771,9 @@
                   <td>
                     <span class="badge 
                       {% if solicitud.estado == 'PENDIENTE' %}bg-warning text-dark
-                      {% elif solicitud.estado == 'RECHAZADO' %}bg-danger
+                      {% elif solicitud.estado == 'RECHAZADO' %}bg-danger-subtle text-danger
                       {% elif solicitud.estado == 'EN PROCESO' %}bg-primary
-                      {% else %}bg-success{% endif %}">
+                      {% else %}bg-success-subtle text-success{% endif %}">
                       {{ solicitud.estado }}
                     </span>
                   </td>
@@ -836,7 +836,7 @@
                                 <td class="text-center {{ 'text-danger' if pendiente > 0 else 'text-muted' }}">{{ pendiente }}</td>
                                 <td>
                                   <div class="progress" style="height: 6px;">
-                                    <div class="progress-bar {{ 'bg-success' if porcentaje == 100 else 'bg-primary' }}" style="width: {{ porcentaje }}%;"></div>
+                                    <div class="progress-bar {{ 'bg-success-subtle text-success' if porcentaje == 100 else 'bg-primary' }}" style="width: {{ porcentaje }}%;"></div>
                                   </div>
                                   <small class="text-muted" style="font-size: 0.65rem;">{{ porcentaje }}% completado</small>
                                 </td>
@@ -896,7 +896,7 @@
             <i class="bi bi-trophy-fill text-warning" style="font-size: 5rem;"></i>
           </div>
           <p class="mb-4">Tu esfuerzo está marcando la diferencia.</p>
-          <button type="button" class="btn btn-success" data-bs-dismiss="modal">Continuar</button>
+          <button type="button" class="btn btn-outline-success" data-bs-dismiss="modal">Continuar</button>
         </div>
       </div>
     </div>
@@ -978,7 +978,7 @@
 
                     <div class="modal-footer border-0">
                         <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-success px-5 shadow-sm">
+                        <button type="submit" class="btn btn-outline-success px-5 shadow-sm">
                             <i class="bi bi-send me-2"></i>Enviar Solicitud
                         </button>
                     </div>
