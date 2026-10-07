@@ -30,69 +30,74 @@
       padding: 20px;
     }
 
-    /* Glassmorphism Container */
-    .glass-panel {
+    /* Glass Panel Principal con Gradiente y Blur */
+    .glass-container {
         width: 100%;
         max-width: 1300px;
-        background: rgba(255, 255, 255, 0.88) !important;
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        border-radius: 18px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        background: rgba(255, 255, 255, 0.75) !important;
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 24px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.06);
         padding: 30px 40px;
     }
     
-    /* Tarjetas de Vehículos & Transiciones Fluidas (Emil Kowalski Style) */
-    .vehicle-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+    /* Tarjetas de Vehículos Estilo Reflect / Stripe */
+    .vehicle-card-v2 {
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        border-radius: 16px;
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         margin-bottom: 12px;
         overflow: hidden;
     }
-    .vehicle-card:hover {
+    .vehicle-card-v2:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+        border-color: rgba(99, 102, 241, 0.4);
+        box-shadow: 0 12px 30px rgba(99, 102, 241, 0.08);
     }
-    .vehicle-card:active {
-        transform: scale(0.99);
+    .vehicle-card-v2:active {
+        transform: scale(0.995);
     }
     
-    /* Touch Target & Hierarchy (Impeccable Design) */
-    .btn-action {
-        min-height: 42px;
-        padding: 8px 16px;
-        border-radius: 8px;
-        font-weight: 500;
-        transition: all 0.15s ease;
+    /* Píldoras Navegación y Filtros (Impeccable Style) */
+    .pill-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 9999px;
+        font-size: 0.825rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+    }
+    .pill-badge-success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .pill-badge-warning { background: #fef9c3; color: #a16207; border: 1px solid #fef08a; }
+    .pill-badge-danger  { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+    .pill-badge-project { background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; }
+    
+    /* Soft Pastel Badges (Legacy fallbacks for detail modal) */
+    .badge-pastel-success {
+        background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; font-weight: 600; border-radius: 20px; padding: 5px 12px; display: inline-block;
+    }
+    .badge-pastel-danger {
+        background-color: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; font-weight: 600; border-radius: 20px; padding: 5px 12px; display: inline-block;
+    }
+
+    /* Buttons con Altura Táctil Óptima */
+    .btn-impeccable {
+        min-height: 44px;
+        border-radius: 12px;
+        font-weight: 600;
+        padding: 8px 20px;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         display: inline-flex;
         align-items: center;
         gap: 8px;
     }
-    .btn-action:active {
-        transform: scale(0.96);
-    }
-    
-    /* Soft Pastel Badges (Taste-Skill Style) */
-    .badge-pastel-success {
-        background-color: #d1fae5;
-        color: #065f46;
-        border: 1px solid #a7f3d0;
-        font-weight: 600;
-        border-radius: 20px;
-        padding: 5px 12px;
-        display: inline-block;
-    }
-    .badge-pastel-danger {
-        background-color: #fee2e2;
-        color: #991b1b;
-        border: 1px solid #fca5a5;
-        font-weight: 600;
-        border-radius: 20px;
-        padding: 5px 12px;
-        display: inline-block;
+    .btn-impeccable:active {
+        transform: scale(0.97);
     }
 
     .accordion-button::after {
@@ -106,8 +111,8 @@
       box-shadow: none !important;
     }
     .estado-doc {
-      border: 1px solid #eaeaea;
-      border-radius: 10px;
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      border-radius: 12px;
       padding: 20px;
       background: #f8fafc;
       transition: all 0.2s ease;
@@ -144,27 +149,32 @@
   {% include 'mensajes.html' %}
 
 <div class="background">
-<div class="glass-panel mx-auto my-4">
+<div class="glass-container mx-auto my-4">
 
-  <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-outline-dark border-0 px-0 d-inline-flex align-items-center gap-2" style="font-weight: 500;">
+  <!-- Header Superior -->
+  <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-light">
+    <!-- Píldora Flotante Izquierda -->
+    <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-light btn-impeccable border-0 shadow-sm text-dark bg-white">
       <i class="bi bi-arrow-left"></i> Volver al Dashboard
     </a>
-    <h2 class="fw-bold text-dark m-0 d-flex align-items-center gap-2"><i class="bi bi-car-front-fill text-primary"></i> Gestión de Vehículos</h2>
-    <button class="btn btn-primary btn-action shadow-sm" data-bs-toggle="modal" data-bs-target="#nuevoVehiculoModal">
+    
+    <!-- Título Tracking Tight -->
+    <h2 class="m-0 text-dark d-flex align-items-center gap-2" style="font-weight: 700; letter-spacing: -0.02em;">
+      <i class="bi bi-car-front-fill text-primary"></i> Gestión de Vehículos
+    </h2>
+    
+    <!-- Píldora Flotante Derecha -->
+    <button class="btn btn-primary btn-impeccable shadow-sm" data-bs-toggle="modal" data-bs-target="#nuevoVehiculoModal">
       <i class="bi bi-plus-circle"></i> Nuevo Vehículo
     </button>
   </div>
-
-  <p class="text-muted mb-4 text-center">Administra la flota de vehículos, su estado y documentación vigente.</p>
 
   {% if vehiculos_info %}
   <div class="accordion" id="vehiculosAccordion">
     {% for item in vehiculos_info %}
       {% set v = item.vehiculo %}
       {% set proyecto_nombre = item.proyecto %}
-    <div class="accordion-item vehicle-card">
+    <div class="accordion-item vehicle-card-v2">
       <h2 class="accordion-header" id="heading{{ v.id_vehiculo }}">
         <button class="accordion-button collapsed fw-semibold d-flex align-items-center gap-4 py-3"
           type="button" data-bs-toggle="collapse"
@@ -179,38 +189,41 @@
             </div>
             <div>
               <div class="fs-5 fw-bold text-dark mb-0 lh-1">{{ v.placa }}</div>
-              <small class="text-muted">{{ v.marca }} {{ v.modelo }}</small>
+              <small class="text-muted" style="letter-spacing: -0.01em;">{{ v.marca }} {{ v.modelo }}</small>
             </div>
           </div>
           
-          <!-- CENTRO: Estado -->
-          <div class="flex-grow-1 text-center">
-            <span class="badge ms-2 px-3 py-2 rounded-pill shadow-sm
-              {% if v.estado == 'Disponible' %} bg-success-subtle text-success border border-success-subtle
-              {% elif v.estado == 'En uso' %} bg-primary-subtle text-primary border border-primary-subtle
-              {% elif v.estado == 'Mantenimiento' %} bg-warning-subtle text-warning border border-warning-subtle
-              {% else %} bg-secondary-subtle text-secondary border border-secondary-subtle {% endif %}">
+          <!-- CENTRO: Estado Actual (Pill) -->
+          <div class="flex-grow-1 d-flex justify-content-center">
+            <span class="pill-badge
+              {% if v.estado == 'Disponible' %} pill-badge-success
+              {% elif v.estado == 'En uso' %} pill-badge-project text-primary border-primary-subtle
+              {% elif v.estado == 'Mantenimiento' %} pill-badge-warning
+              {% else %} pill-badge-danger {% endif %}">
+              {% if v.estado == 'Disponible' %}<i class="bi bi-check2-circle"></i>
+              {% elif v.estado == 'En uso' %}<i class="bi bi-play-circle"></i>
+              {% elif v.estado == 'Mantenimiento' %}<i class="bi bi-wrench-adjustable"></i>
+              {% endif %}
               {{ v.estado }}
             </span>
           </div>
 
           <!-- DERECHA: Proyecto y Alerta -->
-          <div class="d-flex align-items-center gap-3 ms-auto pe-3 text-end" style="min-width: 200px; justify-content: flex-end;">
+          <div class="d-flex align-items-center gap-3 ms-auto pe-3 text-end" style="min-width: 220px; justify-content: flex-end;">
             <div>
-              <div class="fw-bold fs-6 mb-0 lh-1">
+              <div class="fw-bold fs-6 mb-1 lh-1">
                 {% if proyecto_nombre != 'Sin asignar' %}
-                  <span class="text-dark">{{ proyecto_nombre }}</span>
+                  <span class="pill-badge pill-badge-project"><i class="bi bi-building"></i> {{ proyecto_nombre }}</span>
                 {% else %}
-                  <span class="text-muted fw-normal">Sin asignar</span>
+                  <span class="text-muted fw-normal" style="font-size: 0.85rem;">Sin asignar</span>
                 {% endif %}
               </div>
-              <small class="text-muted">Proyecto Actual</small>
             </div>
             
             {% if v.estado_documento == 'vencido' %}
-              <i class="bi bi-exclamation-circle-fill text-danger fs-4 ms-2" title="Documento Vencido"></i>
+              <i class="bi bi-exclamation-circle-fill text-danger fs-4 ms-2 drop-shadow-sm" title="Documento Vencido"></i>
             {% elif v.estado_documento == 'proximo_vencimiento' %}
-              <i class="bi bi-exclamation-triangle-fill text-warning fs-4 ms-2" title="Próximo a Vencer"></i>
+              <i class="bi bi-exclamation-triangle-fill text-warning fs-4 ms-2 drop-shadow-sm" title="Próximo a Vencer"></i>
             {% endif %}
           </div>
         </button>
@@ -231,65 +244,67 @@
           {% endif %}
 
           <!-- DOCUMENTOS -->
-          <h6 class="fw-bold mb-3 text-secondary"><i class="bi bi-folder2-open me-2"></i> Documentación del Vehículo</h6>
+          <h6 class="fw-bold mb-3 text-secondary" style="letter-spacing: -0.01em;"><i class="bi bi-folder2-open me-2"></i> Documentación del Vehículo</h6>
           <div class="row g-4">
+            <!-- SOAT Card -->
             <div class="col-md-6">
-              <div class="estado-doc d-flex flex-column h-100">
+              <div class="estado-doc d-flex flex-column h-100 shadow-sm border-0" style="background: #f8fafc;">
                 <div class="d-flex justify-content-between align-items-start mb-3">
-                  <div class="d-flex align-items-center gap-2">
-                    <div class="bg-light rounded p-2 text-dark"><i class="bi bi-shield-check fs-5"></i></div>
-                    <h6 class="mb-0 fs-5">SOAT</h6>
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="bg-white rounded p-2 text-dark shadow-sm border"><i class="bi bi-shield-check fs-5"></i></div>
+                    <h6 class="mb-0 fs-5 fw-bold" style="letter-spacing: -0.01em;">SOAT</h6>
                   </div>
                   {% if v.soat_vencimiento >= fecha_hoy %}
-                    <span class="badge-pastel-success">Vigente</span>
+                    <span class="pill-badge pill-badge-success">Vigente</span>
                   {% else %}
-                    <span class="badge-pastel-danger">Vencido</span>
+                    <span class="pill-badge pill-badge-danger">Vencido</span>
                   {% endif %}
                 </div>
                 
                 <div class="mb-3">
-                  <span class="text-muted d-block small">Fecha de Vencimiento</span>
-                  <span class="fs-6 fw-medium text-dark">{{ v.soat_vencimiento.strftime('%d %b, %Y') }}</span>
+                  <span class="text-muted d-block small mb-1">Fecha de Vencimiento</span>
+                  <span class="fs-6 fw-bold text-dark">{{ v.soat_vencimiento.strftime('%d %b, %Y') }}</span>
                 </div>
                 
                 <div class="mt-auto pt-3 border-top border-light">
                   {% if v.soat_pdf %}
-                    <a href="{{ url_for('static', filename=v.soat_pdf) }}" target="_blank" class="btn btn-sm btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2 rounded-3">
-                      <i class="bi bi-file-earmark-pdf-fill text-danger"></i> Ver Documento Adjunto
+                    <a href="{{ url_for('static', filename=v.soat_pdf) }}" target="_blank" class="btn btn-light btn-impeccable w-100 border text-dark justify-content-center">
+                      <i class="bi bi-file-earmark-pdf-fill text-danger"></i> Ver PDF Adjunto
                     </a>
                   {% else %}
-                    <div class="text-muted small text-center"><i class="bi bi-info-circle me-1"></i> Sin PDF adjunto</div>
+                    <div class="text-muted small text-center"><i class="bi bi-info-circle me-1"></i> Sin archivo adjunto</div>
                   {% endif %}
                 </div>
               </div>
             </div>
             
+            <!-- Tecno Card -->
             <div class="col-md-6">
-              <div class="estado-doc d-flex flex-column h-100">
+              <div class="estado-doc d-flex flex-column h-100 shadow-sm border-0" style="background: #f8fafc;">
                 <div class="d-flex justify-content-between align-items-start mb-3">
-                  <div class="d-flex align-items-center gap-2">
-                    <div class="bg-light rounded p-2 text-dark"><i class="bi bi-tools fs-5"></i></div>
-                    <h6 class="mb-0 fs-5">Tecnomecánica</h6>
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="bg-white rounded p-2 text-dark shadow-sm border"><i class="bi bi-tools fs-5"></i></div>
+                    <h6 class="mb-0 fs-5 fw-bold" style="letter-spacing: -0.01em;">Tecnomecánica</h6>
                   </div>
                   {% if v.tecno_vencimiento >= fecha_hoy %}
-                    <span class="badge-pastel-success">Vigente</span>
+                    <span class="pill-badge pill-badge-success">Vigente</span>
                   {% else %}
-                    <span class="badge-pastel-danger">Vencido</span>
+                    <span class="pill-badge pill-badge-danger">Vencido</span>
                   {% endif %}
                 </div>
                 
                 <div class="mb-3">
-                  <span class="text-muted d-block small">Fecha de Vencimiento</span>
-                  <span class="fs-6 fw-medium text-dark">{{ v.tecno_vencimiento.strftime('%d %b, %Y') }}</span>
+                  <span class="text-muted d-block small mb-1">Fecha de Vencimiento</span>
+                  <span class="fs-6 fw-bold text-dark">{{ v.tecno_vencimiento.strftime('%d %b, %Y') }}</span>
                 </div>
                 
                 <div class="mt-auto pt-3 border-top border-light">
                   {% if v.tecno_pdf %}
-                    <a href="{{ url_for('static', filename=v.tecno_pdf) }}" target="_blank" class="btn btn-sm btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2 rounded-3">
-                      <i class="bi bi-file-earmark-pdf-fill text-danger"></i> Ver Documento Adjunto
+                    <a href="{{ url_for('static', filename=v.tecno_pdf) }}" target="_blank" class="btn btn-light btn-impeccable w-100 border text-dark justify-content-center">
+                      <i class="bi bi-file-earmark-pdf-fill text-danger"></i> Ver PDF Adjunto
                     </a>
                   {% else %}
-                    <div class="text-muted small text-center"><i class="bi bi-info-circle me-1"></i> Sin PDF adjunto</div>
+                    <div class="text-muted small text-center"><i class="bi bi-info-circle me-1"></i> Sin archivo adjunto</div>
                   {% endif %}
                 </div>
               </div>
@@ -297,16 +312,16 @@
           </div>
 
           <!-- ACCIONES -->
-          <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top border-light">
-            <button class="btn btn-outline-secondary btn-action" data-bs-toggle="modal" data-bs-target="#detalleVehiculoModal{{ v.id_vehiculo }}">
+          <div class="d-flex justify-content-end gap-3 mt-4 pt-4 border-top border-light">
+            <button class="btn btn-light btn-impeccable shadow-sm border text-dark" data-bs-toggle="modal" data-bs-target="#detalleVehiculoModal{{ v.id_vehiculo }}">
               <i class="bi bi-eye"></i> Ver Detalles
             </button>
-            <button class="btn btn-outline-primary btn-action" data-bs-toggle="modal" data-bs-target="#editarVehiculoModal{{ v.id_vehiculo }}">
+            <button class="btn btn-primary btn-impeccable shadow-sm" data-bs-toggle="modal" data-bs-target="#editarVehiculoModal{{ v.id_vehiculo }}">
               <i class="bi bi-pencil"></i> Editar
             </button>
             <form method="POST" action="{{ url_for('vehiculos.delete_vehiculo', id=v.id_vehiculo) }}" onsubmit="return confirm('¿Seguro que quieres eliminar {{ v.placa }}?');" class="m-0">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn btn-outline-danger btn-action">
+              <button type="submit" class="btn btn-outline-danger btn-impeccable border-0">
                 <i class="bi bi-trash"></i> Eliminar
               </button>
             </form>
