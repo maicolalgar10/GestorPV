@@ -500,7 +500,7 @@
               <div class="col-md-3">
                 <label>% IVA</label>
                 <div class="input-group">
-                  <input type="text" name="porcentaje_iva" id="porcentaje_iva" step="any" min="0" max="100" placeholder="Ej: 19 o 19.5" class="form-control" oninput="calcularValores()">
+                  <input type="text" inputmode="decimal" name="porcentaje_iva" id="porcentaje_iva" step="any" min="0" max="100" placeholder="0,82" class="form-control" oninput="calcularValores()">
                   <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
                 </div>
               </div>
@@ -521,8 +521,8 @@
               <div class="col-md-3">
                 <label>% Rete Garantía</label>
                 <div class="input-group">
-                  <input type="text" name="porcentaje_rete_garantia" id="porcentaje_rete_garantia"
-                    class="form-control pct-input" value="0" data-raw-value="0"
+                  <input type="text" inputmode="decimal" name="porcentaje_rete_garantia" id="porcentaje_rete_garantia"
+                    class="form-control pct-input" value="0" data-raw-value="0" placeholder="0,82"
                     oninput="formatPercentField(this); calcularValores()">
                   <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
                 </div>
@@ -659,7 +659,7 @@
               <div class="col-md-3">
                 <label>% IVA</label>
                 <div class="input-group">
-                  <input type="text" name="porcentaje_iva" id="porcentaje_iva_edit" step="any" min="0" max="100" placeholder="Ej: 19 o 19.5" class="form-control" oninput="calcularValoresEdit()">
+                  <input type="text" inputmode="decimal" name="porcentaje_iva" id="porcentaje_iva_edit" step="any" min="0" max="100" placeholder="0,82" class="form-control" oninput="calcularValoresEdit()">
                   <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
                 </div>
               </div>
@@ -680,8 +680,8 @@
               <div class="col-md-3">
                 <label>% Rete Garantía</label>
                 <div class="input-group">
-                  <input type="text" name="porcentaje_rete_garantia" id="porcentaje_rete_garantia_edit"
-                    class="form-control pct-input" value="0" data-raw-value="0"
+                  <input type="text" inputmode="decimal" name="porcentaje_rete_garantia" id="porcentaje_rete_garantia_edit"
+                    class="form-control pct-input" value="0" data-raw-value="0" placeholder="0,82"
                     oninput="formatPercentField(this); calcularValoresEdit()">
                   <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
                 </div>
@@ -819,8 +819,8 @@
               <div class="col-md-6">
                 <label>% Rete Garantía (Opcional)</label>
                 <div class="input-group">
-                  <input type="text" name="porcentaje_retegarantia" id="contrato_rete_garantia_pct"
-                    class="form-control pct-input" placeholder="0"
+                  <input type="text" inputmode="decimal" name="porcentaje_retegarantia" id="contrato_rete_garantia_pct"
+                    class="form-control pct-input" placeholder="0,82"
                     oninput="formatPercentField(this); calcularEspejoContrato();">
                   <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
                 </div>
@@ -924,8 +924,8 @@
               <div class="col-md-6">
                 <label>% Rete Garantía (Opcional)</label>
                 <div class="input-group">
-                  <input type="text" name="porcentaje_retegarantia" id="edit_contrato_rete_garantia_pct"
-                    class="form-control pct-input" placeholder="0"
+                  <input type="text" inputmode="decimal" name="porcentaje_retegarantia" id="edit_contrato_rete_garantia_pct"
+                    class="form-control pct-input" placeholder="0,82"
                     oninput="formatPercentField(this); calcularEspejoEditContrato();">
                   <span class="input-group-text" style="background:#2d2d3f;border-color:#3f3f5c;color:#94a3b8;">%</span>
                 </div>
@@ -1263,6 +1263,13 @@
 
 
 
+    function parseDecimal(val) {
+      if (!val) return 0;
+      const strVal = String(val).replace(',', '.').trim();
+      const num = parseFloat(strVal);
+      return isNaN(num) ? 0 : num;
+    }
+
     function formatPercentField(input) {
       let val = input.value.replace(/[^0-9.,]/g, '');
       let cleanNumber = val.replace(/,/g, '.');
@@ -1277,7 +1284,7 @@
     function getRawVal(id) {
       let el = document.getElementById(id);
       if (!el || !el.dataset.rawValue) return 0;
-      return parseFloat(el.dataset.rawValue) || 0;
+      return parseDecimal(el.dataset.rawValue);
     }
 
     function prepararModalReporte(contratoId) {
@@ -1311,7 +1318,7 @@
       const pagoRealizado = getRawVal('pago_realizado');
 
       const ivaEl = document.getElementById('porcentaje_iva');
-      const porcIva = ivaEl && ivaEl.value ? parseFloat(ivaEl.value) : 0;
+      const porcIva = ivaEl && ivaEl.value ? parseDecimal(ivaEl.value) : 0;
       const valorIva = valorBruto * (porcIva / 100);
       const valorIvaEl = document.getElementById('valor_iva');
       if (valorIvaEl) valorIvaEl.value = valorIva.toFixed(2);
@@ -1343,7 +1350,7 @@
       const pagoRealizado = getRawVal('pago_realizado_edit');
 
       const ivaEl = document.getElementById('porcentaje_iva_edit');
-      const porcIva = ivaEl && ivaEl.value ? parseFloat(ivaEl.value) : 0;
+      const porcIva = ivaEl && ivaEl.value ? parseDecimal(ivaEl.value) : 0;
       const valorIva = valorBruto * (porcIva / 100);
       const valorIvaEl = document.getElementById('valor_iva_edit');
       if (valorIvaEl) valorIvaEl.value = valorIva.toFixed(2);

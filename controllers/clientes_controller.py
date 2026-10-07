@@ -1,6 +1,6 @@
 import mimetypes
 from werkzeug.utils import secure_filename
-from helpers import clean_amount
+from helpers import clean_amount, safe_float
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, session
 from datetime import datetime
 import os
@@ -94,11 +94,11 @@ def crear_reporte():
         contrato_cliente_id = request.form.get('contrato_cliente_id')
         valor_factura = clean_amount(request.form.get('valor_factura'))
         amortizacion = clean_amount(request.form.get('amortizacion'))
-        porcentaje_rete_garantia = limpiar_porcentaje(request.form.get('porcentaje_rete_garantia'))
+        porcentaje_rete_garantia = safe_float(request.form.get('porcentaje_rete_garantia'))
         retencion_ley = clean_amount(request.form.get('retencion_ley'))
         pago_realizado = clean_amount(request.form.get('pago_realizado'))
         valor_bruto = clean_amount(request.form.get('valor_bruto'))
-        porcentaje_iva = limpiar_porcentaje(request.form.get('porcentaje_iva'))
+        porcentaje_iva = safe_float(request.form.get('porcentaje_iva'))
         valor_iva = clean_amount(request.form.get('valor_iva'))
         fecha_pago_str = request.form.get('fecha_pago')
         fecha_factura_str = request.form.get('fecha_factura')
@@ -161,10 +161,10 @@ def editar_reporte(reporte_id):
         reporte.valor_bruto = clean_amount(request.form.get('valor_bruto'))
         reporte.valor_factura = clean_amount(request.form.get('valor_factura'))
         reporte.amortizacion = clean_amount(request.form.get('amortizacion'))
-        reporte.porcentaje_rete_garantia = limpiar_porcentaje(request.form.get('porcentaje_rete_garantia'))
+        reporte.porcentaje_rete_garantia = safe_float(request.form.get('porcentaje_rete_garantia'))
         reporte.retencion_ley = clean_amount(request.form.get('retencion_ley'))
         reporte.pago_realizado = clean_amount(request.form.get('pago_realizado'))
-        reporte.porcentaje_iva = limpiar_porcentaje(request.form.get('porcentaje_iva'))
+        reporte.porcentaje_iva = safe_float(request.form.get('porcentaje_iva'))
         reporte.valor_iva = clean_amount(request.form.get('valor_iva'))
         
         fecha_pago_str = request.form.get('fecha_pago')
@@ -262,7 +262,7 @@ def crear_contrato_cliente():
         cliente_id = request.form.get('cliente_id')
         proyecto_nombre = request.form.get('nombre_proyecto')
         valor_total = clean_amount(request.form.get('valor_total'))
-        porcentaje_retegarantia = limpiar_porcentaje(request.form.get('porcentaje_retegarantia'))
+        porcentaje_retegarantia = safe_float(request.form.get('porcentaje_retegarantia'))
         
         # Archivo PDF del contrato (si lo hay)
         contrato_pdf = request.files.get('contrato_pdf')
@@ -326,7 +326,7 @@ def editar_contrato_cliente(contrato_id):
 
         contrato.nombre_proyecto = request.form.get('nombre_proyecto')
         contrato.valor_total = clean_amount(request.form.get('valor_total'))
-        contrato.porcentaje_retegarantia = limpiar_porcentaje(request.form.get('porcentaje_retegarantia'))
+        contrato.porcentaje_retegarantia = safe_float(request.form.get('porcentaje_retegarantia'))
         
         # Archivo PDF del contrato (si lo hay)
         nuevo_contrato_pdf = request.files.get('contrato_pdf')

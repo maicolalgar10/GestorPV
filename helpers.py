@@ -56,3 +56,15 @@ def clean_amount(val) -> float:
         return float(val_str)
     except ValueError:
         return 0.0
+
+def safe_float(value, default=0.0):
+    if value is None:
+        return default
+    if isinstance(value, (int, float)):
+        return float(value)
+    try:
+        # Limpia espacios y convierte coma decimal a punto
+        cleaned = str(value).replace(',', '.').strip()
+        return float(cleaned) if cleaned else default
+    except (ValueError, TypeError):
+        return default
