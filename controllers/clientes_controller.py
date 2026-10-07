@@ -345,6 +345,27 @@ def editar_contrato_cliente(contrato_id):
     return redirect(url_for('clientes.index'))
 
 
+@clientes_bp.route('/contratos/eliminar/<int:contrato_id>', methods=['POST'])
+@login_required
+@admin_oficina_required
+def eliminar_contrato(contrato_id):
+    try:
+        contrato = ContratosClientes.query.get(contrato_id)
+        if not contrato:
+            flash("Contrato no encontrado", "danger")
+            return redirect(url_for('clientes.index'))
+            
+        db.session.delete(contrato)
+        db.session.commit()
+        flash('Contrato eliminado correctamente.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al eliminar contrato: {e}")
+        flash('Error al eliminar el contrato.', 'danger')
+        
+    return redirect(url_for('clientes.index'))
+
+
 @clientes_bp.route('/subfactura/crear', methods=['POST'])
 @login_required
 @admin_oficina_required

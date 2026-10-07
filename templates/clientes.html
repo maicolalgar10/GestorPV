@@ -439,6 +439,32 @@
                   data-rete="{{ c.porcentaje_retegarantia or 0 }}" onclick="prepararModalEditarContrato(this)">
                   <i class="bi bi-pencil-square me-1"></i> Editar Contrato
                 </button>
+                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill fw-bold ms-2"
+                  data-bs-toggle="modal" data-bs-target="#modalEliminarContrato{{ c.id }}" title="Eliminar Contrato">
+                  <i class="bi bi-trash"></i>
+                </button>
+
+                <!-- Modal Eliminar Contrato -->
+                <div class="modal fade" id="modalEliminarContrato{{ c.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered text-start">
+                        <div class="modal-content">
+                            <div class="modal-header border-0">
+                                <h5 class="modal-title fw-bold text-danger">Confirmar Eliminación</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                ¿Estás seguro de que deseas eliminar el contrato <strong>#{{ c.numero_contrato or c.id }}</strong>? Esta acción no se puede deshacer.
+                            </div>
+                            <div class="modal-footer border-0">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <form action="{{ url_for('clientes.eliminar_contrato', contrato_id=c.id) }}" method="POST" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-danger">Eliminar Definitivamente</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
               </div>
             </div>
           </div>
