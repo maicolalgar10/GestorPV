@@ -232,7 +232,7 @@ background: rgba(255, 255, 255, 0.85);
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
-            <form action="{{ url_for('vehiculos.editar_vehiculo', id=v.id_vehiculo) }}" method="POST">
+            <form action="{{ url_for('vehiculos.editar_vehiculo', id=v.id_vehiculo) }}" method="POST" enctype="multipart/form-data">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <div class="row g-3">
                 <div class="col-md-6">
@@ -264,6 +264,23 @@ background: rgba(255, 255, 255, 0.85);
                   <label class="form-label">Tecno Vencimiento</label>
                   <input type="date" name="tecno_vencimiento" class="form-control"
                     value="{{ v.tecno_vencimiento.strftime('%Y-%m-%d') }}" required>
+                </div>
+              </div>
+              
+              <div class="row g-3 mt-1">
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">Documento SOAT (PDF)</label>
+                  <input type="file" class="form-control" name="soat_pdf" accept=".pdf">
+                  {% if v.soat_pdf %}
+                    <small class="text-success mt-1 d-block"><i class="bi bi-file-earmark-pdf text-danger"></i> Documento actual adjunto.</small>
+                  {% endif %}
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">Documento Tecnomecánica (PDF)</label>
+                  <input type="file" class="form-control" name="tecno_pdf" accept=".pdf">
+                  {% if v.tecno_pdf %}
+                    <small class="text-success mt-1 d-block"><i class="bi bi-file-earmark-pdf text-danger"></i> Documento actual adjunto.</small>
+                  {% endif %}
                 </div>
               </div>
               <div class="text-end mt-3">
@@ -356,7 +373,7 @@ background: rgba(255, 255, 255, 0.85);
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <form action="{{ url_for('vehiculos.nuevo_vehiculo') }}" method="POST">
+          <form action="{{ url_for('vehiculos.nuevo_vehiculo') }}" method="POST" enctype="multipart/form-data">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="row g-3">
               <div class="col-md-6">
@@ -386,6 +403,17 @@ background: rgba(255, 255, 255, 0.85);
               <div class="col-md-6">
                 <label class="form-label">Tecno Vencimiento</label>
                 <input type="date" name="tecno_vencimiento" class="form-control" required>
+              </div>
+            </div>
+            
+            <div class="row g-3 mt-1">
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Documento SOAT (PDF)</label>
+                <input type="file" class="form-control" name="soat_pdf" accept=".pdf">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Documento Tecnomecánica (PDF)</label>
+                <input type="file" class="form-control" name="tecno_pdf" accept=".pdf">
               </div>
             </div>
             <div class="text-end mt-3">

@@ -6,7 +6,18 @@ from decimal import Decimal
 from operator import attrgetter
 from sqlalchemy.orm import aliased, selectinload
 from decorators import login_required, admin_required, admin_encargado_required # Importa los decoradores
+import os
+import uuid
+from werkzeug.utils import secure_filename
+from flask import current_app
 
+def save_vehiculo_pdf(archivo, placa, tipo_doc):
+    ext = archivo.filename.rsplit('.', 1)[-1].lower()
+    filename = secure_filename(f"{placa}_{tipo_doc}_{uuid.uuid4().hex[:8]}.{ext}")
+    upload_path = os.path.join(current_app.root_path, 'static', 'uploads', 'vehiculos')
+    os.makedirs(upload_path, exist_ok=True)
+    archivo.save(os.path.join(upload_path, filename))
+    return f"uploads/vehiculos/{filename}"
 
 
 vehiculos_bp = Blueprint("vehiculos", __name__)
@@ -90,6 +101,14 @@ def nuevo_vehiculo():
                 documentos_al_dia=documentos_al_dia
             )
 
+            soat_file = request.files.get('soat_pdf')
+            if soat_file and soat_file.filename:
+                nuevo.soat_pdf = save_vehiculo_pdf(soat_file, placa, 'SOAT')
+
+            tecno_file = request.files.get('tecno_pdf')
+            if tecno_file and tecno_file.filename:
+                nuevo.tecno_pdf = save_vehiculo_pdf(tecno_file, placa, 'TECNOMECANICA')
+
             db.session.add(nuevo)
             db.session.commit()
             flash(" Vehículo agregado correctamente", "success")
@@ -126,6 +145,14 @@ def editar_vehiculo(id):
             vehiculo.documentos_al_dia = not (
                 vehiculo.soat_vencimiento < date.today() or vehiculo.tecno_vencimiento < date.today()
             )
+
+            soat_file = request.files.get('soat_pdf')
+            if soat_file and soat_file.filename:
+                vehiculo.soat_pdf = save_vehiculo_pdf(soat_file, vehiculo.placa, 'SOAT')
+
+            tecno_file = request.files.get('tecno_pdf')
+            if tecno_file and tecno_file.filename:
+                vehiculo.tecno_pdf = save_vehiculo_pdf(tecno_file, vehiculo.placa, 'TECNOMECANICA')
 
             db.session.commit()
             flash("Vehículo actualizado correctamente", "success")
