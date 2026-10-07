@@ -30,67 +30,105 @@
       padding: 20px;
     }
 
-    /* ===================== CONTENEDOR TRANSPARENTE ===================== */
-    .container-dashboard {
-      width: 100%;
-      max-width: 1300px;
-      
-      /* AQUÍ ESTÁ EL CAMBIO DE TRANSPARENCIA */
-      /* Usamos RGBA: Los primeros 3 números son blanco, el 0.85 es la transparencia (0 es invisible, 1 es sólido) */
-background: rgba(255, 255, 255, 0.85);      
-      /* Efecto de desenfoque estilo 'vidrio esmerilado' para mejorar lectura */
-      
-      border-radius: 30px;
-      box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.15);
-      padding: 25px 40px 40px 40px;
-      border: 1px solid rgba(255, 255, 255, 0.3); /* Borde sutil para resaltar el vidrio */
+    /* Glassmorphism Container */
+    .glass-panel {
+        width: 100%;
+        max-width: 1300px;
+        background: rgba(255, 255, 255, 0.88) !important;
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 18px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        padding: 30px 40px;
     }
     
+    /* Tarjetas de Vehículos & Transiciones Fluidas (Emil Kowalski Style) */
+    .vehicle-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+        margin-bottom: 12px;
+        overflow: hidden;
+    }
+    .vehicle-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+    }
+    .vehicle-card:active {
+        transform: scale(0.99);
+    }
+    
+    /* Touch Target & Hierarchy (Impeccable Design) */
+    .btn-action {
+        min-height: 42px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-action:active {
+        transform: scale(0.96);
+    }
+    
+    /* Soft Pastel Badges (Taste-Skill Style) */
+    .badge-pastel-success {
+        background-color: #d1fae5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
+        font-weight: 600;
+        border-radius: 20px;
+        padding: 5px 12px;
+        display: inline-block;
+    }
+    .badge-pastel-danger {
+        background-color: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fca5a5;
+        font-weight: 600;
+        border-radius: 20px;
+        padding: 5px 12px;
+        display: inline-block;
+    }
+
     .accordion-button::after {
       transition: transform 0.2s ease;
     }
     .accordion-button:not(.collapsed)::after {
       transform: rotate(90deg);
     }
-    .accordion-button .ms-auto {
-      margin-right: 2rem;
+    .accordion-button {
+      background: transparent !important;
+      box-shadow: none !important;
     }
     .estado-doc {
       border: 1px solid #eaeaea;
       border-radius: 10px;
-      padding: 15px;
-      text-align: center;
-      background: #fff;
+      padding: 20px;
+      background: #f8fafc;
+      transition: all 0.2s ease;
     }
-    .estado-doc h6 {
-      font-weight: bold;
-    }
-    .acciones-btns button,
-    .acciones-btns form {
-      margin: 3px;
+    .estado-doc:hover {
+      background: #ffffff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }
     .alerta-vencido {
       background-color: #fff3f3;
       border-left: 5px solid #dc3545;
-      padding: 10px;
+      padding: 12px 16px;
       border-radius: 8px;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       color: #b02a37;
     }
-
-
-
-.accordion-item {
-    /* Fondo casi blanco para que el texto se lea bien sobre el vidrio */
-    background-color: rgba(255, 255, 255, 0.9); 
-    border: none;
-}
-
-/* Ajuste para que el cuerpo del acordeón no se vea raro al abrirse */
-.accordion-body {
-    background-color: transparent; 
-}
-
+    
+    .accordion-body {
+        background-color: transparent; 
+        padding: 1.5rem;
+    }
   </style>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-' + cliente + '.css') }}">
 </head>
@@ -98,74 +136,79 @@ background: rgba(255, 255, 255, 0.85);
   {% include 'mensajes.html' %}
 
 <div class="background">
-<div class="container-dashboard">
+<div class="glass-panel mx-auto my-4">
 
   <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-outline-secondary">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-outline-dark border-0 px-0 d-inline-flex align-items-center gap-2" style="font-weight: 500;">
       <i class="bi bi-arrow-left"></i> Volver al Dashboard
     </a>
-    <h2 class="fw-bold text-dark"><i class="bi bi-truck"></i> Gestión de Vehículos</h2>
-    <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#nuevoVehiculoModal">
+    <h2 class="fw-bold text-dark m-0 d-flex align-items-center gap-2"><i class="bi bi-car-front-fill text-primary"></i> Gestión de Vehículos</h2>
+    <button class="btn btn-primary btn-action shadow-sm" data-bs-toggle="modal" data-bs-target="#nuevoVehiculoModal">
       <i class="bi bi-plus-circle"></i> Nuevo Vehículo
     </button>
   </div>
 
-
-
-  <p class="text-muted">Administra la flota de vehículos, su estado y documentación vigente.</p>
+  <p class="text-muted mb-4 text-center">Administra la flota de vehículos, su estado y documentación vigente.</p>
 
   {% if vehiculos_info %}
   <div class="accordion" id="vehiculosAccordion">
     {% for item in vehiculos_info %}
       {% set v = item.vehiculo %}
       {% set proyecto_nombre = item.proyecto %}
-    <div class="accordion-item mb-3 border-0 shadow-sm rounded-4">
+    <div class="accordion-item vehicle-card">
       <h2 class="accordion-header" id="heading{{ v.id_vehiculo }}">
-        <button class="accordion-button collapsed rounded-top fw-semibold d-flex justify-content-between align-items-center"
+        <button class="accordion-button collapsed fw-semibold d-flex align-items-center gap-4 py-3"
           type="button" data-bs-toggle="collapse"
           data-bs-target="#collapse{{ v.id_vehiculo }}" 
           aria-expanded="{% if v.estado_documento == 'vencido' %}true{% else %}false{% endif %}"
           aria-controls="collapse{{ v.id_vehiculo }}">
 
-          <!-- IZQUIERDA -->
-    <div class="d-flex align-items-center">
-      <i class="bi bi-car-front me-2"></i>  
-      
-      {{ v.placa }} — {{ v.marca }} {{ v.modelo }}
-      
-      <span class="badge ms-2
-        {% if v.estado == 'Disponible' %} bg-success-subtle text-success
-        {% elif v.estado == 'En uso' %} bg-primary
-        {% elif v.estado == 'Mantenimiento' %} bg-warning text-dark
-        {% else %} bg-secondary {% endif %}">
-        {{ v.estado }}
-      </span>
-    </div>
-
-          <!-- DERECHA -->
-          <div class="ms-auto text-end">
-            <span class="fw-bold me-2">
-              {% if proyecto_nombre != 'Sin asignar' %}
-                <span class="text-primary">{{ proyecto_nombre }}</span>
-              {% else %}
-                <span class="text-secondary">Sin asignar</span>
-              {% endif %}
+          <!-- IZQUIERDA: Info del Vehículo -->
+          <div class="d-flex align-items-center" style="min-width: 250px;">
+            <div class="bg-light rounded-circle p-2 d-flex justify-content-center align-items-center me-3" style="width: 48px; height: 48px;">
+              <i class="bi bi-truck fs-5 text-secondary"></i>
+            </div>
+            <div>
+              <div class="fs-5 fw-bold text-dark mb-0 lh-1">{{ v.placa }}</div>
+              <small class="text-muted">{{ v.marca }} {{ v.modelo }}</small>
+            </div>
+          </div>
+          
+          <!-- CENTRO: Estado -->
+          <div class="flex-grow-1 text-center">
+            <span class="badge ms-2 px-3 py-2 rounded-pill shadow-sm
+              {% if v.estado == 'Disponible' %} bg-success-subtle text-success border border-success-subtle
+              {% elif v.estado == 'En uso' %} bg-primary-subtle text-primary border border-primary-subtle
+              {% elif v.estado == 'Mantenimiento' %} bg-warning-subtle text-warning border border-warning-subtle
+              {% else %} bg-secondary-subtle text-secondary border border-secondary-subtle {% endif %}">
+              {{ v.estado }}
             </span>
-            <small class="text-muted">Proyecto</small>
           </div>
 
-          <!--  AÑADIR ÍCONO DE ALERTA SEGÚN ESTADO -->
-          {% if v.estado_documento == 'vencido' %}
-            <i class="bi bi-exclamation-circle-fill text-danger me-1"></i>
-          {% elif v.estado_documento == 'proximo_vencimiento' %}
-            <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>
-          {% endif %}
-
+          <!-- DERECHA: Proyecto y Alerta -->
+          <div class="d-flex align-items-center gap-3 ms-auto pe-3 text-end" style="min-width: 200px; justify-content: flex-end;">
+            <div>
+              <div class="fw-bold fs-6 mb-0 lh-1">
+                {% if proyecto_nombre != 'Sin asignar' %}
+                  <span class="text-dark">{{ proyecto_nombre }}</span>
+                {% else %}
+                  <span class="text-muted fw-normal">Sin asignar</span>
+                {% endif %}
+              </div>
+              <small class="text-muted">Proyecto Actual</small>
+            </div>
+            
+            {% if v.estado_documento == 'vencido' %}
+              <i class="bi bi-exclamation-circle-fill text-danger fs-4 ms-2" title="Documento Vencido"></i>
+            {% elif v.estado_documento == 'proximo_vencimiento' %}
+              <i class="bi bi-exclamation-triangle-fill text-warning fs-4 ms-2" title="Próximo a Vencer"></i>
+            {% endif %}
+          </div>
         </button>
       </h2>
 
-      <div id="collapse{{ v.id_vehiculo }}" class="accordion-collapse collapse"
+      <div id="collapse{{ v.id_vehiculo }}" class="accordion-collapse collapse {% if v.estado_documento == 'vencido' %}show{% endif %}"
         aria-labelledby="heading{{ v.id_vehiculo }}" data-bs-parent="#vehiculosAccordion">
         <div class="accordion-body bg-white rounded-bottom">
 
@@ -180,42 +223,84 @@ background: rgba(255, 255, 255, 0.85);
           {% endif %}
 
           <!-- DOCUMENTOS -->
-          <h6 class="fw-bold mb-2"><i class="bi bi-envelope-paper"></i> Estado de Documentos</h6>
-          <div class="row g-3">
+          <h6 class="fw-bold mb-3 text-secondary"><i class="bi bi-folder2-open me-2"></i> Documentación del Vehículo</h6>
+          <div class="row g-4">
             <div class="col-md-6">
-              <div class="estado-doc">
-                <h6>SOAT</h6>
-                <p class="mb-1">Vence: {{ v.soat_vencimiento.strftime('%Y-%m-%d') }}</p>
-                {% if v.soat_vencimiento >= fecha_hoy %}
-                  <span class="badge bg-success-subtle text-success">Vigente</span>
-                {% else %}
-                  <span class="badge bg-danger-subtle text-danger">Vencido</span>
-                {% endif %}
+              <div class="estado-doc d-flex flex-column h-100">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="bg-light rounded p-2 text-dark"><i class="bi bi-shield-check fs-5"></i></div>
+                    <h6 class="mb-0 fs-5">SOAT</h6>
+                  </div>
+                  {% if v.soat_vencimiento >= fecha_hoy %}
+                    <span class="badge-pastel-success">Vigente</span>
+                  {% else %}
+                    <span class="badge-pastel-danger">Vencido</span>
+                  {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                  <span class="text-muted d-block small">Fecha de Vencimiento</span>
+                  <span class="fs-6 fw-medium text-dark">{{ v.soat_vencimiento.strftime('%d %b, %Y') }}</span>
+                </div>
+                
+                <div class="mt-auto pt-3 border-top border-light">
+                  {% if v.soat_pdf %}
+                    <a href="{{ url_for('static', filename=v.soat_pdf) }}" target="_blank" class="btn btn-sm btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2 rounded-3">
+                      <i class="bi bi-file-earmark-pdf-fill text-danger"></i> Ver Documento Adjunto
+                    </a>
+                  {% else %}
+                    <div class="text-muted small text-center"><i class="bi bi-info-circle me-1"></i> Sin PDF adjunto</div>
+                  {% endif %}
+                </div>
               </div>
             </div>
+            
             <div class="col-md-6">
-              <div class="estado-doc">
-                <h6>Tecnomecánica</h6>
-                <p class="mb-1">Vence: {{ v.tecno_vencimiento.strftime('%Y-%m-%d') }}</p>
-                {% if v.tecno_vencimiento >= fecha_hoy %}
-                  <span class="badge bg-success-subtle text-success">Vigente</span>
-                {% else %}
-                  <span class="badge bg-danger-subtle text-danger">Vencido</span>
-                {% endif %}
+              <div class="estado-doc d-flex flex-column h-100">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="bg-light rounded p-2 text-dark"><i class="bi bi-tools fs-5"></i></div>
+                    <h6 class="mb-0 fs-5">Tecnomecánica</h6>
+                  </div>
+                  {% if v.tecno_vencimiento >= fecha_hoy %}
+                    <span class="badge-pastel-success">Vigente</span>
+                  {% else %}
+                    <span class="badge-pastel-danger">Vencido</span>
+                  {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                  <span class="text-muted d-block small">Fecha de Vencimiento</span>
+                  <span class="fs-6 fw-medium text-dark">{{ v.tecno_vencimiento.strftime('%d %b, %Y') }}</span>
+                </div>
+                
+                <div class="mt-auto pt-3 border-top border-light">
+                  {% if v.tecno_pdf %}
+                    <a href="{{ url_for('static', filename=v.tecno_pdf) }}" target="_blank" class="btn btn-sm btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2 rounded-3">
+                      <i class="bi bi-file-earmark-pdf-fill text-danger"></i> Ver Documento Adjunto
+                    </a>
+                  {% else %}
+                    <div class="text-muted small text-center"><i class="bi bi-info-circle me-1"></i> Sin PDF adjunto</div>
+                  {% endif %}
+                </div>
               </div>
             </div>
           </div>
 
           <!-- ACCIONES -->
-          <div class="d-flex flex-wrap mt-4 acciones-btns">
-            <button class="btn btn-outline-dark" data-bs-toggle="modal"
-              data-bs-target="#detalleVehiculoModal{{ v.id_vehiculo }}"><i class="bi bi-search"></i> Ver Detalles</button>
-            <button class="btn btn-outline-primary" data-bs-toggle="modal"
-              data-bs-target="#editarVehiculoModal{{ v.id_vehiculo }}"><i class="bi bi-pencil-square"></i> Editar</button>
-            <form method="POST" action="{{ url_for('vehiculos.delete_vehiculo', id=v.id_vehiculo) }}"
-              onsubmit="return confirm('¿Seguro que quieres eliminar {{ v.placa }}?');">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn btn-outline-danger"><i class="bi bi-trash3"></i> Eliminar</button>
+          <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top border-light">
+            <button class="btn btn-outline-secondary btn-action" data-bs-toggle="modal" data-bs-target="#detalleVehiculoModal{{ v.id_vehiculo }}">
+              <i class="bi bi-eye"></i> Ver Detalles
+            </button>
+            <button class="btn btn-outline-primary btn-action" data-bs-toggle="modal" data-bs-target="#editarVehiculoModal{{ v.id_vehiculo }}">
+              <i class="bi bi-pencil"></i> Editar
+            </button>
+            <form method="POST" action="{{ url_for('vehiculos.delete_vehiculo', id=v.id_vehiculo) }}" onsubmit="return confirm('¿Seguro que quieres eliminar {{ v.placa }}?');" class="m-0">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-outline-danger btn-action">
+                <i class="bi bi-trash"></i> Eliminar
+              </button>
             </form>
           </div>
         </div>
