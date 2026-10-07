@@ -414,10 +414,43 @@
                   <strong class="d-block">{{ v.placa }}</strong>
                   <span class="small text-muted">{{ v.documento }}</span>
                 </div>
-                <span class="badge bg-danger-subtle text-danger border border-danger">
-                  Vencido (hace {{ v.dias_pasados }} d)
-                </span>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge bg-danger-subtle text-danger border border-danger">
+                    Vencido (hace {{ v.dias_pasados }} d)
+                  </span>
+                  <button type="button" class="btn btn-outline-primary btn-sm px-2 py-1" data-bs-toggle="modal" data-bs-target="#modalRenovar{{ v.vehiculo_id }}_{{ v.tipo_doc }}" title="Renovar">
+                    <i class="bi bi-arrow-repeat"></i>
+                  </button>
+                </div>
               </li>
+              
+              <!-- Modal de Renovación Rápida -->
+              <div class="modal fade" id="modalRenovar{{ v.vehiculo_id }}_{{ v.tipo_doc }}" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                  <form action="{{ url_for('dashboard.renovar_documento_vehiculo', vehiculo_id=v.vehiculo_id) }}" method="POST" enctype="multipart/form-data" class="modal-content">
+                    <div class="modal-header border-0">
+                      <h5 class="modal-title fw-bold">Renovar {{ v.tipo_doc }} — {{ v.placa }}</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input type="hidden" name="tipo_documento" value="{{ v.tipo_doc }}">
+                      <div class="mb-3">
+                        <label class="form-label fw-bold">Nueva Fecha de Vencimiento</label>
+                        <input type="date" class="form-control" name="nueva_fecha" required>
+                      </div>
+                      <div class="mb-3">
+                        <label class="form-label fw-bold">Adjuntar PDF de Soporte</label>
+                        <input type="file" class="form-control" name="archivo_pdf" accept=".pdf" required>
+                      </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                      <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                      <button type="submit" class="btn btn-primary">Guardar Renovación</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
               {% endfor %}
               
               {% for v in vehiculos_por_vencer %}
@@ -426,10 +459,43 @@
                   <strong class="d-block">{{ v.placa }}</strong>
                   <span class="small text-muted">{{ v.documento }}</span>
                 </div>
-                <span class="badge bg-warning-subtle text-warning border border-warning">
-                  En {{ v.dias_restantes }} d
-                </span>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge bg-warning-subtle text-warning border border-warning">
+                    En {{ v.dias_restantes }} d
+                  </span>
+                  <button type="button" class="btn btn-outline-primary btn-sm px-2 py-1" data-bs-toggle="modal" data-bs-target="#modalRenovar{{ v.vehiculo_id }}_{{ v.tipo_doc }}" title="Renovar">
+                    <i class="bi bi-arrow-repeat"></i>
+                  </button>
+                </div>
               </li>
+              
+              <!-- Modal de Renovación Rápida -->
+              <div class="modal fade" id="modalRenovar{{ v.vehiculo_id }}_{{ v.tipo_doc }}" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                  <form action="{{ url_for('dashboard.renovar_documento_vehiculo', vehiculo_id=v.vehiculo_id) }}" method="POST" enctype="multipart/form-data" class="modal-content">
+                    <div class="modal-header border-0">
+                      <h5 class="modal-title fw-bold">Renovar {{ v.tipo_doc }} — {{ v.placa }}</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input type="hidden" name="tipo_documento" value="{{ v.tipo_doc }}">
+                      <div class="mb-3">
+                        <label class="form-label fw-bold">Nueva Fecha de Vencimiento</label>
+                        <input type="date" class="form-control" name="nueva_fecha" required>
+                      </div>
+                      <div class="mb-3">
+                        <label class="form-label fw-bold">Adjuntar PDF de Soporte</label>
+                        <input type="file" class="form-control" name="archivo_pdf" accept=".pdf" required>
+                      </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                      <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                      <button type="submit" class="btn btn-primary">Guardar Renovación</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
               {% endfor %}
             </ul>
           {% else %}
@@ -754,10 +820,43 @@
                   <strong class="d-block">{{ v.placa }}</strong>
                   <span class="small text-muted">{{ v.documento }}</span>
                 </div>
-                <span class="badge bg-danger-subtle text-danger border border-danger">
-                  Vencido (hace {{ v.dias_pasados }} d)
-                </span>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge bg-danger-subtle text-danger border border-danger">
+                    Vencido (hace {{ v.dias_pasados }} d)
+                  </span>
+                  <button type="button" class="btn btn-outline-primary btn-sm px-2 py-1" data-bs-toggle="modal" data-bs-target="#modalRenovar{{ v.vehiculo_id }}_{{ v.tipo_doc }}" title="Renovar">
+                    <i class="bi bi-arrow-repeat"></i>
+                  </button>
+                </div>
               </li>
+              
+              <!-- Modal de Renovación Rápida -->
+              <div class="modal fade" id="modalRenovar{{ v.vehiculo_id }}_{{ v.tipo_doc }}" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                  <form action="{{ url_for('dashboard.renovar_documento_vehiculo', vehiculo_id=v.vehiculo_id) }}" method="POST" enctype="multipart/form-data" class="modal-content">
+                    <div class="modal-header border-0">
+                      <h5 class="modal-title fw-bold">Renovar {{ v.tipo_doc }} — {{ v.placa }}</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input type="hidden" name="tipo_documento" value="{{ v.tipo_doc }}">
+                      <div class="mb-3">
+                        <label class="form-label fw-bold">Nueva Fecha de Vencimiento</label>
+                        <input type="date" class="form-control" name="nueva_fecha" required>
+                      </div>
+                      <div class="mb-3">
+                        <label class="form-label fw-bold">Adjuntar PDF de Soporte</label>
+                        <input type="file" class="form-control" name="archivo_pdf" accept=".pdf" required>
+                      </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                      <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                      <button type="submit" class="btn btn-primary">Guardar Renovación</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
               {% endfor %}
               
               {% for v in vehiculos_por_vencer %}
@@ -766,10 +865,43 @@
                   <strong class="d-block">{{ v.placa }}</strong>
                   <span class="small text-muted">{{ v.documento }}</span>
                 </div>
-                <span class="badge bg-warning-subtle text-warning border border-warning">
-                  En {{ v.dias_restantes }} d
-                </span>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge bg-warning-subtle text-warning border border-warning">
+                    En {{ v.dias_restantes }} d
+                  </span>
+                  <button type="button" class="btn btn-outline-primary btn-sm px-2 py-1" data-bs-toggle="modal" data-bs-target="#modalRenovar{{ v.vehiculo_id }}_{{ v.tipo_doc }}" title="Renovar">
+                    <i class="bi bi-arrow-repeat"></i>
+                  </button>
+                </div>
               </li>
+              
+              <!-- Modal de Renovación Rápida -->
+              <div class="modal fade" id="modalRenovar{{ v.vehiculo_id }}_{{ v.tipo_doc }}" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                  <form action="{{ url_for('dashboard.renovar_documento_vehiculo', vehiculo_id=v.vehiculo_id) }}" method="POST" enctype="multipart/form-data" class="modal-content">
+                    <div class="modal-header border-0">
+                      <h5 class="modal-title fw-bold">Renovar {{ v.tipo_doc }} — {{ v.placa }}</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input type="hidden" name="tipo_documento" value="{{ v.tipo_doc }}">
+                      <div class="mb-3">
+                        <label class="form-label fw-bold">Nueva Fecha de Vencimiento</label>
+                        <input type="date" class="form-control" name="nueva_fecha" required>
+                      </div>
+                      <div class="mb-3">
+                        <label class="form-label fw-bold">Adjuntar PDF de Soporte</label>
+                        <input type="file" class="form-control" name="archivo_pdf" accept=".pdf" required>
+                      </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                      <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                      <button type="submit" class="btn btn-primary">Guardar Renovación</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
               {% endfor %}
             </ul>
           {% else %}

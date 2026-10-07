@@ -14,9 +14,19 @@ from frases import frase_del_dia
 from decorators import login_required, admin_required, admin_encargado_required, admin_bodega_required, admin_oficina_required
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload, selectinload
+from flask import current_app
+import uuid
 
 # Creamos el blueprint
 dashboard_bp = Blueprint("dashboard", __name__)
+
+def save_renovacion_pdf(archivo, placa, tipo_doc):
+    ext = archivo.filename.rsplit('.', 1)[-1].lower()
+    filename = secure_filename(f"{placa}_{tipo_doc}_{uuid.uuid4().hex[:8]}.{ext}")
+    upload_path = os.path.join(current_app.root_path, 'static', 'uploads', 'vehiculos')
+    os.makedirs(upload_path, exist_ok=True)
+    archivo.save(os.path.join(upload_path, filename))
+    return f"uploads/vehiculos/{filename}"
 
 # -----------------------------
 # INICIO / HOME
@@ -332,8 +342,10 @@ def dashboard_oficina():
             fecha_urgente = min(fechas_v) if fechas_v else hoy
             dias = (hoy - fecha_urgente).days
             vehiculos_vencidos.append({
+                "vehiculo_id": v.id_vehiculo,
                 "placa": v.placa,
                 "documento": doc,
+                "tipo_doc": "SOAT" if soat_vencido and not tecno_vencida else ("TECNOMECANICA" if tecno_vencida and not soat_vencido else "SOAT"),
                 "fecha": fecha_urgente,
                 "dias_pasados": dias
             })
@@ -348,8 +360,10 @@ def dashboard_oficina():
             fecha_urgente = min(fechas_p) if fechas_p else hoy
             dias = (fecha_urgente - hoy).days
             vehiculos_por_vencer.append({
+                "vehiculo_id": v.id_vehiculo,
                 "placa": v.placa,
                 "documento": doc,
+                "tipo_doc": "SOAT" if soat_por_vencer and not tecno_por_vencer else ("TECNOMECANICA" if tecno_por_vencer and not soat_por_vencer else "SOAT"),
                 "fecha": fecha_urgente,
                 "dias_restantes": dias
             })
@@ -370,6 +384,35 @@ def dashboard_oficina():
         vehiculos_vencidos=vehiculos_vencidos,
         vehiculos_por_vencer=vehiculos_por_vencer
     )
+
+@dashboard_bp.route('/vehiculos/renovar-documento/<int:vehiculo_id>', methods=['POST'])
+@login_required
+@admin_oficina_required
+def renovar_documento_vehiculo(vehiculo_id):
+    from models import Vehiculos
+    vehiculo = Vehiculos.query.get_or_404(vehiculo_id)
+    tipo_doc = request.form.get('tipo_documento')  # 'SOAT' o 'TECNOMECANICA'
+    nueva_fecha = request.form.get('nueva_fecha')
+    archivo_pdf = request.files.get('archivo_pdf')
+
+    # 1. Actualizar fecha de vencimiento
+    if tipo_doc == 'SOAT':
+        vehiculo.soat_vencimiento = datetime.strptime(nueva_fecha, '%Y-%m-%d').date()
+    elif tipo_doc == 'TECNOMECANICA':
+        vehiculo.tecno_vencimiento = datetime.strptime(nueva_fecha, '%Y-%m-%d').date()
+
+    # 2. Guardar archivo PDF si se proporciona
+    if archivo_pdf and archivo_pdf.filename != '':
+        # Utilizar la lógica habitual del proyecto para guardar adjuntos/archivos seguros en /static/uploads
+        filename = save_renovacion_pdf(archivo_pdf, vehiculo.placa, tipo_doc)
+        if tipo_doc == 'SOAT':
+            vehiculo.soat_pdf = filename
+        elif tipo_doc == 'TECNOMECANICA':
+            vehiculo.tecno_pdf = filename
+
+    db.session.commit()
+    flash(f'{tipo_doc} de vehículo {vehiculo.placa} renovado con éxito.', 'success')
+    return redirect(url_for('dashboard.dashboard_oficina'))
 
 # -----------------------------
 # DASHBOARD DE OFICINA -> MATERIALES
