@@ -129,6 +129,14 @@
         background-color: transparent; 
         padding: 1.5rem;
     }
+
+    /* Modal Backdrop Fixes */
+    .modal-backdrop {
+        z-index: 1050 !important;
+    }
+    .modal {
+        z-index: 1060 !important;
+    }
   </style>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-' + cliente + '.css') }}">
 </head>
@@ -307,9 +315,85 @@
       </div>
     </div>
 
+    {% endfor %}
+  </div>
+  {% else %}
+    <div class="alert alert-info mt-3 text-center">No hay vehículos registrados.</div>
+  {% endif %}
+
+</div>
+</div>
+
+<!-- ======================= MODALES (FUERA DEL CONTENEDOR PRINCIPAL PARA Z-INDEX) ======================= -->
+
+<!-- MODAL CREAR -->
+<div class="modal fade" id="nuevoVehiculoModal" tabindex="-1" aria-labelledby="nuevoVehiculoModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content p-3 rounded-4 shadow">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold">Agregar Nuevo Vehículo</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form action="{{ url_for('vehiculos.nuevo_vehiculo') }}" method="POST" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Placa</label>
+              <input type="text" name="placa" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Marca</label>
+              <input type="text" name="marca" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Modelo</label>
+              <input type="text" name="modelo" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Estado</label>
+              <select name="estado" class="form-select">
+                <option>Disponible</option>
+                <option>En uso</option>
+                <option>Mantenimiento</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">SOAT Vencimiento</label>
+              <input type="date" name="soat_vencimiento" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Tecno Vencimiento</label>
+              <input type="date" name="tecno_vencimiento" class="form-control" required>
+            </div>
+          </div>
+          
+          <div class="row g-3 mt-1">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Documento SOAT (PDF)</label>
+              <input type="file" class="form-control" name="soat_pdf" accept=".pdf">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Documento Tecnomecánica (PDF)</label>
+              <input type="file" class="form-control" name="tecno_pdf" accept=".pdf">
+            </div>
+          </div>
+          <div class="text-end mt-3">
+            <button type="submit" class="btn btn-outline-success"><i class="bi bi-floppy"></i> Guardar Vehículo</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if vehiculos_info %}
+  {% for item in vehiculos_info %}
+    {% set v = item.vehiculo %}
+    {% set proyecto_nombre = item.proyecto %}
+    
     <!-- MODAL EDITAR -->
-    <div class="modal fade" id="editarVehiculoModal{{ v.id_vehiculo }}" tabindex="-1"
-      aria-labelledby="editarVehiculoModalLabel{{ v.id_vehiculo }}" aria-hidden="true">
+    <div class="modal fade" id="editarVehiculoModal{{ v.id_vehiculo }}" tabindex="-1" aria-labelledby="editarVehiculoModalLabel{{ v.id_vehiculo }}" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content p-3 rounded-4 shadow">
           <div class="modal-header border-0">
@@ -318,7 +402,7 @@
           </div>
           <div class="modal-body">
             <form action="{{ url_for('vehiculos.editar_vehiculo', id=v.id_vehiculo) }}" method="POST" enctype="multipart/form-data">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <div class="row g-3">
                 <div class="col-md-6">
                   <label class="form-label">Placa</label>
@@ -342,13 +426,11 @@
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">SOAT Vencimiento</label>
-                  <input type="date" name="soat_vencimiento" class="form-control"
-                    value="{{ v.soat_vencimiento.strftime('%Y-%m-%d') }}" required>
+                  <input type="date" name="soat_vencimiento" class="form-control" value="{{ v.soat_vencimiento.strftime('%Y-%m-%d') }}" required>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Tecno Vencimiento</label>
-                  <input type="date" name="tecno_vencimiento" class="form-control"
-                    value="{{ v.tecno_vencimiento.strftime('%Y-%m-%d') }}" required>
+                  <input type="date" name="tecno_vencimiento" class="form-control" value="{{ v.tecno_vencimiento.strftime('%Y-%m-%d') }}" required>
                 </div>
               </div>
               
@@ -377,141 +459,118 @@
       </div>
     </div>
 
-    <!-- MODAL DETALLE -->
-    <div class="modal fade" id="detalleVehiculoModal{{ v.id_vehiculo }}" tabindex="-1"
-      aria-labelledby="detalleVehiculoLabel{{ v.id_vehiculo }}" aria-hidden="true">
+    <!-- MODAL DETALLE (REDISEÑADO) -->
+    <div class="modal fade" id="detalleVehiculoModal{{ v.id_vehiculo }}" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content p-4 rounded-4 shadow-lg border-0">
-          <div class="modal-header border-0 bg-primary text-white rounded-3">
-            <h5 class="modal-title fw-bold" id="detalleVehiculoLabel{{ v.id_vehiculo }}">
-              <i class="bi bi-car-front-fill"></i> {{ v.placa }} — Detalles del Vehículo
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+          <div class="modal-header bg-white align-items-center" style="border-bottom: 1px solid #e2e8f0; padding: 1.25rem 1.5rem;">
+            <h5 class="modal-title fw-bold m-0 d-flex align-items-center gap-2" style="color: #0f172a;">
+              <div class="bg-primary-subtle rounded p-2 d-flex align-items-center justify-content-center">
+                <i class="bi bi-car-front-fill text-primary"></i>
+              </div>
+              Detalles del Vehículo — {{ v.placa }}
             </h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" style="min-width: 44px; min-height: 44px;"></button>
           </div>
-          <div class="modal-body">
-            <p class="text-muted mb-3">Información general y estado actual del vehículo.</p>
-            <div class="row g-3">
+          
+          <div class="modal-body p-4 bg-white">
+            <div class="row g-4">
+              <!-- Tarjeta 1: Datos Generales -->
               <div class="col-md-6">
-                <h6 class="fw-bold text-secondary">Información General</h6>
-                <p><strong>Placa:</strong> {{ v.placa }}</p>
-                <p><strong>Marca:</strong> {{ v.marca }}</p>
-                <p><strong>Modelo:</strong> {{ v.modelo }}</p>
+                <div class="p-4 h-100" style="background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                  <h6 class="fw-bold mb-4 text-secondary"><i class="bi bi-info-circle me-2"></i> Información General</h6>
+                  
+                  <div class="mb-3">
+                    <span class="text-muted small d-block">Placa</span>
+                    <span class="fs-5 fw-bold text-dark">{{ v.placa }}</span>
+                  </div>
+                  <div class="mb-3">
+                    <span class="text-muted small d-block">Marca / Modelo</span>
+                    <span class="fw-medium text-dark">{{ v.marca }} {{ v.modelo }}</span>
+                  </div>
+                  <div class="mb-3">
+                    <span class="text-muted small d-block">Estado Actual</span>
+                    <span class="badge-pastel-success mt-1 {% if v.estado != 'Disponible' %} badge-pastel-danger {% endif %}">
+                      {{ v.estado }}
+                    </span>
+                  </div>
+                  <div>
+                    <span class="text-muted small d-block">Proyecto Asignado</span>
+                    <span class="fw-medium text-dark">
+                      {% if proyecto_nombre != 'Sin asignar' %}
+                        {{ proyecto_nombre }}
+                      {% else %}
+                        Sin asignar
+                      {% endif %}
+                    </span>
+                  </div>
+                </div>
               </div>
+              
+              <!-- Tarjeta 2: Documentos -->
               <div class="col-md-6">
-                <h6 class="fw-bold text-secondary">Estado Actual</h6>
-                <p><strong>Estado:</strong>
-                  <span class="badge 
-                    {% if v.estado == 'Disponible' %} bg-success-subtle text-success
-                    {% elif v.estado == 'En uso' %} bg-warning text-dark
-                    {% elif v.estado == 'Mantenimiento' %} bg-secondary
-                    {% else %} bg-light text-dark {% endif %}">
-                    {{ v.estado }}
-                  </span>
-                </p>
-                <p><strong>Documentos:</strong>
-                  {% if v.documentos_al_dia %}
-                    <span class="badge bg-success-subtle text-success">Al día</span>
-                  {% else %}
-                    <span class="badge bg-danger-subtle text-danger">Pendientes</span>
-                  {% endif %}
-                </p>
+                <div class="p-4 h-100" style="background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                  <h6 class="fw-bold mb-4 text-secondary"><i class="bi bi-folder2-open me-2"></i> Documentación</h6>
+                  
+                  <!-- SOAT -->
+                  <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <span class="fw-bold text-dark">SOAT</span>
+                      {% if v.soat_vencimiento >= fecha_hoy %}
+                        <span class="badge-pastel-success">Vigente</span>
+                      {% else %}
+                        <span class="badge-pastel-danger">Vencido</span>
+                      {% endif %}
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span class="text-muted small">Vence: {{ v.soat_vencimiento.strftime('%d %b, %Y') }}</span>
+                      {% if v.soat_pdf %}
+                        <a href="{{ url_for('static', filename=v.soat_pdf) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 btn-action" style="min-height: auto;">
+                          <i class="bi bi-file-earmark-pdf"></i> Ver PDF
+                        </a>
+                      {% endif %}
+                    </div>
+                  </div>
+                  
+                  <hr class="border-secondary opacity-25">
+                  
+                  <!-- Tecnomecánica -->
+                  <div class="mt-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <span class="fw-bold text-dark">Tecnomecánica</span>
+                      {% if v.tecno_vencimiento >= fecha_hoy %}
+                        <span class="badge-pastel-success">Vigente</span>
+                      {% else %}
+                        <span class="badge-pastel-danger">Vencido</span>
+                      {% endif %}
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span class="text-muted small">Vence: {{ v.tecno_vencimiento.strftime('%d %b, %Y') }}</span>
+                      {% if v.tecno_pdf %}
+                        <a href="{{ url_for('static', filename=v.tecno_pdf) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 btn-action" style="min-height: auto;">
+                          <i class="bi bi-file-earmark-pdf"></i> Ver PDF
+                        </a>
+                      {% endif %}
+                    </div>
+                  </div>
+                  
+                </div>
               </div>
             </div>
-            <hr>
-            <h6 class="fw-bold text-secondary mt-3"><i class="bi bi-calendar-week"></i> Vencimientos de Documentos</h6>
-            <ul class="list-unstyled mb-0">
-              <li class="mb-2"><i class="bi bi-envelope-paper-fill"></i> <strong>SOAT:</strong> vence el {{ v.soat_vencimiento.strftime('%Y-%m-%d') }}
-                {% if v.soat_vencimiento >= fecha_hoy %}
-                  <span class="badge bg-success-subtle text-success">Vigente</span>
-                {% else %}
-                  <span class="badge bg-danger-subtle text-danger">Vencido</span>
-                {% endif %}
-              </li>
-              <li><i class="bi bi-envelope-paper-fill"></i> <strong>Tecnomecánica:</strong> vence el {{ v.tecno_vencimiento.strftime('%Y-%m-%d') }}
-                {% if v.tecno_vencimiento >= fecha_hoy %}
-                  <span class="badge bg-success-subtle text-success">Vigente</span>
-                {% else %}
-                  <span class="badge bg-danger-subtle text-danger">Vencido</span>
-                {% endif %}
-              </li>
-            </ul>
           </div>
-          <div class="modal-footer border-0">
-            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+          
+          <div class="modal-footer bg-white border-0" style="padding: 1.25rem 1.5rem;">
+            <button type="button" class="btn btn-light btn-action text-dark" data-bs-dismiss="modal">Cerrar</button>
+            <button type="button" class="btn btn-primary btn-action" data-bs-toggle="modal" data-bs-target="#editarVehiculoModal{{ v.id_vehiculo }}">
+              <i class="bi bi-pencil"></i> Editar Vehículo
+            </button>
           </div>
         </div>
       </div>
     </div>
-    {% endfor %}
-  </div>
-  {% else %}
-    <div class="alert alert-info mt-3 text-center">No hay vehículos registrados.</div>
-  {% endif %}
+  {% endfor %}
+{% endif %}
 
-  <!-- MODAL CREAR -->
-  <div class="modal fade" id="nuevoVehiculoModal" tabindex="-1"
-    aria-labelledby="nuevoVehiculoModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content p-3 rounded-4 shadow">
-        <div class="modal-header border-0">
-          <h5 class="modal-title fw-bold">Agregar Nuevo Vehículo</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <form action="{{ url_for('vehiculos.nuevo_vehiculo') }}" method="POST" enctype="multipart/form-data">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label">Placa</label>
-                <input type="text" name="placa" class="form-control" required>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Marca</label>
-                <input type="text" name="marca" class="form-control" required>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Modelo</label>
-                <input type="text" name="modelo" class="form-control" required>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Estado</label>
-                <select name="estado" class="form-select">
-                  <option>Disponible</option>
-                  <option>En uso</option>
-                  <option>Mantenimiento</option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">SOAT Vencimiento</label>
-                <input type="date" name="soat_vencimiento" class="form-control" required>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Tecno Vencimiento</label>
-                <input type="date" name="tecno_vencimiento" class="form-control" required>
-              </div>
-            </div>
-            
-            <div class="row g-3 mt-1">
-              <div class="col-md-6">
-                <label class="form-label fw-bold">Documento SOAT (PDF)</label>
-                <input type="file" class="form-control" name="soat_pdf" accept=".pdf">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label fw-bold">Documento Tecnomecánica (PDF)</label>
-                <input type="file" class="form-control" name="tecno_pdf" accept=".pdf">
-              </div>
-            </div>
-            <div class="text-end mt-3">
-              <button type="submit" class="btn btn-outline-success"><i class="bi bi-floppy"></i> Guardar Vehículo</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
-</div>
-</div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{{ url_for('static', filename='js/formatos.js') }}"></script>
