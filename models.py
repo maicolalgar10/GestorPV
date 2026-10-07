@@ -267,6 +267,10 @@ class Vehiculos(db.Model):
     documentos_al_dia = db.Column(db.Boolean, default=True)
     soat_vencimiento = db.Column(db.Date, nullable=False)
     tecno_vencimiento = db.Column(db.Date, nullable=False)
+    
+    soat_pdf = db.Column(db.String(255), nullable=True)
+    tecno_pdf = db.Column(db.String(255), nullable=True)
+
     estado = db.Column(db.Enum('Disponible', 'En uso', 'Mantenimiento', name='estado_vehiculo_enum'), default='Disponible')
 
     updated_at = db.Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

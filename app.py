@@ -167,6 +167,18 @@ def create_app():
     def inject_cliente():
         return dict(cliente=os.environ.get("CLIENTE", "corseing"))
 
+    # Auto-DDL fallback: Asegurar columnas soat_pdf y tecno_pdf
+    with app.app_context():
+        from sqlalchemy import text
+        try:
+            db.session.execute(text("ALTER TABLE vehiculos ADD COLUMN IF NOT EXISTS soat_pdf VARCHAR(255);"))
+            db.session.execute(text("ALTER TABLE vehiculos ADD COLUMN IF NOT EXISTS tecno_pdf VARCHAR(255);"))
+            db.session.commit()
+            print("[Auto-DDL] Columnas PDF de vehiculos validadas/creadas con éxito.")
+        except Exception as e:
+            db.session.rollback()
+            print(f"[Auto-DDL] Error verificando/creando columnas: {e}")
+
     return app
 
 
