@@ -11,11 +11,27 @@ import uuid
 from werkzeug.utils import secure_filename
 from flask import current_app
 
+from supabase_client import supabase
+import mimetypes
+
 def save_vehiculo_pdf(archivo, placa, tipo_doc):
-    ext = archivo.filename.rsplit('.', 1)[-1].lower()
+    ext = archivo.filename.rsplit('.', 1)[-1].lower() if '.' in archivo.filename else 'pdf'
     filename = secure_filename(f"{placa}_{tipo_doc}_{uuid.uuid4().hex[:8]}.{ext}")
+    
+    if supabase:
+        try:
+            file_bytes = archivo.read()
+            content_type = mimetypes.guess_type(archivo.filename)[0] or "application/pdf"
+            supabase.storage.from_("uploads").upload(f"vehiculos/{filename}", file_bytes, {"content-type": content_type})
+            public_url = supabase.storage.from_("uploads").get_public_url(f"vehiculos/{filename}")
+            return public_url
+        except Exception as e:
+            print("Error al subir archivo a Supabase:", e)
+            
+    # Fallback local
     upload_path = os.path.join(current_app.root_path, 'static', 'uploads', 'vehiculos')
     os.makedirs(upload_path, exist_ok=True)
+    archivo.seek(0)
     archivo.save(os.path.join(upload_path, filename))
     return f"uploads/vehiculos/{filename}"
 
