@@ -62,9 +62,19 @@ def safe_float(value, default=0.0):
         return default
     if isinstance(value, (int, float)):
         return float(value)
+    
+    val_str = str(value).strip().replace('$', '').replace('%', '').replace(' ', '')
+    if not val_str:
+        return default
+        
+    # Si hay coma y punto, asumimos formato colombiano (ej: 1.234,56)
+    if ',' in val_str and '.' in val_str:
+        val_str = val_str.replace('.', '').replace(',', '.')
+    elif ',' in val_str:
+        # Si solo hay coma (ej: 0,82), la convertimos a punto
+        val_str = val_str.replace(',', '.')
+        
     try:
-        # Limpia espacios y convierte coma decimal a punto
-        cleaned = str(value).replace(',', '.').strip()
-        return float(cleaned) if cleaned else default
+        return float(val_str)
     except (ValueError, TypeError):
         return default
