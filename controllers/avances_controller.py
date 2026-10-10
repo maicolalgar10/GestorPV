@@ -485,11 +485,15 @@ def exportar_informe_excel(id_proyecto):
                 elif c == "Fecha": fila_datos.append(fecha_str)
                 elif c == "Trayecto": fila_datos.append(avance.trayecto if avance.trayecto else "-")
                 elif c == "Calzada": fila_datos.append(avance.calzada if avance.calzada else "-")
-                elif c == "Carril": fila_datos.append(avance.carril if avance.carril else "-")
+                elif c == "Carril": 
+                    val = avance.carril or avance.margen
+                    fila_datos.append(val if val else "-")
                 elif c == "Ubicación PR": fila_datos.append(avance.ubicacion_pr if avance.ubicacion_pr else "-")
                 elif c == "PR Inicio": fila_datos.append(avance.pr_inicio if avance.pr_inicio else "-")
                 elif c == "PR Fin": fila_datos.append(avance.pr_fin if avance.pr_fin else "-")
-                elif c == "Margen": fila_datos.append(avance.margen if avance.margen else "-")
+                elif c == "Margen": 
+                    val = avance.margen or avance.carril
+                    fila_datos.append(val if val else "-")
                 elif c == "Tipo": fila_datos.append(avance.tipo if avance.tipo else "-")
                 elif c == "Elemento": fila_datos.append(avance.elemento if avance.elemento else "-")
                 elif c == "Tamaño": fila_datos.append(avance.tamano if avance.tamano else "-")

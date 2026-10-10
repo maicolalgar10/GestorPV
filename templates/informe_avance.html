@@ -117,7 +117,7 @@
             <div class="row g-2">
               <div class="col-md-3"><strong>Trayecto:</strong> {{ avance.trayecto or "—" }}</div>
               <div class="col-md-3"><strong>Calzada:</strong> {{ avance.calzada or "—" }}</div>
-              <div class="col-md-3"><strong>Carril:</strong> {{ avance.carril or "—" }}</div>
+              <div class="col-md-3"><strong>Carril / Margen:</strong> {{ avance.carril or avance.margen or "—" }}</div>
               <div class="col-md-3"><strong>Ubicación PR:</strong> {{ avance.ubicacion_pr or "—" }}</div>
 
               <div class="col-md-4"><strong>Tipo:</strong> {{ avance.tipo or "—" }}</div>
