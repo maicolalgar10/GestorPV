@@ -305,23 +305,22 @@ def exportar_informe_excel(id_proyecto):
 
     proyecto = Proyectos.query.get_or_404(id_proyecto)
 
-    # Use write_only=True to prevent holding the workbook structure in memory
-    wb = Workbook(write_only=True)
+    # Usar Workbook normal para prevenir que se cierre el stream I/O prematuramente
+    wb = Workbook()
+    if "Sheet" in wb.sheetnames:
+        del wb["Sheet"]
     
     # Estilos
     header_font = Font(bold=True, color="FFFFFF")
     header_fill = PatternFill("solid", fgColor="4F81BD")
     align_center = Alignment(horizontal="center", vertical="center", wrap_text=True)
 
-    def style_row(ws, values):
-        row = []
-        for v in values:
-            c = WriteOnlyCell(ws, value=v)
+    def append_styled_header(ws, values):
+        ws.append(values)
+        for c in ws[ws.max_row]:
             c.font = header_font
             c.fill = header_fill
             c.alignment = align_center
-            row.append(c)
-        return row
 
     def get_columns_by_tipo(tipo_unidad):
         tipo = (tipo_unidad or "").lower()
@@ -434,7 +433,7 @@ def exportar_informe_excel(id_proyecto):
     sheet_global.append(["Proyecto:", proyecto.nombre])
     sheet_global.append(["Descripción:", proyecto.descripcion or ""])
     sheet_global.append([])
-    sheet_global.append(style_row(sheet_global, headers_global))
+    append_styled_header(sheet_global, headers_global)
 
     # Usamos yield_per(100) para procesar en bloques (streaming de la DB)
     row_global_idx = 5
@@ -464,7 +463,7 @@ def exportar_informe_excel(id_proyecto):
         
         cols = get_columns_by_tipo(tipo_unidad)
         ws_tipo.append([f"Detalle de Avances - {tipo_nombre}"])
-        ws_tipo.append(style_row(ws_tipo, cols))
+        append_styled_header(ws_tipo, cols)
 
         if tipo_unidad is None:
             q_tipo = avances_query.filter(Actividades.tipo_unidad.is_(None))
@@ -513,21 +512,14 @@ def exportar_informe_excel(id_proyecto):
             ws_tipo.append(fila_datos)
             row_tipo_idx += 1
 
-    # 💾 Guardar usando NamedTemporaryFile para evitar cargar todo el XML en RAM
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
-    wb.save(temp_file.name)
+    # 💾 Guardar usando io.BytesIO de forma segura
+    output = BytesIO()
+    wb.save(output)
     wb.close()
-
-    @after_this_request
-    def remove_file(response):
-        try:
-            os.remove(temp_file.name)
-        except Exception as error:
-            print("Error eliminando archivo temporal:", error)
-        return response
+    output.seek(0)
 
     return send_file(
-        temp_file.name,
+        output,
         as_attachment=True,
         download_name=f"informe_avance_{proyecto.nombre}.xlsx",
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
