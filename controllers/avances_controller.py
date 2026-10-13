@@ -27,6 +27,7 @@ from openpyxl.utils import column_index_from_string
 from openpyxl.styles import Font, Alignment, PatternFill
 from openpyxl.utils import get_column_letter
 from sqlalchemy.orm import selectinload, joinedload
+from sqlalchemy import or_
 
 
 # Carpeta donde se guardarán las imágenes
@@ -261,18 +262,51 @@ def ver_informe_avance(id_proyecto):
 
     proyecto = Proyectos.query.get_or_404(id_proyecto)
 
-    avances = (
+    categoria_sel = request.args.get("categoria", "").strip()
+
+    # Obtener categorías únicas presentes en las actividades del proyecto
+    tipos_raw = (
+        db.session.query(Actividades.tipo_unidad)
+        .filter(Actividades.id_proyecto == id_proyecto)
+        .distinct()
+        .order_by(Actividades.tipo_unidad.asc())
+        .all()
+    )
+    categorias = [t[0] for t in tipos_raw if t[0]]
+    if any(t[0] is None or t[0] == "" for t in tipos_raw):
+        categorias.append("Otro")
+
+    query = (
         db.session.query(Avances, Actividades)
         .join(Actividades, Actividades.id_actividad == Avances.id_actividad)
         .filter(Actividades.id_proyecto == id_proyecto)
-        .order_by(Avances.fecha.desc())
-        .all()
     )
+
+    if categoria_sel and categoria_sel.lower() not in ("todos", "todas", "general"):
+        if categoria_sel.lower() in ("otro", "otros", "sin categoria", "sin categoría"):
+            query = query.filter(
+                or_(
+                    Actividades.tipo_unidad.is_(None),
+                    Actividades.tipo_unidad == "",
+                    Actividades.tipo_unidad.ilike("otro%")
+                )
+            )
+        else:
+            query = query.filter(
+                or_(
+                    Actividades.tipo_unidad == categoria_sel,
+                    Actividades.tipo_unidad.ilike(f"%{categoria_sel}%")
+                )
+            )
+
+    avances = query.order_by(Avances.fecha.desc()).all()
 
     return render_template(
         "informe_avance.html",
         proyecto=proyecto,
-        avances=avances
+        avances=avances,
+        categorias=categorias,
+        categoria_actual=categoria_sel
     )
 
 
@@ -298,12 +332,19 @@ def leer_notificacion(id_notificacion):
 # ===============================================================
 # Exportar informe de avance a Excel
 # ===============================================================
-@avances_bp.route("/informe/<int:id_proyecto>/excel")
+@avances_bp.route("/informe/<int:id_proyecto>/excel", defaults={"categoria": None})
+@avances_bp.route("/informe/<int:id_proyecto>/excel/<path:categoria>")
 @login_required
 @admin_required
-def exportar_informe_excel(id_proyecto):
+def exportar_informe_excel(id_proyecto, categoria=None):
 
     proyecto = Proyectos.query.get_or_404(id_proyecto)
+
+    if not categoria:
+        categoria = request.args.get("categoria")
+
+    categoria_str = (categoria or "").strip()
+    is_filtered = bool(categoria_str and categoria_str.lower() not in ("todos", "general", "todas"))
 
     # Usar Workbook normal para prevenir que se cierre el stream I/O prematuramente
     wb = Workbook()
@@ -335,19 +376,30 @@ def exportar_informe_excel(id_proyecto):
         else:
             return ['Actividad', 'Fecha', 'Trayecto', 'Calzada', 'Carril', 'Ubicación PR', 'Unidades Avanzadas', 'Comentario', 'Usuario', 'Evidencia']
 
+    # Cache en memoria de miniaturas procesadas para no repetir descargas ni transformaciones
+    miniaturas_cache = {}
+
     def descargar_imagen_on_demand(url_original):
+        if not url_original:
+            return None
+        if url_original in miniaturas_cache:
+            return miniaturas_cache[url_original]
+
         es_http = url_original.startswith('http')
         url_completa = url_original if es_http else request.host_url.rstrip('/') + url_for('static', filename=url_original)
         try:
             img_stream = None
             if not es_http:
-                ruta_local = os.path.join("static", url_original)
+                clean_path = url_original.replace('\\', '/')
+                if clean_path.startswith('static/'):
+                    clean_path = clean_path[7:]
+                ruta_local = os.path.join("static", clean_path)
                 if os.path.exists(ruta_local):
                     with open(ruta_local, 'rb') as f:
                         img_stream = BytesIO(f.read())
             
             if img_stream is None:
-                response = requests.get(url_completa, stream=True, timeout=3)
+                response = requests.get(url_completa, stream=True, timeout=2.5)
                 if response.status_code == 200:
                     img_stream = BytesIO(response.content)
 
@@ -358,9 +410,12 @@ def exportar_informe_excel(id_proyecto):
                     if pil_img.mode in ("RGBA", "P"):
                         pil_img = pil_img.convert("RGB")
                     pil_img.save(thumb_io, format='JPEG', quality=85)
-                    return thumb_io.getvalue()
+                    data = thumb_io.getvalue()
+                    miniaturas_cache[url_original] = data
+                    return data
         except Exception as e:
-            print(f"Error descargando miniatura {url_completa}:", e)
+            print(f"Error procesando miniatura {url_completa}:", e)
+        miniaturas_cache[url_original] = None
         return None
 
     def procesar_evidencia_miniatura(avance, ws, row_idx, col_letra):
@@ -379,7 +434,7 @@ def exportar_informe_excel(id_proyecto):
         margin_px = 10
         exito_incrustacion = False
 
-        urls_fila = [e.ruta_archivo for e in avance.evidencias]
+        urls_fila = [e.ruta_archivo for e in avance.evidencias if e.ruta_archivo]
         resultados_bytes = []
         
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
@@ -418,60 +473,49 @@ def exportar_informe_excel(id_proyecto):
         else:
             return "\n".join(texto_fallback) or "Sin imagen"
 
+    # Construir consulta base optimizada
     avances_query = (
         db.session.query(Avances, Actividades, Usuarios)
         .join(Actividades, Actividades.id_actividad == Avances.id_actividad)
         .outerjoin(Usuarios, Usuarios.id_usuario == Avances.id_usuario)
         .filter(Actividades.id_proyecto == id_proyecto)
         .options(selectinload(Avances.evidencias))
-        .order_by(Avances.fecha)
     )
 
-    # 1. Crear y llenar la hoja global
-    sheet_global = wb.create_sheet(title="Resumen Global")
-    headers_global = ["Actividad", "Tipo Unidad", "Fecha", "Usuario", "Comentario", "Total Unidades", "Evidencia"]
-    sheet_global.append(["Proyecto:", proyecto.nombre])
-    sheet_global.append(["Descripción:", proyecto.descripcion or ""])
-    sheet_global.append([])
-    append_styled_header(sheet_global, headers_global)
+    if is_filtered:
+        # Filtrar a nivel de base de datos para la categoría seleccionada
+        if categoria_str.lower() in ("otro", "otros", "sin categoria", "sin categoría"):
+            avances_query = avances_query.filter(
+                or_(
+                    Actividades.tipo_unidad.is_(None),
+                    Actividades.tipo_unidad == "",
+                    Actividades.tipo_unidad.ilike("otro%")
+                )
+            )
+        else:
+            avances_query = avances_query.filter(
+                or_(
+                    Actividades.tipo_unidad == categoria_str,
+                    Actividades.tipo_unidad.ilike(f"%{categoria_str}%")
+                )
+            )
 
-    # Usamos yield_per(100) para procesar en bloques (streaming de la DB)
-    row_global_idx = 5
-    for avance, actividad, usuario in avances_query.yield_per(100):
-        fecha_str = avance.fecha.strftime("%d/%m/%Y") if avance.fecha else ""
-        nombre_usuario = getattr(usuario, 'nombre', getattr(usuario, 'username', 'N/A')) if usuario else "N/A"
-        
-        texto_celda = procesar_evidencia_miniatura(avance, sheet_global, row_global_idx, 'G')
+        avances_query = avances_query.order_by(Avances.fecha.asc())
 
-        sheet_global.append([
-            actividad.nombre,
-            actividad.tipo_unidad or "Otro",
-            fecha_str,
-            nombre_usuario,
-            avance.mensaje or "",
-            avance.unidades_avanzadas or 0,
-            texto_celda
-        ])
-        row_global_idx += 1
-
-    # 2. Generar hojas específicas por tipo de unidad
-    tipos_db = db.session.query(Actividades.tipo_unidad).filter(Actividades.id_proyecto == id_proyecto).distinct().all()
-    
-    for (tipo_unidad,) in tipos_db:
-        tipo_nombre = tipo_unidad or "Otro"
+        # Crear hoja especializada única para esta categoría (ligera y directa)
+        tipo_nombre = categoria_str
         ws_tipo = wb.create_sheet(title=str(tipo_nombre)[:31])
-        
-        cols = get_columns_by_tipo(tipo_unidad)
-        ws_tipo.append([f"Detalle de Avances - {tipo_nombre}"])
+        cols = get_columns_by_tipo(tipo_nombre)
+
+        ws_tipo.append([f"Proyecto: {proyecto.nombre}"])
+        ws_tipo.append([f"Informe de Avances - Categoría: {tipo_nombre}"])
+        if proyecto.descripcion:
+            ws_tipo.append([f"Descripción: {proyecto.descripcion}"])
+        ws_tipo.append([])
         append_styled_header(ws_tipo, cols)
 
-        if tipo_unidad is None:
-            q_tipo = avances_query.filter(Actividades.tipo_unidad.is_(None))
-        else:
-            q_tipo = avances_query.filter(Actividades.tipo_unidad == tipo_unidad)
-
-        row_tipo_idx = 3
-        for avance, actividad, usuario in q_tipo.yield_per(100):
+        row_tipo_idx = ws_tipo.max_row + 1
+        for avance, actividad, usuario in avances_query.yield_per(100):
             fecha_str = avance.fecha.strftime("%d/%m/%Y") if avance.fecha else ""
             nombre_usuario = getattr(usuario, 'nombre', getattr(usuario, 'username', 'N/A')) if usuario else "N/A"
             
@@ -512,16 +556,108 @@ def exportar_informe_excel(id_proyecto):
             ws_tipo.append(fila_datos)
             row_tipo_idx += 1
 
+    else:
+        # Reporte General / Sin filtro: Genera Resumen Global y hojas por tipo
+        avances_query = avances_query.order_by(Avances.fecha.asc())
+
+        sheet_global = wb.create_sheet(title="Resumen Global")
+        headers_global = ["Actividad", "Tipo Unidad", "Fecha", "Usuario", "Comentario", "Total Unidades", "Evidencia"]
+        sheet_global.append(["Proyecto:", proyecto.nombre])
+        sheet_global.append(["Descripción:", proyecto.descripcion or ""])
+        sheet_global.append([])
+        append_styled_header(sheet_global, headers_global)
+
+        row_global_idx = 5
+        for avance, actividad, usuario in avances_query.yield_per(100):
+            fecha_str = avance.fecha.strftime("%d/%m/%Y") if avance.fecha else ""
+            nombre_usuario = getattr(usuario, 'nombre', getattr(usuario, 'username', 'N/A')) if usuario else "N/A"
+            
+            texto_celda = procesar_evidencia_miniatura(avance, sheet_global, row_global_idx, 'G')
+
+            sheet_global.append([
+                actividad.nombre,
+                actividad.tipo_unidad or "Otro",
+                fecha_str,
+                nombre_usuario,
+                avance.mensaje or "",
+                avance.unidades_avanzadas or 0,
+                texto_celda
+            ])
+            row_global_idx += 1
+
+        tipos_db = db.session.query(Actividades.tipo_unidad).filter(Actividades.id_proyecto == id_proyecto).distinct().all()
+        for (tipo_unidad,) in tipos_db:
+            tipo_nombre = tipo_unidad or "Otro"
+            ws_tipo = wb.create_sheet(title=str(tipo_nombre)[:31])
+            
+            cols = get_columns_by_tipo(tipo_unidad)
+            ws_tipo.append([f"Detalle de Avances - {tipo_nombre}"])
+            append_styled_header(ws_tipo, cols)
+
+            if tipo_unidad is None:
+                q_tipo = avances_query.filter(Actividades.tipo_unidad.is_(None))
+            else:
+                q_tipo = avances_query.filter(Actividades.tipo_unidad == tipo_unidad)
+
+            row_tipo_idx = 3
+            for avance, actividad, usuario in q_tipo.yield_per(100):
+                fecha_str = avance.fecha.strftime("%d/%m/%Y") if avance.fecha else ""
+                nombre_usuario = getattr(usuario, 'nombre', getattr(usuario, 'username', 'N/A')) if usuario else "N/A"
+                
+                col_evidencia = get_column_letter(cols.index("Evidencia") + 1)
+                texto_celda = procesar_evidencia_miniatura(avance, ws_tipo, row_tipo_idx, col_evidencia)
+
+                fila_datos = []
+                for c in cols:
+                    if c == "Actividad": fila_datos.append(actividad.nombre)
+                    elif c == "Fecha": fila_datos.append(fecha_str)
+                    elif c == "Trayecto": fila_datos.append(avance.trayecto if avance.trayecto else "-")
+                    elif c == "Calzada": fila_datos.append(avance.calzada if avance.calzada else "-")
+                    elif c == "Carril": 
+                        val = avance.carril or avance.margen
+                        fila_datos.append(val if val else "-")
+                    elif c == "Ubicación PR": fila_datos.append(avance.ubicacion_pr if avance.ubicacion_pr else "-")
+                    elif c == "PR Inicio": fila_datos.append(avance.pr_inicio if avance.pr_inicio else "-")
+                    elif c == "PR Fin": fila_datos.append(avance.pr_fin if avance.pr_fin else "-")
+                    elif c == "Margen": 
+                        val = avance.margen or avance.carril
+                        fila_datos.append(val if val else "-")
+                    elif c == "Tipo": fila_datos.append(avance.tipo if avance.tipo else "-")
+                    elif c == "Elemento": fila_datos.append(avance.elemento if avance.elemento else "-")
+                    elif c == "Tamaño": fila_datos.append(avance.tamano if avance.tamano else "-")
+                    elif c == "Color": fila_datos.append(avance.color if avance.color else "-")
+                    elif c == "Color Lineal": fila_datos.append(avance.color_lineal if avance.color_lineal else "-")
+                    elif c == "Ancho (m)": fila_datos.append(avance.ancho if avance.ancho is not None else "-")
+                    elif c == "Largo (m)": fila_datos.append(avance.largo if avance.largo is not None else "-")
+                    elif c == "Longitud Lineal (m)": fila_datos.append(avance.longitud_lineal if avance.longitud_lineal is not None else "-")
+                    elif c == "Área Elemento (m²)": fila_datos.append(avance.area_elemento if avance.area_elemento is not None else "-")
+                    elif c == "Área Total (m²)": fila_datos.append(avance.area_total if avance.area_total is not None else "-")
+                    elif c == "Cantidad": fila_datos.append(avance.cantidad if avance.cantidad is not None else "-")
+                    elif c == "Unidades Avanzadas": fila_datos.append(avance.unidades_avanzadas if avance.unidades_avanzadas is not None else "-")
+                    elif c == "Comentario": fila_datos.append(avance.mensaje if avance.mensaje else "-")
+                    elif c == "Usuario": fila_datos.append(nombre_usuario)
+                    elif c == "Evidencia": fila_datos.append(texto_celda)
+                    else: fila_datos.append("-")
+                ws_tipo.append(fila_datos)
+                row_tipo_idx += 1
+
     # 💾 Guardar usando io.BytesIO de forma segura
     output = BytesIO()
     wb.save(output)
     wb.close()
     output.seek(0)
 
+    clean_proj = "".join(c for c in (proyecto.nombre or "proyecto") if c.isalnum() or c in (' ', '_', '-')).strip().replace(' ', '_')
+    clean_cat = "".join(c for c in (categoria_str or "") if c.isalnum() or c in (' ', '_', '-')).strip().replace(' ', '_')
+    if is_filtered and clean_cat:
+        filename = f"informe_avance_{clean_proj}_{clean_cat}.xlsx"
+    else:
+        filename = f"informe_avance_{clean_proj}.xlsx"
+
     return send_file(
         output,
         as_attachment=True,
-        download_name=f"informe_avance_{proyecto.nombre}.xlsx",
+        download_name=filename,
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
