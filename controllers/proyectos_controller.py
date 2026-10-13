@@ -181,10 +181,9 @@ def manage_proyectos():
     if termino_busqueda:
         query = query.filter(Proyectos.nombre.ilike(f'%{termino_busqueda}%'))
     
-    page = request.args.get('page', 1, type=int)
-
-    pagination = query.paginate(page=page, per_page=6, error_out=False)
-    proyectos = pagination.items
+    # Obtener todos los proyectos visibles (sin límite de paginación para mostrar la totalidad de activos y finalizados)
+    proyectos = query.order_by(Proyectos.fecha_inicio.desc(), Proyectos.id_proyecto.desc()).all()
+    pagination = None
 
     # 2️⃣ CARGA DE DATOS ADICIONALES (fuera del bucle)
     personal = Personal.query.filter_by(activo=True).all()
