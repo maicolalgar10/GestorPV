@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Historial de Pagos de Nómina</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { background-color: #f3f4f6; font-family: 'Inter', sans-serif; color: #1f2937; }
+    .card-custom {
+      border: none;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+      background: white;
+    }
+    .table-custom th {
+      background-color: #f8f9fa;
+      color: #6b7280;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      border-bottom: 2px solid #e5e7eb;
+    }
+    .table-custom td {
+      vertical-align: middle;
+      font-size: 0.875rem;
+      border-bottom: 1px solid #e5e7eb;
+      color: #374151;
+    }
+  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-' + cliente + '.css') }}">
+</head>
+<body>
+  {% include 'mensajes.html' %}
+
+  <div class="container mt-4 pb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h2 class="fw-bold m-0" style="color: #0f766e;"><i class="bi bi-clock-history text-secondary"></i> Historial de Pagos Realizados (Nómina)</h2>
+        <p class="text-secondary small">Gestión de nómina y pagos de trabajadores | {{ usuario.nombre }}</p>
+      </div>
+      <div>
+        <a href="{{ url_for('trabajadores.nomina') }}" class="btn btn-outline-secondary" style="border-radius: 12px;">
+          <i class="bi bi-arrow-left"></i> Volver a Nómina
+        </a>
+      </div>
+    </div>
+
+    <div class="card card-custom mb-4">
+      <div class="card-body p-4">
+        <!-- Resumen -->
+        <div class="row align-items-center mb-4">
+          <div class="col-md-6">
+            <h5 class="fw-bold m-0 text-success">
+              Total Pagado: ${{ "{:,.0f}".format(total_pagado) | replace(",", ".") }}
+            </h5>
+          </div>
+        </div>
+
+        <form method="GET" action="{{ url_for('trabajadores.historial_nomina') }}" class="row mb-4 align-items-end">
+          <div class="col-md-3">
+            <label class="form-label fw-semibold text-secondary small">Fecha Inicio</label>
+            <input type="date" name="fecha_inicio" class="form-control" value="{{ filtro_inicio if filtro_inicio else '' }}">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold text-secondary small">Fecha Fin</label>
+            <input type="date" name="fecha_fin" class="form-control" value="{{ filtro_fin if filtro_fin else '' }}">
+          </div>
+          <div class="col-md-6 d-flex gap-2 justify-content-md-end align-items-end mt-3 mt-md-0">
+            <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-funnel"></i> Filtrar</button>
+            <a href="{{ url_for('trabajadores.historial_nomina') }}" class="btn btn-light btn-sm"><i class="bi bi-eraser"></i> Limpiar</a>
+            <button type="button" class="btn btn-outline-danger btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#modalExportarPdfHistorial">
+              <i class="bi bi-file-earmark-pdf"></i> Exportar PDF (Unificado)
+            </button>
+          </div>
+        </form>
+
+        <div class="table-responsive">
+          <table class="table table-hover table-custom" id="tablaHistorialPagos">
+            <thead class="table-light">
+              <tr>
+                <th>FECHA</th>
+                <th>TRABAJADOR</th>
+                <th>IDENTIFICACIÓN</th>
+                <th>MONTO</th>
+                <th>FORMA DE PAGO</th>
+                <th>OBSERVACIÓN</th>
+                <th>ESTADO</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for pago in historial_pagos %}
+              <tr>
+                <td class="fw-semibold">{{ pago.fecha_programada.strftime('%d/%m/%Y') }}</td>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 28px; height: 28px; font-size: 0.75rem;">
+                      {{ pago.nombre_trabajador[:2].upper() if pago.nombre_trabajador else 'TR' }}
+                    </div>
+                    <span class="fw-medium">{{ pago.nombre_trabajador }}</span>
+                  </div>
+                </td>
+                <td class="text-muted">{{ pago.identificacion_trabajador if pago.identificacion_trabajador else 'N/A' }}</td>
+                <td class="fw-bold text-success">${{ "{:,.0f}".format(pago.monto or 0) | replace(",", ".") }}</td>
+                <td><span class="badge bg-secondary-subtle text-secondary">{{ pago.forma_pago or 'No especificada' }}</span></td>
+                <td class="text-muted small">{{ pago.observacion if pago.observacion else '-' }}</td>
+                <td><span class="badge bg-success-subtle text-success rounded-pill"><i class="bi bi-check-circle me-1"></i> {{ pago.estado }}</span></td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="7" class="text-center py-4 text-muted">No hay historial de pagos de nómina realizados en el rango seleccionado.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Exportar PDF Historial -->
+  <div class="modal fade" id="modalExportarPdfHistorial" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Exportar Reporte Unificado de Pagos</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="formExportarPdfHistorial" method="GET" action="{{ url_for('proveedores.exportar_pdf_historial') }}" target="_blank">
+          <input type="hidden" name="fecha_inicio" value="{{ request.args.get('fecha_inicio', '') }}">
+          <input type="hidden" name="fecha_fin" value="{{ request.args.get('fecha_fin', '') }}">
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label fw-bold">Saldo Inicial</label>
+              <input type="text" step="0.01" name="saldo_inicial" class="form-control" placeholder="Ingrese el saldo inicial (opcional)" value="0">
+            </div>
+            <div class="mt-3">
+              <label class="form-label fw-semibold text-muted small">Comentario / Observaciones (Opcional)</label>
+              <textarea name="comentario" id="comentarioPDF" class="form-control" rows="2" placeholder="Ingrese un comentario u observación adicional para el reporte..."></textarea>
+            </div>
+            <p class="text-muted small">Este reporte unificará los pagos a proveedores, tarjetas, contratistas, nómina de trabajadores, DIAN y seguridad social realizados en el rango de fechas actual.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-outline-danger"><i class="bi bi-file-earmark-pdf"></i> Generar Reporte PDF</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ url_for('static', filename='js/formatos.js') }}"></script>
+</body>
+</html>

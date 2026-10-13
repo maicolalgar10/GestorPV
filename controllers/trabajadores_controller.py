@@ -26,8 +26,60 @@ def index():
 def nomina():
     usuario = Usuarios.query.get(session["user_id"])
     empleados = Usuarios.query.options(selectinload(Usuarios.personal_data)).order_by(Usuarios.nombre.asc()).all()
-    pagos = ProgramacionPagoTrabajador.query.order_by(ProgramacionPagoTrabajador.fecha_programada.asc()).all()
-    return render_template("trabajadores/nomina.html", usuario=usuario, empleados=empleados, pagos=pagos)
+    
+    fecha_inicio = request.args.get("fecha_inicio")
+    fecha_fin = request.args.get("fecha_fin")
+    
+    query = ProgramacionPagoTrabajador.query
+    if fecha_inicio:
+        try:
+            f_inicio = datetime.strptime(fecha_inicio, "%Y-%m-%d").date()
+            query = query.filter(ProgramacionPagoTrabajador.fecha_programada >= f_inicio)
+        except ValueError:
+            pass
+    if fecha_fin:
+        try:
+            f_fin = datetime.strptime(fecha_fin, "%Y-%m-%d").date()
+            query = query.filter(ProgramacionPagoTrabajador.fecha_programada <= f_fin)
+        except ValueError:
+            pass
+            
+    pagos = query.order_by(ProgramacionPagoTrabajador.fecha_programada.asc()).all()
+    return render_template("trabajadores/nomina.html", usuario=usuario, empleados=empleados, pagos=pagos, filtro_inicio=fecha_inicio, filtro_fin=fecha_fin)
+
+@trabajadores_bp.route("/oficina/trabajadores/nomina/historial")
+@login_required
+@admin_oficina_required
+def historial_nomina():
+    usuario = Usuarios.query.get(session["user_id"])
+    fecha_inicio = request.args.get("fecha_inicio")
+    fecha_fin = request.args.get("fecha_fin")
+    
+    query = ProgramacionPagoTrabajador.query.filter(ProgramacionPagoTrabajador.estado.ilike('Realizado'))
+    if fecha_inicio:
+        try:
+            fecha_ini_date = datetime.strptime(fecha_inicio, "%Y-%m-%d").date()
+            query = query.filter(ProgramacionPagoTrabajador.fecha_programada >= fecha_ini_date)
+        except ValueError:
+            pass
+    if fecha_fin:
+        try:
+            fecha_fin_date = datetime.strptime(fecha_fin, "%Y-%m-%d").date()
+            query = query.filter(ProgramacionPagoTrabajador.fecha_programada <= fecha_fin_date)
+        except ValueError:
+            pass
+            
+    historial_pagos = query.order_by(ProgramacionPagoTrabajador.fecha_programada.desc()).all()
+    total_pagado = sum(float(p.monto or 0) for p in historial_pagos)
+    
+    return render_template(
+        "trabajadores/historial_nomina.html",
+        usuario=usuario,
+        historial_pagos=historial_pagos,
+        total_pagado=total_pagado,
+        filtro_inicio=fecha_inicio,
+        filtro_fin=fecha_fin
+    )
 
 @trabajadores_bp.route("/oficina/trabajadores/tarjetas")
 @login_required

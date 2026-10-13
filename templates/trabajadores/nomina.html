@@ -45,6 +45,12 @@
         <p class="text-secondary small">Gestión de liquidaciones y pagos | {{ usuario.nombre }}</p>
       </div>
       <div>
+        <a href="{{ url_for('trabajadores.historial_nomina') }}" class="btn btn-outline-secondary me-2" style="border-radius: 12px;">
+          <i class="bi bi-clock-history"></i> Historial de Pagos
+        </a>
+        <button type="button" class="btn btn-outline-danger shadow-sm me-2" style="border-radius: 12px;" data-bs-toggle="modal" data-bs-target="#modalExportarPdfHistorial">
+          <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
+        </button>
         <a href="{{ url_for('trabajadores.index') }}" class="btn btn-outline-secondary" style="border-radius: 12px;">
           <i class="bi bi-arrow-left"></i> Volver a Trabajadores
         </a>
@@ -549,6 +555,38 @@
       }
     });
   </script>
-<script src="{{ url_for('static', filename='js/formatos.js') }}"></script>
+
+  <!-- Modal Exportar PDF Historial -->
+  <div class="modal fade" id="modalExportarPdfHistorial" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Exportar Reporte Unificado de Pagos</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="formExportarPdfHistorial" method="GET" action="{{ url_for('proveedores.exportar_pdf_historial') }}" target="_blank">
+          <input type="hidden" name="fecha_inicio" value="{{ filtro_inicio if filtro_inicio else '' }}">
+          <input type="hidden" name="fecha_fin" value="{{ filtro_fin if filtro_fin else '' }}">
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label fw-bold">Saldo Inicial</label>
+              <input type="text" step="0.01" name="saldo_inicial" class="form-control" placeholder="Ingrese el saldo inicial (opcional)" value="0">
+            </div>
+            <div class="mt-3">
+              <label class="form-label fw-semibold text-muted small">Comentario / Observaciones (Opcional)</label>
+              <textarea name="comentario" id="comentarioPDF" class="form-control" rows="2" placeholder="Ingrese un comentario u observación adicional para el reporte..."></textarea>
+            </div>
+            <p class="text-muted small">Este reporte unificará los pagos a proveedores, tarjetas, contratistas, nómina de trabajadores, DIAN y seguridad social realizados en el rango de fechas actual.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-outline-danger"><i class="bi bi-file-earmark-pdf"></i> Generar Reporte PDF</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/formatos.js') }}"></script>
 </body>
 </html>

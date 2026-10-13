@@ -1118,6 +1118,7 @@ def exportar_pdf_pagos_consolidados():
             ProgramacionPagoProveedor, 
             ProgramacionPagoTarjeta, 
             ProgramacionPagoContratista, 
+            ProgramacionPagoTrabajador,
             DianFactura,
             PlanillaSeguridadSocial
         )
@@ -1126,6 +1127,7 @@ def exportar_pdf_pagos_consolidados():
         pagos_prov = ProgramacionPagoProveedor.query.all()
         pagos_tar = ProgramacionPagoTarjeta.query.all()
         pagos_cont = ProgramacionPagoContratista.query.all()
+        pagos_trab = ProgramacionPagoTrabajador.query.all()
         pagos_dian = DianFactura.query.all()
         pagos_ss = PlanillaSeguridadSocial.query.all()
         
@@ -1190,6 +1192,24 @@ def exportar_pdf_pagos_consolidados():
                 'fecha_programada': getattr(p, 'fecha_programada', None),
                 'tipo': 'Contratista',
                 'entidad': clean_text(cont_nombre),
+                'monto': monto_val,
+                'cuenta_origen': cuenta_or_texto,
+                'concepto': clean_text(obs if obs else ''),
+                'estado': clean_text(getattr(p, 'estado', ''))
+            })
+
+        for p in pagos_trab:
+            cuenta_or_texto = 'N/A'
+            obs = getattr(p, 'observacion', None) or 'Pago de Nómina'
+            try:
+                monto_val = float(getattr(p, 'monto', 0) or 0)
+            except (ValueError, TypeError):
+                monto_val = 0.0
+
+            consolidados.append({
+                'fecha_programada': getattr(p, 'fecha_programada', None),
+                'tipo': 'Nómina',
+                'entidad': clean_text(getattr(p, 'nombre_trabajador', '') or 'Trabajador N/A'),
                 'monto': monto_val,
                 'cuenta_origen': cuenta_or_texto,
                 'concepto': clean_text(obs if obs else ''),

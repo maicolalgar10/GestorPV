@@ -5,7 +5,7 @@ from reportlab.lib.pagesizes import letter, landscape
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
-from models import db, ProgramacionPagoProveedor, ProgramacionPagoTarjeta, ProgramacionPagoContratista
+from models import db, ProgramacionPagoProveedor, ProgramacionPagoTarjeta, ProgramacionPagoContratista, ProgramacionPagoTrabajador
 import os
 from reportlab.platypus import Image
 from reportlab.lib.units import inch
@@ -192,6 +192,8 @@ def exportar_pdf_historial():
     query_tarj = ProgramacionPagoTarjeta.query.filter(ProgramacionPagoTarjeta.estado.ilike('REALIZADO'))
     # Query Contratistas
     query_cont = ProgramacionPagoContratista.query.filter(ProgramacionPagoContratista.estado.ilike('Realizado'))
+    # Query Nómina / Trabajadores
+    query_trab = ProgramacionPagoTrabajador.query.filter(ProgramacionPagoTrabajador.estado.ilike('Realizado'))
     
     from models import DianFactura, PlanillaSeguridadSocial
     from sqlalchemy import not_, or_
@@ -209,6 +211,7 @@ def exportar_pdf_historial():
             query_prov = query_prov.filter(ProgramacionPagoProveedor.fecha_programada >= f_inicio)
             query_tarj = query_tarj.filter(ProgramacionPagoTarjeta.fecha_programada >= f_inicio)
             query_cont = query_cont.filter(ProgramacionPagoContratista.fecha_programada >= f_inicio)
+            query_trab = query_trab.filter(ProgramacionPagoTrabajador.fecha_programada >= f_inicio)
             query_dian = query_dian.filter(DianFactura.fecha_pago >= f_inicio)
             query_ss = query_ss.filter(PlanillaSeguridadSocial.fecha_pago >= f_inicio)
         except ValueError:
@@ -220,6 +223,7 @@ def exportar_pdf_historial():
             query_prov = query_prov.filter(ProgramacionPagoProveedor.fecha_programada <= f_fin)
             query_tarj = query_tarj.filter(ProgramacionPagoTarjeta.fecha_programada <= f_fin)
             query_cont = query_cont.filter(ProgramacionPagoContratista.fecha_programada <= f_fin)
+            query_trab = query_trab.filter(ProgramacionPagoTrabajador.fecha_programada <= f_fin)
             query_dian = query_dian.filter(DianFactura.fecha_pago <= f_fin)
             query_ss = query_ss.filter(PlanillaSeguridadSocial.fecha_pago <= f_fin)
         except ValueError:
@@ -228,6 +232,7 @@ def exportar_pdf_historial():
     pagos_prov = query_prov.all()
     pagos_tarj = query_tarj.all()
     pagos_cont = query_cont.all()
+    pagos_trab = query_trab.all()
     pagos_dian = query_dian.all()
     pagos_ss = query_ss.all()
     
@@ -295,6 +300,17 @@ def exportar_pdf_historial():
             'monto': float(ss.valor or 0),
             'forma_pago': 'Realizado',
             'concepto': obs,
+            'estado': 'Realizado'
+        })
+
+    for trab in pagos_trab:
+        unificados.append({
+            'fecha': trab.fecha_programada,
+            'tipo': 'Nómina',
+            'entidad': trab.nombre_trabajador or 'Trabajador N/A',
+            'monto': float(trab.monto or 0),
+            'forma_pago': trab.forma_pago or 'N/A',
+            'concepto': trab.observacion or 'Pago de Nómina',
             'estado': 'Realizado'
         })
 
