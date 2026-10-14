@@ -509,13 +509,23 @@
         <div class="module-card p-4 mb-4" style="border-top: 4px solid #1f2937;">
           <h5 class="section-title"><i class="bi bi-calculator text-dark"></i> Cotizador</h5>
           <p class="text-muted small">Crea presupuestos y expórtalos a PDF.</p>
-          <button class="btn btn-brand-primary btn-sm w-100 rounded-pill py-2" data-bs-toggle="modal" data-bs-target="#modalCotizacion">
-            <i class="bi bi-plus-circle me-1"></i> Nueva Cotización
-          </button>
+          <div class="d-flex flex-column gap-2">
+            <button class="btn btn-brand-primary btn-sm w-100 rounded-pill py-2" data-bs-toggle="modal" data-bs-target="#modalCotizacion">
+              <i class="bi bi-plus-circle me-1"></i> Nueva Cotización
+            </button>
+            <a href="{{ url_for('cotizaciones.historial_cotizaciones') }}" class="btn btn-outline-dark btn-sm w-100 rounded-pill py-2 fw-semibold">
+              <i class="bi bi-clock-history me-1"></i> Ver Historial Completo
+            </a>
+          </div>
         </div>
 
         <div class="module-card p-4">
-          <h5 class="section-title"><i class="bi bi-receipt-cutoff text-dark"></i> Historial</h5>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="section-title m-0"><i class="bi bi-receipt-cutoff text-dark"></i> Historial</h5>
+            <a href="{{ url_for('cotizaciones.historial_cotizaciones') }}" class="btn btn-outline-dark btn-sm rounded-pill px-3 shadow-sm d-inline-flex align-items-center gap-1" style="font-size: 0.82rem; font-weight: 600;">
+              <i class="bi bi-collection"></i> Ver Todas
+            </a>
+          </div>
           <div class="table-responsive">
             <table class="table table-sm align-middle">
               <thead class="table-light">
@@ -627,6 +637,11 @@
                 {% endfor %}
               </tbody>
             </table>
+          </div>
+          <div class="mt-3 text-center border-top pt-2">
+            <a href="{{ url_for('cotizaciones.historial_cotizaciones') }}" class="btn btn-sm btn-light border text-secondary rounded-pill px-3 py-1 small fw-medium">
+              <i class="bi bi-arrow-right-circle me-1"></i> Ver todas las cotizaciones
+            </a>
           </div>
         </div>
       </div>
@@ -914,13 +929,23 @@
         <div class="module-card p-4 mb-4" style="border-top: 4px solid #1f2937;">
           <h5 class="section-title"><i class="bi bi-calculator text-dark"></i> Cotizador</h5>
           <p class="text-muted small">Crea presupuestos y expórtalos a PDF.</p>
-          <button class="btn btn-brand-primary btn-sm w-100 rounded-pill py-2" data-bs-toggle="modal" data-bs-target="#modalCotizacion">
-            <i class="bi bi-plus-circle me-1"></i> Nueva Cotización
-          </button>
+          <div class="d-flex flex-column gap-2">
+            <button class="btn btn-brand-primary btn-sm w-100 rounded-pill py-2" data-bs-toggle="modal" data-bs-target="#modalCotizacion">
+              <i class="bi bi-plus-circle me-1"></i> Nueva Cotización
+            </button>
+            <a href="{{ url_for('cotizaciones.historial_cotizaciones') }}" class="btn btn-outline-dark btn-sm w-100 rounded-pill py-2 fw-semibold">
+              <i class="bi bi-clock-history me-1"></i> Ver Historial Completo
+            </a>
+          </div>
         </div>
 
         <div class="module-card p-4">
-          <h5 class="section-title"><i class="bi bi-receipt-cutoff text-dark"></i> Historial</h5>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="section-title m-0"><i class="bi bi-receipt-cutoff text-dark"></i> Historial</h5>
+            <a href="{{ url_for('cotizaciones.historial_cotizaciones') }}" class="btn btn-outline-dark btn-sm rounded-pill px-3 shadow-sm d-inline-flex align-items-center gap-1" style="font-size: 0.82rem; font-weight: 600;">
+              <i class="bi bi-collection"></i> Ver Todas
+            </a>
+          </div>
           <div class="table-responsive">
             <table class="table table-sm align-middle">
               <thead class="table-light">
@@ -1032,6 +1057,11 @@
                 {% endfor %}
               </tbody>
             </table>
+          </div>
+          <div class="mt-3 text-center border-top pt-2">
+            <a href="{{ url_for('cotizaciones.historial_cotizaciones') }}" class="btn btn-sm btn-light border text-secondary rounded-pill px-3 py-1 small fw-medium">
+              <i class="bi bi-arrow-right-circle me-1"></i> Ver todas las cotizaciones
+            </a>
           </div>
         </div>
       </div>

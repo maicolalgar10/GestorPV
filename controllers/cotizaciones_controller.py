@@ -3,14 +3,71 @@ from werkzeug.utils import secure_filename
 from helpers import clean_amount
 from datetime import datetime
 import os
-from flask import Blueprint, request, redirect, url_for, flash
+from flask import Blueprint, request, redirect, url_for, flash, render_template
 from decorators import login_required, admin_oficina_required
-from models import db, Cotizacion, Contrato, Usuarios, Notificaciones
+from models import db, Cotizacion, Contrato, Usuarios, Notificaciones, Bancos
 from werkzeug.utils import secure_filename
 from supabase_client import supabase
 import uuid
 
 cotizaciones_bp = Blueprint("cotizaciones", __name__)
+
+
+# ================================
+# Historial completo de cotizaciones
+# ================================
+@cotizaciones_bp.route("/cotizaciones/historial", methods=["GET"])
+@cotizaciones_bp.route("/cotizaciones", methods=["GET"])
+@login_required
+@admin_oficina_required
+def historial_cotizaciones():
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 12, type=int)
+    q = request.args.get("q", "").strip()
+    estado = request.args.get("estado", "").strip().upper()
+
+    query = Cotizacion.query
+
+    if q:
+        search_filter = f"%{q}%"
+        query = query.filter(
+            db.or_(
+                Cotizacion.cliente.ilike(search_filter),
+                Cotizacion.proyecto.ilike(search_filter),
+                Cotizacion.numero_cotizacion.ilike(search_filter)
+            )
+        )
+
+    if estado in ["PENDIENTE", "ACEPTADA", "RECHAZADA"]:
+        query = query.filter(Cotizacion.estado == estado)
+
+    pagination = query.order_by(Cotizacion.id.desc()).paginate(page=page, per_page=per_page, error_out=False)
+    cotizaciones = pagination.items
+
+    total_cotizaciones = Cotizacion.query.count()
+    total_pendientes = Cotizacion.query.filter_by(estado="PENDIENTE").count()
+    total_aceptadas = Cotizacion.query.filter_by(estado="ACEPTADA").count()
+    total_rechazadas = Cotizacion.query.filter_by(estado="RECHAZADA").count()
+
+    total_contratado = db.session.query(db.func.sum(Contrato.valor_total)).scalar() or 0
+
+    trabajadores = Usuarios.query.filter_by(rol="EMPLEADO").all()
+    bancos = Bancos.query.all()
+
+    return render_template(
+        "cotizaciones.html",
+        cotizaciones=cotizaciones,
+        pagination=pagination,
+        q=q,
+        estado=estado,
+        total_cotizaciones=total_cotizaciones,
+        total_pendientes=total_pendientes,
+        total_aceptadas=total_aceptadas,
+        total_rechazadas=total_rechazadas,
+        total_contratado=total_contratado,
+        trabajadores=trabajadores,
+        bancos=bancos
+    )
 
 
 # ================================
@@ -28,7 +85,7 @@ def crear_cotizacion():
 
         if not cliente or not proyecto or not numero_cotizacion:
             flash("Cliente, proyecto y número de cotización son obligatorios", "warning")
-            return redirect(url_for("dashboard.dashboard_oficina"))
+            return redirect(request.referrer or url_for("dashboard.dashboard_oficina"))
 
         urls_subidas = []
         if supabase:
@@ -68,12 +125,12 @@ def crear_cotizacion():
         db.session.commit()
 
         flash("Cotización creada correctamente ✅", "success")
-        return redirect(url_for("dashboard.dashboard_oficina"))
+        return redirect(request.referrer or url_for("dashboard.dashboard_oficina"))
 
     except Exception as e:
         db.session.rollback()
         flash(f"Error al crear la cotización: {str(e)}", "danger")
-        return redirect(url_for("dashboard.dashboard_oficina"))
+        return redirect(request.referrer or url_for("dashboard.dashboard_oficina"))
 
 
 @cotizaciones_bp.route("/cotizaciones/<int:id>/estado/<string:estado>", methods=["POST"])
@@ -84,13 +141,13 @@ def cambiar_estado_cotizacion(id, estado):
 
     if estado not in ["ACEPTADA", "RECHAZADA"]:
         flash("Estado no válido", "danger")
-        return redirect(url_for("dashboard.dashboard_oficina"))
+        return redirect(request.referrer or url_for("dashboard.dashboard_oficina"))
 
     # 🔒 Bloquear si ya fue facturada
     existe_contrato = Contrato.query.filter_by(cotizacion_id=cotizacion.id).first()
     if existe_contrato:
         flash("Esta cotización ya tiene un contrato asociado", "warning")
-        return redirect(url_for("dashboard.dashboard_oficina"))
+        return redirect(request.referrer or url_for("dashboard.dashboard_oficina"))
 
     cotizacion.estado = estado
     
@@ -141,7 +198,7 @@ def cambiar_estado_cotizacion(id, estado):
     db.session.commit()
 
     flash(f"Cotización {estado.lower()} correctamente ✅", "success")
-    return redirect(url_for("dashboard.dashboard_oficina"))
+    return redirect(request.referrer or url_for("dashboard.dashboard_oficina"))
 
 
 @cotizaciones_bp.route("/cotizaciones/<int:id>/eliminar", methods=["POST"])
@@ -178,6 +235,7 @@ def eliminar_cotizacion(id):
         db.session.rollback()
         flash(f"Error al eliminar cotización: {str(e)}", "danger")
 
-    return redirect(url_for("dashboard.dashboard_oficina"))
+    return redirect(request.referrer or url_for("dashboard.dashboard_oficina"))
+
 
 

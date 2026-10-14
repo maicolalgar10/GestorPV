@@ -23,7 +23,6 @@ def allowed_support_file(filename):
 
 @tesoreria_bp.route("/contratos/desde-cotizacion/<int:id_cotizacion>", methods=["POST"])
 @login_required
-@admin_required
 @admin_oficina_required
 def crear_contrato_desde_cotizacion(id_cotizacion):
     cotizacion = Cotizacion.query.get_or_404(id_cotizacion)
@@ -106,7 +105,6 @@ def crear_contrato_desde_cotizacion(id_cotizacion):
 
 @tesoreria_bp.route("/contratos/editar/<int:id_contrato>", methods=["POST"])
 @login_required
-@admin_required
 @admin_oficina_required
 def editar_contrato(id_contrato):
     contrato = Contrato.query.get_or_404(id_contrato)
@@ -156,7 +154,6 @@ def editar_contrato(id_contrato):
 
 @tesoreria_bp.route("/")
 @login_required
-@admin_required
 @admin_oficina_required
 def ver_tesoreria():
     contratos = Contrato.query.order_by(Contrato.id.desc()).all()
@@ -219,7 +216,6 @@ def ver_tesoreria():
 
 @tesoreria_bp.route("/bancos")
 @login_required
-@admin_required
 @admin_oficina_required
 def ver_bancos():
     bancos = Bancos.query.all()
@@ -237,7 +233,6 @@ def ver_bancos():
 
 @tesoreria_bp.route("/movimiento/registrar", methods=["POST"])
 @login_required
-@admin_required
 @admin_oficina_required
 def registrar_movimiento():
     # Este endpoint recibe un movimiento general. Puede o no tener contrato
@@ -326,7 +321,6 @@ def registrar_movimiento():
 
 @tesoreria_bp.route("/bancos/crear", methods=["POST"])
 @login_required
-@admin_required
 @admin_oficina_required
 def crear_banco():
     nombre_banco = request.form.get("nombre_banco")
@@ -678,7 +672,6 @@ def generar_prefijo_banco(nombre_banco):
 
 @tesoreria_bp.route("/comprobantes-egresos/siguiente-numero", methods=["GET"])
 @login_required
-@admin_required
 @admin_oficina_required
 def siguiente_numero_comprobante():
     from models import ComprobanteEgreso
@@ -696,7 +689,6 @@ def siguiente_numero_comprobante():
 
 @tesoreria_bp.route("/comprobantes-egresos", methods=["GET", "POST"])
 @login_required
-@admin_required
 @admin_oficina_required
 def comprobantes_egresos():
     from models import db, ComprobanteEgreso
@@ -786,7 +778,6 @@ def comprobantes_egresos():
 
 @tesoreria_bp.route("/comprobantes-egresos/editar/<string:id>", methods=["POST"])
 @login_required
-@admin_required
 @admin_oficina_required
 def editar_comprobante_egreso(id):
     from models import db, ComprobanteEgreso
@@ -844,7 +835,6 @@ def editar_comprobante_egreso(id):
         return f"Error interno en el servidor: <pre>{traceback_str}</pre>", 500
 @tesoreria_bp.route('/comprobantes-egresos/anotaciones/<string:id>', methods=['POST'])
 @login_required
-@admin_required
 @admin_oficina_required
 def guardar_anotaciones_comprobante(id):
     from models import db, ComprobanteEgreso
@@ -868,7 +858,6 @@ def guardar_anotaciones_comprobante(id):
 
 @tesoreria_bp.route('/comprobantes-egresos/pdf/<string:id>')
 @login_required
-@admin_required
 @admin_oficina_required
 def generar_pdf_comprobante(id):
     from models import db, ComprobanteEgreso

@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Historial Completo de Cotizaciones — Panel de Oficina</title>
+  <meta name="description" content="Historial completo y gestión centralizada de cotizaciones, presupuestos y formalización de contratos.">
+  
+  <!-- CSS & Fonts -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary-color: #1e293b;
+      --brand-blue: #3b82f6;
+      --brand-indigo: #4f46e5;
+      --brand-emerald: #10b981;
+      --brand-amber: #f59e0b;
+      --brand-red: #ef4444;
+      --bg-surface: #f8fafc;
+      --card-radius: 18px;
+      --transition-smooth: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    body {
+      background-color: var(--bg-surface);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #1e293b;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Impeccable Header */
+    .header-banner {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      color: #ffffff;
+      border-radius: var(--card-radius);
+      padding: 2.2rem 2.5rem;
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+
+    .header-banner::before {
+      content: "";
+      position: absolute;
+      top: -50%;
+      right: -10%;
+      width: 320px;
+      height: 320px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.18) 0%, rgba(255, 255, 255, 0) 70%);
+      pointer-events: none;
+    }
+
+    .btn-glass {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      backdrop-filter: blur(8px);
+      border-radius: 9999px;
+      padding: 0.55rem 1.25rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: var(--transition-smooth);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn-glass:hover {
+      background: rgba(255, 255, 255, 0.22);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    /* Metric Cards */
+    .metric-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 1.25rem 1.5rem;
+      transition: var(--transition-smooth);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      height: 100%;
+    }
+    .metric-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px -3px rgba(0, 0, 0, 0.06);
+      border-color: #cbd5e1;
+    }
+
+    .metric-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+
+    .icon-total { background: #eff6ff; color: #2563eb; }
+    .icon-pend { background: #fffbeb; color: #d97706; }
+    .icon-acep { background: #ecfdf5; color: #059669; }
+    .icon-rech { background: #fef2f2; color: #dc2626; }
+    .icon-contr { background: #f5f3ff; color: #7c3aed; }
+
+    .metric-label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 600;
+      color: #64748b;
+      margin-bottom: 0.2rem;
+    }
+    .metric-val {
+      font-size: 1.55rem;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.1;
+    }
+
+    /* Content Card */
+    .surface-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--card-radius);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+      padding: 1.75rem;
+      margin-bottom: 2rem;
+    }
+
+    /* Filter Pills */
+    .filter-pill {
+      border-radius: 9999px;
+      padding: 0.45rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #475569;
+      background: #f1f5f9;
+      border: 1px solid transparent;
+      text-decoration: none;
+      transition: var(--transition-smooth);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .filter-pill:hover {
+      background: #e2e8f0;
+      color: #1e293b;
+    }
+    .filter-pill.active {
+      background: #0f172a;
+      color: #ffffff;
+    }
+
+    /* Modern Table */
+    .table-modern {
+      margin-bottom: 0;
+    }
+    .table-modern thead th {
+      background-color: #f8fafc;
+      color: #475569;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 700;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 0.85rem 1rem;
+      white-space: nowrap;
+    }
+    .table-modern tbody td {
+      padding: 1rem;
+      vertical-align: middle;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.9rem;
+    }
+    .table-modern tbody tr {
+      transition: background-color 0.15s ease;
+    }
+    .table-modern tbody tr:hover {
+      background-color: #f8fafc;
+    }
+
+    /* Status Badges */
+    .badge-status {
+      padding: 0.35rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      letter-spacing: 0.02em;
+    }
+    .badge-status-pendiente {
+      background: #fef3c7;
+      color: #b45309;
+      border: 1px solid #fde68a;
+    }
+    .badge-status-aceptada {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+    .badge-status-rechazada {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .doc-pill {
+      font-size: 0.78rem;
+      padding: 0.25rem 0.55rem;
+      border-radius: 8px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      color: #334155;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      margin: 0.15rem;
+      transition: var(--transition-smooth);
+    }
+    .doc-pill:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+
+    /* Action Buttons */
+    .btn-action {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      color: #475569;
+      transition: var(--transition-smooth);
+      font-size: 0.88rem;
+    }
+    .btn-action:hover {
+      background: #f8fafc;
+      color: #0f172a;
+      border-color: #cbd5e1;
+      transform: translateY(-1px);
+    }
+    .btn-action-success:hover {
+      background: #ecfdf5;
+      color: #059669;
+      border-color: #a7f3d0;
+    }
+    .btn-action-danger:hover {
+      background: #fef2f2;
+      color: #dc2626;
+      border-color: #fecaca;
+    }
+
+    .pagination-custom .page-link {
+      border-radius: 10px;
+      margin: 0 3px;
+      border: 1px solid #e2e8f0;
+      color: #334155;
+      font-weight: 600;
+      font-size: 0.85rem;
+      padding: 0.45rem 0.85rem;
+    }
+    .pagination-custom .page-item.active .page-link {
+      background-color: #0f172a;
+      border-color: #0f172a;
+      color: #ffffff;
+    }
+
+    /* Scrollable Container */
+    .table-container-scroll {
+      max-height: 65vh;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e1 #f8fafc;
+    }
+    .table-container-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .table-container-scroll::-webkit-scrollbar-track {
+      background: #f8fafc;
+    }
+    .table-container-scroll::-webkit-scrollbar-thumb {
+      background-color: #cbd5e1;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container-fluid px-3 px-md-5 py-4">
+
+  <!-- Header Banner -->
+  <div class="header-banner">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fw-bold">
+            <i class="bi bi-calculator me-1"></i> Módulo Cotizador
+          </span>
+          <span class="text-white-50 small">•</span>
+          <span class="text-white-50 small">Panel de Oficina</span>
+        </div>
+        <h2 class="fw-bold mb-1 text-white">Historial Completo de Cotizaciones</h2>
+        <p class="text-white-50 mb-0 small">
+          Supervisa cotizaciones emitidas, asigna responsables operativos y formaliza contratos con trazabilidad total.
+        </p>
+      </div>
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <a href="{{ url_for('dashboard.dashboard_oficina') }}" class="btn-glass">
+          <i class="bi bi-arrow-left"></i> Volver a Panel Oficina
+        </a>
+        <button class="btn btn-light rounded-pill px-3 py-2 fw-semibold text-dark shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevaCotizacion">
+          <i class="bi bi-plus-circle-fill text-primary me-1"></i> Nueva Cotización
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show rounded-4 border-0 shadow-sm mb-4" role="alert">
+          <div class="d-flex align-items-center gap-2">
+            {% if category == 'success' %}
+              <i class="bi bi-check-circle-fill fs-5 text-success"></i>
+            {% elif category == 'danger' %}
+              <i class="bi bi-exclamation-triangle-fill fs-5 text-danger"></i>
+            {% else %}
+              <i class="bi bi-info-circle-fill fs-5 text-primary"></i>
+            {% endif %}
+            <div>{{ message | safe }}</div>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <!-- KPI Metric Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="metric-card">
+        <div class="metric-icon icon-total"><i class="bi bi-file-earmark-text"></i></div>
+        <div>
+          <div class="metric-label">Total Cotizaciones</div>
+          <div class="metric-val">{{ total_cotizaciones }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="metric-card">
+        <div class="metric-icon icon-pend"><i class="bi bi-hourglass-split"></i></div>
+        <div>
+          <div class="metric-label">Pendientes</div>
+          <div class="metric-val text-warning">{{ total_pendientes }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="metric-card">
+        <div class="metric-icon icon-acep"><i class="bi bi-check2-circle"></i></div>
+        <div>
+          <div class="metric-label">Aceptadas</div>
+          <div class="metric-val text-success">{{ total_aceptadas }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="metric-card">
+        <div class="metric-icon icon-contr"><i class="bi bi-wallet2"></i></div>
+        <div>
+          <div class="metric-label">Monto Contratado</div>
+          <div class="metric-val text-primary" style="font-size: 1.25rem;">
+            ${{ "{:,.0f}".format(total_contratado) }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search & Filter Controls -->
+  <div class="surface-card">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+      
+      <!-- Filter status pills -->
+      <div class="d-flex flex-wrap gap-2">
+        <a href="{{ url_for('cotizaciones.historial_cotizaciones', q=q) }}" 
+           class="filter-pill {{ 'active' if not estado else '' }}">
+          <i class="bi bi-grid-fill"></i> Todas <span class="badge bg-secondary-subtle text-dark ms-1 rounded-pill">{{ total_cotizaciones }}</span>
+        </a>
+        <a href="{{ url_for('cotizaciones.historial_cotizaciones', estado='PENDIENTE', q=q) }}" 
+           class="filter-pill {{ 'active' if estado == 'PENDIENTE' else '' }}">
+          <i class="bi bi-clock-history text-warning"></i> Pendientes <span class="badge bg-warning-subtle text-warning-emphasis ms-1 rounded-pill">{{ total_pendientes }}</span>
+        </a>
+        <a href="{{ url_for('cotizaciones.historial_cotizaciones', estado='ACEPTADA', q=q) }}" 
+           class="filter-pill {{ 'active' if estado == 'ACEPTADA' else '' }}">
+          <i class="bi bi-check-circle-fill text-success"></i> Aceptadas <span class="badge bg-success-subtle text-success ms-1 rounded-pill">{{ total_aceptadas }}</span>
+        </a>
+        <a href="{{ url_for('cotizaciones.historial_cotizaciones', estado='RECHAZADA', q=q) }}" 
+           class="filter-pill {{ 'active' if estado == 'RECHAZADA' else '' }}">
+          <i class="bi bi-x-circle-fill text-danger"></i> Rechazadas <span class="badge bg-danger-subtle text-danger ms-1 rounded-pill">{{ total_rechazadas }}</span>
+        </a>
+      </div>
+
+      <!-- Search Input -->
+      <form method="GET" action="{{ url_for('cotizaciones.historial_cotizaciones') }}" class="d-flex gap-2">
+        {% if estado %}
+          <input type="hidden" name="estado" value="{{ estado }}">
+        {% endif %}
+        <div class="input-group" style="min-width: 280px;">
+          <span class="input-group-text bg-light border-end-0 text-muted">
+            <i class="bi bi-search"></i>
+          </span>
+          <input type="text" 
+                 name="q" 
+                 value="{{ q or '' }}" 
+                 class="form-control bg-light border-start-0" 
+                 placeholder="Buscar por cliente, proyecto o #..."
+                 aria-label="Buscar cotizaciones">
+          {% if q %}
+            <a href="{{ url_for('cotizaciones.historial_cotizaciones', estado=estado) }}" class="btn btn-light border" title="Limpiar búsqueda">
+              <i class="bi bi-x-lg"></i>
+            </a>
+          {% endif %}
+          <button type="submit" class="btn btn-dark">Buscar</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Cotizaciones Table Container -->
+    <div class="table-responsive table-container-scroll border rounded-3">
+      <table class="table table-modern align-middle">
+        <thead>
+          <tr>
+            <th># Cotización</th>
+            <th>Cliente</th>
+            <th>Proyecto</th>
+            <th>Soportes / Adjuntos</th>
+            <th>Responsable Asignado</th>
+            <th class="text-end">Valor Contrato</th>
+            <th class="text-center">Estado</th>
+            <th class="text-end">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in cotizaciones %}
+            <tr>
+              <!-- # Cotización -->
+              <td>
+                <span class="badge bg-light text-dark border px-2 py-1 fw-bold font-monospace">
+                  #{{ c.numero_cotizacion }}
+                </span>
+              </td>
+
+              <!-- Cliente -->
+              <td>
+                <div class="fw-bold text-dark">{{ c.cliente }}</div>
+              </td>
+
+              <!-- Proyecto -->
+              <td>
+                <div class="text-muted small fw-medium">{{ c.proyecto }}</div>
+              </td>
+
+              <!-- Soportes -->
+              <td>
+                {% if c.imagen_cotizacion %}
+                  {% set urls = c.imagen_cotizacion.split(',') %}
+                  <div class="d-flex flex-wrap">
+                    {% for url in urls %}
+                      {% set file_url = url if url.startswith('http') else url_for('static', filename='uploads/cotizaciones/' ~ url) %}
+                      <a href="{{ file_url }}" target="_blank" class="doc-pill" title="Abrir archivo adjunto">
+                        {% if '.pdf' in url|lower %}
+                          <i class="bi bi-file-earmark-pdf-fill text-danger"></i> PDF
+                        {% else %}
+                          <i class="bi bi-image text-primary"></i> Img
+                        {% endif %}
+                      </a>
+                    {% endfor %}
+                  </div>
+                {% else %}
+                  <span class="text-muted small fst-italic">Sin soportes</span>
+                {% endif %}
+              </td>
+
+              <!-- Responsable Asignado -->
+              <td>
+                {% if c.trabajador %}
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 0.75rem; font-weight: 700;">
+                      {{ c.trabajador.nombre[:1].upper() if c.trabajador.nombre else 'T' }}
+                    </div>
+                    <span class="small fw-semibold text-secondary">{{ c.trabajador.nombre }}</span>
+                  </div>
+                {% else %}
+                  <span class="badge bg-light text-muted border border-dashed">Sin asignar</span>
+                {% endif %}
+              </td>
+
+              <!-- Valor Contrato -->
+              <td class="text-end fw-bold">
+                {% if c.contrato and c.contrato.valor_total %}
+                  <span class="text-success">${{ "{:,.0f}".format(c.contrato.valor_total) }}</span>
+                {% else %}
+                  <span class="text-muted small fst-italic">No formalizado</span>
+                {% endif %}
+              </td>
+
+              <!-- Estado -->
+              <td class="text-center">
+                {% if c.estado == "PENDIENTE" %}
+                  <span class="badge-status badge-status-pendiente">
+                    <i class="bi bi-hourglass-split"></i> Pendiente
+                  </span>
+                {% elif c.estado == "ACEPTADA" %}
+                  <span class="badge-status badge-status-aceptada">
+                    <i class="bi bi-check2"></i> Aceptada
+                  </span>
+                {% else %}
+                  <span class="badge-status badge-status-rechazada">
+                    <i class="bi bi-x"></i> Rechazada
+                  </span>
+                {% endif %}
+              </td>
+
+              <!-- Acciones -->
+              <td class="text-end">
+                <div class="d-inline-flex align-items-center gap-1">
+                  
+                  {% if c.estado == "PENDIENTE" %}
+                    <!-- Botón Aceptar (abre modal para asignar trabajador) -->
+                    <button type="button" 
+                            class="btn-action btn-action-success" 
+                            title="Aceptar Cotización y Asignar Trabajador"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#modalAceptarCotizacion_{{ c.id }}">
+                      <i class="bi bi-check-lg"></i>
+                    </button>
+
+                    <!-- Formulario Rechazar -->
+                    <form method="POST" action="{{ url_for('cotizaciones.cambiar_estado_cotizacion', id=c.id, estado='RECHAZADA') }}" class="d-inline" onsubmit="return confirm('¿Seguro que deseas marcar como RECHAZADA esta cotización?')">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn-action btn-action-danger" title="Rechazar Cotización">
+                        <i class="bi bi-x-lg"></i>
+                      </button>
+                    </form>
+                  {% endif %}
+
+                  {% if c.estado == "ACEPTADA" and not c.contrato %}
+                    <!-- Botón Generar Contrato -->
+                    <button type="button" 
+                            class="btn btn-outline-dark btn-sm rounded-pill px-2 py-1 btn-formalizar-contrato" 
+                            style="font-size: 0.78rem;"
+                            data-id="{{ c.id }}"
+                            data-proyecto="{{ c.proyecto }}">
+                      <i class="bi bi-file-earmark-text me-1"></i> Formalizar
+                    </button>
+                  {% endif %}
+
+                  <!-- Botón Eliminar Cotización -->
+                  <form method="POST" 
+                        action="{{ url_for('cotizaciones.eliminar_cotizacion', id=c.id) }}" 
+                        class="d-inline"
+                        onsubmit="return confirm('¿Seguro que deseas eliminar la cotización #{{ c.numero_cotizacion }}? Esta acción eliminará también contratos asociados y no se puede deshacer.')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn-action btn-action-danger" title="Eliminar cotización">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+
+                </div>
+
+                <!-- Modal de Aceptar Cotización -->
+                <div class="modal fade text-start" id="modalAceptarCotizacion_{{ c.id }}" tabindex="-1" aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                      <form method="POST" action="{{ url_for('cotizaciones.cambiar_estado_cotizacion', id=c.id, estado='ACEPTADA') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="modal-header bg-success-subtle text-success border-0 px-4 pt-4">
+                          <div>
+                            <h5 class="modal-title fw-bold mb-0">Aceptar Cotización</h5>
+                            <small class="text-muted">Cotización #{{ c.numero_cotizacion }}</small>
+                          </div>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body px-4 py-3">
+                          <p class="mb-3">
+                            ¿Confirmas que deseas aceptar la cotización para el cliente <strong>{{ c.cliente }}</strong> en el proyecto <strong>{{ c.proyecto }}</strong>?
+                          </p>
+                          <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted text-uppercase">Asignar Trabajador Responsable</label>
+                            <select class="form-select rounded-3" name="id_trabajador" required>
+                              <option value="">-- Seleccionar trabajador --</option>
+                              {% for t in trabajadores %}
+                                <option value="{{ t.id_usuario }}">{{ t.nombre }}</option>
+                              {% endfor %}
+                            </select>
+                            <div class="form-text small">El trabajador seleccionado recibirá una notificación automática con los detalles.</div>
+                          </div>
+                        </div>
+                        <div class="modal-footer border-0 px-4 pb-4">
+                          <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Cancelar</button>
+                          <button type="submit" class="btn btn-success rounded-pill px-4">
+                            <i class="bi bi-check-circle me-1"></i> Aceptar y Asignar
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="8" class="text-center py-5">
+                <div class="text-muted py-4">
+                  <i class="bi bi-clipboard2-x fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                  <h6 class="fw-bold">No se encontraron cotizaciones</h6>
+                  <p class="small text-muted mb-3">No hay registros con los filtros o términos de búsqueda seleccionados.</p>
+                  <button class="btn btn-sm btn-dark rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalNuevaCotizacion">
+                    <i class="bi bi-plus-circle me-1"></i> Crear primera cotización
+                  </button>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    {% if pagination and pagination.pages > 1 %}
+      <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3 mt-4 pt-2">
+        <div class="text-muted small">
+          Página {{ pagination.page }} de {{ pagination.pages }} ({{ pagination.total }} cotizaciones en total)
+        </div>
+        <nav aria-label="Navegación de páginas">
+          <ul class="pagination pagination-custom mb-0">
+            {% if pagination.has_prev %}
+              <li class="page-item">
+                <a class="page-link" href="{{ url_for('cotizaciones.historial_cotizaciones', page=pagination.prev_num, q=q, estado=estado) }}">
+                  <i class="bi bi-chevron-left"></i> Anterior
+                </a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-left"></i> Anterior</span></li>
+            {% endif %}
+
+            {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+              {% if p %}
+                {% if p == pagination.page %}
+                  <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+                {% else %}
+                  <li class="page-item">
+                    <a class="page-link" href="{{ url_for('cotizaciones.historial_cotizaciones', page=p, q=q, estado=estado) }}">{{ p }}</a>
+                  </li>
+                {% endif %}
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+              {% endif %}
+            {% endfor %}
+
+            {% if pagination.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="{{ url_for('cotizaciones.historial_cotizaciones', page=pagination.next_num, q=q, estado=estado) }}">
+                  Siguiente <i class="bi bi-chevron-right"></i>
+                </a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">Siguiente <i class="bi bi-chevron-right"></i></span></li>
+            {% endif %}
+          </ul>
+        </nav>
+      </div>
+    {% endif %}
+
+  </div>
+
+</div>
+
+<!-- ================= MODAL NUEVA COTIZACIÓN ================= -->
+<div class="modal fade" id="modalNuevaCotizacion" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <form id="formNuevaCotizacion" action="{{ url_for('cotizaciones.crear_cotizacion') }}" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header bg-dark text-white border-0 px-4 pt-4">
+          <div>
+            <h5 class="modal-title fw-bold mb-0"><i class="bi bi-calculator text-primary me-2"></i>Nueva Cotización</h5>
+            <small class="text-white-50">Registrar presupuesto y soportes de cotización</small>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body px-4 py-3">
+          <div class="mb-3">
+            <label class="form-label fw-semibold small text-muted text-uppercase">Cliente</label>
+            <input name="cliente" class="form-control rounded-3" placeholder="Ej. Constructora Andina S.A.S." required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold small text-muted text-uppercase">Proyecto</label>
+            <input name="proyecto" class="form-control rounded-3" placeholder="Ej. Adecuación El Dorado" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold small text-muted text-uppercase">Número de Cotización</label>
+            <input name="numero_cotizacion" class="form-control rounded-3" placeholder="Ej. COT-2025-001" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold small text-muted text-uppercase">Soportes de Cotización (Opcional)</label>
+            <input type="file" name="archivos_cotizacion" id="archivos_cotizacion_modal" class="form-control rounded-3" accept="image/*,application/pdf" multiple>
+            <div id="lista_archivos_modal" class="mt-2 small text-muted"></div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 px-4 pb-4">
+          <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary rounded-pill px-4">
+            <i class="bi bi-check-lg me-1"></i> Guardar Cotización
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL GENERAR CONTRATO ================= -->
+<div class="modal fade" id="modalGenerarContrato" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <form method="POST" id="formGenerarContrato" action="">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header bg-dark text-white border-0 px-4 pt-4">
+          <div>
+            <h5 class="modal-title fw-bold mb-0">Formalizar Contrato</h5>
+            <small class="text-white-50" id="contratoProyectoTexto"></small>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body px-4 py-3 bg-light">
+          <div class="mb-3">
+            <label class="form-label fw-semibold small text-muted text-uppercase">Valor Total Acordado</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input type="hidden" name="valor_total" id="contratoValorTotal_hidden" required>
+              <input type="text" id="contratoValorTotal" class="form-control" placeholder="0" required oninput="formatearMoneda(this, 'contratoValorTotal_hidden'); calcularAnticipoPesos()">
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-semibold small text-muted text-uppercase">% de Anticipo</label>
+              <div class="input-group">
+                <input type="number" step="0.01" min="0" max="100" name="anticipo_porcentaje" id="contratoAnticipoPorcentaje" class="form-control" value="0" required oninput="calcularAnticipoPesos()">
+                <span class="input-group-text">%</span>
+              </div>
+              <div class="form-text text-success fw-bold mt-1" id="anticipoPesosText">$0</div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-semibold small text-muted text-uppercase">% Retención Garantía</label>
+              <div class="input-group">
+                <input type="number" step="0.01" min="0" max="100" name="retencion_garantia_porcentaje" class="form-control" value="0" required>
+                <span class="input-group-text">%</span>
+              </div>
+            </div>
+          </div>
+          <div class="mb-3" id="divBancoAnticipo" style="display: none;">
+            <label class="form-label fw-semibold text-primary"><i class="bi bi-bank"></i> Banco destino para el Anticipo</label>
+            <input type="text" name="banco_nombre" class="form-control border-primary" id="selectBancoAnticipo" list="bancosList" placeholder="Seleccione o ingrese banco...">
+            <datalist id="bancosList">
+              {% for b in bancos %}
+                <option value="{{ b.nombre_banco }} - {{ b.numero_cuenta }}"></option>
+              {% endfor %}
+            </datalist>
+          </div>
+        </div>
+        <div class="modal-footer border-0 px-4 pb-4">
+          <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-dark rounded-pill px-4">
+            <i class="bi bi-file-earmark-check me-1"></i> Activar Contrato
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  function formatearMoneda(inputVisual, idInputOculto) {
+    let valor = inputVisual.value.replace(/\D/g, "");
+    if (valor !== "") {
+      document.getElementById(idInputOculto).value = valor;
+      inputVisual.value = new Intl.NumberFormat('es-CO').format(parseInt(valor, 10));
+    } else {
+      document.getElementById(idInputOculto).value = "";
+      inputVisual.value = "";
+    }
+  }
+
+  function abrirModalContrato(cotizacionId, proyectoNombre) {
+    document.getElementById('contratoProyectoTexto').innerText = proyectoNombre;
+    const form = document.getElementById('formGenerarContrato');
+    form.action = `/tesoreria/contratos/desde-cotizacion/${cotizacionId}`;
+    
+    document.getElementById('contratoValorTotal_hidden').value = '';
+    document.getElementById('contratoValorTotal').value = '';
+    document.getElementById('contratoAnticipoPorcentaje').value = '0';
+    document.getElementById('selectBancoAnticipo').value = '';
+    calcularAnticipoPesos();
+    
+    new bootstrap.Modal(document.getElementById('modalGenerarContrato')).show();
+  }
+
+  function calcularAnticipoPesos() {
+    const valorTotal = parseFloat(document.getElementById('contratoValorTotal_hidden').value) || 0;
+    const porcentaje = parseFloat(document.getElementById('contratoAnticipoPorcentaje').value) || 0;
+    
+    const anticipoCalculado = (valorTotal * porcentaje) / 100;
+    document.getElementById('anticipoPesosText').innerText = '$' + anticipoCalculado.toLocaleString('es-CO');
+    
+    const divBanco = document.getElementById('divBancoAnticipo');
+    const selectBanco = document.getElementById('selectBancoAnticipo');
+    
+    if (porcentaje > 0 && valorTotal > 0) {
+      divBanco.style.display = 'block';
+      selectBanco.required = true;
+    } else {
+      divBanco.style.display = 'none';
+      selectBanco.required = false;
+      selectBanco.value = '';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('click', function(e) {
+      const btn = e.target.closest('.btn-formalizar-contrato');
+      if (btn) {
+        const id = btn.getAttribute('data-id');
+        const proyecto = btn.getAttribute('data-proyecto');
+        abrirModalContrato(id, proyecto);
+      }
+    });
+
+    const inputArchivos = document.getElementById('archivos_cotizacion_modal');
+    if (inputArchivos) {
+      inputArchivos.addEventListener('change', function() {
+        const lista = document.getElementById('lista_archivos_modal');
+        lista.innerHTML = '';
+        if (this.files.length > 0) {
+          let ul = document.createElement('ul');
+          ul.className = 'mb-0 ps-3';
+          for (let i = 0; i < this.files.length; i++) {
+            let li = document.createElement('li');
+            li.textContent = this.files[i].name;
+            ul.appendChild(li);
+          }
+          lista.appendChild(ul);
+        }
+      });
+    }
+  });
+</script>
+</body>
+</html>
