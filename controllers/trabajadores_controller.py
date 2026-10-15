@@ -481,13 +481,39 @@ def programar_pago_nomina():
 @login_required
 @admin_oficina_required
 def editar_pago_programado_nomina(id):
-    pago = ProgramacionPagoTrabajador.query.get_or_404(id)
     try:
-        pago.fecha_programada = datetime.strptime(request.form.get('fecha_programada'), '%Y-%m-%d').date()
-        pago.monto = clean_amount(request.form.get('monto'))
-        pago.forma_pago = request.form.get('forma_pago')
-        pago.observacion = request.form.get('observacion')
-        pago.estado = request.form.get('estado')
+        registro = ProgramacionPagoTrabajador.query.get_or_404(id)
+        
+        # Edición segura de campos de texto plano (nombres de referencia e identificación)
+        # Se persisten directamente en la entidad de nómina sin alterar la tabla de Usuarios de administración
+        nombre_trabajador = request.form.get('nombre_trabajador')
+        identificacion_trabajador = request.form.get('identificacion_trabajador')
+        fecha_str = request.form.get('fecha_programada')
+        monto_str = request.form.get('monto')
+        forma_pago = request.form.get('forma_pago')
+        observacion = request.form.get('observacion')
+        estado = request.form.get('estado')
+
+        if nombre_trabajador and nombre_trabajador.strip():
+            registro.nombre_trabajador = nombre_trabajador.strip()
+            
+        if identificacion_trabajador is not None:
+            registro.identificacion_trabajador = identificacion_trabajador.strip()
+            
+        if fecha_str:
+            registro.fecha_programada = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+            
+        if monto_str:
+            registro.monto = clean_amount(monto_str)
+            
+        if forma_pago is not None:
+            registro.forma_pago = forma_pago
+            
+        if observacion is not None:
+            registro.observacion = observacion
+            
+        if estado is not None:
+            registro.estado = estado
         
         db.session.commit()
         flash('Pago programado actualizado correctamente.', 'success')
@@ -502,9 +528,9 @@ def editar_pago_programado_nomina(id):
 @login_required
 @admin_oficina_required
 def eliminar_pago_nomina(id):
-    pago = ProgramacionPagoTrabajador.query.get_or_404(id)
     try:
-        db.session.delete(pago)
+        registro = ProgramacionPagoTrabajador.query.get_or_404(id)
+        db.session.delete(registro)
         db.session.commit()
         flash('Programación de pago eliminada exitosamente.', 'success')
     except Exception as e:
@@ -518,9 +544,9 @@ def eliminar_pago_nomina(id):
 @login_required
 @admin_oficina_required
 def marcar_pagado_nomina(id):
-    pago = ProgramacionPagoTrabajador.query.get_or_404(id)
     try:
-        pago.estado = 'Realizado'
+        registro = ProgramacionPagoTrabajador.query.get_or_404(id)
+        registro.estado = 'Realizado'
         db.session.commit()
         flash('Pago marcado como realizado exitosamente.', 'success')
     except Exception as e:
@@ -529,4 +555,5 @@ def marcar_pagado_nomina(id):
         flash('Error al actualizar el estado del pago.', 'danger')
         
     return redirect(url_for('trabajadores.nomina'))
+
 

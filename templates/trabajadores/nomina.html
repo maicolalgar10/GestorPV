@@ -184,7 +184,12 @@
                             </tr>
                           </thead>
                           <tbody>
-                            {% set pagos_emp = pagos | selectattr('nombre_trabajador', 'equalto', emp.nombre) | list %}
+                            {% set pagos_emp = [] %}
+                            {% for p in pagos %}
+                              {% if p.nombre_trabajador and emp.nombre and (p.nombre_trabajador|trim|lower == emp.nombre|trim|lower or p.nombre_trabajador == emp.nombre or (emp.cedula and p.identificacion_trabajador and p.identificacion_trabajador|trim == emp.cedula|trim)) %}
+                                {% set _ = pagos_emp.append(p) %}
+                              {% endif %}
+                            {% endfor %}
                             {% for pago in pagos_emp %}
                             <tr>
                               <td>{{ pago.fecha_programada.strftime('%d/%m/%Y') }}</td>
@@ -206,7 +211,20 @@
 
                                   <button type="submit" class="btn btn-sm btn-outline-success" title="Marcar como Pagado"><i class="bi bi-check-circle"></i></button>
                                 </form>
-                                <button type="button" class="btn btn-sm btn-outline-primary ms-1" title="Editar" onclick="abrirModalEditarPago({{ pago.id }}, '{{ pago.fecha_programada }}', '{{ pago.monto }}', '{{ pago.forma_pago }}', '{{ pago.estado }}', '{{ pago.observacion }}')"><i class="bi bi-pencil"></i></button>
+                                <button type="button" 
+                                        class="btn btn-sm btn-outline-primary ms-1 btn-editar-pago" 
+                                        title="Editar" 
+                                        data-id="{{ pago.id }}"
+                                        data-fecha="{{ pago.fecha_programada }}"
+                                        data-monto="{{ pago.monto }}"
+                                        data-forma-pago="{{ pago.forma_pago or 'Transferencia' }}"
+                                        data-estado="{{ pago.estado or 'Programado' }}"
+                                        data-observacion="{{ pago.observacion or '' }}"
+                                        data-nombre="{{ pago.nombre_trabajador or emp.nombre }}"
+                                        data-identificacion="{{ pago.identificacion_trabajador or emp.cedula or '' }}"
+                                        onclick="abrirModalEditarPagoDesdeBoton(this)">
+                                  <i class="bi bi-pencil"></i>
+                                </button>
                                 {% endif %}
                                 <form method="POST" action="{{ url_for('trabajadores.eliminar_pago_nomina', id=pago.id) }}" class="d-inline ms-1" onsubmit="return confirm('¿Seguro que deseas eliminar este pago?');">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -319,14 +337,24 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content shadow" style="border-radius: 16px; border: none;">
         <div class="modal-header border-0 pb-0">
-          <h5 class="modal-title fw-bold text-primary"><i class="bi bi-pencil-square"></i> Editar Pago Programado</h5>
+          <h5 class="modal-title fw-bold text-primary"><i class="bi bi-pencil-square"></i> Editar Pago Programado de Nómina</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <form method="POST" id="formEditarPago">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
           <div class="modal-body py-3">
-  
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Trabajador (Nombre de Referencia) <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="nombre_trabajador" id="editNombreTrabajador" required>
+              <div class="form-text text-muted" style="font-size: 0.75rem;">Nombre descriptivo de referencia en nómina (sin alterar usuarios de administración).</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Identificación / Cédula (Referencia)</label>
+              <input type="text" class="form-control" name="identificacion_trabajador" id="editIdentificacionTrabajador" placeholder="Número de cédula o ID">
+            </div>
+
             <div class="mb-3">
               <label class="form-label small fw-bold">Fecha Programada <span class="text-danger">*</span></label>
               <input type="date" class="form-control" name="fecha_programada" id="editFecha" required>
@@ -386,8 +414,27 @@
       modal.show();
     }
 
-    function abrirModalEditarPago(id, fecha, monto, forma_pago, estado, observacion) {
+    function abrirModalEditarPagoDesdeBoton(btn) {
+      const id = btn.getAttribute('data-id');
+      const fecha = btn.getAttribute('data-fecha');
+      const monto = btn.getAttribute('data-monto');
+      const forma_pago = btn.getAttribute('data-forma-pago');
+      const estado = btn.getAttribute('data-estado');
+      const observacion = btn.getAttribute('data-observacion');
+      const nombre = btn.getAttribute('data-nombre');
+      const identificacion = btn.getAttribute('data-identificacion');
+      
+      abrirModalEditarPago(id, fecha, monto, forma_pago, estado, observacion, nombre, identificacion);
+    }
+
+    function abrirModalEditarPago(id, fecha, monto, forma_pago, estado, observacion, nombre, identificacion) {
       document.getElementById('formEditarPago').action = `/oficina/trabajadores/programacion_pago/editar/${id}`;
+      if (document.getElementById('editNombreTrabajador')) {
+        document.getElementById('editNombreTrabajador').value = nombre || '';
+      }
+      if (document.getElementById('editIdentificacionTrabajador')) {
+        document.getElementById('editIdentificacionTrabajador').value = identificacion || '';
+      }
       document.getElementById('editFecha').value = fecha;
       document.getElementById('editMonto').value = Math.round(Number(monto));
       document.getElementById('editMonto').dataset.rawValue = Math.round(Number(monto)); // For formatos.js
