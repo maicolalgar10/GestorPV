@@ -97,16 +97,35 @@
             </thead>
             <tbody id="tbodyEmpleados">
               {% for emp in empleados %}
+              {% set pagos_emp = [] %}
+              {% for p in pagos %}
+                {% if p.nombre_trabajador and emp.nombre and (
+                    p.nombre_trabajador|trim|lower == emp.nombre|trim|lower 
+                    or p.nombre_trabajador == emp.nombre 
+                    or (emp.cedula and p.identificacion_trabajador and p.identificacion_trabajador|trim == emp.cedula|trim)
+                    or (emp.personal_data and emp.personal_data.contacto and p.identificacion_trabajador and p.identificacion_trabajador|trim == emp.personal_data.contacto|trim)
+                    or ('[UID:' ~ emp.id_usuario ~ ']' in (p.observacion or ''))
+                ) %}
+                  {% set _ = pagos_emp.append(p) %}
+                {% endif %}
+              {% endfor %}
+              {% set nombre_display = (pagos_emp[-1].nombre_trabajador if pagos_emp and pagos_emp[-1].nombre_trabajador else emp.nombre) %}
+              {% set cedula_display = (pagos_emp[-1].identificacion_trabajador if pagos_emp and pagos_emp[-1].identificacion_trabajador else (emp.cedula if emp.cedula else (emp.personal_data.contacto if emp.personal_data and emp.personal_data.contacto else 'N/A'))) %}
               <tr id="fila-emp-{{ emp.id_usuario }}" data-emp-id="{{ emp.id_usuario }}" class="fila-empleado">
                 <td class="fw-semibold">
                   <div class="d-flex align-items-center gap-2">
                     <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; font-size: 0.8rem;">
-                      {{ emp.nombre[:2].upper() if emp.nombre else 'UN' }}
+                      {{ nombre_display[:2].upper() if nombre_display else 'UN' }}
                     </div>
-                    {{ emp.nombre }}
+                    <div>
+                      <span>{{ nombre_display }}</span>
+                      {% if nombre_display != emp.nombre %}
+                      <span class="badge bg-light text-muted border ms-1" style="font-size: 0.65rem;" title="Usuario administrativo original: {{ emp.nombre }}">Ref. nómina</span>
+                      {% endif %}
+                    </div>
                   </div>
                 </td>
-                <td>{{ emp.cedula if emp.cedula else 'N/A' }}</td>
+                <td>{{ cedula_display }}</td>
                 <td>
                   <div><i class="bi bi-envelope text-muted"></i> {{ emp.email }}</div>
                   {% if emp.telefono %}
@@ -123,18 +142,30 @@
                 <td class="text-muted fst-italic">Por definir</td>
                 <td class="text-muted fst-italic">Por definir</td>
                 <td class="text-end text-nowrap">
-                  <button type="button" class="btn btn-sm btn-success ms-1" title="Programar Pago" data-id="{{ emp.id_usuario }}" data-nombre="{{ emp.nombre }}" data-cedula="{{ emp.cedula }}" onclick="abrirModalProgramarPago(this)">
+                  <button type="button" 
+                          class="btn btn-sm btn-outline-primary ms-1 shadow-sm btn-editar-trabajador-local" 
+                          title="Editar Datos Locales de Nómina"
+                          style="border-radius: 8px; transition: all 0.2s ease;"
+                          data-id="{{ emp.id_usuario }}" 
+                          data-nombre="{{ nombre_display }}" 
+                          data-cedula="{{ cedula_display if cedula_display != 'N/A' else '' }}"
+                          data-nombre-original="{{ emp.nombre }}"
+                          onclick="abrirModalEditarTrabajadorLocal(this)">
+                    <i class="bi bi-pencil-square"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-success ms-1 shadow-sm" style="border-radius: 8px;" title="Programar Pago" data-id="{{ emp.id_usuario }}" data-nombre="{{ nombre_display }}" data-cedula="{{ cedula_display if cedula_display != 'N/A' else '' }}" onclick="abrirModalProgramarPago(this)">
                     <i class="bi bi-calendar-plus"></i>
                   </button>
-                  <button type="button" class="btn btn-sm btn-info ms-1 text-white" title="Ver Pagos Programados" data-bs-toggle="modal" data-bs-target="#modalVerPagos{{ emp.id_usuario }}">
+                  <button type="button" class="btn btn-sm btn-info ms-1 text-white shadow-sm" style="border-radius: 8px;" title="Ver Pagos Programados" data-bs-toggle="modal" data-bs-target="#modalVerPagos{{ emp.id_usuario }}">
                     <i class="bi bi-list-check"></i>
                   </button>
         
                   <button type="button" 
-                          class="btn btn-sm btn-outline-danger ms-1 btn-quitar-fila" 
+                          class="btn btn-sm btn-outline-danger ms-1 btn-quitar-fila shadow-sm" 
+                          style="border-radius: 8px;"
                           title="Quitar / Ocultar de la nómina"
                           data-id="{{ emp.id_usuario }}"
-                          data-nombre="{{ emp.nombre }}"
+                          data-nombre="{{ nombre_display }}"
                           onclick="abrirModalQuitar(this)">
                     <i class="bi bi-trash"></i>
                   </button>
@@ -332,6 +363,64 @@
     </div>
   </div>
 
+  <!-- Modal Editar Datos Locales de Nómina -->
+  <div class="modal fade" id="modalEditarTrabajadorLocal" tabindex="-1" aria-labelledby="modalEditarTrabajadorLocalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg border-0" style="border-radius: 18px; overflow: hidden;">
+        <div class="modal-header border-0 pb-0 pt-4 px-4">
+          <div class="d-flex align-items-center gap-3">
+            <div class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; font-size: 1.25rem;">
+              <i class="bi bi-pencil-square"></i>
+            </div>
+            <div>
+              <h5 class="modal-title fw-bold text-dark mb-0" id="modalEditarTrabajadorLocalLabel">Editar Datos de Nómina</h5>
+              <p class="text-muted small mb-0">Modificación local de referencia para el módulo de nómina</p>
+            </div>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        
+        <form method="POST" id="formEditarTrabajadorLocal" action="">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="nombre_anterior" id="editLocalNombreAnterior">
+          <input type="hidden" name="usuario_id" id="editLocalUsuarioId">
+
+          <div class="modal-body py-4 px-4">
+            <div class="alert alert-info border-0 d-flex align-items-start gap-2 mb-3" style="background-color: #f0f7ff; border-radius: 12px; font-size: 0.825rem; color: #1e40af;">
+              <i class="bi bi-shield-check fs-5 flex-shrink-0 mt-0"></i>
+              <div>
+                <strong>Aislamiento seguro:</strong> Esta edición se aplica únicamente a la planilla y registros de nómina. La cuenta y credenciales del usuario de administración no son modificadas.
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-secondary">Nombre de Referencia en Nómina <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-person"></i></span>
+                <input type="text" class="form-control border-start-0" name="nombre_trabajador" id="editLocalNombreTrabajador" placeholder="Nombre para nómina" required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-secondary">Identificación / Cédula (Referencia)</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-card-heading"></i></span>
+                <input type="text" class="form-control border-start-0" name="identificacion_trabajador" id="editLocalIdentificacionTrabajador" placeholder="Cédula o ID de referencia">
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer border-0 pt-0 pb-4 px-4 gap-2">
+            <button type="button" class="btn btn-outline-secondary px-3 py-2" data-bs-dismiss="modal" style="border-radius: 10px; font-weight: 500;">Cancelar</button>
+            <button type="submit" class="btn btn-primary px-4 py-2" style="border-radius: 10px; font-weight: 600;">
+              <i class="bi bi-check-lg me-1"></i> Guardar Cambios
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal Editar Pago -->
   <div class="modal fade" id="modalEditarPago" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -448,6 +537,23 @@
       }
       
       const modal = new bootstrap.Modal(document.getElementById('modalEditarPago'));
+      modal.show();
+    }
+
+    function abrirModalEditarTrabajadorLocal(btn) {
+      const id = btn.getAttribute('data-id');
+      const nombre = btn.getAttribute('data-nombre');
+      const cedula = btn.getAttribute('data-cedula');
+      const nombreOriginal = btn.getAttribute('data-nombre-original') || nombre;
+
+      document.getElementById('formEditarTrabajadorLocal').action = `/oficina/trabajadores/nomina/editar/${id}`;
+      document.getElementById('editLocalNombreAnterior').value = nombreOriginal;
+      document.getElementById('editLocalUsuarioId').value = id;
+      document.getElementById('editLocalNombreTrabajador').value = nombre || '';
+      document.getElementById('editLocalIdentificacionTrabajador').value = (cedula && cedula !== 'N/A') ? cedula : '';
+
+      const modalEl = document.getElementById('modalEditarTrabajadorLocal');
+      const modal = new bootstrap.Modal(modalEl);
       modal.show();
     }
   </script>

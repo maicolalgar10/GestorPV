@@ -12,6 +12,7 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 trabajadores_bp = Blueprint("trabajadores", __name__)
 from sqlalchemy.orm import selectinload
+from sqlalchemy import func
 
 @trabajadores_bp.route("/oficina/trabajadores")
 @login_required
@@ -474,6 +475,67 @@ def programar_pago_nomina():
         db.session.rollback()
         print(f"Error al programar pago trabajador: {e}")
         flash('Ocurrió un error al programar el pago.', 'danger')
+
+    return redirect(url_for('trabajadores.nomina'))
+
+@trabajadores_bp.route('/oficina/trabajadores/nomina/editar/<int:id>', methods=['POST'])
+@login_required
+@admin_oficina_required
+def editar_trabajador_nomina_local(id):
+    try:
+        nombre_trabajador = request.form.get('nombre_trabajador')
+        identificacion_trabajador = request.form.get('identificacion_trabajador')
+        nombre_anterior = request.form.get('nombre_anterior')
+        
+        nuevo_nombre = (nombre_trabajador or '').strip()
+        nueva_identificacion = (identificacion_trabajador or '').strip()
+        
+        if not nuevo_nombre:
+            flash('El nombre del trabajador no puede estar vacío.', 'warning')
+            return redirect(url_for('trabajadores.nomina'))
+
+        # 1. Si el ID coincide directamente con un registro de ProgramacionPagoTrabajador
+        pago_directo = ProgramacionPagoTrabajador.query.get(id)
+        if pago_directo:
+            pago_directo.nombre_trabajador = nuevo_nombre
+            if identificacion_trabajador is not None:
+                pago_directo.identificacion_trabajador = nueva_identificacion
+
+        # 2. Actualizar todos los pagos programados que coincidan con este trabajador
+        # (por nombre anterior, o nombre del usuario de referencia) sin tocar la tabla Usuarios
+        usuario = Usuarios.query.get(id)
+        nombre_buscar = (nombre_anterior or (usuario.nombre if usuario else '')).strip()
+
+        pagos_asociados = []
+        if nombre_buscar:
+            pagos_asociados = ProgramacionPagoTrabajador.query.filter(
+                func.lower(ProgramacionPagoTrabajador.nombre_trabajador) == func.lower(nombre_buscar)
+            ).all()
+
+        if pagos_asociados:
+            for p in pagos_asociados:
+                p.nombre_trabajador = nuevo_nombre
+                if identificacion_trabajador is not None:
+                    p.identificacion_trabajador = nueva_identificacion
+        elif not pago_directo:
+            # Si no tiene pagos programados previos, creamos un registro inicial de nómina para persistir la referencia local
+            nuevo_registro = ProgramacionPagoTrabajador(
+                nombre_trabajador=nuevo_nombre,
+                identificacion_trabajador=nueva_identificacion,
+                fecha_programada=datetime.today().date(),
+                monto=0,
+                forma_pago='Transferencia',
+                estado='Programado',
+                observacion='Registro de referencia de nómina (datos locales actualizados)'
+            )
+            db.session.add(nuevo_registro)
+
+        db.session.commit()
+        flash(f'Datos de referencia de "{nuevo_nombre}" actualizados correctamente en nómina.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al actualizar trabajador en nómina: {e}")
+        flash(f'Error al actualizar los datos en nómina: {str(e)}', 'danger')
 
     return redirect(url_for('trabajadores.nomina'))
 
