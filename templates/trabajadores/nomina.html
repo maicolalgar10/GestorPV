@@ -45,6 +45,9 @@
         <p class="text-secondary small">Gestión de liquidaciones y pagos | {{ usuario.nombre }}</p>
       </div>
       <div>
+        <button type="button" class="btn btn-primary shadow-sm me-2" style="border-radius: 12px;" data-bs-toggle="modal" data-bs-target="#modalCrearTrabajador">
+          <i class="bi bi-person-plus-fill me-1"></i> Nuevo Trabajador
+        </button>
         <a href="{{ url_for('trabajadores.historial_nomina') }}" class="btn btn-outline-secondary me-2" style="border-radius: 12px;">
           <i class="bi bi-clock-history"></i> Historial de Pagos
         </a>
@@ -63,21 +66,13 @@
           <div class="col-md-6">
             <div class="input-group">
               <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
-              <input type="text" id="buscadorEmpleados" class="form-control border-start-0 bg-light" placeholder="Buscar por nombre, cédula o email..." onkeyup="filtrarTabla()">
+              <input type="text" id="buscadorEmpleados" class="form-control border-start-0 bg-light" placeholder="Buscar por nombre o cédula..." onkeyup="filtrarTabla()">
             </div>
           </div>
           <div class="col-md-6 text-md-end mt-3 mt-md-0 d-flex justify-content-md-end align-items-center gap-2">
             <span class="badge bg-light text-dark border py-2 px-3" style="border-radius: 10px;">
               <i class="bi bi-people-fill text-primary"></i> <span id="contadorVisibles">{{ empleados|length }}</span> en Nómina
             </span>
-            <button type="button" 
-                    id="btnRestablecerOcultos" 
-                    class="btn btn-outline-secondary btn-sm py-2 px-3 d-none" 
-                    onclick="restablecerOcultos()" 
-                    style="border-radius: 10px;"
-                    title="Mostrar todos los trabajadores que se habían quitado">
-              <i class="bi bi-arrow-counterclockwise"></i> Restablecer (<span id="contadorOcultos">0</span>)
-            </button>
           </div>
         </div>
 
@@ -87,10 +82,7 @@
               <tr>
                 <th>Nombre Completo</th>
                 <th>Cédula</th>
-                <th>Contacto</th>
                 <th>Estado</th>
-                <!-- Columnas futuras -->
-                <th>Sueldo Día (ref)</th>
                 <th>Total Devengado</th>
                 <th class="text-end">Acciones</th>
               </tr>
@@ -103,70 +95,59 @@
                     p.nombre_trabajador|trim|lower == emp.nombre|trim|lower 
                     or p.nombre_trabajador == emp.nombre 
                     or (emp.cedula and p.identificacion_trabajador and p.identificacion_trabajador|trim == emp.cedula|trim)
-                    or (emp.personal_data and emp.personal_data.contacto and p.identificacion_trabajador and p.identificacion_trabajador|trim == emp.personal_data.contacto|trim)
-                    or ('[UID:' ~ emp.id_usuario ~ ']' in (p.observacion or ''))
                 ) %}
                   {% set _ = pagos_emp.append(p) %}
                 {% endif %}
               {% endfor %}
-              {% set nombre_display = (pagos_emp[-1].nombre_trabajador if pagos_emp and pagos_emp[-1].nombre_trabajador else emp.nombre) %}
-              {% set cedula_display = (pagos_emp[-1].identificacion_trabajador if pagos_emp and pagos_emp[-1].identificacion_trabajador else (emp.cedula if emp.cedula else (emp.personal_data.contacto if emp.personal_data and emp.personal_data.contacto else 'N/A'))) %}
-              <tr id="fila-emp-{{ emp.id_usuario }}" data-emp-id="{{ emp.id_usuario }}" class="fila-empleado">
+              {% set nombre_display = emp.nombre %}
+              {% set cedula_display = emp.cedula if emp.cedula else 'N/A' %}
+              <tr id="fila-emp-{{ emp.id }}" data-emp-id="{{ emp.id }}" class="fila-empleado">
                 <td class="fw-semibold">
                   <div class="d-flex align-items-center gap-2">
                     <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; font-size: 0.8rem;">
-                      {{ nombre_display[:2].upper() if nombre_display else 'UN' }}
+                      {{ nombre_display[:2].upper() if nombre_display else 'TR' }}
                     </div>
                     <div>
                       <span>{{ nombre_display }}</span>
-                      {% if nombre_display != emp.nombre %}
-                      <span class="badge bg-light text-muted border ms-1" style="font-size: 0.65rem;" title="Usuario administrativo original: {{ emp.nombre }}">Ref. nómina</span>
-                      {% endif %}
                     </div>
                   </div>
                 </td>
                 <td>{{ cedula_display }}</td>
                 <td>
-                  <div><i class="bi bi-envelope text-muted"></i> {{ emp.email }}</div>
-                  {% if emp.telefono %}
-                  <div class="small text-muted"><i class="bi bi-telephone"></i> {{ emp.telefono }}</div>
-                  {% endif %}
+                  <span class="badge bg-success-subtle text-success badge-estado"><i class="bi bi-check-circle"></i> Activo</span>
                 </td>
-                <td>
-                  {% if emp.estado == 'Activo' or emp.estado == True %}
-                    <span class="badge bg-success-subtle text-success badge-estado"><i class="bi bi-check-circle"></i> Activo</span>
+                <td class="fw-semibold text-success">
+                  {% if emp.total_devengado > 0 %}
+                    $ {{ "{:,.0f}".format(emp.total_devengado).replace(',', '.') }}
                   {% else %}
-                    <span class="badge bg-secondary-subtle text-secondary badge-estado">Inactivo</span>
+                    $ 0
                   {% endif %}
                 </td>
-                <td class="text-muted fst-italic">Por definir</td>
-                <td class="text-muted fst-italic">Por definir</td>
                 <td class="text-end text-nowrap">
                   <button type="button" 
                           class="btn btn-sm btn-outline-primary ms-1 shadow-sm btn-editar-trabajador-local" 
-                          title="Editar Datos Locales de Nómina"
+                          title="Editar Datos de Nómina"
                           style="border-radius: 8px; transition: all 0.2s ease;"
-                          data-id="{{ emp.id_usuario }}" 
+                          data-id="{{ emp.id }}" 
                           data-nombre="{{ nombre_display }}" 
                           data-cedula="{{ cedula_display if cedula_display != 'N/A' else '' }}"
-                          data-nombre-original="{{ emp.nombre }}"
                           onclick="abrirModalEditarTrabajadorLocal(this)">
                     <i class="bi bi-pencil-square"></i>
                   </button>
-                  <button type="button" class="btn btn-sm btn-success ms-1 shadow-sm" style="border-radius: 8px;" title="Programar Pago" data-id="{{ emp.id_usuario }}" data-nombre="{{ nombre_display }}" data-cedula="{{ cedula_display if cedula_display != 'N/A' else '' }}" onclick="abrirModalProgramarPago(this)">
+                  <button type="button" class="btn btn-sm btn-success ms-1 shadow-sm" style="border-radius: 8px;" title="Programar Pago" data-id="{{ emp.id }}" data-nombre="{{ nombre_display }}" data-cedula="{{ cedula_display if cedula_display != 'N/A' else '' }}" onclick="abrirModalProgramarPago(this)">
                     <i class="bi bi-calendar-plus"></i>
                   </button>
-                  <button type="button" class="btn btn-sm btn-info ms-1 text-white shadow-sm" style="border-radius: 8px;" title="Ver Pagos Programados" data-bs-toggle="modal" data-bs-target="#modalVerPagos{{ emp.id_usuario }}">
+                  <button type="button" class="btn btn-sm btn-info ms-1 text-white shadow-sm" style="border-radius: 8px;" title="Ver Pagos Programados" data-bs-toggle="modal" data-bs-target="#modalVerPagos{{ emp.id }}">
                     <i class="bi bi-list-check"></i>
                   </button>
         
                   <button type="button" 
-                          class="btn btn-sm btn-outline-danger ms-1 btn-quitar-fila shadow-sm" 
+                          class="btn btn-sm btn-outline-danger ms-1 shadow-sm" 
                           style="border-radius: 8px;"
-                          title="Quitar / Ocultar de la nómina"
-                          data-id="{{ emp.id_usuario }}"
+                          title="Eliminar de la nómina"
+                          data-id="{{ emp.id }}"
                           data-nombre="{{ nombre_display }}"
-                          onclick="abrirModalQuitar(this)">
+                          onclick="abrirModalEliminarTrabajador(this)">
                     <i class="bi bi-trash"></i>
                   </button>
                 </td>
@@ -174,17 +155,9 @@
 
               {% else %}
               <tr id="filaSinEmpleados">
-                <td colspan="7" class="text-center py-4 text-muted">No se encontraron empleados registrados.</td>
+                <td colspan="5" class="text-center py-4 text-muted">No se encontraron trabajadores registrados en la nómina local.</td>
               </tr>
               {% endfor %}
-              <tr id="filaTodosOcultos" class="d-none">
-                <td colspan="7" class="text-center py-4 text-muted">
-                  Todos los trabajadores han sido quitados de la vista actual. 
-                  <a href="javascript:void(0)" onclick="restablecerOcultos()" class="text-primary text-decoration-none fw-semibold ms-1">
-                    <i class="bi bi-arrow-counterclockwise"></i> Restablecer lista
-                  </a>
-                </td>
-              </tr>
             </tbody>
           </table>
         </div>
@@ -195,7 +168,7 @@
 
   <!-- Modales Ver Pagos Programados -->
   {% for emp in empleados %}
-              <div class="modal fade" id="modalVerPagos{{ emp.id_usuario }}" tabindex="-1" aria-hidden="true">
+              <div class="modal fade" id="modalVerPagos{{ emp.id }}" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-lg modal-dialog-centered">
                   <div class="modal-content">
                     <div class="modal-header border-0 pb-0">
@@ -217,7 +190,7 @@
                           <tbody>
                             {% set pagos_emp = [] %}
                             {% for p in pagos %}
-                              {% if p.nombre_trabajador and emp.nombre and (p.nombre_trabajador|trim|lower == emp.nombre|trim|lower or p.nombre_trabajador == emp.nombre or (emp.cedula and p.identificacion_trabajador and p.identificacion_trabajador|trim == emp.cedula|trim)) %}
+                              {% if p.nombre_trabajador and emp.nombre and (p.nombre_trabajador|trim|lower == emp.nombre|trim|lower or (emp.cedula and p.identificacion_trabajador and p.identificacion_trabajador|trim == emp.cedula|trim)) %}
                                 {% set _ = pagos_emp.append(p) %}
                               {% endif %}
                             {% endfor %}
@@ -238,8 +211,7 @@
                               <td class="text-nowrap">
                                 {% if pago.estado != 'Realizado' %}
                                 <form method="POST" action="{{ url_for('trabajadores.marcar_pagado_nomina', id=pago.id) }}" class="d-inline">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
+                                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                   <button type="submit" class="btn btn-sm btn-outline-success" title="Marcar como Pagado"><i class="bi bi-check-circle"></i></button>
                                 </form>
                                 <button type="button" 
@@ -258,8 +230,7 @@
                                 </button>
                                 {% endif %}
                                 <form method="POST" action="{{ url_for('trabajadores.eliminar_pago_nomina', id=pago.id) }}" class="d-inline ms-1" onsubmit="return confirm('¿Seguro que deseas eliminar este pago?');">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
+                                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                   <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar"><i class="bi bi-trash"></i></button>
                                 </form>
                               </td>
@@ -276,41 +247,122 @@
                   </div>
                 </div>
               </div>
-
   {% endfor %}
 
-  <!-- Modal Confirmación Ocultar Trabajador (Frontend Puro) -->
-  <div class="modal fade" id="modalQuitarTrabajador" tabindex="-1" aria-labelledby="modalQuitarTrabajadorLabel" aria-hidden="true">
+  <!-- Modal Nuevo Trabajador -->
+  <div class="modal fade" id="modalCrearTrabajador" tabindex="-1" aria-labelledby="modalCrearTrabajadorLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content shadow" style="border-radius: 16px; border: none;">
-        <div class="modal-header border-0 pb-0">
-          <h5 class="modal-title fw-bold text-danger d-flex align-items-center gap-2" id="modalQuitarTrabajadorLabel">
-            <i class="bi bi-exclamation-triangle-fill"></i> Quitar de Nómina
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-        </div>
-        <div class="modal-body py-3">
-          <p class="mb-2 fs-6">
-            ¿Estás seguro de quitar a <strong id="nombreTrabajadorModal" class="text-dark">este trabajador</strong> de esta lista de nómina?
-          </p>
-          <div class="alert alert-warning d-flex align-items-start gap-2 mb-0 mt-3" style="border-radius: 12px; font-size: 0.875rem;">
-            <i class="bi bi-info-circle-fill text-warning fs-5 flex-shrink-0 mt-1"></i>
+      <div class="modal-content shadow-lg border-0" style="border-radius: 18px; overflow: hidden;">
+        <div class="modal-header border-0 pb-0 pt-4 px-4">
+          <div class="d-flex align-items-center gap-3">
+            <div class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; font-size: 1.25rem;">
+              <i class="bi bi-person-plus-fill"></i>
+            </div>
             <div>
-              <strong>Nota:</strong> El trabajador seguirá existiendo en el sistema general (únicamente se quita de esta lista).
+              <h5 class="modal-title fw-bold text-dark mb-0" id="modalCrearTrabajadorLabel">Nuevo Trabajador de Nómina</h5>
+              <p class="text-muted small mb-0">Registro independiente en nómina local</p>
             </div>
           </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
-        <div class="modal-footer border-0 pt-0">
-          <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal" style="border-radius: 10px;">Cancelar</button>
-          <button type="button" class="btn btn-outline-danger px-3" id="btnConfirmarQuitar" style="border-radius: 10px;">
-            <i class="bi bi-trash me-1"></i> Sí, Quitar
-          </button>
-        </div>
+        
+        <form method="POST" action="{{ url_for('trabajadores.crear_trabajador_nomina') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="modal-body py-4 px-4">
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-secondary">Nombre Completo <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-person"></i></span>
+                <input type="text" class="form-control border-start-0" name="nombre_trabajador" placeholder="Ej. Juan Pérez" required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-secondary">Identificación / Cédula</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-card-heading"></i></span>
+                <input type="text" class="form-control border-start-0" name="identificacion_trabajador" placeholder="Número de documento">
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label small fw-bold text-secondary">Fecha Programada</label>
+                <input type="date" class="form-control" name="fecha_programada">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label small fw-bold text-secondary">Monto Inicial ($)</label>
+                <input type="text" class="form-control money-input" name="monto" placeholder="0">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-secondary">Forma de Pago</label>
+              <select class="form-select" name="forma_pago">
+                <option value="Transferencia">Transferencia</option>
+                <option value="Efectivo">Efectivo</option>
+                <option value="Cheque">Cheque</option>
+              </select>
+            </div>
+
+            <div class="mb-0">
+              <label class="form-label small fw-bold text-secondary">Observación</label>
+              <textarea class="form-control" name="observacion" rows="2" placeholder="Opcional..."></textarea>
+            </div>
+          </div>
+
+          <div class="modal-footer border-0 pt-0 pb-4 px-4 gap-2">
+            <button type="button" class="btn btn-outline-secondary px-3 py-2" data-bs-dismiss="modal" style="border-radius: 10px; font-weight: 500;">Cancelar</button>
+            <button type="submit" class="btn btn-primary px-4 py-2" style="border-radius: 10px; font-weight: 600;">
+              <i class="bi bi-check-lg me-1"></i> Registrar Trabajador
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
 
-  
+  <!-- Modal Confirmación Eliminar Trabajador (Definitivo en BD) -->
+  <div class="modal fade" id="modalEliminarTrabajador" tabindex="-1" aria-labelledby="modalEliminarTrabajadorLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg border-0" style="border-radius: 18px; overflow: hidden;">
+        <div class="modal-header border-0 pb-0 pt-4 px-4">
+          <div class="d-flex align-items-center gap-3">
+            <div class="bg-danger-subtle text-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; font-size: 1.25rem;">
+              <i class="bi bi-trash-fill"></i>
+            </div>
+            <div>
+              <h5 class="modal-title fw-bold text-danger mb-0" id="modalEliminarTrabajadorLabel">Eliminar Trabajador</h5>
+              <p class="text-muted small mb-0">Eliminación definitiva de la nómina local</p>
+            </div>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <form method="POST" id="formEliminarTrabajador" action="">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="modal-body py-4 px-4">
+            <p class="mb-2 fs-6">
+              ¿Estás seguro de eliminar a <strong id="nombreTrabajadorModal" class="text-dark">este trabajador</strong> de la nómina?
+            </p>
+            <div class="alert alert-danger d-flex align-items-start gap-2 mb-0 mt-3" style="border-radius: 12px; font-size: 0.85rem;">
+              <i class="bi bi-exclamation-octagon-fill text-danger fs-5 flex-shrink-0 mt-0"></i>
+              <div>
+                <strong>Borrado definitivo:</strong> Se eliminarán de forma permanente todos los registros y pagos locales asociados a este trabajador en la tabla de nómina.
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer border-0 pt-0 pb-4 px-4 gap-2">
+            <button type="button" class="btn btn-outline-secondary px-3 py-2" data-bs-dismiss="modal" style="border-radius: 10px;">Cancelar</button>
+            <button type="submit" class="btn btn-danger px-4 py-2" style="border-radius: 10px; font-weight: 600;">
+              <i class="bi bi-trash me-1"></i> Sí, Eliminar Definitivamente
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal Programar Pago -->
   <div class="modal fade" id="modalProgramarPago" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -374,7 +426,7 @@
             </div>
             <div>
               <h5 class="modal-title fw-bold text-dark mb-0" id="modalEditarTrabajadorLocalLabel">Editar Datos de Nómina</h5>
-              <p class="text-muted small mb-0">Modificación local de referencia para el módulo de nómina</p>
+              <p class="text-muted small mb-0">Modificación en la entidad local de nómina</p>
             </div>
           </div>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
@@ -383,29 +435,21 @@
         <form method="POST" id="formEditarTrabajadorLocal" action="">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="nombre_anterior" id="editLocalNombreAnterior">
-          <input type="hidden" name="usuario_id" id="editLocalUsuarioId">
 
           <div class="modal-body py-4 px-4">
-            <div class="alert alert-info border-0 d-flex align-items-start gap-2 mb-3" style="background-color: #f0f7ff; border-radius: 12px; font-size: 0.825rem; color: #1e40af;">
-              <i class="bi bi-shield-check fs-5 flex-shrink-0 mt-0"></i>
-              <div>
-                <strong>Aislamiento seguro:</strong> Esta edición se aplica únicamente a la planilla y registros de nómina. La cuenta y credenciales del usuario de administración no son modificadas.
-              </div>
-            </div>
-
             <div class="mb-3">
-              <label class="form-label small fw-bold text-secondary">Nombre de Referencia en Nómina <span class="text-danger">*</span></label>
+              <label class="form-label small fw-bold text-secondary">Nombre en Nómina <span class="text-danger">*</span></label>
               <div class="input-group">
                 <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-person"></i></span>
-                <input type="text" class="form-control border-start-0" name="nombre_trabajador" id="editLocalNombreTrabajador" placeholder="Nombre para nómina" required>
+                <input type="text" class="form-control border-start-0" name="nombre_trabajador" id="editLocalNombreTrabajador" placeholder="Nombre completo" required>
               </div>
             </div>
 
             <div class="mb-3">
-              <label class="form-label small fw-bold text-secondary">Identificación / Cédula (Referencia)</label>
+              <label class="form-label small fw-bold text-secondary">Identificación / Cédula</label>
               <div class="input-group">
                 <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-card-heading"></i></span>
-                <input type="text" class="form-control border-start-0" name="identificacion_trabajador" id="editLocalIdentificacionTrabajador" placeholder="Cédula o ID de referencia">
+                <input type="text" class="form-control border-start-0" name="identificacion_trabajador" id="editLocalIdentificacionTrabajador" placeholder="Número de cédula">
               </div>
             </div>
           </div>
@@ -544,11 +588,9 @@
       const id = btn.getAttribute('data-id');
       const nombre = btn.getAttribute('data-nombre');
       const cedula = btn.getAttribute('data-cedula');
-      const nombreOriginal = btn.getAttribute('data-nombre-original') || nombre;
 
       document.getElementById('formEditarTrabajadorLocal').action = `/oficina/trabajadores/nomina/editar/${id}`;
-      document.getElementById('editLocalNombreAnterior').value = nombreOriginal;
-      document.getElementById('editLocalUsuarioId').value = id;
+      document.getElementById('editLocalNombreAnterior').value = nombre || '';
       document.getElementById('editLocalNombreTrabajador').value = nombre || '';
       document.getElementById('editLocalIdentificacionTrabajador').value = (cedula && cedula !== 'N/A') ? cedula : '';
 
@@ -556,158 +598,44 @@
       const modal = new bootstrap.Modal(modalEl);
       modal.show();
     }
-  </script>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    const STORAGE_KEY = 'nomina_trabajadores_ocultos';
-    let trabajadorSeleccionado = null;
+    function abrirModalEliminarTrabajador(btn) {
+      const id = btn.getAttribute('data-id');
+      const nombre = btn.getAttribute('data-nombre');
 
-    function getOcultos() {
-      try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-      } catch (e) {
-        return [];
-      }
-    }
-
-    function saveOcultos(list) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-      } catch (e) {
-        console.error('Error guardando en localStorage:', e);
-      }
-    }
-
-    function actualizarContadores() {
-      const ocultos = getOcultos();
-      const filas = document.querySelectorAll('.fila-empleado');
-      let visibles = 0;
-
-      filas.forEach(f => {
-        const id = f.getAttribute('data-emp-id');
-        if (ocultos.includes(String(id))) {
-          f.style.display = 'none';
-        } else {
-          // Si no está oculto por eliminación, respetar filtro de búsqueda
-          if (!f.classList.contains('filtrado-busqueda')) {
-            f.style.display = '';
-            visibles++;
-          }
-        }
-      });
-
-      const contadorVis = document.getElementById('contadorVisibles');
-      if (contadorVis) contadorVis.textContent = visibles;
-
-      const btnRestablecer = document.getElementById('btnRestablecerOcultos');
-      const contadorOcultos = document.getElementById('contadorOcultos');
-      const filaTodosOcultos = document.getElementById('filaTodosOcultos');
-
-      if (btnRestablecer && contadorOcultos) {
-        if (ocultos.length > 0) {
-          btnRestablecer.classList.remove('d-none');
-          contadorOcultos.textContent = ocultos.length;
-        } else {
-          btnRestablecer.classList.add('d-none');
-          contadorOcultos.textContent = '0';
-        }
-      }
-
-      if (filaTodosOcultos) {
-        if (visibles === 0 && filas.length > 0) {
-          filaTodosOcultos.classList.remove('d-none');
-        } else {
-          filaTodosOcultos.classList.add('d-none');
-        }
-      }
-    }
-
-    function abrirModalQuitar(boton) {
-      const id = boton.getAttribute('data-id');
-      const nombre = boton.getAttribute('data-nombre');
-      trabajadorSeleccionado = { id, nombre, elemento: boton.closest('tr') };
-
+      document.getElementById('formEliminarTrabajador').action = `/oficina/trabajadores/nomina/eliminar/${id}`;
       const nombreModal = document.getElementById('nombreTrabajadorModal');
       if (nombreModal) {
         nombreModal.textContent = nombre ? `"${nombre}"` : 'este trabajador';
       }
 
-      const modalEl = document.getElementById('modalQuitarTrabajador');
+      const modalEl = document.getElementById('modalEliminarTrabajador');
       const modal = new bootstrap.Modal(modalEl);
       modal.show();
-    }
-
-    function restablecerOcultos() {
-      saveOcultos([]);
-      const filas = document.querySelectorAll('.fila-empleado');
-      filas.forEach(f => {
-        f.classList.remove('filtrado-busqueda');
-        f.style.display = '';
-      });
-      const input = document.getElementById('buscadorEmpleados');
-      if (input) input.value = '';
-      actualizarContadores();
     }
 
     function filtrarTabla() {
       const input = document.getElementById('buscadorEmpleados');
       const filter = (input ? input.value : '').toLowerCase().trim();
-      const ocultos = getOcultos();
       const filas = document.querySelectorAll('.fila-empleado');
+      let visibles = 0;
 
       filas.forEach(tr => {
-        const id = tr.getAttribute('data-emp-id');
-        // Si fue quitado por el usuario, permanece oculto
-        if (ocultos.includes(String(id))) {
-          tr.style.display = 'none';
-          return;
-        }
-
         const rowText = (tr.textContent || tr.innerText).toLowerCase();
         if (filter === '' || rowText.indexOf(filter) > -1) {
-          tr.classList.remove('filtrado-busqueda');
           tr.style.display = '';
+          visibles++;
         } else {
-          tr.classList.add('filtrado-busqueda');
           tr.style.display = 'none';
         }
       });
 
-      actualizarContadores();
+      const contadorVis = document.getElementById('contadorVisibles');
+      if (contadorVis) contadorVis.textContent = visibles;
     }
-
-    document.addEventListener('DOMContentLoaded', function () {
-      actualizarContadores();
-
-      const btnConfirmar = document.getElementById('btnConfirmarQuitar');
-      if (btnConfirmar) {
-        btnConfirmar.addEventListener('click', function () {
-          if (!trabajadorSeleccionado) return;
-
-          const { id, elemento } = trabajadorSeleccionado;
-          const ocultos = getOcultos();
-          if (!ocultos.includes(String(id))) {
-            ocultos.push(String(id));
-            saveOcultos(ocultos);
-          }
-
-          if (elemento) {
-            elemento.style.display = 'none';
-          }
-
-          const modalEl = document.getElementById('modalQuitarTrabajador');
-          const modalInstance = bootstrap.Modal.getInstance(modalEl);
-          if (modalInstance) {
-            modalInstance.hide();
-          }
-
-          trabajadorSeleccionado = null;
-          actualizarContadores();
-        });
-      }
-    });
   </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <!-- Modal Exportar PDF Historial -->
   <div class="modal fade" id="modalExportarPdfHistorial" tabindex="-1">

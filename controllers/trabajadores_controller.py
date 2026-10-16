@@ -26,11 +26,12 @@ def index():
 @admin_oficina_required
 def nomina():
     usuario = Usuarios.query.get(session["user_id"])
-    empleados = Usuarios.query.options(selectinload(Usuarios.personal_data)).order_by(Usuarios.nombre.asc()).all()
     
     fecha_inicio = request.args.get("fecha_inicio")
     fecha_fin = request.args.get("fecha_fin")
     
+    # 1. Total aislamiento: remueve cualquier búsqueda o sincronización con la tabla global de Usuarios.
+    # 2. Obtenemos exclusivamente los registros independientes de la tabla local ProgramacionPagoTrabajador.
     query = ProgramacionPagoTrabajador.query
     if fecha_inicio:
         try:
@@ -46,6 +47,36 @@ def nomina():
             pass
             
     pagos = query.order_by(ProgramacionPagoTrabajador.fecha_programada.asc()).all()
+
+    # Construir lista de trabajadores locales independientes a partir de ProgramacionPagoTrabajador
+    todos_los_pagos = ProgramacionPagoTrabajador.query.order_by(ProgramacionPagoTrabajador.fecha_programada.desc()).all()
+    
+    trabajadores_dict = {}
+    for p in todos_los_pagos:
+        nom = (p.nombre_trabajador or '').strip()
+        if not nom:
+            continue
+        key = nom.lower()
+        if key not in trabajadores_dict:
+            trabajadores_dict[key] = {
+                'id': p.id,
+                'id_usuario': p.id,
+                'nombre': nom,
+                'cedula': (p.identificacion_trabajador or '').strip(),
+                'email': '',
+                'telefono': '',
+                'estado': 'Activo',
+                'pagos': [],
+                'total_devengado': 0
+            }
+        trabajadores_dict[key]['pagos'].append(p)
+        if (p.estado or '').strip().lower() == 'realizado':
+            trabajadores_dict[key]['total_devengado'] += float(p.monto or 0)
+        if p.identificacion_trabajador and not trabajadores_dict[key]['cedula']:
+            trabajadores_dict[key]['cedula'] = p.identificacion_trabajador.strip()
+
+    empleados = sorted(trabajadores_dict.values(), key=lambda x: x['nombre'].lower())
+
     return render_template("trabajadores/nomina.html", usuario=usuario, empleados=empleados, pagos=pagos, filtro_inicio=fecha_inicio, filtro_fin=fecha_fin)
 
 @trabajadores_bp.route("/oficina/trabajadores/nomina/historial")
@@ -478,6 +509,44 @@ def programar_pago_nomina():
 
     return redirect(url_for('trabajadores.nomina'))
 
+@trabajadores_bp.route('/oficina/trabajadores/nomina/crear', methods=['POST'])
+@login_required
+@admin_oficina_required
+def crear_trabajador_nomina():
+    try:
+        nombre_trabajador = (request.form.get('nombre_trabajador') or '').strip()
+        identificacion_trabajador = (request.form.get('identificacion_trabajador') or '').strip()
+        fecha_str = request.form.get('fecha_programada')
+        monto_str = request.form.get('monto')
+        forma_pago = request.form.get('forma_pago') or 'Transferencia'
+        observacion = request.form.get('observacion') or 'Trabajador registrado en nómina local'
+
+        if not nombre_trabajador:
+            flash('El nombre del trabajador es obligatorio.', 'warning')
+            return redirect(url_for('trabajadores.nomina'))
+
+        fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date() if fecha_str else datetime.today().date()
+        monto = clean_amount(monto_str) if monto_str else 0
+
+        nuevo_registro = ProgramacionPagoTrabajador(
+            nombre_trabajador=nombre_trabajador,
+            identificacion_trabajador=identificacion_trabajador,
+            fecha_programada=fecha,
+            monto=monto,
+            forma_pago=forma_pago,
+            observacion=observacion,
+            estado='Programado'
+        )
+        db.session.add(nuevo_registro)
+        db.session.commit()
+        flash(f'Trabajador "{nombre_trabajador}" agregado exitosamente a la nómina local.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al registrar trabajador en nómina: {e}")
+        flash(f'Error al registrar trabajador en nómina: {str(e)}', 'danger')
+
+    return redirect(url_for('trabajadores.nomina'))
+
 @trabajadores_bp.route('/oficina/trabajadores/nomina/editar/<int:id>', methods=['POST'])
 @login_required
 @admin_oficina_required
@@ -494,48 +563,56 @@ def editar_trabajador_nomina_local(id):
             flash('El nombre del trabajador no puede estar vacío.', 'warning')
             return redirect(url_for('trabajadores.nomina'))
 
-        # 1. Si el ID coincide directamente con un registro de ProgramacionPagoTrabajador
+        # Operación estrictamente sobre la entidad local ProgramacionPagoTrabajador
         pago_directo = ProgramacionPagoTrabajador.query.get(id)
+        nombre_buscar = (nombre_anterior or (pago_directo.nombre_trabajador if pago_directo else '')).strip()
+
         if pago_directo:
             pago_directo.nombre_trabajador = nuevo_nombre
             if identificacion_trabajador is not None:
                 pago_directo.identificacion_trabajador = nueva_identificacion
 
-        # 2. Actualizar todos los pagos programados que coincidan con este trabajador
-        # (por nombre anterior, o nombre del usuario de referencia) sin tocar la tabla Usuarios
-        usuario = Usuarios.query.get(id)
-        nombre_buscar = (nombre_anterior or (usuario.nombre if usuario else '')).strip()
-
-        pagos_asociados = []
+        # Actualizar todos los pagos asociados a este trabajador en la tabla local
         if nombre_buscar:
             pagos_asociados = ProgramacionPagoTrabajador.query.filter(
                 func.lower(ProgramacionPagoTrabajador.nombre_trabajador) == func.lower(nombre_buscar)
             ).all()
-
-        if pagos_asociados:
             for p in pagos_asociados:
                 p.nombre_trabajador = nuevo_nombre
                 if identificacion_trabajador is not None:
                     p.identificacion_trabajador = nueva_identificacion
-        elif not pago_directo:
-            # Si no tiene pagos programados previos, creamos un registro inicial de nómina para persistir la referencia local
-            nuevo_registro = ProgramacionPagoTrabajador(
-                nombre_trabajador=nuevo_nombre,
-                identificacion_trabajador=nueva_identificacion,
-                fecha_programada=datetime.today().date(),
-                monto=0,
-                forma_pago='Transferencia',
-                estado='Programado',
-                observacion='Registro de referencia de nómina (datos locales actualizados)'
-            )
-            db.session.add(nuevo_registro)
 
         db.session.commit()
-        flash(f'Datos de referencia de "{nuevo_nombre}" actualizados correctamente en nómina.', 'success')
+        flash(f'Datos del trabajador "{nuevo_nombre}" actualizados correctamente en nómina.', 'success')
     except Exception as e:
         db.session.rollback()
         print(f"Error al actualizar trabajador en nómina: {e}")
         flash(f'Error al actualizar los datos en nómina: {str(e)}', 'danger')
+
+    return redirect(url_for('trabajadores.nomina'))
+
+@trabajadores_bp.route('/oficina/trabajadores/nomina/eliminar/<int:id>', methods=['POST'])
+@login_required
+@admin_oficina_required
+def eliminar_trabajador_nomina(id):
+    try:
+        registro = ProgramacionPagoTrabajador.query.get_or_404(id)
+        nombre_trabajador = registro.nombre_trabajador
+
+        # Borrado definitivo en la tabla local ProgramacionPagoTrabajador
+        registros_a_eliminar = ProgramacionPagoTrabajador.query.filter(
+            func.lower(ProgramacionPagoTrabajador.nombre_trabajador) == func.lower(nombre_trabajador)
+        ).all()
+
+        for r in registros_a_eliminar:
+            db.session.delete(r)
+
+        db.session.commit()
+        flash(f'Trabajador "{nombre_trabajador}" y sus registros han sido eliminados definitivamente de la nómina.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al eliminar trabajador de nómina: {e}")
+        flash(f'Error al eliminar el trabajador de nómina: {str(e)}', 'danger')
 
     return redirect(url_for('trabajadores.nomina'))
 
