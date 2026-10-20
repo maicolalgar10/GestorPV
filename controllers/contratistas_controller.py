@@ -48,7 +48,7 @@ def limpiar_monto(valor):
 import tempfile
 def subir_archivo_supabase(file_obj, carpeta="contratistas"):
     """Sube un archivo a Supabase Storage y retorna la URL pública."""
-    if not file_obj or file_obj.filename == '':
+    if not file_obj or file_obj.filename == '' or not supabase:
         return None
         
     if allowed_file(file_obj.filename):
@@ -60,15 +60,55 @@ def subir_archivo_supabase(file_obj, carpeta="contratistas"):
         
         # Guardar en archivo temporal para evitar colapsar la RAM (SIGKILL) con archivos pesados
         temp_path = os.path.join(tempfile.gettempdir(), filename)
-        file_obj.save(temp_path)
+        if hasattr(file_obj, 'save'):
+            file_obj.save(temp_path)
+        else:
+            if hasattr(file_obj, 'seek'):
+                file_obj.seek(0)
+            with open(temp_path, 'wb') as f:
+                f.write(file_obj.read())
         
         try:
-            supabase.storage.from_("tesoreria").upload(
+            content_type = mimetypes.guess_type(file_obj.filename)[0] or "application/octet-stream"
+            res = supabase.storage.from_("tesoreria").upload(
                 path,
                 temp_path,
-                {"content-type": mimetypes.guess_type(file_obj.filename)[0] or "application/octet-stream"}
+                {"content-type": content_type, "upsert": "true"}
             )
-            return supabase.storage.from_("tesoreria").get_public_url(path)
+            
+            # Extraer la ruta directamente desde las claves del diccionario devuelto o del objeto
+            ruta_archivo = path
+            if isinstance(res, dict):
+                if res.get("error"):
+                    error_detail = res.get("message") or res.get("error")
+                    print(f"!!! Error retornado por Supabase Storage: {error_detail}")
+                    return None
+                if res.get("publicUrl") or res.get("public_url") or res.get("url"):
+                    return res.get("publicUrl") or res.get("public_url") or res.get("url")
+                ruta_archivo = (
+                    res.get("Key")
+                    or res.get("path")
+                    or res.get("full_path")
+                    or res.get("fullPath")
+                    or path
+                )
+            elif hasattr(res, "path"):
+                ruta_archivo = getattr(res, "path", path)
+            elif hasattr(res, "full_path"):
+                ruta_archivo = getattr(res, "full_path", path)
+            elif hasattr(res, "Key"):
+                ruta_archivo = getattr(res, "Key", path)
+
+            # Si la ruta contiene el prefijo del bucket, normalizarla para get_public_url
+            if isinstance(ruta_archivo, str) and ruta_archivo.startswith("tesoreria/"):
+                ruta_archivo = ruta_archivo[len("tesoreria/"):]
+
+            url_res = supabase.storage.from_("tesoreria").get_public_url(ruta_archivo)
+            if isinstance(url_res, dict):
+                return url_res.get("publicUrl") or url_res.get("public_url") or url_res.get("url")
+            elif hasattr(url_res, "public_url"):
+                return getattr(url_res, "public_url")
+            return str(url_res) if url_res else None
         except Exception as e:
             error_msg = str(e)
             print(f"!!! ERROR CRÍTICO EN SUPABASE STORAGE: {error_msg}")
