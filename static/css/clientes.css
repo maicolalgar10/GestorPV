@@ -1,0 +1,637 @@
+/* ==========================================================================
+   MÓDULO DE CLIENTES — ESTILOS VISUALES (clientes.css)
+   Inspirado en diseño corporativo de alta gama (Linear / Stripe / Vercel ERP)
+   ========================================================================== */
+
+/* ─── Tokens del Sistema de Diseño ────────────────────────────────────────── */
+:root {
+  /* Lienzo y Superficies */
+  --cl-bg-canvas: #f8fafc;
+  --cl-surface-card: #ffffff;
+  --cl-surface-subtle: #f1f5f9;
+  --cl-surface-elevated: #ffffff;
+  
+  /* Paleta Neutral */
+  --cl-neutral-900: #0f172a;
+  --cl-neutral-800: #1e293b;
+  --cl-neutral-700: #334155;
+  --cl-neutral-600: #475569;
+  --cl-neutral-500: #64748b;
+  --cl-neutral-400: #94a3b8;
+  --cl-neutral-300: #cbd5e1;
+  --cl-neutral-200: #e2e8f0;
+  --cl-neutral-100: #f1f5f9;
+  --cl-neutral-50:  #f8fafc;
+
+  /* Colores de Acento y Estado Calibrados (No fluorescentes) */
+  --cl-primary: #2563eb;
+  --cl-primary-subtle: rgba(37, 99, 235, 0.08);
+  --cl-primary-border: rgba(37, 99, 235, 0.25);
+
+  --cl-success: #059669;
+  --cl-success-subtle: rgba(5, 150, 105, 0.08);
+  --cl-success-border: rgba(5, 150, 105, 0.25);
+
+  --cl-warning: #d97706;
+  --cl-warning-subtle: rgba(217, 119, 6, 0.08);
+  --cl-warning-border: rgba(217, 119, 6, 0.25);
+
+  --cl-danger: #dc2626;
+  --cl-danger-subtle: rgba(220, 38, 38, 0.08);
+  --cl-danger-border: rgba(220, 38, 38, 0.25);
+
+  --cl-info: #0284c7;
+  --cl-info-subtle: rgba(2, 132, 199, 0.08);
+  --cl-info-border: rgba(2, 132, 199, 0.25);
+
+  /* Sombras y Profundidad */
+  --cl-shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --cl-shadow-sm: 0 2px 6px -1px rgba(15, 23, 42, 0.06), 0 1px 4px -1px rgba(15, 23, 42, 0.04);
+  --cl-shadow-md: 0 8px 20px -3px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.04);
+  --cl-shadow-lg: 0 16px 32px -4px rgba(15, 23, 42, 0.12), 0 6px 14px -3px rgba(15, 23, 42, 0.05);
+
+  /* Radios */
+  --cl-radius-sm: 8px;
+  --cl-radius-md: 12px;
+  --cl-radius-lg: 16px;
+  --cl-radius-xl: 20px;
+
+  /* Transición */
+  --cl-transition-fast: 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  --cl-transition-normal: 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ─── Tipografía Base y Contenedor Principal ──────────────────────────────── */
+body {
+  background-color: var(--cl-bg-canvas);
+  color: var(--cl-neutral-900);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Header Principal Ejecutivo ─────────────────────────────────────────── */
+.page-header {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #1e3a8a 100%) !important;
+  border-radius: var(--cl-radius-lg) !important;
+  color: #ffffff !important;
+  padding: 24px 32px !important;
+  margin-bottom: 24px !important;
+  box-shadow: 0 12px 30px -8px rgba(15, 23, 42, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.page-header::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.page-header h1 {
+  font-size: 1.35rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+}
+
+.page-header p {
+  color: #94a3b8 !important;
+  font-size: 0.82rem !important;
+  font-weight: 500;
+}
+
+/* Botones del Header */
+.btn-back {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+  border-radius: 9999px !important;
+  padding: 8px 18px !important;
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  backdrop-filter: blur(8px);
+  transition: all var(--cl-transition-fast) !important;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.btn-back:hover {
+  background: rgba(255, 255, 255, 0.18) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
+.page-header .btn-outline-light {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 0.82rem;
+  padding: 8px 18px;
+  transition: all var(--cl-transition-fast);
+}
+
+.page-header .btn-outline-light:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.page-header .btn-light {
+  background: #ffffff !important;
+  color: var(--cl-neutral-900) !important;
+  border: none !important;
+  font-size: 0.82rem !important;
+  padding: 8px 20px !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15) !important;
+  transition: all var(--cl-transition-fast) !important;
+}
+
+.page-header .btn-light:hover {
+  background: #f8fafc !important;
+  color: var(--cl-neutral-900) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2) !important;
+  transform: translateY(-1px);
+}
+
+/* ─── Acordeón de Contratos ───────────────────────────────────────────────── */
+#accordionContratos .accordion-item {
+  border-radius: var(--cl-radius-md) !important;
+  border: 1px solid var(--cl-neutral-200) !important;
+  background: var(--cl-surface-card);
+  margin-bottom: 16px;
+  overflow: hidden;
+  box-shadow: var(--cl-shadow-xs) !important;
+  transition: box-shadow var(--cl-transition-fast), border-color var(--cl-transition-fast);
+}
+
+#accordionContratos .accordion-item:hover {
+  box-shadow: var(--cl-shadow-sm) !important;
+  border-color: var(--cl-neutral-300) !important;
+}
+
+#accordionContratos .accordion-button {
+  background: #ffffff !important;
+  color: var(--cl-neutral-800) !important;
+  padding: 18px 24px !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+#accordionContratos .accordion-button:not(.collapsed) {
+  background: #ffffff !important;
+  border-bottom: 1px solid var(--cl-neutral-200) !important;
+}
+
+#accordionContratos .accordion-button::after {
+  background-size: 1rem;
+  filter: grayscale(0.8) opacity(0.7);
+  transition: transform var(--cl-transition-normal);
+}
+
+/* Metadatos del Contrato en el Header */
+.badge.bg-primary-subtle {
+  background-color: var(--cl-neutral-100) !important;
+  color: var(--cl-neutral-700) !important;
+  border: 1px solid var(--cl-neutral-200) !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em;
+  padding: 5px 10px !important;
+  border-radius: 6px !important;
+}
+
+/* ─── Las 6 Tarjetas de Métricas del Contrato (Rediseño Sobrio) ───────────── */
+/* Contenedor de las 6 tarjetas */
+#accordionContratos .accordion-button .row {
+  margin-top: 10px !important;
+}
+
+/* Tarjeta individual */
+#accordionContratos .accordion-button .card {
+  background: #ffffff !important;
+  border-radius: var(--cl-radius-sm) !important;
+  border: 1px solid var(--cl-neutral-200) !important;
+  border-left-width: 3px !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03) !important;
+  padding: 10px 12px !important;
+  text-align: left !important;
+  transition: transform var(--cl-transition-fast), box-shadow var(--cl-transition-fast), border-color var(--cl-transition-fast);
+}
+
+#accordionContratos .accordion-button .card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--cl-shadow-sm) !important;
+}
+
+/* Borde izquierdo y acento calibrado para cada una de las 6 tarjetas */
+#accordionContratos .accordion-button .card.border-primary {
+  border-left-color: #3b82f6 !important;
+}
+#accordionContratos .accordion-button .card.border-warning {
+  border-left-color: #d97706 !important;
+}
+#accordionContratos .accordion-button .card.border-info {
+  border-left-color: #0284c7 !important;
+}
+#accordionContratos .accordion-button .card.border-secondary {
+  border-left-color: #64748b !important;
+}
+#accordionContratos .accordion-button .card.border-success {
+  border-left-color: #059669 !important;
+}
+#accordionContratos .accordion-button .card.border-danger {
+  border-left-color: #dc2626 !important;
+}
+
+/* Cifras de las tarjetas */
+#accordionContratos .accordion-button .card .fs-5 {
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+}
+
+#accordionContratos .accordion-button .card .text-primary {
+  color: #1e3a8a !important;
+}
+#accordionContratos .accordion-button .card .text-warning {
+  color: #b45309 !important;
+}
+#accordionContratos .accordion-button .card .text-info {
+  color: #0369a1 !important;
+}
+#accordionContratos .accordion-button .card .text-secondary {
+  color: #475569 !important;
+}
+#accordionContratos .accordion-button .card .text-success {
+  color: #047857 !important;
+}
+#accordionContratos .accordion-button .card .text-danger {
+  color: #b91c1c !important;
+}
+
+/* Micro-etiquetas debajo de las cifras */
+#accordionContratos .accordion-button .card .small.text-muted {
+  font-size: 0.67rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.05em;
+  text-transform: uppercase !important;
+  color: #64748b !important;
+  margin-top: 4px !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Tabla de Reportes / Facturas Expandida ──────────────────────────────── */
+.table-responsive {
+  border: none;
+}
+
+.table-responsive .table {
+  margin-bottom: 0 !important;
+  font-size: 0.83rem !important;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table-responsive .table thead {
+  background-color: var(--cl-neutral-50) !important;
+}
+
+.table-responsive .table thead th {
+  background-color: var(--cl-neutral-50) !important;
+  color: var(--cl-neutral-600) !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  padding: 12px 14px !important;
+  border-top: none !important;
+  border-bottom: 1px solid var(--cl-neutral-200) !important;
+  white-space: nowrap;
+}
+
+.table-responsive .table tbody tr {
+  transition: background-color var(--cl-transition-fast);
+}
+
+.table-responsive .table tbody tr:hover {
+  background-color: #f8fafc !important;
+}
+
+.table-responsive .table tbody td {
+  padding: 13px 14px !important;
+  vertical-align: middle !important;
+  border-bottom: 1px solid var(--cl-neutral-100) !important;
+  color: var(--cl-neutral-800);
+  font-variant-numeric: tabular-nums;
+}
+
+.table-responsive .table tbody td.text-success {
+  color: var(--cl-success) !important;
+}
+.table-responsive .table tbody td.text-danger {
+  color: var(--cl-danger) !important;
+}
+
+/* Botones de acción dentro de la tabla */
+.table-responsive .table .btn-sm {
+  width: 28px;
+  height: 28px;
+  padding: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px !important;
+  font-size: 0.8rem !important;
+  transition: all var(--cl-transition-fast);
+}
+
+.table-responsive .table .btn-sm:hover {
+  transform: translateY(-1px);
+}
+
+.table-responsive .table .btn-outline-primary {
+  border-color: var(--cl-neutral-300) !important;
+  color: var(--cl-neutral-700) !important;
+}
+.table-responsive .table .btn-outline-primary:hover {
+  background-color: var(--cl-primary) !important;
+  border-color: var(--cl-primary) !important;
+  color: #ffffff !important;
+}
+
+.table-responsive .table .btn-outline-danger {
+  border-color: var(--cl-neutral-300) !important;
+  color: var(--cl-neutral-700) !important;
+}
+.table-responsive .table .btn-outline-danger:hover {
+  background-color: var(--cl-danger) !important;
+  border-color: var(--cl-danger) !important;
+  color: #ffffff !important;
+}
+
+.table-responsive .table .btn-outline-secondary {
+  border-color: var(--cl-neutral-300) !important;
+  color: var(--cl-neutral-700) !important;
+}
+.table-responsive .table .btn-outline-secondary:hover {
+  background-color: var(--cl-neutral-800) !important;
+  border-color: var(--cl-neutral-800) !important;
+  color: #ffffff !important;
+}
+
+/* Barra Inferior de Acciones del Contrato */
+.accordion-body .bg-light.text-end.border-top {
+  background-color: #fafafa !important;
+  border-top: 1px solid var(--cl-neutral-200) !important;
+  padding: 14px 20px !important;
+}
+
+.accordion-body .bg-light .btn {
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  padding: 7px 16px !important;
+  border-radius: var(--cl-radius-sm) !important;
+  transition: all var(--cl-transition-fast);
+}
+
+.accordion-body .bg-light .btn-primary {
+  background-color: var(--cl-primary) !important;
+  border-color: var(--cl-primary) !important;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.2);
+}
+.accordion-body .bg-light .btn-primary:hover {
+  background-color: #1d4ed8 !important;
+  border-color: #1d4ed8 !important;
+  transform: translateY(-1px);
+}
+
+.accordion-body .bg-light .btn-outline-secondary {
+  border-color: var(--cl-neutral-300) !important;
+  color: var(--cl-neutral-700) !important;
+  background: #ffffff !important;
+}
+.accordion-body .bg-light .btn-outline-secondary:hover {
+  background-color: var(--cl-neutral-100) !important;
+  color: var(--cl-neutral-900) !important;
+}
+
+.accordion-body .bg-light .btn-outline-danger {
+  border-color: var(--cl-neutral-300) !important;
+  color: var(--cl-danger) !important;
+  background: #ffffff !important;
+}
+.accordion-body .bg-light .btn-outline-danger:hover {
+  background-color: var(--cl-danger) !important;
+  color: #ffffff !important;
+}
+
+/* ─── Modales (Dark Corporativo & Diálogos Refinados) ─────────────────────── */
+.modal-backdrop.show {
+  opacity: 0.65 !important;
+  backdrop-filter: blur(4px);
+}
+
+.modal-dark .modal-content {
+  background-color: #111827 !important;
+  color: #f1f5f9 !important;
+  border: 1px solid #1f2937 !important;
+  border-radius: var(--cl-radius-lg) !important;
+  box-shadow: var(--cl-shadow-lg) !important;
+  overflow: hidden;
+}
+
+.modal-dark .modal-header {
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%) !important;
+  border-bottom: 1px solid #374151 !important;
+  padding: 18px 24px !important;
+}
+
+.modal-dark .modal-title {
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  letter-spacing: -0.01em;
+}
+
+.modal-dark .modal-body {
+  padding: 22px 26px !important;
+  background-color: #111827 !important;
+}
+
+.modal-dark .modal-footer {
+  background-color: #0f172a !important;
+  border-top: 1px solid #1f2937 !important;
+  padding: 14px 24px !important;
+}
+
+/* Form Controls en Modales */
+.modal-dark label {
+  color: #94a3b8 !important;
+  font-size: 0.74rem !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  margin-bottom: 6px !important;
+}
+
+.modal-dark .form-control,
+.modal-dark .form-select {
+  background-color: #1e293b !important;
+  border: 1px solid #334155 !important;
+  color: #f8fafc !important;
+  border-radius: var(--cl-radius-sm) !important;
+  font-size: 0.88rem !important;
+  padding: 9px 13px !important;
+  transition: border-color var(--cl-transition-fast), box-shadow var(--cl-transition-fast);
+}
+
+.modal-dark .form-control:focus,
+.modal-dark .form-select:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+}
+
+.modal-dark .form-control::placeholder {
+  color: #64748b !important;
+}
+
+.modal-dark .input-group-text {
+  background-color: #1e293b !important;
+  border: 1px solid #334155 !important;
+  color: #94a3b8 !important;
+  font-size: 0.88rem !important;
+  font-weight: 600 !important;
+}
+
+/* Cajas de Cálculo dentro de los Modales */
+.modal-dark .calc-box {
+  background-color: #1e293b !important;
+  border: 1px solid #334155 !important;
+  border-radius: var(--cl-radius-sm) !important;
+  padding: 12px 16px !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.modal-dark .calc-box .calc-label {
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  color: #94a3b8 !important;
+}
+
+.modal-dark .calc-box .calc-val {
+  font-size: 1.2rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  margin-top: 3px;
+}
+
+.modal-dark .section-sep {
+  border-top: 1px solid #1f2937 !important;
+  color: #60a5fa !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  margin: 18px 0 14px !important;
+  padding-top: 14px !important;
+}
+
+/* Upload Zone en Modales */
+.modal-dark .upload-zone {
+  background-color: #1e293b !important;
+  border: 1.5px dashed #334155 !important;
+  border-radius: var(--cl-radius-sm) !important;
+  padding: 10px 14px !important;
+  transition: all var(--cl-transition-fast) !important;
+  cursor: pointer;
+}
+
+.modal-dark .upload-zone:hover {
+  border-color: #3b82f6 !important;
+  background-color: #243046 !important;
+}
+
+.modal-dark .upload-zone label {
+  color: #94a3b8 !important;
+  font-size: 0.8rem !important;
+  cursor: pointer;
+}
+
+/* Botones dentro del Modal */
+.modal-dark .btn-confirm {
+  background: linear-gradient(135deg, #059669, #047857) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: var(--cl-radius-sm) !important;
+  padding: 8px 22px !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.3) !important;
+  transition: all var(--cl-transition-fast) !important;
+}
+
+.modal-dark .btn-confirm:hover {
+  background: linear-gradient(135deg, #047857, #065f46) !important;
+  transform: translateY(-1px);
+}
+
+.modal-dark .btn-outline-primary {
+  border-color: #3b82f6 !important;
+  color: #60a5fa !important;
+  border-radius: var(--cl-radius-sm) !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+}
+
+.modal-dark .btn-outline-primary:hover {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
+.modal-dark .btn-outline-secondary {
+  border-color: #374151 !important;
+  color: #94a3b8 !important;
+  border-radius: var(--cl-radius-sm) !important;
+  font-size: 0.85rem !important;
+}
+
+.modal-dark .btn-outline-secondary:hover {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+}
+
+/* Tabla de Subfacturas dentro del Modal */
+#modalSubFacturas .custom-table th {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+  font-size: 0.72rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  border-bottom: 1px solid #334155 !important;
+}
+
+#modalSubFacturas .custom-table td {
+  border-bottom: 1px solid #1f2937 !important;
+  font-size: 0.84rem !important;
+}
